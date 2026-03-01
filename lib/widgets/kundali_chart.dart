@@ -180,11 +180,10 @@ class KundaliChart extends StatelessWidget {
           Expanded(
             child: SingleChildScrollView(
               padding: const EdgeInsets.all(2),
-              child: Wrap(
-                alignment: WrapAlignment.center,
-                spacing: 3,
-                runSpacing: 2,
-                children: planets,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: planets.map((p) => Padding(padding: const EdgeInsets.only(bottom: 2), child: p)).toList(),
               ),
             ),
           ),

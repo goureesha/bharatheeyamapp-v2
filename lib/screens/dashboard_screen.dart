@@ -203,6 +203,7 @@ class _DashboardScreenState extends State<DashboardScreen>
               varga: _chartMode == 'ಭಾವ' ? 1 : (_chartMode == 'ನವಾಂಶ' ? 9 : _varga),
               isBhava: _chartMode == 'ಭಾವ',
               showSphutas: _showSphutas,
+              centerLabel: _chartMode,
             ),
           ),
           const SizedBox(height: 16),
@@ -465,6 +466,7 @@ class _DashboardScreenState extends State<DashboardScreen>
   // ─────────────────────────────────────────────
   Widget _buildAshtakavargaTab() {
     return AshtakavargaWidget(
+      key: UniqueKey(),
       savBindus: widget.result.savBindus,
       bavBindus: widget.result.bavBindus,
     );

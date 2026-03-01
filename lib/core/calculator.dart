@@ -151,14 +151,15 @@ class AstroCalculator {
     double sr = Ephemeris.findSunrise(y, m, d, lat, lon);
     double ss = Ephemeris.findSunset(y, m, d, lat, lon);
     double nextSr;
-    int vedicWday = dob.weekday % 7;
+    final int pyWeekday = dob.weekday - 1; // Mon=0, Sun=6
+    int vedicWday = (pyWeekday + 1) % 7; // Sun=0, Mon=1...
 
     if (jdBirth < sr) {
       final prev = dob.subtract(const Duration(days: 1));
       nextSr = sr; 
       sr = Ephemeris.findSunrise(prev.year, prev.month, prev.day, lat, lon);
       ss = Ephemeris.findSunset(prev.year, prev.month, prev.day, lat, lon);
-      vedicWday = prev.weekday % 7;
+      vedicWday = (vedicWday - 1 + 7) % 7;
     } else {
       final next = dob.add(const Duration(days: 1));
       nextSr = Ephemeris.findSunrise(next.year, next.month, next.day, lat, lon);
@@ -184,7 +185,7 @@ class AstroCalculator {
 
     final ayn = _getAyanamsa(mandiJd, ayanamsaMode);
     final cusps = Ephemeris.placidusHouses(mandiJd, lat, lon, ayn);
-    return cusps[0];
+    return cusps.length == 13 ? normDeg(cusps[1] - ayn) : normDeg(cusps[0] - ayn);
   }
 
   static double _getAyanamsa(double jd, String mode) {
@@ -338,9 +339,19 @@ class AstroCalculator {
         speeds[kn] = entry.value[1];
       }
 
-      // Lagna (Ascendant)
-      final cusps = Ephemeris.placidusHouses(jdBirth, lat, lon, ayn);
-      positions['ಲಗ್ನ'] = cusps[0];
+      // Lagna (Ascendant) and Bhavas
+      final rawCusps = Ephemeris.placidusHouses(jdBirth, lat, lon, ayn);
+      double ascDeg;
+      List<double> bhavaSphutas;
+      if (rawCusps.length == 13) {
+        ascDeg = normDeg(rawCusps[1] - ayn);
+        bhavaSphutas = [for (int i = 1; i <= 12; i++) normDeg(rawCusps[i] - ayn)];
+      } else {
+        ascDeg = normDeg(rawCusps[0] - ayn);
+        bhavaSphutas = [for (int i = 0; i < 12; i++) normDeg(rawCusps[i] - ayn)];
+      }
+      
+      positions['ಲಗ್ನ'] = ascDeg;
       speeds['ಲಗ್ನ'] = 0;
 
       // Mandi
@@ -467,7 +478,7 @@ class AstroCalculator {
 
       return KundaliResult(
         planets: planetInfoMap,
-        bhavas: cusps,
+        bhavas: bhavaSphutas,
         panchang: panchang,
         dashas: dashas,
         savBindus: sav,
