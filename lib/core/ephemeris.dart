@@ -66,9 +66,9 @@ class Ephemeris {
     double cur = jd0 - 0.25;
     double bestJd = jd0 + (rising ? 0.25 : 0.75);
 
-    // Using exact 0.0 threshold for geometric mid-limb sunrise (no refraction), 
-    // exactly matching the requested Vedic Jyotish criteria provided in D:\app.py logic rewrite earlier
-    final threshold = 0.0;
+    // Using -0.583 for Mid-Limb Sunrise (center of sun including refraction)
+    // exactly matching the requested Vedic Jyotish criteria provided in D:\app.py
+    final threshold = -0.583;
     
     for (int i = 0; i < 32; i++) {
       final a1 = getAltitudeManual(cur, lat, lng);
@@ -120,15 +120,9 @@ class Ephemeris {
   static List<double> placidusHouses(double jd, double lat, double lng, double ayanamsa) {
     try {
       final res = Sweph.swe_houses(jd, lat, lng, Hsys.P);
-      final cusps = res.cusps;
-      // cusps[1] is 1st house in Sweph, array size 13
-      List<double> siderealCusps = [];
-      for (int i = 1; i <= 12; i++) {
-        siderealCusps.add(_norm(cusps[i] - ayanamsa));
-      }
-      return siderealCusps;
+      return res.cusps;
     } catch (_) {
-      return List.filled(12, 0);
+      return [];
     }
   }
 

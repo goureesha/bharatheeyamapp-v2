@@ -185,6 +185,7 @@ class AstroCalculator {
 
     final ayn = _getAyanamsa(mandiJd, ayanamsaMode);
     final cusps = Ephemeris.placidusHouses(mandiJd, lat, lon, ayn);
+    if (cusps.isEmpty) return 0.0;
     return cusps.length == 13 ? normDeg(cusps[1] - ayn) : normDeg(cusps[0] - ayn);
   }
 
@@ -341,14 +342,17 @@ class AstroCalculator {
 
       // Lagna (Ascendant) and Bhavas
       final rawCusps = Ephemeris.placidusHouses(jdBirth, lat, lon, ayn);
-      double ascDeg;
-      List<double> bhavaSphutas;
-      if (rawCusps.length == 13) {
-        ascDeg = normDeg(rawCusps[1] - ayn);
-        bhavaSphutas = [for (int i = 1; i <= 12; i++) normDeg(rawCusps[i] - ayn)];
-      } else {
-        ascDeg = normDeg(rawCusps[0] - ayn);
-        bhavaSphutas = [for (int i = 0; i < 12; i++) normDeg(rawCusps[i] - ayn)];
+      double ascDeg = 0.0;
+      List<double> bhavaSphutas = List.filled(12, 0.0);
+      
+      if (rawCusps.isNotEmpty) {
+        if (rawCusps.length == 13) {
+          ascDeg = normDeg(rawCusps[1] - ayn);
+          bhavaSphutas = [for (int i = 1; i <= 12; i++) normDeg(rawCusps[i] - ayn)];
+        } else {
+          ascDeg = normDeg(rawCusps[0] - ayn);
+          bhavaSphutas = [for (int i = 0; i < 12; i++) normDeg(rawCusps[i] - ayn)];
+        }
       }
       
       positions['ಲಗ್ನ'] = ascDeg;
