@@ -97,8 +97,9 @@ class KundaliChart extends StatelessWidget {
 
         int ri;
         if (isBhava) {
-          // Bhava: house number from lagna rashi
-          ri = ((info.rashiIndex - lagnaIdx + 12) % 12);
+          final lagnaDeg = result.planets['ಲಗ್ನ']?.longitude ?? 0;
+          final d = info.longitude;
+          ri = (lagnaIdx + (((d - lagnaDeg + 360) % 360 + 15) ~/ 30)) % 12;
         } else {
           ri = _rashinFor(info.longitude);
         }
