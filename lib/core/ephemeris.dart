@@ -47,59 +47,45 @@ class Ephemeris {
     }
   }
 
-  // ─────────────────────────────────────────────
-  // Find sunrise (returns JD of sunrise/sunset)
-  // ─────────────────────────────────────────────
-  static double findSunrise(int year, int month, int day, double lat, double lng) {
-    return _findCrossing(year, month, day, lat, lng, true);
-  }
-
-  static double findSunset(int year, int month, int day, double lat, double lng) {
-    return _findCrossing(year, month, day, lat, lng, false);
-  }
-
-  static double _findCrossing(int year, int month, int day, double lat, double lng, bool rising) {
-    final jd0 = Sweph.swe_julday(year, month, day, 0.0, CalendarType.SE_GREG_CAL);
-    double low = jd0 - 0.2;
-    double high = jd0 + 1.0;
+  static List<double> findSunriseSetForDate(int year, int month, int day, double lat, double lon) {
+    final jdStart = Sweph.swe_julday(year, month, day, 0.0, CalendarType.SE_GREG_CAL);
+    double riseTime = jdStart + 0.25;
+    double setTime = jdStart + 0.75;
     double step = 1.0 / 24.0;
-    double cur = jd0 - 0.25;
-    double bestJd = jd0 + (rising ? 0.25 : 0.75);
-
-    // Using -0.583 for Mid-Limb Sunrise (center of sun including refraction)
-    // exactly matching the requested Vedic Jyotish criteria provided in D:\app.py
-    final threshold = -0.583;
+    double current = jdStart - 0.3;
     
-    for (int i = 0; i < 32; i++) {
-      final a1 = getAltitudeManual(cur, lat, lng);
-      final a2 = getAltitudeManual(cur + step, lat, lng);
-      
-      if (rising && a1 < threshold && a2 >= threshold) {
-        low = cur; high = cur + step;
-        for (int j = 0; j < 20; j++) {
-          final mid = (low + high) / 2;
-          if (getAltitudeManual(mid, lat, lng) < threshold) {
-            low = mid;
-          } else {
-            high = mid;
+    try {
+      for (int i = 0; i < 30; i++) {
+        double alt1 = getAltitudeManual(current, lat, lon);
+        double alt2 = getAltitudeManual(current + step, lat, lon);
+        if (alt1 < -0.583 && alt2 >= -0.583) {
+          double l = current, h = current + step;
+          for (int j = 0; j < 20; j++) {
+            double m = (l + h) / 2;
+            if (getAltitudeManual(m, lat, lon) < -0.583) {
+              l = m;
+            } else {
+              h = m;
+            }
           }
+          riseTime = h;
         }
-        bestJd = (low + high) / 2;
-      } else if (!rising && a1 > threshold && a2 <= threshold) {
-        low = cur; high = cur + step;
-        for (int j = 0; j < 20; j++) {
-          final mid = (low + high) / 2;
-          if (getAltitudeManual(mid, lat, lng) > threshold) {
-            low = mid;
-          } else {
-            high = mid;
+        if (alt1 > -0.583 && alt2 <= -0.583) {
+          double l = current, h = current + step;
+          for (int j = 0; j < 20; j++) {
+            double m = (l + h) / 2;
+            if (getAltitudeManual(m, lat, lon) > -0.583) {
+              l = m;
+            } else {
+              h = m;
+            }
           }
+          setTime = h;
         }
-        bestJd = (low + high) / 2;
+        current += step;
       }
-      cur += step;
-    }
-    return bestJd;
+    } catch (_) {}
+    return [riseTime, setTime];
   }
 
   static double ayanamsaLahiri(double jd) {
