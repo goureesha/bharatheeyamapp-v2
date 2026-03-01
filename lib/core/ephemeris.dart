@@ -117,12 +117,11 @@ class Ephemeris {
     return Sweph.swe_get_ayanamsa(jd);
   }
 
-  static List<double> placidusHouses(double jd, double lat, double lng, double ayanamsa) {
+  static SweHouses? placidusHousesFull(double jd, double lat, double lng) {
     try {
-      final res = Sweph.swe_houses(jd, lat, lng, Hsys.P);
-      return res.cusps;
+      return Sweph.swe_houses(jd, lat, lng, Hsys.P);
     } catch (_) {
-      return [];
+      return null;
     }
   }
 

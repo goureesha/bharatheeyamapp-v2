@@ -184,9 +184,9 @@ class AstroCalculator {
     final mandiJd = startBase + (duration * factor / 30.0);
 
     final ayn = _getAyanamsa(mandiJd, ayanamsaMode);
-    final cusps = Ephemeris.placidusHouses(mandiJd, lat, lon, ayn);
-    if (cusps.isEmpty) return 0.0;
-    return cusps.length == 13 ? normDeg(cusps[1] - ayn) : normDeg(cusps[0] - ayn);
+    final hres = Ephemeris.placidusHousesFull(mandiJd, lat, lon);
+    if (hres == null) return 0.0;
+    return normDeg(hres.ascmc[0] - ayn);
   }
 
   static double _getAyanamsa(double jd, String mode) {
@@ -341,17 +341,18 @@ class AstroCalculator {
       }
 
       // Lagna (Ascendant) and Bhavas
-      final rawCusps = Ephemeris.placidusHouses(jdBirth, lat, lon, ayn);
+      final hres = Ephemeris.placidusHousesFull(jdBirth, lat, lon);
       double ascDeg = 0.0;
       List<double> bhavaSphutas = List.filled(12, 0.0);
       
-      if (rawCusps.isNotEmpty) {
-        if (rawCusps.length == 13) {
-          ascDeg = normDeg(rawCusps[1] - ayn);
-          bhavaSphutas = [for (int i = 1; i <= 12; i++) normDeg(rawCusps[i] - ayn)];
-        } else {
-          ascDeg = normDeg(rawCusps[0] - ayn);
-          bhavaSphutas = [for (int i = 0; i < 12; i++) normDeg(rawCusps[i] - ayn)];
+      if (hres != null) {
+        ascDeg = normDeg(hres.ascmc[0] - ayn);
+        
+        // Bhava cusps (length can be 12 or 13, house 1 starts at array.length 13 -> cusps[1])
+        if (hres.cusps.length == 13) {
+          bhavaSphutas = [for (int i = 1; i <= 12; i++) normDeg(hres.cusps[i] - ayn)];
+        } else if (hres.cusps.isNotEmpty) {
+          bhavaSphutas = [for (int i = 0; i < 12; i++) normDeg(hres.cusps[i] - ayn)];
         }
       }
       
