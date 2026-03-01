@@ -157,6 +157,9 @@ class KundaliChart extends StatelessWidget {
           },
         ),
       ),
+    );
+  }
+
   Widget _rashiBox(int rashiIdx, List<Widget> planets) {
     return Container(
       margin: const EdgeInsets.all(1.0),
