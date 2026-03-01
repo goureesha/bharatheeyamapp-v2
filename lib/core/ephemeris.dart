@@ -117,7 +117,7 @@ class Ephemeris {
     return Sweph.swe_get_ayanamsa(jd);
   }
 
-  static SweHouses? placidusHousesFull(double jd, double lat, double lng) {
+  static dynamic placidusHousesFull(double jd, double lat, double lng) {
     try {
       return Sweph.swe_houses(jd, lat, lng, Hsys.P);
     } catch (_) {
