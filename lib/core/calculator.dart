@@ -140,11 +140,6 @@ class AstroCalculator {
   // ─────────────────────────────────────────────
   // MANDI calculation — exact Python port
   // ─────────────────────────────────────────────
-  static Future<double> calcMandi({
-    required double jdBirth,
-    required double lat,
-    required double lon,
-    required DateTime dob,
   static List<dynamic> calcMandi({
     required double jdBirth,
     required double lat,
