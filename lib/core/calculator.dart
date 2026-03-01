@@ -148,53 +148,43 @@ class AstroCalculator {
     required String ayanamsaMode,
   }) async {
     final y = dob.year; final m = dob.month; final d = dob.day;
-    final sr = Ephemeris.findSunrise(y, m, d, lat, lon);
-    final ss = Ephemeris.findSunset(y, m, d, lat, lon);
+    double sr = Ephemeris.findSunrise(y, m, d, lat, lon);
+    double ss = Ephemeris.findSunset(y, m, d, lat, lon);
+    double nextSr;
+    int vedicWday = dob.weekday % 7;
 
-    final pyWeekday = dob.weekday % 7; // Mon=1..Sun=0
-    final civilWdayIdx = (pyWeekday + 1) % 7; // Sun=0
+    if (jdBirth < sr) {
+      final prev = dob.subtract(const Duration(days: 1));
+      nextSr = sr; 
+      sr = Ephemeris.findSunrise(prev.year, prev.month, prev.day, lat, lon);
+      ss = Ephemeris.findSunset(prev.year, prev.month, prev.day, lat, lon);
+      vedicWday = prev.weekday % 7;
+    } else {
+      final next = dob.add(const Duration(days: 1));
+      nextSr = Ephemeris.findSunrise(next.year, next.month, next.day, lat, lon);
+    }
 
-    final bool isNight = !(jdBirth >= sr && jdBirth < ss);
-
-    int vedWday;
-    double startBase, duration, panchSr;
-
+    final bool isNight = jdBirth >= ss;
+    double startBase, duration;
+    
     if (!isNight) {
-      vedWday = civilWdayIdx;
-      panchSr = sr;
       startBase = sr;
       duration = ss - sr;
     } else {
-      if (jdBirth < sr) {
-        vedWday = (civilWdayIdx - 1 + 7) % 7;
-        final prev = dob.subtract(const Duration(days: 1));
-        final pSr = Ephemeris.findSunrise(prev.year, prev.month, prev.day, lat, lon);
-        final pSs = Ephemeris.findSunset(prev.year, prev.month, prev.day, lat, lon);
-        startBase = pSs;
-        duration = sr - pSs;
-        panchSr = pSr;
-      } else {
-        vedWday = civilWdayIdx;
-        final next = dob.add(const Duration(days: 1));
-        final nSr = Ephemeris.findSunrise(next.year, next.month, next.day, lat, lon);
-        startBase = ss;
-        duration = nSr - ss;
-        panchSr = sr;
-      }
+      startBase = ss;
+      duration = nextSr - ss;
     }
 
     final List<int> dayFactors = isNight
         ? [10, 6, 2, 26, 22, 18, 14]
         : [26, 22, 18, 14, 10, 6, 2];
 
-    final factor = dayFactors[vedWday];
+    final factor = dayFactors[vedicWday];
     final mandiJd = startBase + (duration * factor / 30.0);
 
-    //  Lagna at Mandi time = Mandi degree
     final ayn = _getAyanamsa(mandiJd, ayanamsaMode);
-    final gst = Sweph.swe_sidtime(mandiJd);
     final cusps = Ephemeris.placidusHouses(mandiJd, lat, lon, ayn);
-    return cusps[0]; // Ascendant at Mandi time
+    return cusps[0];
   }
 
   static double _getAyanamsa(double jd, String mode) {
@@ -395,8 +385,14 @@ class AstroCalculator {
         kName = kArr[(kIdx - 1) % 7];
       }
 
-      // Sunrise for panchang
-      final panSr = Ephemeris.findSunrise(year, month, day, lat, lon);
+      // Vedic day (Sunrise to Sunrise) calculation for Panchang & Udayadi Ghati
+      double panSr = Ephemeris.findSunrise(year, month, day, lat, lon);
+      int vedicWday = dob.weekday % 7; // Sun=0
+      if (jdBirth < panSr) {
+        final prev = dob.subtract(const Duration(days: 1));
+        panSr = Ephemeris.findSunrise(prev.year, prev.month, prev.day, lat, lon);
+        vedicWday = prev.weekday % 7;
+      }
       final udayadiGhati = formatGhati((jdBirth - panSr) * 60);
 
       // Nakshatra ghatis
@@ -410,14 +406,8 @@ class AstroCalculator {
       final bal = dashaYears[nIdx % 9] * (1 - perc);
       final dashaLord = dashaLords[nIdx % 9];
 
-      // Weekday (in Vedic: Sun=0)
-      // Python: civil_weekday_idx = (py_weekday + 1) % 7
-      // Dart DateTime: Mon=1..Sun=7
-      final pyWeekday = dob.weekday % 7;
-      final varaIdx = (pyWeekday + 1) % 7;
-
       final panchang = PanchangData(
-        vara: knVara[varaIdx],
+        vara: knVara[vedicWday],
         tithi: knTithi[tIdx],
         nakshatra: knNak[nIdx],
         yoga: knYoga[yIdx],

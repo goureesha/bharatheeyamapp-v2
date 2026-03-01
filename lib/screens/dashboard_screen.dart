@@ -479,6 +479,7 @@ class _DashboardScreenState extends State<DashboardScreen>
       child: TextField(
         maxLines: null,
         expands: true,
+        textAlignVertical: TextAlignVertical.top,
         onChanged: (v) => _notes = v,
         controller: TextEditingController(text: _notes),
         decoration: InputDecoration(
@@ -577,10 +578,14 @@ class _DashboardScreenState extends State<DashboardScreen>
           flex: e.key == 1 ? 2 : 1,
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-            child: Text(e.value, style: TextStyle(
-              fontSize: 13,
-              fontWeight: (e.key == 0 && bold0) ? FontWeight.w700 : FontWeight.normal,
-            )),
+            child: FittedBox(
+              fit: BoxFit.scaleDown,
+              alignment: Alignment.centerLeft,
+              child: Text(e.value, style: TextStyle(
+                fontSize: 13,
+                fontWeight: (e.key == 0 && bold0) ? FontWeight.w700 : FontWeight.normal,
+              )),
+            ),
           ),
         )).toList(),
       ),

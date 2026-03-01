@@ -157,31 +157,32 @@ class KundaliChart extends StatelessWidget {
           },
         ),
       ),
-    );
-  }
-
   Widget _rashiBox(int rashiIdx, List<Widget> planets) {
     return Container(
+      margin: const EdgeInsets.all(1.0),
       decoration: BoxDecoration(
         color: Colors.white,
+        border: Border.all(color: const Color(0xFFCBD5E0), width: 1.0),
         borderRadius: BorderRadius.circular(6),
       ),
-      padding: const EdgeInsets.fromLTRB(2, 18, 2, 2),
-      child: Stack(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Positioned(
-            top: -14,
-            left: 2,
+          Padding(
+            padding: const EdgeInsets.only(left: 3, top: 2),
             child: Text(knRashi[rashiIdx],
-              style: TextStyle(
-                fontSize: 9, color: const Color(0xFF2F855A), fontWeight: FontWeight.w900)),
+              style: const TextStyle(
+                fontSize: 9, color: Color(0xFF2F855A), fontWeight: FontWeight.w900)),
           ),
-          SingleChildScrollView(
-            child: Wrap(
-              alignment: WrapAlignment.center,
-              spacing: 1,
-              runSpacing: 1,
-              children: planets,
+          Expanded(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(2),
+              child: Wrap(
+                alignment: WrapAlignment.center,
+                spacing: 3,
+                runSpacing: 2,
+                children: planets,
+              ),
             ),
           ),
         ],
@@ -192,11 +193,10 @@ class KundaliChart extends StatelessWidget {
   Widget _centerBox() {
     final label = centerLabel ?? 'ಭಾರತೀಯಮ್';
     return Container(
-      margin: const EdgeInsets.all(3),
+      margin: const EdgeInsets.all(0),
       decoration: BoxDecoration(
         color: const Color(0xFFFFF0EC),
-        borderRadius: BorderRadius.circular(6),
-        border: Border.all(color: const Color(0xFFDD6B20), width: 1.5),
+        border: Border.all(color: const Color(0xFFDD6B20), width: 1.0),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.05),
