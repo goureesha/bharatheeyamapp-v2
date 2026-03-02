@@ -48,6 +48,8 @@ class PlanetDetailSheet extends StatelessWidget {
                     ['ರಾಶಿ (D1)',      detail['d1']],
                     ['ಹೋರಾ (D2)',     detail['d2']],
                     ['ದ್ರೇಕ್ಕಾಣ (D3)', detail['d3']],
+                    ['ಉಪ-ದ್ರೇಕ್ಕಾಣ (Parivritti)', detail['subDrekD1']],
+                    ['ಉಪ-ದ್ರೇಕ್ಕಾಣ (Somanatha)', detail['subDrekD9']],
                     ['ನವಾಂಶ (D9)',    detail['d9']],
                     ['ದ್ವಾದಶಾಂಶ (D12)',detail['d12']],
                     ['ತ್ರಿಂಶಾಂಶ (D30)',detail['d30']],

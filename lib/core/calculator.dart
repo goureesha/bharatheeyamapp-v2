@@ -15,6 +15,8 @@ class PlanetInfo {
   final int pada;
   final String rashi;
   final int rashiIndex;
+  final String subDrekD1;
+  final String subDrekD9;
 
   PlanetInfo({
     required this.name,
@@ -24,6 +26,8 @@ class PlanetInfo {
     required this.pada,
     required this.rashi,
     required this.rashiIndex,
+    required this.subDrekD1,
+    required this.subDrekD9,
   });
 }
 
@@ -423,14 +427,19 @@ class AstroCalculator {
         final deg = positions[kn]!;
         final (nak, pada) = nakFromDeg(deg);
         final ri = (deg / 30).floor() % 12;
+        final speed = speeds[kn] ?? 0.0;
+        final extra = calcExtra(kn, deg, speed, positions['ರವಿ']!);
+        
         planetInfoMap[kn] = PlanetInfo(
           name: kn,
           longitude: deg,
-          speed: speeds[kn] ?? 0,
+          speed: speed,
           nakshatra: nak,
           pada: pada,
           rashi: knRashi[ri],
           rashiIndex: ri,
+          subDrekD1: extra['subDrekD1'] as String,
+          subDrekD9: extra['subDrekD9'] as String,
         );
       }
 
@@ -572,6 +581,14 @@ class AstroCalculator {
     final d9Idx   = (d9Exact / 30).floor() % 12;
     final d12Idx  = (d1Idx + (dr / 2.5).floor()) % 12;
 
+    // Sub-Drekkana Parts
+    String p1Part = dr < 10 ? '1' : (dr < 20 ? '2' : '3');
+    String d3D1Str = '\${knRashi[d1Idx]} $p1Part';
+
+    final degInD9 = d9Exact % 30;
+    String p9Part = degInD9 < 10 ? '1' : (degInD9 < 20 ? '2' : '3');
+    String d3D9Str = '\${knRashi[d9Idx]} $p9Part';
+
     int d30Idx;
     if (isOdd) {
       if (dr < 5) d30Idx = 0;
@@ -597,6 +614,8 @@ class AstroCalculator {
       'd9': knRashi[d9Idx],
       'd12': knRashi[d12Idx],
       'd30': knRashi[d30Idx],
+      'subDrekD1': d3D1Str,
+      'subDrekD9': d3D9Str,
     };
   }
 }
