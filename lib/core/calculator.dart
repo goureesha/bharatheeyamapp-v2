@@ -12,6 +12,7 @@ class PlanetInfo {
   final double longitude; // sidereal, degrees
   final double speed;
   final String nakshatra;
+  final int pada;
   final String rashi;
   final int rashiIndex;
   final String subDrekD1;
@@ -429,7 +430,7 @@ class AstroCalculator {
         final (nak, pada) = nakFromDeg(deg);
         final ri = (deg / 30).floor() % 12;
         final speed = speeds[kn] ?? 0.0;
-        final extra = calcExtra(kn, deg, speed, positions['ರವಿ']!);
+        final extra = getPlanetDetail(kn, deg, speed, positions['ರವಿ']!);
         
         planetInfoMap[kn] = PlanetInfo(
           name: kn,
