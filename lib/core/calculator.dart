@@ -227,7 +227,7 @@ class AstroCalculator {
     int factor = factors[vedicWday];
     double mandiJd = startBase + (duration * factor / 30.0);
     
-    return [mandiJd, isNight, panchSr, vedicWday, startBase];
+    return [mandiJd, isNight, panchSr, vedicWday, startBase, srCivil, ssCivil];
   }
 
   static double _getAyanamsa(double jd, String mode) {
