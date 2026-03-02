@@ -12,11 +12,11 @@ class PlanetInfo {
   final double longitude; // sidereal, degrees
   final double speed;
   final String nakshatra;
-  final int pada;
   final String rashi;
   final int rashiIndex;
   final String subDrekD1;
   final String subDrekD9;
+  final String subDrekD12;
 
   PlanetInfo({
     required this.name,
@@ -28,6 +28,7 @@ class PlanetInfo {
     required this.rashiIndex,
     required this.subDrekD1,
     required this.subDrekD9,
+    required this.subDrekD12,
   });
 }
 
@@ -440,6 +441,7 @@ class AstroCalculator {
           rashiIndex: ri,
           subDrekD1: extra['subDrekD1'] as String,
           subDrekD9: extra['subDrekD9'] as String,
+          subDrekD12: extra['subDrekD12'] as String,
         );
       }
 
@@ -589,6 +591,10 @@ class AstroCalculator {
     String p9Part = degInD9 < 10 ? '1' : (degInD9 < 20 ? '2' : '3');
     String d3D9Str = '\${knRashi[d9Idx]} $p9Part';
 
+    final degInD12 = (deg % 2.5) * 12;
+    String p12Part = degInD12 < 10 ? '1' : (degInD12 < 20 ? '2' : '3');
+    String d3D12Str = '\${knRashi[d12Idx]} $p12Part';
+
     int d30Idx;
     if (isOdd) {
       if (dr < 5) d30Idx = 0;
@@ -616,6 +622,7 @@ class AstroCalculator {
       'd30': knRashi[d30Idx],
       'subDrekD1': d3D1Str,
       'subDrekD9': d3D9Str,
+      'subDrekD12': d3D12Str,
     };
   }
 }
