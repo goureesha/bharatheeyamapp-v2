@@ -1,21 +1,21 @@
-import 'dart:math';
+import 'dart:io';
+import 'lib/core/ephemeris.dart';
+import 'lib/core/calculator.dart';
 import 'package:sweph/sweph.dart';
 
 void main() async {
   await Sweph.init(epheAssets: []);
-  double lat = 14.96;
-  double lon = 74.71;
-  double ayn = 24.1; // approx
+  final lat = 14.9667;
+  final lon = 74.7167;
+  final dob = DateTime(2026, 3, 1, 17, 6);
+  final jdBirth = Sweph.swe_julday(dob.year, dob.month, dob.day, 17 + 6/60.0 - 5.5, CalendarType.SE_GREG_CAL);
   
-  double sr = 1.25; // UT 6:45 AM
-  double ss = 13.08; // UT 6:35 PM
-  double duration = ss - sr;
+  final res = AstroCalculator.calcMandi(
+    jdBirth: jdBirth,
+    lat: lat,
+    lon: lon,
+    dobObj: dob,
+  );
   
-  for(int factor in [26, 22, 18, 14, 10, 6, 2]) {
-    double mandiJd = sr + (duration * factor / 30.0);
-    SweHouses hres = Sweph.swe_houses(mandiJd, lat, lon, Hsys.P);
-    double asc = hres.ascmc[0];
-    double ascSidereal = (asc - ayn + 360) % 360;
-    print('Factor \ gives \');
-  }
+  print('Result: \');
 }
