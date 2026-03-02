@@ -425,6 +425,8 @@ class _DashboardScreenState extends State<DashboardScreen>
               _tableRow(['ಯೋಗ', pan.yoga]),
               _tableRow(['ಕರಣ', pan.karana]),
               _tableRow(['ಚಂದ್ರ ರಾಶಿ', pan.chandraRashi]),
+              _tableRow(['ಉದಯ (Sunrise)', pan.sunrise]),
+              _tableRow(['ಅಸ್ತ (Sunset)', pan.sunset]),
               _tableRow(['ಉದಯಾದಿ ಘಟಿ', pan.udayadiGhati]),
               _tableRow(['ಗತ ಘಟಿ', pan.gataGhati]),
               _tableRow(['ಪರಮ ಘಟಿ', pan.paramaGhati]),
@@ -544,7 +546,7 @@ class _DashboardScreenState extends State<DashboardScreen>
           children: [
             Text('ಭಾರತೀಯಮ್', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800)),
             const SizedBox(height: 8),
-            Text('ಆವೃತ್ತಿ: 1.0.10 (Bhava Equal Houses)', style: TextStyle(fontWeight: FontWeight.w700)),
+            Text('ಆವೃತ್ತಿ: 1.0.11 (Sunrise Timings)', style: TextStyle(fontWeight: FontWeight.w700)),
             const SizedBox(height: 8),
             Text('ನಿಖರವಾದ ವೈದಿಕ ಜ್ಯೋತಿಷ್ಯ ಲೆಕ್ಕಾಚಾರಗಳಿಗಾಗಿ ವಿನ್ಯಾಸಗೊಳಿಸಲಾಗಿದೆ.',
               style: TextStyle(color: kMuted, height: 1.6)),

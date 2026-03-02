@@ -42,6 +42,8 @@ class PanchangData {
   final String dashaLord;
   final int nakshatraIndex;
   final double nakPercent;
+  final String sunrise;
+  final String sunset;
 
   PanchangData({
     required this.vara,
@@ -58,6 +60,8 @@ class PanchangData {
     required this.dashaLord,
     required this.nakshatraIndex,
     required this.nakPercent,
+    required this.sunrise,
+    required this.sunset,
   });
 }
 
@@ -116,6 +120,24 @@ String formatDeg(double deg) {
   int sc = tSec % 60;
   if (dg == 30) { dg = 29; mn = 59; sc = 59; }
   return '$dg° ${mn.toString().padLeft(2, '0')}\' ${sc.toString().padLeft(2, '0')}"';
+}
+
+String formatTimeFromJd(double jd, {double tzOffset = 5.5}) {
+  // Add 0.5 because JD starts at noon UT, and add TZ offset
+  final localJd = jd + 0.5 + (tzOffset / 24.0);
+  final frac = localJd - localJd.floor();
+  
+  int totalMinutes = (frac * 24 * 60).round();
+  int h = totalMinutes ~/ 60;
+  int m = totalMinutes % 60;
+  
+  if (h == 24) h = 0;
+  
+  String amPm = h >= 12 ? 'PM' : 'AM';
+  int hStr = h % 12;
+  if (hStr == 0) hStr = 12;
+  
+  return '${hStr.toString().padLeft(2, '0')}:${m.toString().padLeft(2, '0')} $amPm';
 }
 
 // ============================================================
@@ -383,6 +405,8 @@ class AstroCalculator {
       final mandiTimeJd = mandiRes[0] as double;
       final panchSr = mandiRes[2] as double;
       final wIdx = mandiRes[3] as int;
+      final srCivil = mandiRes[5] as double;
+      final ssCivil = mandiRes[6] as double;
       
       final hMandi = Ephemeris.placidusHousesFull(mandiTimeJd, lat, lon);
       final aMandi = _getAyanamsa(mandiTimeJd, ayanamsaMode);
@@ -458,6 +482,8 @@ class AstroCalculator {
         dashaLord: dashaLord,
         nakshatraIndex: nIdx,
         nakPercent: perc,
+        sunrise: formatTimeFromJd(srCivil),
+        sunset: formatTimeFromJd(ssCivil),
       );
 
       // Dashas
