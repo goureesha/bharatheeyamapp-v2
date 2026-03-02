@@ -63,10 +63,9 @@ class Ephemeris {
       final typeRise = 1 | 256; 
       final typeSet = 2 | 256;
 
-      final riseRes = Sweph.swe_rise_trans(
+      final double? riseRes = Sweph.swe_rise_trans<HeavenlyBody>(
         searchStart,
         HeavenlyBody.SE_SUN,
-        '',
         flagsRise,
         typeRise,
         [lon, lat, 0.0],
@@ -74,10 +73,9 @@ class Ephemeris {
         0.0, // Default 0 for temp
       );
 
-      final setRes = Sweph.swe_rise_trans(
-        riseRes.tret[0] + 0.05, // Search for sunset strictly after sunrise
+      final double? setRes = Sweph.swe_rise_trans<HeavenlyBody>(
+        (riseRes ?? searchStart) + 0.05, // Search for sunset strictly after sunrise
         HeavenlyBody.SE_SUN,
-        '',
         flagsRise,
         typeSet,
         [lon, lat, 0.0],
@@ -85,7 +83,10 @@ class Ephemeris {
         0.0,
       );
 
-      return [riseRes.tret[0], setRes.tret[0]];
+      return [
+        riseRes ?? (jdStart + 0.25), 
+        setRes ?? (jdStart + 0.75)
+      ];
     } catch (_) {
       return [jdStart + 0.25, jdStart + 0.75];
     }
