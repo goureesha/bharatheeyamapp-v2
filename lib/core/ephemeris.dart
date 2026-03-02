@@ -48,44 +48,47 @@ class Ephemeris {
   }
 
   static List<double> findSunriseSetForDate(int year, int month, int day, double lat, double lon) {
+    // JD for 00:00 UT
     final jdStart = Sweph.swe_julday(year, month, day, 0.0, CalendarType.SE_GREG_CAL);
-    double riseTime = jdStart + 0.25;
-    double setTime = jdStart + 0.75;
-    double step = 1.0 / 24.0;
-    double current = jdStart - 0.3;
     
+    // Yellapur longitude is ~75 E, so local midnight is ~ 5 hours BEFORE UT midnight.
+    // Sunrise is generally around 6 AM local = 1 AM UT = jdStart + 0.04.
+    // To ensure we get the rise/set for the local current day, we start searching slightly before UT midnight.
+    final searchStart = jdStart - 0.3;
+
     try {
-      for (int i = 0; i < 30; i++) {
-        double alt1 = getAltitudeManual(current, lat, lon);
-        double alt2 = getAltitudeManual(current + step, lat, lon);
-        if (alt1 < -0.583 && alt2 >= -0.583) {
-          double l = current, h = current + step;
-          for (int j = 0; j < 20; j++) {
-            double m = (l + h) / 2;
-            if (getAltitudeManual(m, lat, lon) < -0.583) {
-              l = m;
-            } else {
-              h = m;
-            }
-          }
-          riseTime = h;
-        }
-        if (alt1 > -0.583 && alt2 <= -0.583) {
-          double l = current, h = current + step;
-          for (int j = 0; j < 20; j++) {
-            double m = (l + h) / 2;
-            if (getAltitudeManual(m, lat, lon) > -0.583) {
-              l = m;
-            } else {
-              h = m;
-            }
-          }
-          setTime = h;
-        }
-        current += step;
-      }
-    } catch (_) {}
-    return [riseTime, setTime];
+      // SE_CALC_RISE = 1, SE_CALC_SET = 2
+      // SE_BIT_DISC_CENTER = 256
+      final flagsRise = SwephFlag.SEFLG_SWIEPH;
+      final typeRise = 1 | 256; 
+      final typeSet = 2 | 256;
+
+      final riseRes = Sweph.swe_rise_trans(
+        searchStart,
+        HeavenlyBody.SE_SUN,
+        '',
+        flagsRise,
+        typeRise,
+        [lon, lat, 0.0],
+        0.0, // Used default 0 for pressure
+        0.0, // Default 0 for temp
+      );
+
+      final setRes = Sweph.swe_rise_trans(
+        riseRes.tret[0] + 0.05, // Search for sunset strictly after sunrise
+        HeavenlyBody.SE_SUN,
+        '',
+        flagsRise,
+        typeSet,
+        [lon, lat, 0.0],
+        0.0,
+        0.0,
+      );
+
+      return [riseRes.tret[0], setRes.tret[0]];
+    } catch (_) {
+      return [jdStart + 0.25, jdStart + 0.75];
+    }
   }
 
   static double ayanamsaLahiri(double jd) {
