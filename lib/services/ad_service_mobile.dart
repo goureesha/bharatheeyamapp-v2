@@ -1,26 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
-import 'subscription_service.dart';
 
 class AdService {
   static Future<void> initialize() async {
     await MobileAds.instance.initialize();
   }
 
-  // Official Google AdMob Test Ad Units
   static String get bannerAdUnitId {
-    // Return Android test Banner ID by default
     return "ca-app-pub-3940256099942544/6300978111"; 
   }
 
   static String get interstitialAdUnitId {
-    // Return Android test Interstitial ID by default
     return "ca-app-pub-3940256099942544/1033173712";
   }
 
   static Future<void> showInterstitialAd(BuildContext context) async {
-    if (SubscriptionService.isProUser) return;
-
     InterstitialAd.load(
       adUnitId: interstitialAdUnitId,
       request: const AdRequest(),
@@ -54,9 +48,7 @@ class _BannerAdWidgetState extends State<BannerAdWidget> {
   @override
   void initState() {
     super.initState();
-    if (!SubscriptionService.isProUser) {
-      _loadAd();
-    }
+    _loadAd();
   }
 
   void _loadAd() {
@@ -84,7 +76,7 @@ class _BannerAdWidgetState extends State<BannerAdWidget> {
 
   @override
   Widget build(BuildContext context) {
-    if (SubscriptionService.isProUser || !_isLoaded || _bannerAd == null) {
+    if (!_isLoaded || _bannerAd == null) {
       return const SizedBox.shrink();
     }
     return Container(

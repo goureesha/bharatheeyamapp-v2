@@ -16,8 +16,6 @@ dependencies:
   sweph: ^3.2.1+2.10.3
   shared_preferences: any
   google_mobile_ads: any
-  purchases_flutter: any
-  purchases_ui_flutter: any
 
 dev_dependencies:
   flutter_test:

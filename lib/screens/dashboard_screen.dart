@@ -7,7 +7,6 @@ import '../widgets/planet_detail_sheet.dart';
 import '../widgets/dasha_widget.dart';
 import '../widgets/ashtakavarga_widget.dart';
 import '../services/ad_service.dart';
-import '../services/subscription_service.dart';
 
 class DashboardScreen extends StatefulWidget {
   final KundaliResult result;
@@ -51,7 +50,7 @@ class _DashboardScreenState extends State<DashboardScreen>
   static const _tabs = [
     'ಕುಂಡಲಿ', 'ಗ್ರಹ ಸ್ಫುಟ', 'ಉಪಗ್ರಹ ಸ್ಫುಟ', 'ಆರೂಢ',
     'ದಶ', 'ಪಂಚಾಂಗ', 'ಭಾವ', 'ಅಷ್ಟಕವರ್ಗ',
-    'ಟಿಪ್ಪಣಿ', 'ಚಂದಾದಾರಿಕೆ', 'ಬಗ್ಗೆ'
+    'ಟಿಪ್ಪಣಿ', 'ಬಗ್ಗೆ'
   ];
 
   @override
@@ -130,7 +129,6 @@ class _DashboardScreenState extends State<DashboardScreen>
                   _buildBhavaTab(),
                   _buildAshtakavargaTab(),
                   _buildNotesTab(),
-                  _buildSubscriptionTab(),
                   _buildAboutTab(),
                 ],
               ),
@@ -475,74 +473,7 @@ class _DashboardScreenState extends State<DashboardScreen>
     );
   }
 
-  // ─────────────────────────────────────────────
-  // TAB 10: SUBSCRIPTION
-  // ─────────────────────────────────────────────
-  Widget _buildSubscriptionTab() {
-    if (SubscriptionService.isProUser) {
-      return Center(
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: AppCard(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Text('🎉', style: TextStyle(fontSize: 64)),
-                const SizedBox(height: 16),
-                const Text('ನೀವು ಪ್ರೀಮಿಯಂ ಚಂದಾದಾರರಾಗಿದ್ದೀರಿ!', 
-                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.green)),
-                const SizedBox(height: 8),
-                const Text('ಭಾರತೀಯಮ್ Pro ಸಕ್ರಿಯವಾಗಿದೆ. ಯಾವುದೇ ಜಾಹೀರಾತುಗಳಿಲ್ಲ.', 
-                  style: TextStyle(fontSize: 14, color: Colors.black54), textAlign: TextAlign.center),
-              ],
-            ),
-          ),
-        ),
-      );
-    }
 
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16),
-        child: AppCard(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Text('👑', style: TextStyle(fontSize: 48)),
-              const SizedBox(height: 8),
-              const Text('ಜಾಹೀರಾತು-ಮುಕ್ತ ಪ್ರೀಮಿಯಂ', style: TextStyle(
-                fontSize: 18, fontWeight: FontWeight.w900, color: Color(0xFFDD6B20))),
-              const SizedBox(height: 12),
-              const Text('ಜಾಹೀರಾತುಗಳಿಲ್ಲದೆ ನಿರಂತರವಾಗಿ ಜಾತಕ ಲೆಕ್ಕಾಚಾರಗಳನ್ನು ಬಳಸಿ.',
-                style: TextStyle(fontSize: 14, height: 1.5, color: Color(0xFF2D3748)), textAlign: TextAlign.center),
-              const SizedBox(height: 24),
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: () async {
-                    final isPro = await SubscriptionService.presentPaywall();
-                    if (isPro && mounted) {
-                      setState(() {});
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('ಖರೀದಿ ಯಶಸ್ವಿಯಾಗಿದೆ (Purchase Successful)!'))
-                      );
-                    }
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF4A00E0),
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                  ),
-                  child: const Text('ಯೋಜನೆಗಳನ್ನು ವೀಕ್ಷಿಸಿ (View Plans)',
-                    style: TextStyle(fontWeight: FontWeight.w900, fontSize: 16)),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
 
   // ─────────────────────────────────────────────
   // TAB 11: ABOUT
