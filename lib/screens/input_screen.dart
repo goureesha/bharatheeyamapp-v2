@@ -69,8 +69,18 @@ class _InputScreenState extends State<InputScreen> {
       _hour   = p.hour;
       _minute = p.minute;
       _ampm   = p.ampm;
-      final parts = p.date.split('-');
-      _dob = DateTime(int.parse(parts[0]), int.parse(parts[1]), int.parse(parts[2]));
+      try {
+        final parts = p.date.split('-');
+        if (parts.length == 3) {
+          _dob = DateTime(
+            int.parse(parts[0]),
+            int.parse(parts[1]),
+            int.parse(parts[2]),
+          );
+        }
+      } catch (_) {
+        _dob = DateTime.now(); // Fallback if corrupted
+      }
     });
   }
 
