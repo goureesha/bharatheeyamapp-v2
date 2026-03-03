@@ -29,10 +29,15 @@ class StorageService {
       final Map<String, dynamic> map = jsonDecode(jsonStr);
       final Map<String, Profile> profiles = {};
       for (final entry in map.entries) {
-        profiles[entry.key] = Profile.fromJson(entry.key, entry.value as Map<String, dynamic>);
+        try {
+          profiles[entry.key] = Profile.fromJson(entry.key, entry.value as Map<String, dynamic>);
+        } catch (e) {
+          debugPrint('Failed to load profile ${entry.key}: $e');
+        }
       }
       return profiles;
     } catch (e) {
+      debugPrint('Complete storage corruption: $e');
       return {};
     }
   }

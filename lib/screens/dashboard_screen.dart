@@ -479,6 +479,28 @@ class _DashboardScreenState extends State<DashboardScreen>
   // TAB 10: SUBSCRIPTION
   // ─────────────────────────────────────────────
   Widget _buildSubscriptionTab() {
+    if (SubscriptionService.isProUser) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: AppCard(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Text('🎉', style: TextStyle(fontSize: 64)),
+                const SizedBox(height: 16),
+                const Text('ನೀವು ಪ್ರೀಮಿಯಂ ಚಂದಾದಾರರಾಗಿದ್ದೀರಿ!', 
+                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.green)),
+                const SizedBox(height: 8),
+                const Text('ಭಾರತೀಯಮ್ Pro ಸಕ್ರಿಯವಾಗಿದೆ. ಯಾವುದೇ ಜಾಹೀರಾತುಗಳಿಲ್ಲ.', 
+                  style: TextStyle(fontSize: 14, color: Colors.black54), textAlign: TextAlign.center),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
+
     return Center(
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -491,38 +513,19 @@ class _DashboardScreenState extends State<DashboardScreen>
               const Text('ಜಾಹೀರಾತು-ಮುಕ್ತ ಪ್ರೀಮಿಯಂ', style: TextStyle(
                 fontSize: 18, fontWeight: FontWeight.w900, color: Color(0xFFDD6B20))),
               const SizedBox(height: 12),
-              const Text('ಕೇವಲ ₹350 ಕ್ಕೆ 380 ದಿನಗಳವರೆಗೆ ಯಾವುದೇ ಜಾಹೀರಾತುಗಳಿಲ್ಲದೆ ನಿರಂತರವಾಗಿ ಜಾತಕ ಲೆಕ್ಕಾಚಾರಗಳನ್ನು ಬಳಸಿ.',
+              const Text('ಜಾಹೀರಾತುಗಳಿಲ್ಲದೆ ನಿರಂತರವಾಗಿ ಜಾತಕ ಲೆಕ್ಕಾಚಾರಗಳನ್ನು ಬಳಸಿ.',
                 style: TextStyle(fontSize: 14, height: 1.5, color: Color(0xFF2D3748)), textAlign: TextAlign.center),
               const SizedBox(height: 24),
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFEDF2F7),
-                  borderRadius: BorderRadius.circular(8)
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: const [
-                    Icon(Icons.security, size: 16, color: Color(0xFF4A00E0)),
-                    SizedBox(width: 8),
-                    Text('Google Play ಮೂಲಕ ಸುರಕ್ಷಿತ ಪಾವತಿ', style: TextStyle(
-                      fontSize: 12, fontWeight: FontWeight.w700, color: Color(0xFF4A00E0)
-                    )),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 16),
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
                   onPressed: () async {
-                    final success = await SubscriptionService.purchasePremium();
-                    if (!mounted) return;
-                    if (success) {
-                      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('ಚಂದಾದಾರಿಕೆ ಯಶಸ್ವಿಯಾಗಿದೆ (Subscription Successful)!')));
+                    final isPro = await SubscriptionService.presentPaywall();
+                    if (isPro && mounted) {
                       setState(() {});
-                    } else {
-                      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('ಚಂದಾದಾರಿಕೆ ವಿಫಲವಾಗಿದೆ (Subscription Failed/Cancelled).')));
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('ಖರೀದಿ ಯಶಸ್ವಿಯಾಗಿದೆ (Purchase Successful)!'))
+                      );
                     }
                   },
                   style: ElevatedButton.styleFrom(
@@ -530,7 +533,7 @@ class _DashboardScreenState extends State<DashboardScreen>
                     padding: const EdgeInsets.symmetric(vertical: 16),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                   ),
-                  child: const Text('ಚಂದಾದಾರರಾಗಿ (₹350 / 380 ದಿನಗಳು)',
+                  child: const Text('ಯೋಜನೆಗಳನ್ನು ವೀಕ್ಷಿಸಿ (View Plans)',
                     style: TextStyle(fontWeight: FontWeight.w900, fontSize: 16)),
                 ),
               ),

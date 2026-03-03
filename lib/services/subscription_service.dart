@@ -1,34 +1,50 @@
 import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';
 import 'package:purchases_flutter/purchases_flutter.dart';
+import 'package:purchases_ui_flutter/purchases_ui_flutter.dart';
+import '../core/secrets.dart';
 
 class SubscriptionService {
   static bool isProUser = false;
-  static const String _entitlementId = 'premium_access'; // Set this inside RevenueCat
+  static const String entitlementId = 'Bharatiyam Pro';
 
   static Future<void> initialize() async {
-    if (kIsWeb) return; // RevenueCat is mobile-only for Flutter
+    if (kIsWeb) return; 
 
-    // REPLACE WITH YOUR REVENUECAT PUBLIC API KEYS
-    // Purchases.configure(PurchasesConfiguration("YOUR_REVENUECAT_PUBLIC_KEY"));
-    
-    // final customerInfo = await Purchases.getCustomerInfo();
-    // isProUser = customerInfo.entitlements.all[_entitlementId]?.isActive == true;
+    try {
+      await Purchases.setLogLevel(LogLevel.debug);
+      
+      PurchasesConfiguration configuration = PurchasesConfiguration(Secrets.revenueCatApiKey);
+      await Purchases.configure(configuration);
+      
+      final customerInfo = await Purchases.getCustomerInfo();
+      isProUser = customerInfo.entitlements.all[entitlementId]?.isActive == true;
+    } on PlatformException catch (e) {
+      debugPrint("RevenueCat Init Error: ${e.message}");
+    }
   }
 
-  static Future<bool> purchasePremium() async {
-    /*
+  static Future<bool> presentPaywall() async {
+    if (kIsWeb) return false;
     try {
-      final offerings = await Purchases.getOfferings();
-      if (offerings.current != null && offerings.current!.availablePackages.isNotEmpty) {
-        final package = offerings.current!.availablePackages[0];
-        final customerInfo = await Purchases.purchasePackage(package);
-        isProUser = customerInfo.entitlements.all[_entitlementId]?.isActive == true;
-        return isProUser;
+      final paywallResult = await RevenueCatUI.presentPaywallIfNeeded(entitlementId);
+      if (paywallResult == PaywallResult.purchased || paywallResult == PaywallResult.restored) {
+        return await checkProStatus();
       }
     } catch (e) {
-      debugPrint("Purchase failed: $e");
+      debugPrint("Paywall presenting error: $e");
     }
-    */
     return false;
+  }
+
+  static Future<bool> checkProStatus() async {
+    if (kIsWeb) return false;
+    try {
+      final customerInfo = await Purchases.getCustomerInfo();
+      isProUser = customerInfo.entitlements.all[entitlementId]?.isActive == true;
+      return isProUser;
+    } catch (_) {
+      return false;
+    }
   }
 }
