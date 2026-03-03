@@ -18,6 +18,7 @@ class PlanetInfo {
   final String subDrekD1;
   final String subDrekD9;
   final String subDrekD12;
+  final String d9OfD9;
 
   PlanetInfo({
     required this.name,
@@ -30,6 +31,7 @@ class PlanetInfo {
     required this.subDrekD1,
     required this.subDrekD9,
     required this.subDrekD12,
+    required this.d9OfD9,
   });
 }
 
@@ -443,6 +445,7 @@ class AstroCalculator {
           subDrekD1: extra['subDrekD1'] as String,
           subDrekD9: extra['subDrekD9'] as String,
           subDrekD12: extra['subDrekD12'] as String,
+          d9OfD9: extra['d9OfD9'] as String,
         );
       }
 
@@ -596,6 +599,11 @@ class AstroCalculator {
     String p12Part = degInD12 < 10 ? '1' : (degInD12 < 20 ? '2' : '3');
     String d3D12Str = '\${knRashi[d12Idx]} $p12Part';
 
+    // Nava Navamsha (D9 of D9)
+    final d81Exact = (deg * 81) % 360;
+    final d81Idx = (d81Exact / 30).floor() % 12;
+    String d9OfD9Str = knRashi[d81Idx];
+
     int d30Idx;
     if (isOdd) {
       if (dr < 5) d30Idx = 0;
@@ -624,6 +632,7 @@ class AstroCalculator {
       'subDrekD1': d3D1Str,
       'subDrekD9': d3D9Str,
       'subDrekD12': d3D12Str,
+      'd9OfD9': d9OfD9Str,
     };
   }
 }
