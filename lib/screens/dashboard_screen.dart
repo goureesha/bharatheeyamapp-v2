@@ -477,27 +477,55 @@ class _DashboardScreenState extends State<DashboardScreen>
   // ─────────────────────────────────────────────
   Widget _buildSubscriptionTab() {
     return Center(
-      child: AppCard(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Text('🚫', style: TextStyle(fontSize: 48)),
-            const SizedBox(height: 8),
-            Text('ಜಾಹೀರಾತು-ಮುಕ್ತ', style: TextStyle(
-              fontSize: 18, fontWeight: FontWeight.w800)),
-            const SizedBox(height: 8),
-            Text('ಜಾಹೀರಾತುಗಳಿಲ್ಲದೆ ನಿರಂತರವಾಗಿ ಆ್ಯಪ್ ಬಳಸಿ.',
-              style: TextStyle(color: kMuted), textAlign: TextAlign.center),
-            const SizedBox(height: 20),
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                onPressed: () {},
-                child: Text('ಜಾಹೀರಾತು ತೆಗೆಯಿರಿ (₹99)',
-                  style: TextStyle(fontWeight: FontWeight.w800)),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        child: AppCard(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Text('👑', style: TextStyle(fontSize: 48)),
+              const SizedBox(height: 8),
+              const Text('ಜಾಹೀರಾತು-ಮುಕ್ತ ಪ್ರೀಮಿಯಂ', style: TextStyle(
+                fontSize: 18, fontWeight: FontWeight.w900, color: Color(0xFFDD6B20))),
+              const SizedBox(height: 12),
+              const Text('ಕೇವಲ ₹350 ಕ್ಕೆ 380 ದಿನಗಳವರೆಗೆ ಯಾವುದೇ ಜಾಹೀರಾತುಗಳಿಲ್ಲದೆ ನಿರಂತರವಾಗಿ ಜಾತಕ ಲೆಕ್ಕಾಚಾರಗಳನ್ನು ಬಳಸಿ.',
+                style: TextStyle(fontSize: 14, height: 1.5, color: Color(0xFF2D3748)), textAlign: TextAlign.center),
+              const SizedBox(height: 24),
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFEDF2F7),
+                  borderRadius: BorderRadius.circular(8)
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: const [
+                    Icon(Icons.security, size: 16, color: Color(0xFF4A00E0)),
+                    SizedBox(width: 8),
+                    Text('Google Play ಮೂಲಕ ಸುರಕ್ಷಿತ ಪಾವತಿ', style: TextStyle(
+                      fontSize: 12, fontWeight: FontWeight.w700, color: Color(0xFF4A00E0)
+                    )),
+                  ],
+                ),
               ),
-            ),
-          ],
+              const SizedBox(height: 16),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: () {
+                    // Trigger RevenueCat Subscription Flow Here
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF4A00E0),
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  ),
+                  child: const Text('ಚಂದಾದಾರರಾಗಿ (₹350 / 380 ದಿನಗಳು)',
+                    style: TextStyle(fontWeight: FontWeight.w900, fontSize: 16)),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );

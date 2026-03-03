@@ -6,6 +6,7 @@ import '../widgets/common.dart';
 import '../services/storage_service.dart';
 import '../core/calculator.dart';
 import '../core/ephemeris.dart';
+import '../services/network_service.dart';
 import 'dashboard_screen.dart';
 
 class InputScreen extends StatefulWidget {
@@ -33,10 +34,24 @@ class _InputScreenState extends State<InputScreen> {
   Map<String, Profile> _savedProfiles = {};
   String? _selName;
 
+  bool _isInitStatus = true;
+  bool _isNetworkBlocked = false;
+
   @override
   void initState() {
     super.initState();
     _loadProfiles();
+    _checkNetwork();
+  }
+
+  Future<void> _checkNetwork() async {
+    final allowed = await NetworkService.checkAndInitialize();
+    if (mounted) {
+      setState(() {
+        _isNetworkBlocked = !allowed;
+        _isInitStatus = false;
+      });
+    }
   }
 
   Future<void> _loadProfiles() async {
@@ -160,6 +175,40 @@ class _InputScreenState extends State<InputScreen> {
 
   @override
   Widget build(BuildContext context) {
+    if (_isInitStatus) {
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    }
+    if (_isNetworkBlocked) {
+      return Scaffold(
+        backgroundColor: kBg,
+        body: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(32),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(Icons.wifi_off, size: 80, color: Colors.red.shade400),
+                const SizedBox(height: 24),
+                const Text('ಇಂಟರ್ನೆಟ್ ಸಂಪರ್ಕ ಅಗತ್ಯವಿದೆ', style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.red), textAlign: TextAlign.center),
+                const SizedBox(height: 16),
+                const Text('ನಿಮ್ಮ ಚಂದಾದಾರಿಕೆಯನ್ನು ಪರಿಶೀಲಿಸಲು ದಯವಿಟ್ಟು ೪೮ ಗಂಟೆಗಳಿಗೊಮ್ಮೆ ಇಂಟರ್ನೆಟ್ ಸಂಪರ್ಕ ಕಲ್ಪಿಸಿ\n(Internet required at least once every 48 hours).', 
+                    style: TextStyle(fontSize: 16, height: 1.5), textAlign: TextAlign.center),
+                const SizedBox(height: 32),
+                ElevatedButton.icon(
+                  onPressed: () {
+                    setState(() => _isInitStatus = true);
+                    _checkNetwork();
+                  },
+                  icon: const Icon(Icons.refresh, color: Colors.white),
+                  label: const Text('ಮರುಪ್ರಯತ್ನಿಸಿ (Retry)'),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
+
     return Scaffold(
       backgroundColor: kBg,
       body: SafeArea(
