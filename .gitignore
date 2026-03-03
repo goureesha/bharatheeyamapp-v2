@@ -23,6 +23,3 @@ android/key.properties
 # OS
 .DS_Store
 Thumbs.db
-
-# Secrets
-lib/core/secrets.dart
