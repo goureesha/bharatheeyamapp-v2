@@ -6,6 +6,8 @@ import '../widgets/kundali_chart.dart';
 import '../widgets/planet_detail_sheet.dart';
 import '../widgets/dasha_widget.dart';
 import '../widgets/ashtakavarga_widget.dart';
+import '../services/ad_service.dart';
+import '../services/subscription_service.dart';
 
 class DashboardScreen extends StatefulWidget {
   final KundaliResult result;
@@ -133,6 +135,7 @@ class _DashboardScreenState extends State<DashboardScreen>
                 ],
               ),
             ),
+            const BannerAdWidget(),
           ],
         ),
       ),
@@ -512,8 +515,15 @@ class _DashboardScreenState extends State<DashboardScreen>
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
-                  onPressed: () {
-                    // Trigger RevenueCat Subscription Flow Here
+                  onPressed: () async {
+                    final success = await SubscriptionService.purchasePremium();
+                    if (!mounted) return;
+                    if (success) {
+                      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('ಚಂದಾದಾರಿಕೆ ಯಶಸ್ವಿಯಾಗಿದೆ (Subscription Successful)!')));
+                      setState(() {});
+                    } else {
+                      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('ಚಂದಾದಾರಿಕೆ ವಿಫಲವಾಗಿದೆ (Subscription Failed/Cancelled).')));
+                    }
                   },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFF4A00E0),
@@ -542,7 +552,7 @@ class _DashboardScreenState extends State<DashboardScreen>
           children: [
             Text('ಭಾರತೀಯಮ್', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800)),
             const SizedBox(height: 8),
-            Text('ಆವೃತ್ತಿ: 1.0.18 (Interactive Kundali Hover Popup)', style: TextStyle(fontWeight: FontWeight.w700)),
+            Text('ಆವೃತ್ತಿ: 1.0.19 (Monetization & Ads)', style: TextStyle(fontWeight: FontWeight.w700)),
             const SizedBox(height: 8),
             Text('ನಿಖರವಾದ ವೈದಿಕ ಜ್ಯೋತಿಷ್ಯ ಲೆಕ್ಕಾಚಾರಗಳಿಗಾಗಿ ವಿನ್ಯಾಸಗೊಳಿಸಲಾಗಿದೆ.',
               style: TextStyle(color: kMuted, height: 1.6)),
