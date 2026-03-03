@@ -588,16 +588,16 @@ class AstroCalculator {
     final d12Idx  = (d1Idx + (dr / 2.5).floor()) % 12;
 
     // Sub-Drekkana Parts
-    String p1Part = dr < 10 ? '1' : (dr < 20 ? '2' : '3');
-    String d3D1Str = '\${knRashi[d1Idx]} $p1Part';
+    String p1Part = dr < 10 ? '೧' : (dr < 20 ? '೨' : '೩');
+    String d3D1Str = '${knRashi[d1Idx]} $p1Part';
 
     final degInD9 = d9Exact % 30;
-    String p9Part = degInD9 < 10 ? '1' : (degInD9 < 20 ? '2' : '3');
-    String d3D9Str = '\${knRashi[d9Idx]} $p9Part';
+    String p9Part = degInD9 < 10 ? '೧' : (degInD9 < 20 ? '೨' : '೩');
+    String d3D9Str = '${knRashi[d9Idx]} $p9Part';
 
     final degInD12 = (deg % 2.5) * 12;
-    String p12Part = degInD12 < 10 ? '1' : (degInD12 < 20 ? '2' : '3');
-    String d3D12Str = '\${knRashi[d12Idx]} $p12Part';
+    String p12Part = degInD12 < 10 ? '೧' : (degInD12 < 20 ? '೨' : '೩');
+    String d3D12Str = '${knRashi[d12Idx]} $p12Part';
 
     // Nava Navamsha (D9 of D9)
     final d81Exact = (deg * 81) % 360;

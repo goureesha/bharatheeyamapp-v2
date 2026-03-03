@@ -546,7 +546,7 @@ class _DashboardScreenState extends State<DashboardScreen>
           children: [
             Text('ಭಾರತೀಯಮ್', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800)),
             const SizedBox(height: 8),
-            Text('ಆವೃತ್ತಿ: 1.0.16 (Nava Navamsha & UI Split)', style: TextStyle(fontWeight: FontWeight.w700)),
+            Text('ಆವೃತ್ತಿ: 1.0.17 (Nava Navamsha & Translation Fix)', style: TextStyle(fontWeight: FontWeight.w700)),
             const SizedBox(height: 8),
             Text('ನಿಖರವಾದ ವೈದಿಕ ಜ್ಯೋತಿಷ್ಯ ಲೆಕ್ಕಾಚಾರಗಳಿಗಾಗಿ ವಿನ್ಯಾಸಗೊಳಿಸಲಾಗಿದೆ.',
               style: TextStyle(color: kMuted, height: 1.6)),
