@@ -34,7 +34,7 @@ android {
 
     defaultConfig {
         applicationId = "com.bharatheeyam.app"
-        minSdk = 23
+        minSdk = 24
         targetSdk = flutter.targetSdkVersion
         versionCode = flutterVersionCode.toInteger()
         versionName = flutterVersionName
