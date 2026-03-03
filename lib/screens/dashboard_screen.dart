@@ -204,40 +204,7 @@ class _DashboardScreenState extends State<DashboardScreen>
               isBhava: _chartMode == 'ಭಾವ',
               showSphutas: _showSphutas,
               centerLabel: _chartMode,
-            ),
-          ),
-          const SizedBox(height: 16),
-
-          // Planet buttons
-          const SectionTitle('🔍 ಗ್ರಹಗಳ ವಿಸ್ತೃತ ವಿವರ'),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: GridView.count(
-              crossAxisCount: 4,
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              mainAxisSpacing: 8,
-              crossAxisSpacing: 8,
-              childAspectRatio: 2.2,
-              children: planetOrder.map((p) {
-                final info = widget.result.planets[p];
-                if (info == null) return const SizedBox.shrink();
-                return ElevatedButton(
-                  onPressed: () => _showPlanetDetail(p),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: p == 'ಲಗ್ನ' || p == 'ಮಾಂದಿ'
-                        ? kOrange.withOpacity(0.15) : Colors.white,
-                    foregroundColor: kText,
-                    elevation: 0,
-                    side: BorderSide(color: kBorder),
-                    padding: EdgeInsets.zero,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                  ),
-                  child: Text(p, style: TextStyle(
-                    fontSize: 12, fontWeight: FontWeight.w700,
-                    color: p == 'ಲಗ್ನ' || p == 'ಮಾಂದಿ' ? kOrange2 : const Color(0xFF2B6CB0))),
-                );
-              }).toList(),
+              onPlanetTap: _showPlanetDetail,
             ),
           ),
           const SizedBox(height: 24),
@@ -370,6 +337,7 @@ class _DashboardScreenState extends State<DashboardScreen>
                 showSphutas: false,
                 aroodhas: _aroodhas,
                 centerLabel: 'ಆರೂಢ\nಚಕ್ರ',
+                onPlanetTap: _showPlanetDetail,
               ),
             ),
             const SizedBox(height: 24),
@@ -546,7 +514,7 @@ class _DashboardScreenState extends State<DashboardScreen>
           children: [
             Text('ಭಾರತೀಯಮ್', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800)),
             const SizedBox(height: 8),
-            Text('ಆವೃತ್ತಿ: 1.0.17 (Nava Navamsha & Translation Fix)', style: TextStyle(fontWeight: FontWeight.w700)),
+            Text('ಆವೃತ್ತಿ: 1.0.18 (Interactive Kundali Hover Popup)', style: TextStyle(fontWeight: FontWeight.w700)),
             const SizedBox(height: 8),
             Text('ನಿಖರವಾದ ವೈದಿಕ ಜ್ಯೋತಿಷ್ಯ ಲೆಕ್ಕಾಚಾರಗಳಿಗಾಗಿ ವಿನ್ಯಾಸಗೊಳಿಸಲಾಗಿದೆ.',
               style: TextStyle(color: kMuted, height: 1.6)),

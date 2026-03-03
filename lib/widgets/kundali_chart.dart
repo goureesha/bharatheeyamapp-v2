@@ -14,6 +14,7 @@ class KundaliChart extends StatelessWidget {
   final bool showSphutas;
   final Map<String, int>? aroodhas; // for Aroodha tab
   final String? centerLabel;
+  final void Function(String planetName)? onPlanetTap;
 
   const KundaliChart({
     super.key,
@@ -23,6 +24,7 @@ class KundaliChart extends StatelessWidget {
     required this.showSphutas,
     this.aroodhas,
     this.centerLabel,
+    this.onPlanetTap,
   });
 
   // Grid layout: indices into rashi boxes, null = center
@@ -228,9 +230,18 @@ class KundaliChart extends StatelessWidget {
       case ChipType.sphuta: color = const Color(0xFF805AD5); break;
       default:              color = const Color(0xFF2B6CB0);
     }
-    return Text(
-      name,
-      style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: color),
+    return GestureDetector(
+      onTap: () {
+        if (onPlanetTap != null) onPlanetTap!(name);
+      },
+      behavior: HitTestBehavior.opaque,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 2, horizontal: 4),
+        child: Text(
+          name,
+          style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: color),
+        ),
+      ),
     );
   }
 }
