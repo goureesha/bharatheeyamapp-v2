@@ -397,12 +397,12 @@ class AstroCalculator {
       if (housesRes != null) {
         if (housesRes.cusps.length == 13) {
           ascDeg = normDeg(housesRes.cusps[1] - ayn);
+          // Use actual Placidus cusps (unequal houses) - matches Python reference
+          bhavaSphutas = List.generate(12, (i) => normDeg(housesRes.cusps[i + 1] - ayn));
         } else if (housesRes.cusps.isNotEmpty) {
           ascDeg = normDeg(housesRes.cusps[0] - ayn);
+          bhavaSphutas = List.generate(12, (i) => normDeg(housesRes.cusps[i] - ayn));
         }
-        // User explicitly requested Vedic Equal House (Lagna = Midpoint)
-        // Bhava 1 = ascDeg, Bhava 2 = ascDeg + 30, etc.
-        bhavaSphutas = List.generate(12, (i) => normDeg(ascDeg + i * 30.0));
       }
       
       positions['ಲಗ್ನ'] = ascDeg;

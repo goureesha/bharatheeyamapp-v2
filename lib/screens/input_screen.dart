@@ -338,44 +338,26 @@ class _InputScreenState extends State<InputScreen> {
           ),
           const SizedBox(height: 14),
 
-          // Time
-          Row(children: [
-            Expanded(
-              child: TextField(
-                keyboardType: TextInputType.number,
-                inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                decoration: const InputDecoration(labelText: 'ಗಂಟೆ (1-12)'),
-                onChanged: (v) {
-                  final n = int.tryParse(v);
-                  if (n != null && n >= 1 && n <= 12) setState(() => _hour = n);
-                },
-                controller: TextEditingController(text: _hour.toString())..selection = TextSelection.collapsed(offset: _hour.toString().length),
+          // Time picker
+          GestureDetector(
+            onTap: _pickTime,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                border: Border.all(color: kBorder),
+                borderRadius: BorderRadius.circular(12),
               ),
+              child: Row(children: [
+                const Icon(Icons.access_time, color: kMuted),
+                const SizedBox(width: 10),
+                Text(
+                  'ಸಮಯ: ${_hour.toString().padLeft(2,'0')}:${_minute.toString().padLeft(2,'0')} $_ampm',
+                  style: TextStyle(fontSize: 14, color: kText),
+                ),
+              ]),
             ),
-            const SizedBox(width: 10),
-            Expanded(
-              child: TextField(
-                keyboardType: TextInputType.number,
-                inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                decoration: const InputDecoration(labelText: 'ನಿಮಿಷ (0-59)'),
-                onChanged: (v) {
-                  final n = int.tryParse(v);
-                  if (n != null && n >= 0 && n <= 59) setState(() => _minute = n);
-                },
-                controller: TextEditingController(text: _minute.toString().padLeft(2,'0')),
-              ),
-            ),
-            const SizedBox(width: 10),
-            Expanded(
-              child: DropdownButtonFormField<String>(
-                value: _ampm,
-                items: ['AM','PM'].map((v) => DropdownMenuItem(
-                  value: v, child: Text(v, style: TextStyle(fontWeight: FontWeight.w700)))).toList(),
-                onChanged: (v) => setState(() => _ampm = v!),
-                decoration: const InputDecoration(labelText: 'ಬೆಳಿಗ್ಗೆ/ಸಂಜೆ'),
-              ),
-            ),
-          ]),
+          ),
           const SizedBox(height: 14),
 
           // Place search
@@ -490,5 +472,29 @@ class _InputScreenState extends State<InputScreen> {
       ),
     );
     if (picked != null) setState(() => _dob = picked);
+  }
+
+  Future<void> _pickTime() async {
+    final picked = await showTimePicker(
+      context: context,
+      initialTime: TimeOfDay(
+        hour: _ampm == 'PM' && _hour != 12 ? _hour + 12 : (_ampm == 'AM' && _hour == 12 ? 0 : _hour),
+        minute: _minute,
+      ),
+      builder: (ctx, child) => Theme(
+        data: Theme.of(ctx).copyWith(
+          colorScheme: const ColorScheme.light(primary: kPurple2),
+        ),
+        child: child!,
+      ),
+    );
+    if (picked != null) {
+      setState(() {
+        final h24 = picked.hour;
+        _ampm = h24 >= 12 ? 'PM' : 'AM';
+        _hour = h24 % 12 == 0 ? 12 : h24 % 12;
+        _minute = picked.minute;
+      });
+    }
   }
 }

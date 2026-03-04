@@ -27,14 +27,14 @@ jobs:
       - name: Get dependencies
         run: flutter pub get
 
-      - name: Build release APK (split per ABI for smaller size)
-        run: flutter build apk --release --split-per-abi
+      - name: Build release APK
+        run: flutter build apk --release
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: bharatheeyam-apk
-          path: build/app/outputs/flutter-apk/app-*.apk
+          path: build/app/outputs/flutter-apk/app-release.apk
           retention-days: 7
 
   build_web:
