@@ -115,11 +115,11 @@ class _InputScreenState extends State<InputScreen> {
 
   Future<void> _calculate() async {
     setState(() => _loading = true);
-    await Future.delayed(const Duration(milliseconds: 50)); // let UI rebuild
+    await Future.delayed(const Duration(milliseconds: 50));
 
     try {
-      final lat = double.parse(_latCtrl.text);
-      final lon = double.parse(_lonCtrl.text);
+      final lat = double.tryParse(_latCtrl.text) ?? 14.98;
+      final lon = double.tryParse(_lonCtrl.text) ?? 74.73;
 
       int h24 = _hour + (_ampm == 'PM' && _hour != 12 ? 12 : 0);
       if (_ampm == 'AM' && _hour == 12) h24 = 0;
@@ -154,7 +154,7 @@ class _InputScreenState extends State<InputScreen> {
           ),
         ));
       } else {
-        _showError('ಜಾತಕ ಲೆಕ್ಕಾಚಾರದಲ್ಲಿ ವಿಫಲ. ದಿನಾಂಕ/ಸಮಯ ಪರಿಶೀಲಿಸಿ.');
+        _showError('ಲೆಕ್ಕಾಚಾರ ವಿಫಲ. ದಯವಿಟ್ಟು ಮತ್ತೊಮ್ಮೆ ಪ್ರಯತ್ನಿಸಿ.');
       }
     } catch (e) {
       _showError('ದೋಷ: $e');

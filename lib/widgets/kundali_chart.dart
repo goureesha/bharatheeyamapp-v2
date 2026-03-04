@@ -178,7 +178,7 @@ class KundaliChart extends StatelessWidget {
             padding: const EdgeInsets.only(left: 3, top: 2),
             child: Text(knRashi[rashiIdx],
               style: const TextStyle(
-                fontSize: 9, color: Color(0xFF2F855A), fontWeight: FontWeight.w900)),
+                fontSize: 11, color: Color(0xFF2F855A), fontWeight: FontWeight.w900)),
           ),
           Expanded(
             child: SingleChildScrollView(
@@ -239,7 +239,7 @@ class KundaliChart extends StatelessWidget {
         padding: const EdgeInsets.symmetric(vertical: 2, horizontal: 4),
         child: Text(
           name,
-          style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: color),
+          style: TextStyle(fontSize: 13, fontWeight: FontWeight.w800, color: color),
         ),
       ),
     );

@@ -42,9 +42,6 @@ class _DashboardScreenState extends State<DashboardScreen>
     with SingleTickerProviderStateMixin {
   late TabController _tabCtrl;
   String _notes = '';
-  bool _showSphutas = false;
-  int _varga = 1;
-  String _chartMode = 'ರಾಶಿ';
   Map<String, int> _aroodhas = {};
 
   static const _tabs = [
@@ -141,73 +138,48 @@ class _DashboardScreenState extends State<DashboardScreen>
   }
 
   // ─────────────────────────────────────────────
-  // TAB 1: KUNDALI
+  // TAB 1: KUNDALI (All vargas stacked vertically)
   // ─────────────────────────────────────────────
   Widget _buildKundaliTab() {
+    // Define all charts in the specific order requested
+    final charts = [
+      {'label': 'ರಾಶಿ ಕುಂಡಲಿ', 'varga': 1, 'isBhava': false},
+      {'label': 'ಭಾವ ಕುಂಡಲಿ', 'varga': 1, 'isBhava': true},
+      {'label': 'ನವಾಂಶ ಕುಂಡಲಿ (D9)', 'varga': 9, 'isBhava': false},
+      {'label': 'ಹೋರಾ ಕುಂಡಲಿ (D2)', 'varga': 2, 'isBhava': false},
+      {'label': 'ದ್ರೇಕ್ಕಾಣ ಕುಂಡಲಿ (D3)', 'varga': 3, 'isBhava': false},
+      {'label': 'ದ್ವಾದಶಾಂಶ ಕುಂಡಲಿ (D12)', 'varga': 12, 'isBhava': false},
+      {'label': 'ತ್ರಿಂಶಾಂಶ ಕುಂಡಲಿ (D30)', 'varga': 30, 'isBhava': false},
+    ];
+
     return SingleChildScrollView(
       child: Column(
         children: [
           const SizedBox(height: 12),
-          // Varga + chart mode
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: Row(
+          ...charts.map((chart) => Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            child: Column(
               children: [
-                Expanded(
-                  child: DropdownButtonFormField<int>(
-                    value: _varga,
-                    decoration: const InputDecoration(labelText: 'ವರ್ಗ', contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8)),
-                    items: const [
-                      DropdownMenuItem(value: 1, child: Text('ರಾಶಿ')),
-                      DropdownMenuItem(value: 2, child: Text('ಹೋರಾ')),
-                      DropdownMenuItem(value: 3, child: Text('ದ್ರೇಕ್ಕಾಣ')),
-                      DropdownMenuItem(value: 9, child: Text('ನವಾಂಶ')),
-                      DropdownMenuItem(value: 12, child: Text('ದ್ವಾದಶಾಂಶ')),
-                      DropdownMenuItem(value: 30, child: Text('ತ್ರಿಂಶಾಂಶ')),
-                    ],
-                    onChanged: (v) => setState(() { _varga = v!; _chartMode = 'ರಾಶಿ'; }),
-                  ),
+                Text(
+                  chart['label'] as String,
+                  style: const TextStyle(
+                    fontSize: 17, fontWeight: FontWeight.w800,
+                    color: Color(0xFF2B6CB0)),
                 ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: DropdownButtonFormField<String>(
-                    value: _chartMode,
-                    decoration: const InputDecoration(labelText: 'ಚಾರ್ಟ್ ವಿಧ', contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8)),
-                    items: ['ರಾಶಿ','ಭಾವ','ನವಾಂಶ'].map((m) =>
-                      DropdownMenuItem(value: m, child: Text(m))).toList(),
-                    onChanged: (v) => setState(() {
-                      _chartMode = v!;
-                      if (v == 'ಭಾವ') _varga = 1;
-                      if (v == 'ನವಾಂಶ') _varga = 9;
-                    }),
-                  ),
+                const SizedBox(height: 6),
+                KundaliChart(
+                  result: widget.result,
+                  varga: chart['varga'] as int,
+                  isBhava: chart['isBhava'] as bool,
+                  showSphutas: false,
+                  centerLabel: chart['label'] as String,
+                  onPlanetTap: _showPlanetDetail,
                 ),
+                const SizedBox(height: 8),
+                const Divider(thickness: 1, color: Color(0xFFE2E8F0)),
               ],
             ),
-          ),
-          const SizedBox(height: 8),
-          SwitchListTile(
-            title: Text('ಸ್ಫುಟಗಳನ್ನು ಕುಂಡಲಿಯಲ್ಲಿ ತೋರಿಸಿ',
-              style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: const Color(0xFF2B6CB0))),
-            value: _showSphutas,
-            activeColor: kPurple2,
-            onChanged: (v) => setState(() => _showSphutas = v),
-            contentPadding: const EdgeInsets.symmetric(horizontal: 16),
-          ),
-          const SizedBox(height: 8),
-
-          // Chart
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: KundaliChart(
-              result: widget.result,
-              varga: _chartMode == 'ಭಾವ' ? 1 : (_chartMode == 'ನವಾಂಶ' ? 9 : _varga),
-              isBhava: _chartMode == 'ಭಾವ',
-              showSphutas: _showSphutas,
-              centerLabel: _chartMode,
-              onPlanetTap: _showPlanetDetail,
-            ),
-          ),
+          )),
           const SizedBox(height: 24),
         ],
       ),
