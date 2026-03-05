@@ -18,6 +18,8 @@ class DashboardScreen extends StatefulWidget {
   final String ampm;
   final double lat;
   final double lon;
+  final String initialNotes;
+  final Map<String, int> initialAroodhas;
   final void Function(String notes, Map<String, int> aroodhas) onSave;
 
   const DashboardScreen({
@@ -31,6 +33,8 @@ class DashboardScreen extends StatefulWidget {
     required this.ampm,
     required this.lat,
     required this.lon,
+    this.initialNotes = '',
+    this.initialAroodhas = const {},
     required this.onSave,
   });
 
@@ -54,6 +58,8 @@ class _DashboardScreenState extends State<DashboardScreen>
   void initState() {
     super.initState();
     _tabCtrl = TabController(length: _tabs.length, vsync: this);
+    _notes = widget.initialNotes;
+    _aroodhas = Map.from(widget.initialAroodhas);
   }
 
   @override

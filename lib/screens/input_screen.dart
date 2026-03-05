@@ -38,6 +38,9 @@ class _InputScreenState extends State<InputScreen> {
   bool _isInitStatus = true;
   bool _isNetworkBlocked = false;
 
+  String _loadedNotes = '';
+  Map<String, int> _loadedAroodhas = {};
+
   @override
   void initState() {
     super.initState();
@@ -70,6 +73,8 @@ class _InputScreenState extends State<InputScreen> {
       _hour   = p.hour;
       _minute = p.minute;
       _ampm   = p.ampm;
+      _loadedNotes = p.notes;
+      _loadedAroodhas = Map.from(p.aroodhas);
       try {
         final parts = p.date.split('-');
         if (parts.length == 3) {
@@ -151,6 +156,8 @@ class _InputScreenState extends State<InputScreen> {
             ampm: _ampm,
             lat: lat,
             lon: lon,
+            initialNotes: _loadedNotes,
+            initialAroodhas: _loadedAroodhas,
             onSave: (notes, aroodhas) => _saveProfile(notes: notes, aroodhas: aroodhas),
           ),
         ));
@@ -492,6 +499,8 @@ class _InputScreenState extends State<InputScreen> {
                     _hour = now.hour % 12 == 0 ? 12 : now.hour % 12;
                     _minute = now.minute;
                     _ampm = now.hour >= 12 ? 'PM' : 'AM';
+                    _loadedNotes = '';
+                    _loadedAroodhas = {};
                   });
                 },
                 style: ElevatedButton.styleFrom(
