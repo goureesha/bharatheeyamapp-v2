@@ -527,10 +527,24 @@ class AstroCalculator {
         'ಪ್ಲವಂಗ','ಕೀಲಕ','ಸೌಮ್ಯ','ಸಾಧಾರಣ','ವಿರೋಧಕೃತ್','ಪರಿಧಾವಿ','ಪ್ರಮಾದೀಚ','ಆನಂದ','ರಾಕ್ಷಸ','ಅನಲ',
         'ಪಿಂಗಳ','ಕಾಳಯುಕ್ತಿ','ಸಿದ್ಧಾರ್ಥಿ','ರೌದ್ರಿ','ದುರ್ಮತಿ','ದುಂದುಭಿ','ರುಧಿರೋದ್ಗಾರಿ','ರಕ್ತಾಕ್ಷಿ','ಕ್ರೋಧನ','ಅಕ್ಷಯ',
       ];
-      // Shalivahana Shaka year: Ugadi happens when Sun enters Meena (rashi index 11)
-      // Before Ugadi: Sun is in Makara (9) or Kumbha (10) = Jan/Feb/early March
+      // Shalivahana Shaka year: Ugadi = Chaitra Shukla Pratipada (Moon-based)
+      // Ugadi occurs when the first new moon (Amavasya) passes while Sun is in Meena (11)
+      // Before this: still in previous samvatsara. After: new samvatsara.
+      // Chaitra = Sun in Meena (11). If Sun hasn't reached Meena yet = before Ugadi.
+      // If Sun is in Meena AND tithi is in Shukla paksha (0-14) = Chaitra has started = after Ugadi.
+      // If Sun is past Meena (in Mesha 0 or later) = definitely after Ugadi.
       int shakaYear = year - 78;
-      final bool beforeUgadi = (sunRashiIdx == 9 || sunRashiIdx == 10);
+      bool beforeUgadi;
+      if (sunRashiIdx == 9 || sunRashiIdx == 10) {
+        // Sun in Makara or Kumbha (Jan-Mar before Meena) = before Ugadi
+        beforeUgadi = true;
+      } else if (sunRashiIdx == 11 && tIdx >= 15) {
+        // Sun entered Meena but still in Krishna paksha (before new moon) = before Ugadi
+        beforeUgadi = true;
+      } else {
+        // Sun past Meena or in Meena Shukla paksha = after Ugadi
+        beforeUgadi = false;
+      }
       if (beforeUgadi) shakaYear -= 1;
       final samvatsaraIdx = ((shakaYear + 11) % 60);
       final samvatsara = '${knSamvatsara[samvatsaraIdx]} (ಶಕ $shakaYear)';

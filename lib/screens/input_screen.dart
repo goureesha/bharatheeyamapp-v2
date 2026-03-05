@@ -389,6 +389,27 @@ class _InputScreenState extends State<InputScreen> {
             const SizedBox(height: 6),
             Text(_geoStatus, style: TextStyle(fontSize: 12, color: kGreen)),
           ],
+          const SizedBox(height: 10),
+
+          // Online place search
+          Row(children: [
+            Expanded(
+              child: TextField(
+                controller: _placeCtrl,
+                decoration: const InputDecoration(labelText: 'ಊರು ಹುಡುಕಿ (Online)', prefixIcon: Icon(Icons.search)),
+              ),
+            ),
+            const SizedBox(width: 10),
+            ElevatedButton(
+              onPressed: _geoLoading ? null : _geocode,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: kTeal,
+                padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 14)),
+              child: _geoLoading
+                  ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                  : Text('ಹುಡುಕಿ', style: TextStyle(fontWeight: FontWeight.w800)),
+            ),
+          ]),
           const SizedBox(height: 14),
 
           // Lat/Lon
