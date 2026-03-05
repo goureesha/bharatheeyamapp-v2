@@ -76,6 +76,8 @@ class Profile {
   final double lat;
   final double lon;
   final String place;
+  final String notes;
+  final Map<String, int> aroodhas;
 
   Profile({
     required this.name,
@@ -86,11 +88,15 @@ class Profile {
     required this.lat,
     required this.lon,
     required this.place,
+    this.notes = '',
+    this.aroodhas = const {},
   });
 
   Map<String, dynamic> toJson() => {
     'name': name, 'd': date, 'h': hour, 'm': minute,
     'ampm': ampm, 'lat': lat, 'lon': lon, 'p': place,
+    'notes': notes,
+    'aroodhas': aroodhas.map((k, v) => MapEntry(k, v)),
   };
 
   factory Profile.fromJson(String name, Map<String, dynamic> j) => Profile(
@@ -102,5 +108,9 @@ class Profile {
     lat: (j['lat'] ?? 14.98).toDouble(),
     lon: (j['lon'] ?? 74.73).toDouble(),
     place: j['p'] ?? '',
+    notes: j['notes'] ?? '',
+    aroodhas: j['aroodhas'] != null 
+        ? Map<String, int>.from((j['aroodhas'] as Map).map((k, v) => MapEntry(k.toString(), (v as num).toInt())))
+        : {},
   );
 }

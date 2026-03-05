@@ -52,6 +52,15 @@ class PanchangData {
   final double nakPercent;
   final String sunrise;
   final String sunset;
+  // New Panchanga fields
+  final String suryaNakshatra;
+  final String suryaPada;
+  final String souraMasa;
+  final String souraMasaGataDina;
+  final String chandraMasa;
+  final String samvatsara;
+  final String vishaPraghati;
+  final String amrutaPraghati;
 
   PanchangData({
     required this.vara,
@@ -70,6 +79,14 @@ class PanchangData {
     required this.nakPercent,
     required this.sunrise,
     required this.sunset,
+    this.suryaNakshatra = '',
+    this.suryaPada = '',
+    this.souraMasa = '',
+    this.souraMasaGataDina = '',
+    this.chandraMasa = '',
+    this.samvatsara = '',
+    this.vishaPraghati = '',
+    this.amrutaPraghati = '',
   });
 }
 
@@ -482,6 +499,41 @@ class AstroCalculator {
       final bal = dashaYears[nIdx % 9] * (1 - perc);
       final dashaLord = dashaLords[nIdx % 9];
 
+      // === Additional Panchanga Calculations ===
+      // Surya Nakshatra & Pada (from Sun longitude)
+      final sunDeg = positions['ರವಿ'] ?? 0.0;
+      final sunNakIdx = (sunDeg / _nakSize).floor() % 27;
+      final sunPada = ((sunDeg % _nakSize) / (_nakSize / 4)).floor() + 1;
+      
+      // Soura Masa (Solar month = Sun's Rashi)
+      final knSouraMasa = ['ಮೇಷ','ವೃಷಭ','ಮಿಥುನ','ಕರ್ಕಾಟಕ','ಸಿಂಹ','ಕನ್ಯಾ','ತುಲಾ','ವೃಶ್ಚಿಕ','ಧನು','ಮಕರ','ಕುಂಭ','ಮೀನ'];
+      final sunRashiIdx = (sunDeg / 30).floor() % 12;
+      final souraMasa = knSouraMasa[sunRashiIdx];
+      final souraMasaGataDina = ((sunDeg % 30)).toStringAsFixed(1);
+      
+      // Chandra Masa (Lunar month from Moon's position)
+      final knChandraMasa = ['ಚೈತ್ರ','ವೈಶಾಖ','ಜ್ಯೇಷ್ಠ','ಆಷಾಢ','ಶ್ರಾವಣ','ಭಾದ್ರಪದ','ಆಶ್ವಿನ','ಕಾರ್ತಿಕ','ಮಾರ್ಗಶಿರ','ಪುಷ್ಯ','ಮಾಘ','ಫಾಲ್ಗುಣ'];
+      final moonRashiIdx = (mDeg / 30).floor() % 12;
+      final chandraMasa = knChandraMasa[moonRashiIdx];
+      
+      // Samvatsara (60-year Jupiter cycle)
+      final knSamvatsara = [
+        'ಪ್ರಭವ','ವಿಭವ','ಶುಕ್ಲ','ಪ್ರಮೋದೂತ','ಪ್ರಜೋತ್ಪತ್ತಿ','ಆಂಗೀರಸ','ಶ್ರೀಮುಖ','ಭಾವ','ಯುವ','ಧಾತೃ',
+        'ಈಶ್ವರ','ಬಹುಧಾನ್ಯ','ಪ್ರಮಾಥಿ','ವಿಕ್ರಮ','ವೃಷ','ಚಿತ್ರಭಾನು','ಸುಭಾನು','ತಾರಣ','ಪಾರ್ಥಿವ','ವ್ಯಯ',
+        'ಸರ್ವಜಿತ್','ಸರ್ವಧಾರಿ','ವಿರೋಧಿ','ವಿಕೃತಿ','ಖರ','ನಂದನ','ವಿಜಯ','ಜಯ','ಮನ್ಮಥ','ದುರ್ಮುಖಿ',
+        'ಹೇವಿಳಂಬಿ','ವಿಳಂಬಿ','ವಿಕಾರಿ','ಶಾರ್ವರಿ','ಪ್ಲವ','ಶುಭಕೃತ್','ಶೋಭಕೃತ್','ಕ್ರೋಧಿ','ವಿಶ್ವಾವಸು','ಪರಾಭವ',
+        'ಪ್ಲವಂಗ','ಕೀಲಕ','ಸೌಮ್ಯ','ಸಾಧಾರಣ','ವಿರೋಧಕೃತ್','ಪರಿಧಾವಿ','ಪ್ರಮಾದೀಚ','ಆನಂದ','ರಾಕ್ಷಸ','ಅನಲ',
+        'ಪಿಂಗಳ','ಕಾಳಯುಕ್ತಿ','ಸಿದ್ಧಾರ್ಥಿ','ರೌದ್ರಿ','ದುರ್ಮತಿ','ದುಂದುಭಿ','ರುಧಿರೋದ್ಗಾರಿ','ರಕ್ತಾಕ್ಷಿ','ಕ್ರೋಧನ','ಅಕ್ಷಯ',
+      ];
+      final samvatsaraIdx = ((year + 11) % 60);
+      final samvatsara = knSamvatsara[samvatsaraIdx];
+      
+      // Visha Praghati & Amruta Praghati (per nakshatra, in ghatis from sunrise)
+      final vishaGhatis = [30,28,22,20,18,26,24,10,14,12,8,6,4,2,30,22,20,14,12,10,8,6,4,2,28,26,24,22,20,18];
+      final amrutaGhatis = [6,8,10,4,28,26,20,22,12,16,18,14,24,2,6,8,10,4,28,26,20,22,12,16,18,14,24,2,6,8];
+      final vishaG = nIdx < vishaGhatis.length ? vishaGhatis[nIdx] : 0;
+      final amrutaG = nIdx < amrutaGhatis.length ? amrutaGhatis[nIdx] : 0;
+
       final panchang = PanchangData(
         vara: knVara[wIdx],
         tithi: knTithi[tIdx],
@@ -499,6 +551,14 @@ class AstroCalculator {
         nakPercent: perc,
         sunrise: formatTimeFromJd(srCivil),
         sunset: formatTimeFromJd(ssCivil),
+        suryaNakshatra: knNak[sunNakIdx],
+        suryaPada: '$sunPada',
+        souraMasa: souraMasa,
+        souraMasaGataDina: '$souraMasaGataDina°',
+        chandraMasa: chandraMasa,
+        samvatsara: samvatsara,
+        vishaPraghati: '$vishaG ಘಟಿ',
+        amrutaPraghati: '$amrutaG ಘಟಿ',
       );
 
       // Dashas

@@ -37,6 +37,42 @@ class _InputScreenState extends State<InputScreen> {
   bool _isInitStatus = true;
   bool _isNetworkBlocked = false;
 
+  // Offline place database (lat, lon)
+  static const Map<String, List<double>> _offlinePlaces = {
+    'Yellapur': [14.9800, 74.7300],
+    'Bangalore': [12.9716, 77.5946],
+    'Mysore': [12.2958, 76.6394],
+    'Hubli': [15.3647, 75.1240],
+    'Dharwad': [15.4589, 75.0078],
+    'Belgaum': [15.8497, 74.4977],
+    'Mangalore': [12.9141, 74.8560],
+    'Shimoga': [13.9299, 75.5681],
+    'Davangere': [14.4644, 75.9218],
+    'Gulbarga': [17.3297, 76.8343],
+    'Bellary': [15.1394, 76.9214],
+    'Bijapur': [16.8302, 75.7100],
+    'Raichur': [16.2076, 77.3463],
+    'Karwar': [14.8127, 74.1293],
+    'Udupi': [13.3409, 74.7421],
+    'Hassan': [13.0072, 76.0962],
+    'Chitradurga': [14.2226, 76.3980],
+    'Tumkur': [13.3379, 77.1173],
+    'Kolar': [13.1360, 78.1292],
+    'Mandya': [12.5244, 76.8958],
+    'Mumbai': [19.0760, 72.8777],
+    'Delhi': [28.7041, 77.1025],
+    'Chennai': [13.0827, 80.2707],
+    'Hyderabad': [17.3850, 78.4867],
+    'Pune': [18.5204, 73.8567],
+    'Kolkata': [22.5726, 88.3639],
+    'Jaipur': [26.9124, 75.7873],
+    'Ahmedabad': [23.0225, 72.5714],
+    'Lucknow': [26.8467, 80.9462],
+    'Varanasi': [25.3176, 82.9739],
+    'Tirupati': [13.6288, 79.4192],
+    'Goa': [15.2993, 74.1240],
+  };
+
   @override
   void initState() {
     super.initState();
@@ -150,7 +186,7 @@ class _InputScreenState extends State<InputScreen> {
             ampm: _ampm,
             lat: lat,
             lon: lon,
-            onSave: _saveProfile,
+            onSave: (notes, aroodhas) => _saveProfile(notes: notes, aroodhas: aroodhas),
           ),
         ));
       } else {
@@ -162,16 +198,18 @@ class _InputScreenState extends State<InputScreen> {
     setState(() => _loading = false);
   }
 
-  void _saveProfile() async {
+  void _saveProfile({String notes = '', Map<String, int> aroodhas = const {}}) async {
     String name = _nameCtrl.text.trim();
     if (name.isEmpty) name = 'Unknown_${_dob.toIso8601String().substring(0, 10)}';
     final p = Profile(
       name: name,
       date: '${_dob.year}-${_dob.month.toString().padLeft(2,'0')}-${_dob.day.toString().padLeft(2,'0')}',
       hour: _hour, minute: _minute, ampm: _ampm,
-      lat: double.parse(_latCtrl.text),
-      lon: double.parse(_lonCtrl.text),
+      lat: double.tryParse(_latCtrl.text) ?? 14.98,
+      lon: double.tryParse(_lonCtrl.text) ?? 74.73,
       place: _placeCtrl.text,
+      notes: notes,
+      aroodhas: aroodhas,
     );
     await StorageService.save(p);
     await _loadProfiles();
@@ -360,12 +398,36 @@ class _InputScreenState extends State<InputScreen> {
           ),
           const SizedBox(height: 14),
 
-          // Place search
+          // Offline place selector
+          DropdownButtonFormField<String>(
+            decoration: const InputDecoration(
+              labelText: '📍 ಊರು ಆಯ್ಕೆ (Offline)',
+              prefixIcon: Icon(Icons.location_city),
+            ),
+            isExpanded: true,
+            items: _offlinePlaces.keys.map((name) => DropdownMenuItem(
+              value: name, child: Text(name, style: const TextStyle(fontSize: 13)),
+            )).toList(),
+            onChanged: (v) {
+              if (v != null && _offlinePlaces.containsKey(v)) {
+                final coords = _offlinePlaces[v]!;
+                setState(() {
+                  _placeCtrl.text = v;
+                  _latCtrl.text = coords[0].toStringAsFixed(4);
+                  _lonCtrl.text = coords[1].toStringAsFixed(4);
+                  _geoStatus = '📍 $v (Offline)';
+                });
+              }
+            },
+          ),
+          const SizedBox(height: 10),
+
+          // Online place search
           Row(children: [
             Expanded(
               child: TextField(
                 controller: _placeCtrl,
-                decoration: const InputDecoration(labelText: 'ಊರು ಹುಡುಕಿ', prefixIcon: Icon(Icons.search)),
+                decoration: const InputDecoration(labelText: 'ಊರು ಹುಡುಕಿ (Online)', prefixIcon: Icon(Icons.search)),
               ),
             ),
             const SizedBox(width: 10),

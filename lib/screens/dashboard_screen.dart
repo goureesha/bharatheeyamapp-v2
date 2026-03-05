@@ -18,7 +18,7 @@ class DashboardScreen extends StatefulWidget {
   final String ampm;
   final double lat;
   final double lon;
-  final VoidCallback onSave;
+  final void Function(String notes, Map<String, int> aroodhas) onSave;
 
   const DashboardScreen({
     super.key,
@@ -92,7 +92,7 @@ class _DashboardScreenState extends State<DashboardScreen>
                   IconButton(
                     icon: const Icon(Icons.save, color: Colors.white),
                     onPressed: () {
-                      widget.onSave();
+                      widget.onSave(_notes, _aroodhas);
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(content: Text('ಉಳಿಸಲಾಗಿದೆ!',
                           style: const TextStyle())));
@@ -360,18 +360,25 @@ class _DashboardScreenState extends State<DashboardScreen>
           AppCard(
             padding: EdgeInsets.zero,
             child: Column(children: [
+              _tableRow(['ಸಂವತ್ಸರ', pan.samvatsara]),
               _tableRow(['ವಾರ', pan.vara]),
               _tableRow(['ತಿಥಿ', pan.tithi]),
-              _tableRow(['ನಕ್ಷತ್ರ', pan.nakshatra]),
+              _tableRow(['ಚಂದ್ರ ನಕ್ಷತ್ರ', pan.nakshatra]),
               _tableRow(['ಯೋಗ', pan.yoga]),
               _tableRow(['ಕರಣ', pan.karana]),
               _tableRow(['ಚಂದ್ರ ರಾಶಿ', pan.chandraRashi]),
-              _tableRow(['ಉದಯ (Sunrise)', pan.sunrise]),
-              _tableRow(['ಅಸ್ತ (Sunset)', pan.sunset]),
+              _tableRow(['ಚಂದ್ರ ಮಾಸ', pan.chandraMasa]),
+              _tableRow(['ಸೂರ್ಯ ನಕ್ಷತ್ರ', '${pan.suryaNakshatra} - ಪಾದ ${pan.suryaPada}']),
+              _tableRow(['ಸೌರ ಮಾಸ', pan.souraMasa]),
+              _tableRow(['ಸೌರ ಮಾಸ ಗತ ದಿನ', pan.souraMasaGataDina]),
+              _tableRow(['ಉದಯ (ಸೂರ್ಯೋದಯ)', pan.sunrise]),
+              _tableRow(['ಅಸ್ತ (ಸೂರ್ಯಾಸ್ತ)', pan.sunset]),
               _tableRow(['ಉದಯಾದಿ ಘಟಿ', pan.udayadiGhati]),
               _tableRow(['ಗತ ಘಟಿ', pan.gataGhati]),
               _tableRow(['ಪರಮ ಘಟಿ', pan.paramaGhati]),
               _tableRow(['ಶೇಷ ಘಟಿ', pan.shesha]),
+              _tableRow(['ವಿಷ ಪ್ರಘಟಿ', pan.vishaPraghati]),
+              _tableRow(['ಅಮೃತ ಪ್ರಘಟಿ', pan.amrutaPraghati]),
             ]),
           ),
           const SizedBox(height: 24),
@@ -479,7 +486,7 @@ class _DashboardScreenState extends State<DashboardScreen>
           flex: e.key == 1 ? 2 : 1,
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-            child: Text(e.value, style: TextStyle(fontWeight: FontWeight.w800, fontSize: 12)),
+            child: Text(e.value, style: TextStyle(fontWeight: FontWeight.w800, fontSize: 13)),
           ),
         )).toList(),
       ),
@@ -494,13 +501,13 @@ class _DashboardScreenState extends State<DashboardScreen>
           flex: e.key == 1 ? 2 : 1,
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-            child: FittedBox(
-              fit: BoxFit.scaleDown,
-              alignment: Alignment.centerLeft,
-              child: Text(e.value, style: TextStyle(
+            child: Text(e.value,
+              style: TextStyle(
                 fontSize: 13,
                 fontWeight: (e.key == 0 && bold0) ? FontWeight.w700 : FontWeight.normal,
-              )),
+              ),
+              overflow: TextOverflow.ellipsis,
+              maxLines: 2,
             ),
           ),
         )).toList(),
