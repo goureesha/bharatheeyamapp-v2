@@ -154,6 +154,7 @@ class _InputScreenState extends State<InputScreen> {
             onSave: (notes, aroodhas) => _saveProfile(notes: notes, aroodhas: aroodhas),
           ),
         ));
+      }
     } catch (e) {
       _showError('ದೋಷ: $e');
     }
