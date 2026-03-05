@@ -169,12 +169,8 @@ class KundaliChart extends StatelessWidget {
     return Container(
       margin: const EdgeInsets.all(1.0),
       decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [Color(0xFFF6D365), Color(0xFFFDA085)],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        border: Border.all(color: Colors.white, width: 1.0),
+        color: const Color(0xFFE53E3E), // Deep Red
+        border: Border.all(color: Colors.white, width: 2.0), // Thicker white border
         borderRadius: BorderRadius.circular(6),
       ),
       child: Column(

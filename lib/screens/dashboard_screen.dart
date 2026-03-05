@@ -487,11 +487,7 @@ class _DashboardScreenState extends State<DashboardScreen>
   Widget _tableHeader(List<String> cols) {
     return Container(
       decoration: const BoxDecoration(
-        gradient: LinearGradient(
-          colors: [Color(0xFFF6D365), Color(0xFFFDA085)],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
+        color: Color(0xFFE53E3E), // Deep Red
       ),
       child: Row(
         children: cols.asMap().entries.map((e) => Expanded(
@@ -507,11 +503,7 @@ class _DashboardScreenState extends State<DashboardScreen>
   Widget _tableRow(List<String> cols, {bool bold0 = false}) {
     return Container(
       decoration: const BoxDecoration(
-        gradient: LinearGradient(
-          colors: [Color(0xFFF6D365), Color(0xFFFDA085)],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
+        color: Color(0xFFE53E3E), // Deep Red
         border: Border(bottom: BorderSide(color: Colors.white38)),
       ),
       child: Row(
