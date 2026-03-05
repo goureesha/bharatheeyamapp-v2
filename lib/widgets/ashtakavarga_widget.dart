@@ -71,22 +71,21 @@ class _SavGrid extends StatelessWidget {
     return Container(
       margin: const EdgeInsets.all(1.0),
       decoration: BoxDecoration(
-        color: Colors.white,
-        border: Border.all(color: const Color(0xFFCBD5E0), width: 1.0),
+        gradient: const LinearGradient(
+          colors: [Color(0xFFF6D365), Color(0xFFFDA085)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        border: Border.all(color: Colors.white, width: 1.0),
         borderRadius: BorderRadius.circular(6),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Padding(
-            padding: const EdgeInsets.only(left: 3, top: 2),
-            child: Text(knRashi[idx],
-              style: const TextStyle(fontSize: 11, color: Color(0xFF2F855A), fontWeight: FontWeight.w900)),
-          ),
           Expanded(
             child: Center(
               child: Text(bindu.toString(),
-                style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w900, color: Color(0xFFDD6B20))),
+                style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w900, color: Colors.white)),
             ),
           ),
         ],

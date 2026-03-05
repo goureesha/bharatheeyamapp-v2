@@ -169,19 +169,17 @@ class KundaliChart extends StatelessWidget {
     return Container(
       margin: const EdgeInsets.all(1.0),
       decoration: BoxDecoration(
-        color: Colors.white,
-        border: Border.all(color: const Color(0xFFCBD5E0), width: 1.0),
+        gradient: const LinearGradient(
+          colors: [Color(0xFFF6D365), Color(0xFFFDA085)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        border: Border.all(color: Colors.white, width: 1.0),
         borderRadius: BorderRadius.circular(6),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Padding(
-            padding: const EdgeInsets.only(left: 3, top: 2),
-            child: Text(knRashi[rashiIdx],
-              style: const TextStyle(
-                fontSize: 11, color: Color(0xFF2F855A), fontWeight: FontWeight.w900)),
-          ),
           Expanded(
             child: SingleChildScrollView(
               padding: const EdgeInsets.all(2),
@@ -225,13 +223,6 @@ class KundaliChart extends StatelessWidget {
     );
   }
 
-  Widget _planetChip(String name, ChipType type) {
-    Color color;
-    switch (type) {
-      case ChipType.lagna:  color = const Color(0xFFE53E3E); break;
-      case ChipType.sphuta: color = const Color(0xFF805AD5); break;
-      default:              color = const Color(0xFF2B6CB0);
-    }
     return GestureDetector(
       onTap: () {
         if (onPlanetTap != null) onPlanetTap!(name);
@@ -241,7 +232,7 @@ class KundaliChart extends StatelessWidget {
         padding: const EdgeInsets.symmetric(vertical: 2, horizontal: 4),
         child: Text(
           name,
-          style: TextStyle(fontSize: 13, fontWeight: FontWeight.w800, color: color),
+          style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w900, color: Colors.white),
         ),
       ),
     );

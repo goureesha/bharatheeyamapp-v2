@@ -486,12 +486,18 @@ class _DashboardScreenState extends State<DashboardScreen>
   // ─────────────────────────────────────────────
   Widget _tableHeader(List<String> cols) {
     return Container(
-      color: const Color(0xFFEDF2F7),
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
+          colors: [Color(0xFFF6D365), Color(0xFFFDA085)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+      ),
       child: Row(
         children: cols.asMap().entries.map((e) => Expanded(
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
-            child: Text(e.value, style: TextStyle(fontWeight: FontWeight.w800, fontSize: 12)),
+            child: Text(e.value, style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 15, color: Colors.white)),
           ),
         )).toList(),
       ),
@@ -500,15 +506,23 @@ class _DashboardScreenState extends State<DashboardScreen>
 
   Widget _tableRow(List<String> cols, {bool bold0 = false}) {
     return Container(
-      decoration: const BoxDecoration(border: Border(bottom: BorderSide(color: Color(0xFFEDF2F7)))),
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
+          colors: [Color(0xFFF6D365), Color(0xFFFDA085)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        border: Border(bottom: BorderSide(color: Colors.white38)),
+      ),
       child: Row(
         children: cols.asMap().entries.map((e) => Expanded(
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
             child: Text(e.value,
               style: TextStyle(
-                fontSize: 12,
-                fontWeight: (e.key == 0 && bold0) ? FontWeight.w700 : FontWeight.normal,
+                fontSize: 14,
+                fontWeight: (e.key == 0 || bold0) ? FontWeight.w900 : FontWeight.w700,
+                color: Colors.white,
               ),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
