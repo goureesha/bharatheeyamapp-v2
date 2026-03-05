@@ -154,9 +154,6 @@ class _InputScreenState extends State<InputScreen> {
             onSave: (notes, aroodhas) => _saveProfile(notes: notes, aroodhas: aroodhas),
           ),
         ));
-      } else {
-        _showError('ದಯವಿಟ್ಟು ದಿನಾಂಕ ಮತ್ತು ಸಮಯವನ್ನು ಕ್ಲಿಕ್ ಮಾಡಿ ಮತ್ತು OK ಒತ್ತಿ.');
-      }
     } catch (e) {
       _showError('ದೋಷ: $e');
     }
@@ -230,7 +227,6 @@ class _InputScreenState extends State<InputScreen> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               const AppHeader(),
-              _buildSavedCard(),
               _buildInputCard(),
               const SizedBox(height: 32),
             ],
@@ -466,20 +462,58 @@ class _InputScreenState extends State<InputScreen> {
           ),
           const SizedBox(height: 16),
 
-          // Calculate button
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton(
-              onPressed: _loading ? null : _calculate,
-              child: _loading
-                  ? Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-                      const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2)),
-                      const SizedBox(width: 12),
-                      Text('ಲೆಕ್ಕಾಚಾರ ಮಾಡುತ್ತಿದೆ...', style: TextStyle(fontWeight: FontWeight.w800)),
-                    ])
-                  : Text('ಜಾತಕ ರಚಿಸಿ', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16)),
+          // Three action buttons
+          Row(children: [
+            Expanded(
+              child: ElevatedButton(
+                onPressed: () {
+                  showModalBottomSheet(
+                    context: context,
+                    backgroundColor: Colors.white,
+                    shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+                    builder: (_) => _buildProfileListSheet(),
+                  );
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF2B6CB0),
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                ),
+                child: Text('ತೆರೆಯಿರಿ', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 13)),
+              ),
             ),
-          ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: ElevatedButton(
+                onPressed: () {
+                  final now = DateTime.now();
+                  setState(() {
+                    _dob = now;
+                    _hour = now.hour % 12 == 0 ? 12 : now.hour % 12;
+                    _minute = now.minute;
+                    _ampm = now.hour >= 12 ? 'PM' : 'AM';
+                  });
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: kTeal,
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                ),
+                child: Text('ಪ್ರಸ್ತುತ', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 13)),
+              ),
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: ElevatedButton(
+                onPressed: _loading ? null : _calculate,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: kOrange,
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                ),
+                child: _loading
+                    ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                    : Text('ರಚಿಸಿ', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 13)),
+              ),
+            ),
+          ]),
         ],
       ),
     );

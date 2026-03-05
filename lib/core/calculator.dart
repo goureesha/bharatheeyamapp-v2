@@ -1,4 +1,5 @@
 import 'dart:math';
+import 'package:flutter/foundation.dart';
 import 'package:sweph/sweph.dart';
 import '../constants/strings.dart';
 import 'ephemeris.dart';
@@ -634,7 +635,8 @@ class AstroCalculator {
         advSphutas: advSphutas,
       );
     } catch (e) {
-      return null;
+      debugPrint('AstroCalculator error: $e');
+      rethrow;
     }
   }
 
