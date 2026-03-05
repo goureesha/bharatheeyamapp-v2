@@ -527,10 +527,12 @@ class AstroCalculator {
         'ಪ್ಲವಂಗ','ಕೀಲಕ','ಸೌಮ್ಯ','ಸಾಧಾರಣ','ವಿರೋಧಕೃತ್','ಪರಿಧಾವಿ','ಪ್ರಮಾದೀಚ','ಆನಂದ','ರಾಕ್ಷಸ','ಅನಲ',
         'ಪಿಂಗಳ','ಕಾಳಯುಕ್ತಿ','ಸಿದ್ಧಾರ್ಥಿ','ರೌದ್ರಿ','ದುರ್ಮತಿ','ದುಂದುಭಿ','ರುಧಿರೋದ್ಗಾರಿ','ರಕ್ತಾಕ್ಷಿ','ಕ್ರೋಧನ','ಅಕ್ಷಯ',
       ];
-      // Shalivahana Shaka year: before Ugadi (approx March 22), use previous year
+      // Shalivahana Shaka year: Ugadi happens when Sun enters Meena (rashi index 11)
+      // Before Ugadi: Sun is in Makara (9) or Kumbha (10) = Jan/Feb/early March
       int shakaYear = year - 78;
-      if (month < 3 || (month == 3 && day < 22)) shakaYear -= 1;
-      final samvatsaraIdx = ((shakaYear - 1) % 60).abs();
+      final bool beforeUgadi = (sunRashiIdx == 9 || sunRashiIdx == 10);
+      if (beforeUgadi) shakaYear -= 1;
+      final samvatsaraIdx = ((shakaYear + 11) % 60);
       final samvatsara = '${knSamvatsara[samvatsaraIdx]} (ಶಕ $shakaYear)';
       
       // Visha Praghati & Amruta Praghati (per nakshatra, in ghatis from sunrise)

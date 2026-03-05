@@ -483,10 +483,9 @@ class _DashboardScreenState extends State<DashboardScreen>
       color: const Color(0xFFEDF2F7),
       child: Row(
         children: cols.asMap().entries.map((e) => Expanded(
-          flex: e.key == 1 ? 2 : 1,
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-            child: Text(e.value, style: TextStyle(fontWeight: FontWeight.w800, fontSize: 13)),
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
+            child: Text(e.value, style: TextStyle(fontWeight: FontWeight.w800, fontSize: 12)),
           ),
         )).toList(),
       ),
@@ -498,16 +497,15 @@ class _DashboardScreenState extends State<DashboardScreen>
       decoration: const BoxDecoration(border: Border(bottom: BorderSide(color: Color(0xFFEDF2F7)))),
       child: Row(
         children: cols.asMap().entries.map((e) => Expanded(
-          flex: e.key == 1 ? 2 : 1,
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
             child: Text(e.value,
               style: TextStyle(
-                fontSize: 13,
+                fontSize: 12,
                 fontWeight: (e.key == 0 && bold0) ? FontWeight.w700 : FontWeight.normal,
               ),
+              maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              maxLines: 2,
             ),
           ),
         )).toList(),
