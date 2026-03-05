@@ -101,17 +101,19 @@ class KundaliChart extends StatelessWidget {
         if (isBhava) {
           // Bhava chart: determine house using actual Placidus cusps
           final d = info.longitude;
-          ri = 0;
+          int houseNum = 0;
           for (int h = 0; h < 12; h++) {
             final cuspStart = result.bhavas[h];
             final cuspEnd = result.bhavas[(h + 1) % 12];
             if (cuspEnd > cuspStart) {
-              if (d >= cuspStart && d < cuspEnd) { ri = h; break; }
+              if (d >= cuspStart && d < cuspEnd) { houseNum = h; break; }
             } else {
               // Wraps around 360
-              if (d >= cuspStart || d < cuspEnd) { ri = h; break; }
+              if (d >= cuspStart || d < cuspEnd) { houseNum = h; break; }
             }
           }
+          // Map house number to rashi box: house 0 goes to lagnaIdx
+          ri = (lagnaIdx + houseNum) % 12;
         } else {
           ri = _rashinFor(info.longitude);
         }

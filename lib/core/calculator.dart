@@ -511,12 +511,14 @@ class AstroCalculator {
       final souraMasa = knSouraMasa[sunRashiIdx];
       final souraMasaGataDina = ((sunDeg % 30)).toStringAsFixed(1);
       
-      // Chandra Masa (Lunar month from Moon's position)
-      final knChandraMasa = ['ಚೈತ್ರ','ವೈಶಾಖ','ಜ್ಯೇಷ್ಠ','ಆಷಾಢ','ಶ್ರಾವಣ','ಭಾದ್ರಪದ','ಆಶ್ವಿನ','ಕಾರ್ತಿಕ','ಮಾರ್ಗಶಿರ','ಪುಷ್ಯ','ಮಾಘ','ಫಾಲ್ಗುಣ'];
-      final moonRashiIdx = (mDeg / 30).floor() % 12;
-      final chandraMasa = knChandraMasa[moonRashiIdx];
+      // Chandra Masa (Amavasyanta system - based on Sun's rashi position)
+      // In Amavasyanta: month is named after the rashi the Sun is in at Purnima
+      // Sun in Meena = Chaitra, Sun in Mesha = Vaishakha, etc.
+      final knChandraMasa = ['ವೈಶಾಖ','ಜ್ಯೇಷ್ಠ','ಆಷಾಢ','ಶ್ರಾವಣ','ಭಾದ್ರಪದ','ಆಶ್ವಿನ','ಕಾರ್ತಿಕ','ಮಾರ್ಗಶಿರ','ಪುಷ್ಯ','ಮಾಘ','ಫಾಲ್ಗುಣ','ಚೈತ್ರ'];
+      final chandraMasa = knChandraMasa[sunRashiIdx];
       
-      // Samvatsara (60-year Jupiter cycle)
+      // Samvatsara (Shalivahana Shaka - changes at Ugadi/Chaitra Shukla Pratipada)
+      // Shaka year = Gregorian year - 78; before Ugadi (~March/April), use previous year
       final knSamvatsara = [
         'ಪ್ರಭವ','ವಿಭವ','ಶುಕ್ಲ','ಪ್ರಮೋದೂತ','ಪ್ರಜೋತ್ಪತ್ತಿ','ಆಂಗೀರಸ','ಶ್ರೀಮುಖ','ಭಾವ','ಯುವ','ಧಾತೃ',
         'ಈಶ್ವರ','ಬಹುಧಾನ್ಯ','ಪ್ರಮಾಥಿ','ವಿಕ್ರಮ','ವೃಷ','ಚಿತ್ರಭಾನು','ಸುಭಾನು','ತಾರಣ','ಪಾರ್ಥಿವ','ವ್ಯಯ',
@@ -525,8 +527,11 @@ class AstroCalculator {
         'ಪ್ಲವಂಗ','ಕೀಲಕ','ಸೌಮ್ಯ','ಸಾಧಾರಣ','ವಿರೋಧಕೃತ್','ಪರಿಧಾವಿ','ಪ್ರಮಾದೀಚ','ಆನಂದ','ರಾಕ್ಷಸ','ಅನಲ',
         'ಪಿಂಗಳ','ಕಾಳಯುಕ್ತಿ','ಸಿದ್ಧಾರ್ಥಿ','ರೌದ್ರಿ','ದುರ್ಮತಿ','ದುಂದುಭಿ','ರುಧಿರೋದ್ಗಾರಿ','ರಕ್ತಾಕ್ಷಿ','ಕ್ರೋಧನ','ಅಕ್ಷಯ',
       ];
-      final samvatsaraIdx = ((year + 11) % 60);
-      final samvatsara = knSamvatsara[samvatsaraIdx];
+      // Shalivahana Shaka year: before Ugadi (approx March 22), use previous year
+      int shakaYear = year - 78;
+      if (month < 3 || (month == 3 && day < 22)) shakaYear -= 1;
+      final samvatsaraIdx = ((shakaYear - 1) % 60).abs();
+      final samvatsara = '${knSamvatsara[samvatsaraIdx]} (ಶಕ $shakaYear)';
       
       // Visha Praghati & Amruta Praghati (per nakshatra, in ghatis from sunrise)
       final vishaGhatis = [30,28,22,20,18,26,24,10,14,12,8,6,4,2,30,22,20,14,12,10,8,6,4,2,28,26,24,22,20,18];
