@@ -222,7 +222,7 @@ class KundaliChart extends StatelessWidget {
       ),
     );
   }
-
+  Widget _planetChip(String name, ChipType type) {
     return GestureDetector(
       onTap: () {
         if (onPlanetTap != null) onPlanetTap!(name);
