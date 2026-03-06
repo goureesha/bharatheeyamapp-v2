@@ -3,6 +3,7 @@ import 'package:flutter/foundation.dart';
 import 'package:sweph/sweph.dart';
 import '../constants/strings.dart';
 import 'ephemeris.dart';
+import 'shadbala.dart';
 
 // ============================================================
 // KUNDALI RESULT DATA MODELS
@@ -110,8 +111,7 @@ class KundaliResult {
   final List<double> bhavas; // 12 house cusps
   final PanchangData panchang;
   final List<DashaEntry> dashas;
-  final List<int> savBindus;   // Sarvashtakavarga
-  final Map<String, List<int>> bavBindus; // Bhinnashtakavarga
+  final Map<String, Map<String, double>> shadbala; // 6-fold planetary strength
   final Map<String, double> advSphutas; // 16 upagrahas
 
   KundaliResult({
@@ -119,8 +119,7 @@ class KundaliResult {
     required this.bhavas,
     required this.panchang,
     required this.dashas,
-    required this.savBindus,
-    required this.bavBindus,
+    required this.shadbala,
     required this.advSphutas,
   });
 }
@@ -282,42 +281,8 @@ class AstroCalculator {
   }
 
   // ─────────────────────────────────────────────
-  // ASHTAKAVARGA — exact Python port
+  // SHADBALA Logic applied externally
   // ─────────────────────────────────────────────
-  static (List<int> sav, Map<String, List<int>> bav) calcAshtakavarga(
-      Map<String, double> positions) {
-    // P_KEYS in order: Sun, Moon, Mars, Mercury, Jupiter, Venus, Saturn, Lagna
-    final pKeys = ['ರವಿ', 'ಚಂದ್ರ', 'ಕುಜ', 'ಬುಧ', 'ಗುರು', 'ಶುಕ್ರ', 'ಶನಿ', 'ಲಗ್ನ'];
-    final rIdx = {for (var k in pKeys) k: (positions[k]! / 30).floor()};
-
-    final sav = List<int>.filled(12, 0);
-    final bav = {
-      for (var p in ['ರವಿ', 'ಚಂದ್ರ', 'ಕುಜ', 'ಬುಧ', 'ಗುರು', 'ಶುಕ್ರ', 'ಶನಿ'])
-        p: List<int>.filled(12, 0)
-    };
-
-    const bavRules = {
-      'ರವಿ': [[1,2,4,7,8,9,10,11],[3,6,10,11],[1,2,4,7,8,9,10,11],[3,5,6,9,10,11,12],[5,6,9,11],[6,7,12],[1,2,4,7,8,9,10,11],[3,4,6,10,11,12]],
-      'ಚಂದ್ರ': [[3,6,7,8,10,11],[1,3,6,7,10,11],[2,3,5,6,9,10,11],[1,3,4,5,7,8,10,11],[1,4,7,8,10,11,12],[3,4,5,7,9,10,11],[3,5,6,11],[3,6,10,11]],
-      'ಕುಜ': [[3,5,6,10,11],[3,6,11],[1,2,4,7,8,10,11],[3,5,6,11],[6,10,11,12],[6,8,11,12],[1,4,7,8,9,10,11],[1,3,6,10,11]],
-      'ಬುಧ': [[5,6,9,11,12],[2,4,6,8,10,11],[1,2,4,7,8,9,10,11],[1,3,5,6,9,10,11,12],[6,8,11,12],[1,2,3,4,5,8,9,11],[1,2,4,7,8,9,10,11],[1,2,4,6,8,10,11]],
-      'ಗುರು': [[1,2,3,4,7,8,9,10,11],[2,5,7,9,11],[1,2,4,7,8,10,11],[1,2,4,5,6,9,10,11],[1,2,3,4,7,8,10,11],[2,5,6,9,10,11],[3,5,6,12],[1,2,4,5,6,9,10,11]],
-      'ಶುಕ್ರ': [[8,11,12],[1,2,3,4,5,8,9,11,12],[3,5,6,9,11,12],[3,5,6,9,11],[5,8,9,10,11],[1,2,3,4,5,8,9,10,11],[3,4,5,8,9,10,11],[1,2,3,4,5,8,9,11]],
-      'ಶನಿ': [[1,2,4,7,8,10,11],[3,6,11],[3,5,6,10,11,12],[6,8,9,10,11,12],[5,6,11,12],[6,11,12],[3,5,6,11],[1,3,4,6,10,11]],
-    };
-
-    for (final target in ['ರವಿ', 'ಚಂದ್ರ', 'ಕುಜ', 'ಬುಧ', 'ಗುರು', 'ಶುಕ್ರ', 'ಶನಿ']) {
-      final rules = bavRules[target]!;
-      for (int refIdx = 0; refIdx < pKeys.length; refIdx++) {
-        final refRashi = rIdx[pKeys[refIdx]]!;
-        for (final h in rules[refIdx]) {
-          final signIdx = (refRashi + h - 1) % 12;
-          bav[target]![signIdx]++;
-          sav[signIdx]++;
-        }
-      }
-    }
-    return (sav, bav);
   }
 
   // ─────────────────────────────────────────────
@@ -611,8 +576,30 @@ class AstroCalculator {
       // Dashas
       final dashas = calcDasha(DateTime(year, month, day), nIdx, perc);
 
-      // Ashtakavarga
-      final (sav, bav) = calcAshtakavarga(positions);
+      // Shadbala Calculation
+      final shadbalaResults = ShadbalaLogic.calculateShadbala(
+        {
+          'Sun': positions['ರವಿ'] ?? 0.0,
+          'Moon': positions['ಚಂದ್ರ'] ?? 0.0,
+          'Mars': positions['ಕುಜ'] ?? 0.0,
+          'Mercury': positions['ಬುಧ'] ?? 0.0,
+          'Jupiter': positions['ಗುರು'] ?? 0.0,
+          'Venus': positions['ಶುಕ್ರ'] ?? 0.0,
+          'Saturn': positions['ಶನಿ'] ?? 0.0,
+        },
+        {
+          'Sun': speeds['ರವಿ'] ?? 0.0,
+          'Moon': speeds['ಚಂದ್ರ'] ?? 0.0,
+          'Mars': speeds['ಕುಜ'] ?? 0.0,
+          'Mercury': speeds['ಬುಧ'] ?? 0.0,
+          'Jupiter': speeds['ಗುರು'] ?? 0.0,
+          'Venus': speeds['ಶುಕ್ರ'] ?? 0.0,
+          'Saturn': speeds['ಶನಿ'] ?? 0.0,
+        },
+        positions['ಲಗ್ನ'] ?? 0.0,
+        srCivil, // sunRiseJd
+        jdBirth, // birthJd
+      );
 
       // Advanced Sphutas (16) — exact Python port
       final S   = positions['ರವಿ']!;
@@ -655,8 +642,7 @@ class AstroCalculator {
         bhavas: bhavaSphutas,
         panchang: panchang,
         dashas: dashas,
-        savBindus: sav,
-        bavBindus: bav,
+        shadbala: shadbalaResults,
         advSphutas: advSphutas,
       );
     } catch (e) {
