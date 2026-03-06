@@ -175,7 +175,7 @@ class _InputScreenState extends State<InputScreen> {
             _minute = now.minute;
             _ampm = now.hour >= 12 ? 'PM' : 'AM';
             _loadedNotes = '';
-            _loadedAroodhas = null;
+            _loadedAroodhas = {};
           });
         }
       }
