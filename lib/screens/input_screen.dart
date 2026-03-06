@@ -40,6 +40,7 @@ class _InputScreenState extends State<InputScreen> {
 
   String _loadedNotes = '';
   Map<String, int> _loadedAroodhas = {};
+  int? _loadedJanmaNakshatraIdx;
 
   @override
   void initState() {
@@ -75,6 +76,7 @@ class _InputScreenState extends State<InputScreen> {
       _ampm   = p.ampm;
       _loadedNotes = p.notes;
       _loadedAroodhas = Map.from(p.aroodhas);
+      _loadedJanmaNakshatraIdx = p.janmaNakshatraIdx;
       try {
         final parts = p.date.split('-');
         if (parts.length == 3) {
@@ -158,7 +160,8 @@ class _InputScreenState extends State<InputScreen> {
             lon: lon,
             initialNotes: _loadedNotes,
             initialAroodhas: _loadedAroodhas,
-            onSave: (notes, aroodhas) => _saveProfile(notes: notes, aroodhas: aroodhas),
+            initialJanmaNakshatraIdx: _loadedJanmaNakshatraIdx,
+            onSave: (notes, aroodhas, janmaIdx) => _saveProfile(notes: notes, aroodhas: aroodhas, janmaNakshatraIdx: janmaIdx),
           ),
         ));
 
@@ -176,6 +179,7 @@ class _InputScreenState extends State<InputScreen> {
             _ampm = now.hour >= 12 ? 'PM' : 'AM';
             _loadedNotes = '';
             _loadedAroodhas = {};
+            _loadedJanmaNakshatraIdx = null;
           });
         }
       }
@@ -185,7 +189,7 @@ class _InputScreenState extends State<InputScreen> {
     setState(() => _loading = false);
   }
 
-  void _saveProfile({String notes = '', Map<String, int> aroodhas = const {}}) async {
+  void _saveProfile({String notes = '', Map<String, int> aroodhas = const {}, int? janmaNakshatraIdx}) async {
     String name = _nameCtrl.text.trim();
     if (name.isEmpty) name = 'Unknown_${_dob.toIso8601String().substring(0, 10)}';
     final p = Profile(
@@ -197,6 +201,7 @@ class _InputScreenState extends State<InputScreen> {
       place: _placeCtrl.text,
       notes: notes,
       aroodhas: aroodhas,
+      janmaNakshatraIdx: janmaNakshatraIdx,
     );
     await StorageService.save(p);
     await _loadProfiles();

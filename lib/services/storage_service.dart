@@ -78,6 +78,7 @@ class Profile {
   final String place;
   final String notes;
   final Map<String, int> aroodhas;
+  final int? janmaNakshatraIdx;
 
   Profile({
     required this.name,
@@ -90,6 +91,7 @@ class Profile {
     required this.place,
     this.notes = '',
     this.aroodhas = const {},
+    this.janmaNakshatraIdx,
   });
 
   Map<String, dynamic> toJson() => {
@@ -97,6 +99,7 @@ class Profile {
     'ampm': ampm, 'lat': lat, 'lon': lon, 'p': place,
     'notes': notes,
     'aroodhas': aroodhas.map((k, v) => MapEntry(k, v)),
+    'janmaNakshatraIdx': janmaNakshatraIdx,
   };
 
   factory Profile.fromJson(String name, Map<String, dynamic> j) => Profile(
@@ -112,5 +115,6 @@ class Profile {
     aroodhas: j['aroodhas'] != null 
         ? Map<String, int>.from((j['aroodhas'] as Map).map((k, v) => MapEntry(k.toString(), (v as num).toInt())))
         : {},
+    janmaNakshatraIdx: j['janmaNakshatraIdx'] as int?,
   );
 }

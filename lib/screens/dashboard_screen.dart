@@ -20,7 +20,8 @@ class DashboardScreen extends StatefulWidget {
   final double lon;
   final String initialNotes;
   final Map<String, int> initialAroodhas;
-  final void Function(String notes, Map<String, int> aroodhas) onSave;
+  final int? initialJanmaNakshatraIdx;
+  final void Function(String notes, Map<String, int> aroodhas, int? janmaNakshatraIdx) onSave;
 
   const DashboardScreen({
     super.key,
@@ -35,6 +36,7 @@ class DashboardScreen extends StatefulWidget {
     required this.lon,
     this.initialNotes = '',
     this.initialAroodhas = const {},
+    this.initialJanmaNakshatraIdx,
     required this.onSave,
   });
 
@@ -47,10 +49,11 @@ class _DashboardScreenState extends State<DashboardScreen>
   late TabController _tabCtrl;
   String _notes = '';
   Map<String, int> _aroodhas = {};
+  int? _janmaNakshatraIdx;
 
   static const _tabs = [
     'ಕುಂಡಲಿ', 'ಗ್ರಹ ಸ್ಫುಟ', 'ಉಪಗ್ರಹ ಸ್ಫುಟ', 'ಆರೂಢ',
-    'ದಶ', 'ಪಂಚಾಂಗ', 'ಭಾವ', 'ಅಷ್ಟಕವರ್ಗ',
+    'ದಶ', 'ಪಂಚಾಂಗ', 'ಭಾವ', 'ಅಷ್ಟಕವರ್ಗ', 'ತಾರಾನುಕೂಲ',
     'ಟಿಪ್ಪಣಿ', 'ಬಗ್ಗೆ'
   ];
 
@@ -60,6 +63,7 @@ class _DashboardScreenState extends State<DashboardScreen>
     _tabCtrl = TabController(length: _tabs.length, vsync: this);
     _notes = widget.initialNotes;
     _aroodhas = Map.from(widget.initialAroodhas);
+    _janmaNakshatraIdx = widget.initialJanmaNakshatraIdx;
   }
 
   @override
@@ -98,7 +102,7 @@ class _DashboardScreenState extends State<DashboardScreen>
                   IconButton(
                     icon: const Icon(Icons.save, color: Colors.white),
                     onPressed: () {
-                      widget.onSave(_notes, _aroodhas);
+                      widget.onSave(_notes, _aroodhas, _janmaNakshatraIdx);
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(content: Text('ಉಳಿಸಲಾಗಿದೆ!',
                           style: const TextStyle())));
@@ -131,6 +135,7 @@ class _DashboardScreenState extends State<DashboardScreen>
                   _buildPanchangTab(),
                   _buildBhavaTab(),
                   _buildAshtakavargaTab(),
+                  _buildTaranukoolaTab(),
                   _buildNotesTab(),
                   _buildAboutTab(),
                 ],
@@ -429,7 +434,110 @@ class _DashboardScreenState extends State<DashboardScreen>
   }
 
   // ─────────────────────────────────────────────
-  // TAB 9: NOTES
+  // TAB 9: TARANUKOOLA
+  // ─────────────────────────────────────────────
+  Widget _buildTaranukoolaTab() {
+    // 1. Get daily Nakshatra index from Panchanga
+    final dinaNakName = widget.result.panchanga.nakshatra.split(' ')[0];
+    int dinaNakIdx = knNak.indexWhere((n) => dinaNakName.startsWith(n));
+    if (dinaNakIdx == -1) dinaNakIdx = 0; // Fallback
+
+    final taras = [
+      'ಜನ್ಮ ತಾರೆ\n(ಅಶುಭ - ಪ್ರತಿಕೂಲ)',        // 1
+      'ಸಂಪತ್ ತಾರೆ\n(ಶುಭ - ಉತ್ತಮ)',           // 2 
+      'ವಿಪತ್ ತಾರೆ\n(ಅಶುಭ - ಪ್ರತಿಕೂಲ)',       // 3
+      'ಕ್ಷೇಮ ತಾರೆ\n(ಶುಭ - ಉತ್ತಮ)',           // 4
+      'ಪ್ರತ್ಯಕ್ ತಾರೆ\n(ಅಶುಭ - ಪ್ರತಿಕೂಲ)',      // 5
+      'ಸಾಧಕ ತಾರೆ\n(ಶುಭ - ಉತ್ತಮ)',           // 6
+      'ನೈಧನ ತಾರೆ\n(ಅಶುಭ - ಪ್ರತಿಕೂಲ)',        // 7
+      'ಮಿತ್ರ ತಾರೆ\n(ಶುಭ - ಉತ್ತಮ)',           // 8
+      'ಪರಮ ಮಿತ್ರ ತಾರೆ\n(ಶುಭ - ಅತ್ಯುತ್ತಮ)',      // 9
+    ];
+
+    String resultText = 'ದಯವಿಟ್ಟು ನಿಮ್ಮ ಜನ್ಮ ನಕ್ಷತ್ರವನ್ನು ಆಯ್ಕೆಮಾಡಿ';
+    Color resultColor = Colors.grey;
+
+    if (_janmaNakshatraIdx != null) {
+      // Tara calculation logic: (Dina - Janma + 27) % 9
+      int taraIdx = (dinaNakIdx - _janmaNakshatraIdx! + 27) % 9;
+      resultText = taras[taraIdx];
+      // Auspicious Taras: 2(idx 1), 4(idx 3), 6(idx 5), 8(idx 7), 9(idx 8)
+      bool isShubha = (taraIdx == 1 || taraIdx == 3 || taraIdx == 5 || taraIdx == 7 || taraIdx == 8);
+      resultColor = isShubha ? Colors.green.shade700 : Colors.red.shade700;
+    }
+
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(16),
+      child: AppCard(
+        title: 'ತಾರಾನುಕೂಲ (ತಾರಾ ಬಲ)',
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            const Text('ದಿನ ನಕ್ಷತ್ರ (ಇಂದಿನ / ಜನನ ಸಮಯದ ನಕ್ಷತ್ರ):', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
+            const SizedBox(height: 4),
+            Text(widget.result.panchanga.nakshatra, style: const TextStyle(fontSize: 18, color: kPurple1, fontWeight: FontWeight.w600)),
+            const SizedBox(height: 24),
+            
+            const Text('ನಿಮ್ಮ ಜನ್ಮ ನಕ್ಷತ್ರವನ್ನು ಆಯ್ಕೆಮಾಡಿ:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
+            const SizedBox(height: 8),
+            Container(
+              decoration: BoxDecoration(
+                border: Border.all(color: Colors.grey.shade300),
+                borderRadius: BorderRadius.circular(8),
+                color: Colors.white,
+              ),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+              child: DropdownButtonHideUnderline(
+                child: DropdownButton<int>(
+                  isExpanded: true,
+                  hint: const Text('ನಕ್ಷತ್ರ ಆಯ್ಕೆಮಾಡಿ'),
+                  value: _janmaNakshatraIdx,
+                  items: List.generate(27, (i) => DropdownMenuItem(
+                    value: i,
+                    child: Text(knNak[i], style: const TextStyle(fontSize: 16)),
+                  )),
+                  onChanged: (val) {
+                    setState(() {
+                      _janmaNakshatraIdx = val;
+                    });
+                  },
+                ),
+              ),
+            ),
+            const SizedBox(height: 32),
+            
+            if (_janmaNakshatraIdx != null) ...[
+              const Text('ತಾರಾ ಬಲ ಫಲಿತಾಂಶ:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+              const SizedBox(height: 12),
+              Container(
+                padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 16),
+                decoration: BoxDecoration(
+                  color: resultColor.withOpacity(0.08),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: resultColor.withOpacity(0.3), width: 2),
+                ),
+                child: Center(
+                  child: Text(
+                    resultText,
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                      color: resultColor,
+                      height: 1.4,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                ),
+              ),
+            ]
+          ],
+        ),
+      ),
+    );
+  }
+
+  // ─────────────────────────────────────────────
+  // TAB 10: NOTES
   // ─────────────────────────────────────────────
   Widget _buildNotesTab() {
     return Padding(
