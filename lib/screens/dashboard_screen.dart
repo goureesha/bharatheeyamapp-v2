@@ -438,7 +438,7 @@ class _DashboardScreenState extends State<DashboardScreen>
   // ─────────────────────────────────────────────
   Widget _buildTaranukoolaTab() {
     // 1. Get daily Nakshatra index from Panchanga
-    final dinaNakName = widget.result.panchanga.nakshatra.split(' ')[0];
+    final dinaNakName = widget.result.panchang.nakshatra.split(' ')[0];
     int dinaNakIdx = knNak.indexWhere((n) => dinaNakName.startsWith(n));
     if (dinaNakIdx == -1) dinaNakIdx = 0; // Fallback
 
@@ -475,7 +475,7 @@ class _DashboardScreenState extends State<DashboardScreen>
           children: [
             const Text('ದಿನ ನಕ್ಷತ್ರ (ಇಂದಿನ / ಜನನ ಸಮಯದ ನಕ್ಷತ್ರ):', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
             const SizedBox(height: 4),
-            Text(widget.result.panchanga.nakshatra, style: const TextStyle(fontSize: 18, color: kPurple1, fontWeight: FontWeight.w600)),
+            Text(widget.result.panchang.nakshatra, style: const TextStyle(fontSize: 18, color: kPurple1, fontWeight: FontWeight.w600)),
             const SizedBox(height: 24),
             
             const Text('ನಿಮ್ಮ ಜನ್ಮ ನಕ್ಷತ್ರವನ್ನು ಆಯ್ಕೆಮಾಡಿ:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
