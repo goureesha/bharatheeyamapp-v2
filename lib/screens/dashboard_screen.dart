@@ -64,6 +64,14 @@ class _DashboardScreenState extends State<DashboardScreen>
     _notes = widget.initialNotes;
     _aroodhas = Map.from(widget.initialAroodhas);
     _janmaNakshatraIdx = widget.initialJanmaNakshatraIdx;
+
+    if (_janmaNakshatraIdx == null) {
+      final panchangNakName = widget.result.panchang.nakshatra.split(' ')[0];
+      int panchangNakIdx = knNak.indexWhere((n) => panchangNakName.startsWith(n));
+      if (panchangNakIdx != -1) {
+        _janmaNakshatraIdx = panchangNakIdx;
+      }
+    }
   }
 
   @override
