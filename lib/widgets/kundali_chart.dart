@@ -99,11 +99,27 @@ class KundaliChart extends StatelessWidget {
 
         int ri;
         if (isBhava) {
-          // Bhava chart: exact Python formula (line 1038)
-          // ri = (int(ld/30) + int(((d - ld + 360)%360 + 15)/30)) % 12
-          final ld = result.planets['ಲಗ್ನ']?.longitude ?? 0;
+          // Bhava chart: place planet based on which unequal house it falls into.
+          // result.bhavas contains the starting cusps of the 12 houses.
           final d = info.longitude;
-          ri = ((ld / 30).floor() + (((d - ld + 360) % 360 + 15) / 30).floor()) % 12;
+          int bhavaIdx = 0;
+          for (int i = 0; i < 12; i++) {
+            final start = result.bhavas[i];
+            final end = result.bhavas[(i + 1) % 12];
+            if (start < end) {
+              if (d >= start && d < end) {
+                bhavaIdx = i;
+                break;
+              }
+            } else {
+              // Wrap-around case (e.g. start=350, end=20)
+              if (d >= start || d < end) {
+                bhavaIdx = i;
+                break;
+              }
+            }
+          }
+          ri = (lagnaIdx + bhavaIdx) % 12;
         } else {
           ri = _rashinFor(info.longitude);
         }
