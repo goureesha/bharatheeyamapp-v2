@@ -3,14 +3,14 @@ import '../constants/strings.dart';
 import '../widgets/common.dart';
 import '../core/match_making.dart';
 
-class MatchMakingScreen extends StatefulWidget {
-  const MatchMakingScreen({super.key});
+class MatchMakingTab extends StatefulWidget {
+  const MatchMakingTab({super.key});
 
   @override
-  State<MatchMakingScreen> createState() => _MatchMakingScreenState();
+  State<MatchMakingTab> createState() => _MatchMakingTabState();
 }
 
-class _MatchMakingScreenState extends State<MatchMakingScreen> {
+class _MatchMakingTabState extends State<MatchMakingTab> {
   int? _bNak;
   int? _bRashi;
   int? _gNak;
@@ -157,68 +157,56 @@ class _MatchMakingScreenState extends State<MatchMakingScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: kBg,
-      body: SafeArea(
-        child: Column(
-          children: [
-            const AppHeader(),
-            Expanded(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.all(16),
-                child: Column(
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        children: [
+          AppCard(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const SectionTitle('ವಧುವಿನ ವಿವರಗಳು (Bride)', color: kOrange),
+                const SizedBox(height: 12),
+                Row(
                   children: [
-                    AppCard(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const SectionTitle('ವಧುವಿನ ವಿವರಗಳು (Bride)', color: kOrange),
-                          const SizedBox(height: 12),
-                          Row(
-                            children: [
-                              Expanded(child: _buildDropdown('ರಾಶಿ', _bRashi, knRashi, (v) => setState(() => _bRashi = v))),
-                              const SizedBox(width: 16),
-                              Expanded(child: _buildDropdown('ನಕ್ಷತ್ರ', _bNak, knNak, (v) => setState(() => _bNak = v))),
-                            ],
-                          ),
-                          const SizedBox(height: 24),
-                          const Divider(),
-                          const SizedBox(height: 8),
-                          const SectionTitle('ವರನ ವಿವರಗಳು (Groom)', color: kTeal),
-                          const SizedBox(height: 12),
-                          Row(
-                            children: [
-                              Expanded(child: _buildDropdown('ರಾಶಿ', _gRashi, knRashi, (v) => setState(() => _gRashi = v))),
-                              const SizedBox(width: 16),
-                              Expanded(child: _buildDropdown('ನಕ್ಷತ್ರ', _gNak, knNak, (v) => setState(() => _gNak = v))),
-                            ],
-                          ),
-                          const SizedBox(height: 32),
-                          SizedBox(
-                            width: double.infinity,
-                            child: ElevatedButton(
-                              onPressed: _calculateMatch,
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: kPurple1,
-                                foregroundColor: Colors.white,
-                                padding: const EdgeInsets.symmetric(vertical: 16),
-                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                                elevation: 0,
-                              ),
-                              child: const Text('ಹೊಂದಾಣಿಕೆ ಪರೀಕ್ಷಿಸಿ', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    _buildResultTable(),
-                    const SizedBox(height: 32),
+                    Expanded(child: _buildDropdown('ರಾಶಿ', _bRashi, knRashi, (v) => setState(() => _bRashi = v))),
+                    const SizedBox(width: 16),
+                    Expanded(child: _buildDropdown('ನಕ್ಷತ್ರ', _bNak, knNak, (v) => setState(() => _bNak = v))),
                   ],
                 ),
-              ),
+                const SizedBox(height: 24),
+                const Divider(),
+                const SizedBox(height: 8),
+                const SectionTitle('ವರನ ವಿವರಗಳು (Groom)', color: kTeal),
+                const SizedBox(height: 12),
+                Row(
+                  children: [
+                    Expanded(child: _buildDropdown('ರಾಶಿ', _gRashi, knRashi, (v) => setState(() => _gRashi = v))),
+                    const SizedBox(width: 16),
+                    Expanded(child: _buildDropdown('ನಕ್ಷತ್ರ', _gNak, knNak, (v) => setState(() => _gNak = v))),
+                  ],
+                ),
+                const SizedBox(height: 32),
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: _calculateMatch,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: kPurple1,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      elevation: 0,
+                    ),
+                    child: const Text('ಹೊಂದಾಣಿಕೆ ಪರೀಕ್ಷಿಸಿ', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                  ),
+                ),
+              ],
             ),
-          ],
-        ),
+          ),
+          _buildResultTable(),
+          const SizedBox(height: 32),
+        ],
       ),
     );
   }

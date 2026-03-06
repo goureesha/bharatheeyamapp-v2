@@ -7,6 +7,7 @@ import '../widgets/planet_detail_sheet.dart';
 import '../widgets/dasha_widget.dart';
 import '../widgets/ashtakavarga_widget.dart';
 import '../services/ad_service.dart';
+import 'match_making_tab.dart';
 
 class DashboardScreen extends StatefulWidget {
   final KundaliResult result;
@@ -54,7 +55,7 @@ class _DashboardScreenState extends State<DashboardScreen>
 
   static const _tabs = [
     'ಕುಂಡಲಿ', 'ಗ್ರಹ ಸ್ಫುಟ', 'ಉಪಗ್ರಹ ಸ್ಫುಟ', 'ಆರೂಢ',
-    'ದಶ', 'ಪಂಚಾಂಗ', 'ಭಾವ', 'ಅಷ್ಟಕವರ್ಗ', 'ತಾರಾನುಕೂಲ',
+    'ದಶ', 'ಪಂಚಾಂಗ', 'ಭಾವ', 'ಅಷ್ಟಕವರ್ಗ', 'ತಾರಾನುಕೂಲ', 'ಹೊಂದಾಣಿಕೆ',
     'ಟಿಪ್ಪಣಿ', 'ಬಗ್ಗೆ'
   ];
 
@@ -141,6 +142,7 @@ class _DashboardScreenState extends State<DashboardScreen>
                   _buildBhavaTab(),
                   _buildAshtakavargaTab(),
                   _buildTaranukoolaTab(),
+                  const MatchMakingTab(),
                   _buildNotesTab(),
                   _buildAboutTab(),
                 ],
