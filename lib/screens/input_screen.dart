@@ -145,7 +145,7 @@ class _InputScreenState extends State<InputScreen> {
       );
 
       if (result != null && mounted) {
-        Navigator.push(context, MaterialPageRoute(
+        await Navigator.push(context, MaterialPageRoute(
           builder: (_) => DashboardScreen(
             result: result,
             name: _nameCtrl.text,
@@ -161,6 +161,23 @@ class _InputScreenState extends State<InputScreen> {
             onSave: (notes, aroodhas) => _saveProfile(notes: notes, aroodhas: aroodhas),
           ),
         ));
+
+        // Reset the form back to current time/empty strings when returning
+        if (mounted) {
+          final now = DateTime.now();
+          setState(() {
+            _nameCtrl.clear();
+            _placeCtrl.clear();
+            _latCtrl.clear();
+            _lonCtrl.clear();
+            _dob = now;
+            _hour = now.hour % 12 == 0 ? 12 : now.hour % 12;
+            _minute = now.minute;
+            _ampm = now.hour >= 12 ? 'PM' : 'AM';
+            _loadedNotes = '';
+            _loadedAroodhas = null;
+          });
+        }
       }
     } catch (e) {
       _showError('ದೋಷ: $e');
