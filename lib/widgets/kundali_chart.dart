@@ -100,20 +100,32 @@ class KundaliChart extends StatelessWidget {
         int ri;
         if (isBhava) {
           // Bhava chart: place planet based on which unequal house it falls into.
-          // result.bhavas contains the starting cusps of the 12 houses.
+          // result.bhavas contains the 12 precise Sripathi Bhava Madhyas (midpoints).
+          // We must calculate the Bhava Sandhi (boundaries) midway between adjacent midpoints.
           final d = info.longitude;
+          List<double> boundaries = List.filled(12, 0.0);
+          for (int i = 0; i < 12; i++) {
+            final m1 = result.bhavas[i];
+            final m2 = result.bhavas[(i + 1) % 12];
+            
+            // Calculate midpoint of the shortest arc bridging m1 and m2
+            double diff = (m2 - m1 + 360.0) % 360.0;
+            boundaries[i] = (m1 + (diff / 2.0)) % 360.0;
+          }
+
           int bhavaIdx = 0;
           for (int i = 0; i < 12; i++) {
-            final start = result.bhavas[i];
-            final end = result.bhavas[(i + 1) % 12];
-            if (start < end) {
-              if (d >= start && d < end) {
+            final startBoundary = boundaries[(i + 11) % 12]; // Boundary *before* this house's midpoint
+            final endBoundary = boundaries[i];              // Boundary *after* this house's midpoint
+            
+            if (startBoundary < endBoundary) {
+              if (d >= startBoundary && d < endBoundary) {
                 bhavaIdx = i;
                 break;
               }
             } else {
               // Wrap-around case (e.g. start=350, end=20)
-              if (d >= start || d < end) {
+              if (d >= startBoundary || d < endBoundary) {
                 bhavaIdx = i;
                 break;
               }

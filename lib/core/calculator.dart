@@ -407,20 +407,45 @@ class AstroCalculator {
         speeds[kn] = entry.value[1];
       }
 
-      // Lagna (Ascendant) and Bhavas
+      // Lagna (Ascendant) and Bhavas using Sripathi/Porphyry (Linear Ecliptic Trisection)
       final housesRes = Ephemeris.placidusHousesFull(jdBirth, lat, lon);
       double ascDeg = 0.0;
       List<double> bhavaSphutas = List.filled(12, 0.0);
       
-      if (housesRes != null) {
-        if (housesRes.cusps.length == 13) {
-          ascDeg = normDeg(housesRes.cusps[1] - ayn);
-          // Use actual Placidus cusps (unequal houses) - matches Python reference
-          bhavaSphutas = List.generate(12, (i) => normDeg(housesRes.cusps[i + 1] - ayn));
-        } else if (housesRes.cusps.isNotEmpty) {
-          ascDeg = normDeg(housesRes.cusps[0] - ayn);
-          bhavaSphutas = List.generate(12, (i) => normDeg(housesRes.cusps[i] - ayn));
-        }
+      if (housesRes != null && housesRes.ascmc.length >= 2) {
+        final tropicalAsc = housesRes.ascmc[0];
+        final tropicalMC = housesRes.ascmc[1];
+        
+        // Exact sidereal anchors
+        final h1 = normDeg(tropicalAsc - ayn);
+        final h10 = normDeg(tropicalMC - ayn);
+        
+        ascDeg = h1;
+        
+        // Cardinal houses
+        final h4 = normDeg(h10 + 180.0);
+        final h7 = normDeg(h1 + 180.0);
+        
+        // Trisection of Arc 1 (Ascendant to IC) -> Houses 2 and 3
+        final dist14 = normDeg(h4 - h1);
+        final step14 = dist14 / 3.0;
+        final h2 = normDeg(h1 + step14);
+        final h3 = normDeg(h1 + 2.0 * step14);
+        
+        // Trisection of Arc 2 (IC to Descendant) -> Houses 5 and 6
+        final dist47 = normDeg(h7 - h4);
+        final step47 = dist47 / 3.0;
+        final h5 = normDeg(h4 + step47);
+        final h6 = normDeg(h4 + 2.0 * step47);
+        
+        // Opposite houses
+        final h8 = normDeg(h2 + 180.0);
+        final h9 = normDeg(h3 + 180.0);
+        final h11 = normDeg(h5 + 180.0);
+        final h12 = normDeg(h6 + 180.0);
+        
+        // Sripathi Bhava Madhyas (Midpoints)
+        bhavaSphutas = [h1, h2, h3, h4, h5, h6, h7, h8, h9, h10, h11, h12];
       }
       
       positions['ಲಗ್ನ'] = ascDeg;
