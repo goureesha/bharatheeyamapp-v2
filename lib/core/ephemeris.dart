@@ -55,15 +55,16 @@ class Ephemeris {
     double current = jdStart - 0.3;
     
     try {
-      // Using -0.583 for Mid-Limb Sunrise (center of sun including refraction)
+      // Using 0.0 for True Horizon Geocentric Sunrise (center of solar disk)
+      // Disabling atmospheric refraction & radius corr per Shuddha Drigganitha
       for (int i = 0; i < 30; i++) {
         double alt1 = getAltitudeManual(current, lat, lon);
         double alt2 = getAltitudeManual(current + step, lat, lon);
-        if (alt1 < -0.583 && alt2 >= -0.583) {
+        if (alt1 < 0.0 && alt2 >= 0.0) {
           double l = current, h = current + step;
           for (int j = 0; j < 20; j++) {
             double m = (l + h) / 2;
-            if (getAltitudeManual(m, lat, lon) < -0.583) {
+            if (getAltitudeManual(m, lat, lon) < 0.0) {
               l = m;
             } else {
               h = m;
@@ -71,11 +72,11 @@ class Ephemeris {
           }
           riseTime = h;
         }
-        if (alt1 > -0.583 && alt2 <= -0.583) {
+        if (alt1 > 0.0 && alt2 <= 0.0) {
           double l = current, h = current + step;
           for (int j = 0; j < 20; j++) {
             double m = (l + h) / 2;
-            if (getAltitudeManual(m, lat, lon) > -0.583) {
+            if (getAltitudeManual(m, lat, lon) > 0.0) {
               l = m;
             } else {
               h = m;
