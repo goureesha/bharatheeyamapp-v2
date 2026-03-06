@@ -50,6 +50,7 @@ class _DashboardScreenState extends State<DashboardScreen>
   String _notes = '';
   Map<String, int> _aroodhas = {};
   int? _janmaNakshatraIdx;
+  int? _dinaNakshatraIdx;
 
   static const _tabs = [
     'ಕುಂಡಲಿ', 'ಗ್ರಹ ಸ್ಫುಟ', 'ಉಪಗ್ರಹ ಸ್ಫುಟ', 'ಆರೂಢ',
@@ -64,6 +65,10 @@ class _DashboardScreenState extends State<DashboardScreen>
     _notes = widget.initialNotes;
     _aroodhas = Map.from(widget.initialAroodhas);
     _janmaNakshatraIdx = widget.initialJanmaNakshatraIdx;
+
+    final panchangNakName = widget.result.panchang.nakshatra.split(' ')[0];
+    int panchangNakIdx = knNak.indexWhere((n) => panchangNakName.startsWith(n));
+    _dinaNakshatraIdx = panchangNakIdx != -1 ? panchangNakIdx : 0;
   }
 
   @override
@@ -437,10 +442,7 @@ class _DashboardScreenState extends State<DashboardScreen>
   // TAB 9: TARANUKOOLA
   // ─────────────────────────────────────────────
   Widget _buildTaranukoolaTab() {
-    // 1. Get daily Nakshatra index from Panchanga
-    final dinaNakName = widget.result.panchang.nakshatra.split(' ')[0];
-    int dinaNakIdx = knNak.indexWhere((n) => dinaNakName.startsWith(n));
-    if (dinaNakIdx == -1) dinaNakIdx = 0; // Fallback
+    int dinaNakIdx = _dinaNakshatraIdx ?? 0;
 
     final taras = [
       'ಜನ್ಮ ತಾರೆ\n(ಅಶುಭ - ಪ್ರತಿಕೂಲ)',        // 1
@@ -472,11 +474,35 @@ class _DashboardScreenState extends State<DashboardScreen>
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            const Text('ತಾರಾನುಕೂಲ', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: kPurple1)),
+            const Text('ತಾರಾನುಕೂಲ', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
             const SizedBox(height: 16),
-            const Text('ದಿನ ನಕ್ಷತ್ರ (ಇಂದಿನ / ಜನನ ಸಮಯದ ನಕ್ಷತ್ರ):', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
-            const SizedBox(height: 4),
-            Text(widget.result.panchang.nakshatra, style: const TextStyle(fontSize: 18, color: kPurple1, fontWeight: FontWeight.w600)),
+            const Text('ದಿನದ ನಕ್ಷತ್ರ:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
+            const SizedBox(height: 8),
+            Container(
+              decoration: BoxDecoration(
+                border: Border.all(color: Colors.grey.shade300),
+                borderRadius: BorderRadius.circular(8),
+                color: Colors.white,
+              ),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+              child: DropdownButtonHideUnderline(
+                child: DropdownButton<int>(
+                  isExpanded: true,
+                  value: _dinaNakshatraIdx,
+                  items: List.generate(27, (i) => DropdownMenuItem<int>(
+                    value: i,
+                    child: Text(knNak[i], style: const TextStyle(fontSize: 16)),
+                  )),
+                  onChanged: (val) {
+                    if (val != null) {
+                      setState(() {
+                        _dinaNakshatraIdx = val;
+                      });
+                    }
+                  },
+                ),
+              ),
+            ),
             const SizedBox(height: 24),
             
             const Text('ನಕ್ಷತ್ರವನ್ನು ಆಯ್ಕೆಮಾಡಿ:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
