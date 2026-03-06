@@ -492,7 +492,7 @@ class _DashboardScreenState extends State<DashboardScreen>
                   isExpanded: true,
                   hint: const Text('ನಕ್ಷತ್ರ ಆಯ್ಕೆಮಾಡಿ'),
                   value: _janmaNakshatraIdx,
-                  items: List.generate(27, (i) => DropdownMenuItem(
+                  items: List.generate(27, (i) => DropdownMenuItem<int>(
                     value: i,
                     child: Text(knNak[i], style: const TextStyle(fontSize: 16)),
                   )),
