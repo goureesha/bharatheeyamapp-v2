@@ -85,33 +85,22 @@ class _DashboardScreenState extends State<DashboardScreen>
       body: SafeArea(
         child: Column(
           children: [
-            // Header with back/save
-            Container(
-              decoration: const BoxDecoration(
-                gradient: LinearGradient(colors: [kPurple1, kPurple2]),
-              ),
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+            // Minimal header with back/save
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
               child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   IconButton(
-                    icon: const Icon(Icons.arrow_back, color: Colors.white),
+                    icon: const Icon(Icons.arrow_back, color: kText),
                     onPressed: () => Navigator.pop(context),
                   ),
-                  Expanded(
-                    child: Text(
-                      widget.name.isNotEmpty ? widget.name : 'ಭಾರತೀಯಮ್',
-                      style: TextStyle(
-                        color: Colors.white, fontWeight: FontWeight.w800, fontSize: 18),
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
                   IconButton(
-                    icon: const Icon(Icons.save, color: Colors.white),
+                    icon: const Icon(Icons.save, color: kText),
                     onPressed: () {
                       widget.onSave(_notes, _aroodhas, _janmaNakshatraIdx);
                       ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text('ಉಳಿಸಲಾಗಿದೆ!',
-                          style: const TextStyle())));
+                        const SnackBar(content: Text('ಉಳಿಸಲಾಗಿದೆ!')));
                     },
                   ),
                 ],

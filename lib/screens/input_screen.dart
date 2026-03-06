@@ -256,7 +256,6 @@ class _InputScreenState extends State<InputScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              const AppHeader(),
               _buildInputCard(),
               const SizedBox(height: 32),
             ],
