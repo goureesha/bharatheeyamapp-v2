@@ -64,14 +64,6 @@ class _DashboardScreenState extends State<DashboardScreen>
     _notes = widget.initialNotes;
     _aroodhas = Map.from(widget.initialAroodhas);
     _janmaNakshatraIdx = widget.initialJanmaNakshatraIdx;
-
-    if (_janmaNakshatraIdx == null) {
-      final panchangNakName = widget.result.panchang.nakshatra.split(' ')[0];
-      int panchangNakIdx = knNak.indexWhere((n) => panchangNakName.startsWith(n));
-      if (panchangNakIdx != -1) {
-        _janmaNakshatraIdx = panchangNakIdx;
-      }
-    }
   }
 
   @override
@@ -480,14 +472,14 @@ class _DashboardScreenState extends State<DashboardScreen>
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            const Text('ತಾರಾನುಕೂಲ (ತಾರಾ ಬಲ)', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: kPurple1)),
+            const Text('ತಾರಾನುಕೂಲ', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: kPurple1)),
             const SizedBox(height: 16),
             const Text('ದಿನ ನಕ್ಷತ್ರ (ಇಂದಿನ / ಜನನ ಸಮಯದ ನಕ್ಷತ್ರ):', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
             const SizedBox(height: 4),
             Text(widget.result.panchang.nakshatra, style: const TextStyle(fontSize: 18, color: kPurple1, fontWeight: FontWeight.w600)),
             const SizedBox(height: 24),
             
-            const Text('ನಿಮ್ಮ ಜನ್ಮ ನಕ್ಷತ್ರವನ್ನು ಆಯ್ಕೆಮಾಡಿ:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
+            const Text('ನಕ್ಷತ್ರವನ್ನು ಆಯ್ಕೆಮಾಡಿ:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
             const SizedBox(height: 8),
             Container(
               decoration: BoxDecoration(
@@ -516,7 +508,7 @@ class _DashboardScreenState extends State<DashboardScreen>
             const SizedBox(height: 32),
             
             if (_janmaNakshatraIdx != null) ...[
-              const Text('ತಾರಾ ಬಲ ಫಲಿತಾಂಶ:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+              const Text('ತಾರಾನುಕೂಲ ಫಲಿತಾಂಶ:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
               const SizedBox(height: 12),
               Container(
                 padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 16),
