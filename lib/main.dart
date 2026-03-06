@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'screens/input_screen.dart';
+import 'screens/main_screen.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -17,7 +17,7 @@ class BharatheeyamApp extends StatelessWidget {
       title: 'ಭಾರತೀಯಮ್',
       debugShowCheckedModeBanner: false,
       theme: _buildTheme(context),
-      home: const InputScreen(),
+      home: const MainScreen(),
     );
   }
 
