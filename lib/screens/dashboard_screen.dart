@@ -469,10 +469,11 @@ class _DashboardScreenState extends State<DashboardScreen>
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
       child: AppCard(
-        title: 'ತಾರಾನುಕೂಲ (ತಾರಾ ಬಲ)',
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
+            const Text('ತಾರಾನುಕೂಲ (ತಾರಾ ಬಲ)', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: kPurple1)),
+            const SizedBox(height: 16),
             const Text('ದಿನ ನಕ್ಷತ್ರ (ಇಂದಿನ / ಜನನ ಸಮಯದ ನಕ್ಷತ್ರ):', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
             const SizedBox(height: 4),
             Text(widget.result.panchang.nakshatra, style: const TextStyle(fontSize: 18, color: kPurple1, fontWeight: FontWeight.w600)),
