@@ -4,8 +4,6 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 import '../widgets/common.dart';
 import '../services/storage_service.dart';
-import '../services/drive_backup_service.dart';
-import '../services/sheets_export_service.dart';
 import '../core/calculator.dart';
 import '../constants/places.dart';
 import '../core/ephemeris.dart';
@@ -295,52 +293,9 @@ class _InputScreenState extends State<InputScreen> {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Padding(
-            padding: const EdgeInsets.all(16),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                const Expanded(
-                  child: Text('ಉಳಿಸಿದ ಜಾತಕಗಳು (Saved Profiles)', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w900, color: Color(0xFF2B6CB0))),
-                ),
-                Row(
-                  children: [
-                    IconButton(
-                      icon: const Icon(Icons.cloud_upload, color: Color(0xFF2B6CB0)),
-                      tooltip: 'Backup to Google Drive',
-                      onPressed: () async {
-                        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Backing up data to Google Drive...')));
-                        bool success = await DriveBackupService.backupData();
-                        if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(success ? '✅ Backup Successful' : '❌ Backup Failed')));
-                      },
-                    ),
-                    IconButton(
-                      icon: const Icon(Icons.cloud_download, color: Color(0xFF2B6CB0)),
-                      tooltip: 'Restore from Google Drive',
-                      onPressed: () async {
-                        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Restoring data from Google Drive...')));
-                        bool success = await DriveBackupService.restoreData();
-                        if (success && mounted) {
-                           await _loadProfiles();
-                           ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('✅ Data Restored Successfully')));
-                        } else if (mounted) {
-                           ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('❌ Restore Failed (No Backup/Error)')));
-                        }
-                      },
-                    ),
-                    IconButton(
-                      icon: const Icon(Icons.table_view, color: Colors.green),
-                      tooltip: 'Export to Google Sheets',
-                      onPressed: () async {
-                        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Exporting to Google Sheets...')));
-                        String? url = await SheetsExportService.exportToSheets();
-                        if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(url != null ? '✅ Export Successful ($url)' : '❌ Export Failed')));
-                      },
-                    ),
-                  ],
-                ),
-              ],
-            ),
+          const Padding(
+            padding: EdgeInsets.all(16),
+            child: Text('ಉಳಿಸಿದ ಜಾತಕಗಳು (Saved Profiles)', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: Color(0xFF2B6CB0))),
           ),
           if (_savedProfiles.isEmpty)
             const Padding(padding: EdgeInsets.all(32), child: Text('ಯಾವುದೇ ಜಾತಕ ಉಳಿಸಿಲ್ಲ.'))
