@@ -32,15 +32,15 @@ class _MahaBlock extends StatelessWidget {
       child: Container(
         margin: const EdgeInsets.only(bottom: 6),
         decoration: BoxDecoration(
-          gradient: const LinearGradient(colors: [Color(0xFFFF9933), Color(0xFFDD6B20)]),
+          gradient: LinearGradient(colors: [Color(0xFFFF9933), Color(0xFFDD6B20)]),
           borderRadius: BorderRadius.circular(10),
         ),
         child: ExpansionTile(
           title: Row(children: [
-            Text(md.lord, style: const TextStyle(
+            Text(md.lord, style: TextStyle(
               color: Colors.white, fontWeight: FontWeight.w900, fontSize: 16)),
             const Spacer(),
-            Text(fmt(md.end), style: const TextStyle(
+            Text(fmt(md.end), style: TextStyle(
               color: Colors.white70, fontSize: 13, fontWeight: FontWeight.w600)),
           ]),
           iconColor: Colors.white,
@@ -75,7 +75,7 @@ class _AntarBlock extends StatelessWidget {
               color: kMuted, fontSize: 12, fontWeight: FontWeight.w600)),
           ]),
           children: ad.antardashas.map((pd) => Container(
-            decoration: const BoxDecoration(
+            decoration: BoxDecoration(
               border: Border(bottom: BorderSide(color: Color(0xFFEDF2F7))),
               color: Color(0xFFFFFFFF),
             ),

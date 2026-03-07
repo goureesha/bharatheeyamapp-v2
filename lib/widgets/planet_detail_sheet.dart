@@ -14,7 +14,7 @@ class PlanetDetailSheet extends StatelessWidget {
       minChildSize: 0.4,
       maxChildSize: 0.95,
       builder: (_, ctrl) => Container(
-        decoration: const BoxDecoration(
+        decoration: BoxDecoration(
           color: kBg,
           borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
         ),
@@ -81,7 +81,7 @@ class PlanetDetailSheet extends StatelessWidget {
               fontWeight: FontWeight.w800, fontSize: 14, color: const Color(0xFF2B6CB0))),
           ),
           ...rows.map((r) => Container(
-            decoration: const BoxDecoration(
+            decoration: BoxDecoration(
               border: Border(top: BorderSide(color: Color(0xFFEDF2F7)))),
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
             child: Row(children: [

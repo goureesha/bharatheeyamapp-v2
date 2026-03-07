@@ -207,7 +207,7 @@ class KundaliChart extends StatelessWidget {
           Padding(
             padding: const EdgeInsets.only(left: 3, top: 2),
             child: Text(knRashi[rashiIdx],
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 11, color: Color(0xFF2F855A), fontWeight: FontWeight.w900)),
           ),
           Expanded(
@@ -243,7 +243,7 @@ class KundaliChart extends StatelessWidget {
       child: Center(
         child: Text(label,
           textAlign: TextAlign.center,
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 20, 
             fontWeight: FontWeight.w900, 
             color: Color(0xFFDD6B20),

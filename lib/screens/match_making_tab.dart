@@ -35,7 +35,7 @@ class _MatchMakingTabState extends State<MatchMakingTab> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
+        Text(label, style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
         const SizedBox(height: 6),
         Container(
           decoration: BoxDecoration(
@@ -47,11 +47,11 @@ class _MatchMakingTabState extends State<MatchMakingTab> {
           child: DropdownButtonHideUnderline(
             child: DropdownButton<int>(
               isExpanded: true,
-              hint: const Text('ಆಯ್ಕೆಮಾಡಿ', style: TextStyle(fontSize: 14)),
+              hint: Text('ಆಯ್ಕೆಮಾಡಿ', style: TextStyle(fontSize: 14)),
               value: value,
               items: List.generate(items.length, (i) => DropdownMenuItem<int>(
                 value: i,
-                child: Text(items[i], style: const TextStyle(fontSize: 14)),
+                child: Text(items[i], style: TextStyle(fontSize: 14)),
               )),
               onChanged: onChanged,
             ),
@@ -84,9 +84,9 @@ class _MatchMakingTabState extends State<MatchMakingTab> {
       return TableRow(
         decoration: BoxDecoration(border: Border(bottom: BorderSide(color: Colors.grey.shade200))),
         children: [
-          Padding(padding: const EdgeInsets.all(12), child: Text(name, style: const TextStyle(fontWeight: FontWeight.w600))),
+          Padding(padding: const EdgeInsets.all(12), child: Text(name, style: TextStyle(fontWeight: FontWeight.w600))),
           Padding(padding: const EdgeInsets.all(12), child: Text(pts.toStringAsFixed(1), textAlign: TextAlign.center)),
-          Padding(padding: const EdgeInsets.all(12), child: Text(max.toString(), textAlign: TextAlign.center, style: const TextStyle(color: Colors.grey))),
+          Padding(padding: const EdgeInsets.all(12), child: Text(max.toString(), textAlign: TextAlign.center, style: TextStyle(color: Colors.grey))),
         ],
       );
     }
@@ -95,7 +95,7 @@ class _MatchMakingTabState extends State<MatchMakingTab> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          const Text('ಅಷ್ಟಕೂಟ ಗುಣ ಮಿಲನ ಫಲಿತಾಂಶ', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: kPurple1), textAlign: TextAlign.center),
+          Text('ಅಷ್ಟಕೂಟ ಗುಣ ಮಿಲನ ಫಲಿತಾಂಶ', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: kPurple1), textAlign: TextAlign.center),
           const SizedBox(height: 16),
           Table(
             columnWidths: const {
@@ -123,9 +123,9 @@ class _MatchMakingTabState extends State<MatchMakingTab> {
               TableRow(
                 decoration: BoxDecoration(color: kPurple1.withOpacity(0.05)),
                 children: [
-                  const Padding(padding: EdgeInsets.all(12), child: Text('ಒಟ್ಟು ಗುಣ', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16))),
-                  Padding(padding: const EdgeInsets.all(12), child: Text(total.toStringAsFixed(1), textAlign: TextAlign.center, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: kPurple1))),
-                  const Padding(padding: EdgeInsets.all(12), child: Text('36', textAlign: TextAlign.center, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.grey))),
+                  Padding(padding: EdgeInsets.all(12), child: Text('ಒಟ್ಟು ಗುಣ', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16))),
+                  Padding(padding: const EdgeInsets.all(12), child: Text(total.toStringAsFixed(1), textAlign: TextAlign.center, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: kPurple1))),
+                  Padding(padding: EdgeInsets.all(12), child: Text('36', textAlign: TextAlign.center, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.grey))),
                 ],
               ),
             ],
@@ -165,7 +165,7 @@ class _MatchMakingTabState extends State<MatchMakingTab> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const SectionTitle('ವಧುವಿನ ವಿವರಗಳು (Bride)', color: kOrange),
+                SectionTitle('ವಧುವಿನ ವಿವರಗಳು (Bride)', color: kOrange),
                 const SizedBox(height: 12),
                 Row(
                   children: [
@@ -175,9 +175,9 @@ class _MatchMakingTabState extends State<MatchMakingTab> {
                   ],
                 ),
                 const SizedBox(height: 24),
-                const Divider(),
+                Divider(),
                 const SizedBox(height: 8),
-                const SectionTitle('ವರನ ವಿವರಗಳು (Groom)', color: kTeal),
+                SectionTitle('ವರನ ವಿವರಗಳು (Groom)', color: kTeal),
                 const SizedBox(height: 12),
                 Row(
                   children: [
@@ -198,7 +198,7 @@ class _MatchMakingTabState extends State<MatchMakingTab> {
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                       elevation: 0,
                     ),
-                    child: const Text('ಹೊಂದಾಣಿಕೆ ಪರೀಕ್ಷಿಸಿ', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                    child: Text('ಹೊಂದಾಣಿಕೆ ಪರೀಕ್ಷಿಸಿ', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
                   ),
                 ),
               ],

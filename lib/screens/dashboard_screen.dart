@@ -57,7 +57,7 @@ class _DashboardScreenState extends State<DashboardScreen>
   static const _tabs = [
     'ಕುಂಡಲಿ', 'ಗ್ರಹ ಸ್ಫುಟ', 'ಉಪಗ್ರಹ ಸ್ಫುಟ', 'ಆರೂಢ',
     'ದಶ', 'ಪಂಚಾಂಗ', 'ಭಾವ', 'ಷಡ್ಬಲ', 'ತಾರಾನುಕೂಲ', 'ಹೊಂದಾಣಿಕೆ',
-    'ಟಿಪ್ಪಣಿ', 'ಬಗ್ಗೆ'
+    'ಟಿಪ್ಪಣಿ', 'ಸೆಟ್ಟಿಂಗ್ಸ್'
   ];
 
   @override
@@ -93,11 +93,11 @@ class _DashboardScreenState extends State<DashboardScreen>
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   IconButton(
-                    icon: const Icon(Icons.arrow_back, color: kText),
+                    icon: Icon(Icons.arrow_back, color: kText),
                     onPressed: () => Navigator.pop(context),
                   ),
                   IconButton(
-                    icon: const Icon(Icons.save, color: kText),
+                    icon: Icon(Icons.save, color: kText),
                     tooltip: 'Save Profile',
                     onPressed: () {
                       widget.onSave(_notes, _aroodhas, _janmaNakshatraIdx);
@@ -135,7 +135,7 @@ class _DashboardScreenState extends State<DashboardScreen>
                   _buildTaranukoolaTab(),
                   const MatchMakingTab(),
                   _buildNotesTab(),
-                  _buildAboutTab(),
+                  _buildSettingsTab(),
                 ],
               ),
             ),
@@ -171,7 +171,7 @@ class _DashboardScreenState extends State<DashboardScreen>
               children: [
                 Text(
                   chart['label'] as String,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 17, fontWeight: FontWeight.w800,
                     color: Color(0xFF2B6CB0)),
                 ),
@@ -185,7 +185,7 @@ class _DashboardScreenState extends State<DashboardScreen>
                   onPlanetTap: _showPlanetDetail,
                 ),
                 const SizedBox(height: 8),
-                const Divider(thickness: 1, color: Color(0xFFE2E8F0)),
+                Divider(thickness: 1, color: Color(0xFFE2E8F0)),
               ],
             ),
           )),
@@ -272,13 +272,13 @@ class _DashboardScreenState extends State<DashboardScreen>
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const SectionTitle('ಆರೂಢ ಚಕ್ರ'),
+                  SectionTitle('ಆರೂಢ ಚಕ್ರ'),
                   Row(children: [
                     Expanded(
                       child: DropdownButtonFormField<String>(
                         value: _selAro,
                         items: ['ಆರೂಢ','ಉದಯ','ಲಗ್ನಾಂಶ','ಛತ್ರ','ಸ್ಪೃಷ್ಟಾಂಗ','ಚಂದ್ರ','ತಾಂಬೂಲ']
-                          .map((a) => DropdownMenuItem(value: a, child: Text(a, style: const TextStyle()))).toList(),
+                          .map((a) => DropdownMenuItem(value: a, child: Text(a, style: TextStyle()))).toList(),
                         onChanged: (v) => setS(() => _selAro = v!),
                         decoration: const InputDecoration(labelText: 'ಆರೂಢ'),
                       ),
@@ -288,7 +288,7 @@ class _DashboardScreenState extends State<DashboardScreen>
                       child: DropdownButtonFormField<int>(
                         value: _selRashiIdx,
                         items: List.generate(12, (i) => DropdownMenuItem(
-                          value: i, child: Text(knRashi[i], style: const TextStyle()))).toList(),
+                          value: i, child: Text(knRashi[i], style: TextStyle()))).toList(),
                         onChanged: (v) => setS(() => _selRashiIdx = v!),
                         decoration: const InputDecoration(labelText: 'ರಾಶಿ'),
                       ),
@@ -466,9 +466,9 @@ class _DashboardScreenState extends State<DashboardScreen>
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            const Text('ತಾರಾನುಕೂಲ', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            Text('ತಾರಾನುಕೂಲ', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
             const SizedBox(height: 16),
-            const Text('ದಿನದ ನಕ್ಷತ್ರ:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
+            Text('ದಿನದ ನಕ್ಷತ್ರ:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
             const SizedBox(height: 8),
             Container(
               decoration: BoxDecoration(
@@ -483,7 +483,7 @@ class _DashboardScreenState extends State<DashboardScreen>
                   value: _dinaNakshatraIdx,
                   items: List.generate(27, (i) => DropdownMenuItem<int>(
                     value: i,
-                    child: Text(knNak[i], style: const TextStyle(fontSize: 16)),
+                    child: Text(knNak[i], style: TextStyle(fontSize: 16)),
                   )),
                   onChanged: (val) {
                     if (val != null) {
@@ -497,7 +497,7 @@ class _DashboardScreenState extends State<DashboardScreen>
             ),
             const SizedBox(height: 24),
             
-            const Text('ನಕ್ಷತ್ರವನ್ನು ಆಯ್ಕೆಮಾಡಿ:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
+            Text('ನಕ್ಷತ್ರವನ್ನು ಆಯ್ಕೆಮಾಡಿ:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
             const SizedBox(height: 8),
             Container(
               decoration: BoxDecoration(
@@ -509,11 +509,11 @@ class _DashboardScreenState extends State<DashboardScreen>
               child: DropdownButtonHideUnderline(
                 child: DropdownButton<int>(
                   isExpanded: true,
-                  hint: const Text('ನಕ್ಷತ್ರ ಆಯ್ಕೆಮಾಡಿ'),
+                  hint: Text('ನಕ್ಷತ್ರ ಆಯ್ಕೆಮಾಡಿ'),
                   value: _janmaNakshatraIdx,
                   items: List.generate(27, (i) => DropdownMenuItem<int>(
                     value: i,
-                    child: Text(knNak[i], style: const TextStyle(fontSize: 16)),
+                    child: Text(knNak[i], style: TextStyle(fontSize: 16)),
                   )),
                   onChanged: (val) {
                     setState(() {
@@ -526,7 +526,7 @@ class _DashboardScreenState extends State<DashboardScreen>
             const SizedBox(height: 32),
             
             if (_janmaNakshatraIdx != null) ...[
-              const Text('ತಾರಾನುಕೂಲ ಫಲಿತಾಂಶ:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+              Text('ತಾರಾನುಕೂಲ ಫಲಿತಾಂಶ:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
               const SizedBox(height: 12),
               Container(
                 padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 16),
@@ -571,16 +571,16 @@ class _DashboardScreenState extends State<DashboardScreen>
           hintText: 'ನಿಮ್ಮ ಟಿಪ್ಪಣಿಗಳನ್ನು ಇಲ್ಲಿ ಬರೆಯಿರಿ...',
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
-            borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+            borderSide: BorderSide(color: Color(0xFFE2E8F0)),
           ),
           enabledBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
-            borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+            borderSide: BorderSide(color: Color(0xFFE2E8F0)),
           ),
           fillColor: Colors.white,
           filled: true,
         ),
-        style: const TextStyle(fontSize: 15, height: 1.5, color: Color(0xFF2D3748)),
+        style: TextStyle(fontSize: 15, height: 1.5, color: Color(0xFF2D3748)),
       ),
     );
   }
@@ -588,20 +588,38 @@ class _DashboardScreenState extends State<DashboardScreen>
 
 
   // ─────────────────────────────────────────────
-  // TAB 11: ABOUT
+  // TAB 11: SETTINGS
   // ─────────────────────────────────────────────
-  Widget _buildAboutTab() {
+  Widget _buildSettingsTab() {
+    final themes = ['ಸ್ಟ್ಯಾಂಡರ್ಡ್ ಲೈಟ್ (Light)', 'ಡಾರ್ಕ್ ಮೋಡ್ (Dark)', 'ಸ್ವರ್ಣ (Sepia)', 'ಸಾಗರ (Blue)', 'ಹಸಿರು (Green)'];
     return SingleChildScrollView(
+      padding: const EdgeInsets.all(16),
       child: AppCard(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('ಭಾರತೀಯಮ್', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800)),
-            const SizedBox(height: 8),
-            Text('ಆವೃತ್ತಿ: 1.0.19 (Monetization & Ads)', style: TextStyle(fontWeight: FontWeight.w700)),
-            const SizedBox(height: 8),
-            Text('ನಿಖರವಾದ ವೈದಿಕ ಜ್ಯೋತಿಷ್ಯ ಲೆಕ್ಕಾಚಾರಗಳಿಗಾಗಿ ವಿನ್ಯಾಸಗೊಳಿಸಲಾಗಿದೆ.',
-              style: TextStyle(color: kMuted, height: 1.6)),
+            SectionTitle('ಥೀಮ್ ಸೆಟ್ಟಿಂಗ್ಸ್ (Theme Settings)'),
+            const SizedBox(height: 10),
+            ValueListenableBuilder<int>(
+              valueListenable: AppThemes.themeNotifier,
+              builder: (context, currentTheme, _) {
+                return Column(
+                  children: List.generate(themes.length, (i) {
+                    return RadioListTile<int>(
+                      value: i,
+                      groupValue: currentTheme,
+                      title: Text(themes[i], style: TextStyle(fontWeight: FontWeight.w800, color: kText)),
+                      activeColor: kPurple2,
+                      onChanged: (val) {
+                        if (val != null) {
+                          AppThemes.setTheme(val);
+                        }
+                      },
+                    );
+                  }),
+                );
+              }
+            )
           ],
         ),
       ),
@@ -627,7 +645,7 @@ class _DashboardScreenState extends State<DashboardScreen>
 
   Widget _tableRow(List<String> cols, {bool bold0 = false}) {
     return Container(
-      decoration: const BoxDecoration(border: Border(bottom: BorderSide(color: Color(0xFFEDF2F7)))),
+      decoration: BoxDecoration(border: Border(bottom: BorderSide(color: Color(0xFFEDF2F7)))),
       child: Row(
         children: cols.asMap().entries.map((e) => Expanded(
           child: Padding(
@@ -651,7 +669,7 @@ class _DashboardScreenState extends State<DashboardScreen>
       padding: const EdgeInsets.symmetric(vertical: 4),
       child: Row(children: [
         Text('$k: ', style: TextStyle(fontWeight: FontWeight.w800, color: const Color(0xFF2B6CB0))),
-        Expanded(child: Text(v, style: const TextStyle())),
+        Expanded(child: Text(v, style: TextStyle())),
       ]),
     );
   }

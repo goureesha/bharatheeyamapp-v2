@@ -9,7 +9,7 @@ class ShadbalaWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (shadbala.isEmpty) {
-      return const Center(child: Text('ಷಡ್ಬಲ ಡೇಟಾ ಲಭ್ಯವಿಲ್ಲ (Shadbala Data Not Available)'));
+      return Center(child: Text('ಷಡ್ಬಲ ಡೇಟಾ ಲಭ್ಯವಿಲ್ಲ (Shadbala Data Not Available)'));
     }
 
     final pKeysEng = ['Sun', 'Moon', 'Mars', 'Mercury', 'Jupiter', 'Venus', 'Saturn'];
@@ -27,7 +27,7 @@ class ShadbalaWidget extends StatelessWidget {
               borderRadius: BorderRadius.circular(12),
               border: Border.all(color: kOrange.withOpacity(0.3)),
             ),
-            child: const Column(
+            child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
@@ -76,14 +76,14 @@ class ShadbalaWidget extends StatelessWidget {
 
                     return DataRow(
                       cells: [
-                        DataCell(Text(kKey, style: const TextStyle(fontWeight: FontWeight.bold, color: kPurple2))),
+                        DataCell(Text(kKey, style: TextStyle(fontWeight: FontWeight.bold, color: kPurple2))),
                         DataCell(Text((data['Sthana'] ?? 0.0).toStringAsFixed(2))),
                         DataCell(Text((data['Dik'] ?? 0.0).toStringAsFixed(2))),
                         DataCell(Text((data['Kala'] ?? 0.0).toStringAsFixed(2))),
                         DataCell(Text((data['Cheshta'] ?? 0.0).toStringAsFixed(2))),
                         DataCell(Text((data['Naisargika'] ?? 0.0).toStringAsFixed(2))),
                         DataCell(Text((data['Drik'] ?? 0.0).toStringAsFixed(2))),
-                        DataCell(Text(totalVal.toStringAsFixed(2), style: const TextStyle(fontWeight: FontWeight.w900))),
+                        DataCell(Text(totalVal.toStringAsFixed(2), style: TextStyle(fontWeight: FontWeight.w900))),
                         DataCell(Text(reqVal.toStringAsFixed(1), style: TextStyle(color: Colors.grey.shade700))),
                         DataCell(
                           Container(

@@ -229,9 +229,9 @@ class _InputScreenState extends State<InputScreen> {
               children: [
                 Icon(Icons.wifi_off, size: 80, color: Colors.red.shade400),
                 const SizedBox(height: 24),
-                const Text('ಇಂಟರ್ನೆಟ್ ಸಂಪರ್ಕ ಅಗತ್ಯವಿದೆ', style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.red), textAlign: TextAlign.center),
+                Text('ಇಂಟರ್ನೆಟ್ ಸಂಪರ್ಕ ಅಗತ್ಯವಿದೆ', style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.red), textAlign: TextAlign.center),
                 const SizedBox(height: 16),
-                const Text('ನಿಮ್ಮ ಚಂದಾದಾರಿಕೆಯನ್ನು ಪರಿಶೀಲಿಸಲು ದಯವಿಟ್ಟು ೪೮ ಗಂಟೆಗಳಿಗೊಮ್ಮೆ ಇಂಟರ್ನೆಟ್ ಸಂಪರ್ಕ ಕಲ್ಪಿಸಿ\n(Internet required at least once every 48 hours).', 
+                Text('ನಿಮ್ಮ ಚಂದಾದಾರಿಕೆಯನ್ನು ಪರಿಶೀಲಿಸಲು ದಯವಿಟ್ಟು ೪೮ ಗಂಟೆಗಳಿಗೊಮ್ಮೆ ಇಂಟರ್ನೆಟ್ ಸಂಪರ್ಕ ಕಲ್ಪಿಸಿ\n(Internet required at least once every 48 hours).', 
                     style: TextStyle(fontSize: 16, height: 1.5), textAlign: TextAlign.center),
                 const SizedBox(height: 32),
                 ElevatedButton.icon(
@@ -239,8 +239,8 @@ class _InputScreenState extends State<InputScreen> {
                     setState(() => _isInitStatus = true);
                     _checkNetwork();
                   },
-                  icon: const Icon(Icons.refresh, color: Colors.white),
-                  label: const Text('ಮರುಪ್ರಯತ್ನಿಸಿ (Retry)'),
+                  icon: Icon(Icons.refresh, color: Colors.white),
+                  label: Text('ಮರುಪ್ರಯತ್ನಿಸಿ (Retry)'),
                 ),
               ],
             ),
@@ -269,8 +269,8 @@ class _InputScreenState extends State<InputScreen> {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       child: ElevatedButton.icon(
-        icon: const Icon(Icons.folder_open, color: Colors.white),
-        label: const Text('ಉಳಿಸಿದ ಜಾತಕ (Saved Profiles)', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16, color: Colors.white)),
+        icon: Icon(Icons.folder_open, color: Colors.white),
+        label: Text('ಉಳಿಸಿದ ಜಾತಕ (Saved Profiles)', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16, color: Colors.white)),
         style: ElevatedButton.styleFrom(
           backgroundColor: const Color(0xFF2B6CB0),
           padding: const EdgeInsets.symmetric(vertical: 16),
@@ -293,25 +293,25 @@ class _InputScreenState extends State<InputScreen> {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Padding(
+          Padding(
             padding: EdgeInsets.all(16),
             child: Text('ಉಳಿಸಿದ ಜಾತಕಗಳು (Saved Profiles)', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: Color(0xFF2B6CB0))),
           ),
           if (_savedProfiles.isEmpty)
-            const Padding(padding: EdgeInsets.all(32), child: Text('ಯಾವುದೇ ಜಾತಕ ಉಳಿಸಿಲ್ಲ.'))
+            Padding(padding: EdgeInsets.all(32), child: Text('ಯಾವುದೇ ಜಾತಕ ಉಳಿಸಿಲ್ಲ.'))
           else
             Flexible(
               child: ListView.separated(
                 shrinkWrap: true,
                 itemCount: _savedProfiles.length,
-                separatorBuilder: (_, __) => const Divider(height: 1),
+                separatorBuilder: (_, __) => Divider(height: 1),
                 itemBuilder: (ctx, i) {
                   final name = _savedProfiles.keys.elementAt(i);
                   return ListTile(
                     leading: const CircleAvatar(backgroundColor: Color(0xFFEDF2F7), child: Icon(Icons.person, color: Color(0xFF2B6CB0))),
-                    title: Text(name, style: const TextStyle(fontWeight: FontWeight.w800)),
+                    title: Text(name, style: TextStyle(fontWeight: FontWeight.w800)),
                     subtitle: Text('${_savedProfiles[name]!.date} | ${_savedProfiles[name]!.place}'),
-                    trailing: const Icon(Icons.chevron_right, color: Colors.grey),
+                    trailing: Icon(Icons.chevron_right, color: Colors.grey),
                     onTap: () {
                       Navigator.pop(ctx);
                       _loadProfile(name);
@@ -339,7 +339,7 @@ class _InputScreenState extends State<InputScreen> {
             controller: _nameCtrl,
             decoration: InputDecoration(
               labelText: 'ಹೆಸರು',
-              prefixIcon: const Icon(Icons.person_outline),
+              prefixIcon: Icon(Icons.person_outline),
             ),
           ),
           const SizedBox(height: 14),
@@ -355,7 +355,7 @@ class _InputScreenState extends State<InputScreen> {
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Row(children: [
-                const Icon(Icons.calendar_today, color: kMuted),
+                Icon(Icons.calendar_today, color: kMuted),
                 const SizedBox(width: 10),
                 Text(
                   'ದಿನಾಂಕ: ${_dob.day.toString().padLeft(2,'0')}-${_dob.month.toString().padLeft(2,'0')}-${_dob.year}',
@@ -377,7 +377,7 @@ class _InputScreenState extends State<InputScreen> {
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Row(children: [
-                const Icon(Icons.access_time, color: kMuted),
+                Icon(Icons.access_time, color: kMuted),
                 const SizedBox(width: 10),
                 Text(
                   'ಸಮಯ: ${_hour.toString().padLeft(2,'0')}:${_minute.toString().padLeft(2,'0')} $_ampm',
@@ -396,7 +396,7 @@ class _InputScreenState extends State<InputScreen> {
             ),
             isExpanded: true,
             items: offlinePlaces.keys.map((name) => DropdownMenuItem(
-              value: name, child: Text(name, style: const TextStyle(fontSize: 13)),
+              value: name, child: Text(name, style: TextStyle(fontSize: 13)),
             )).toList(),
             onChanged: (v) {
               if (v != null && offlinePlaces.containsKey(v)) {
@@ -442,7 +442,7 @@ class _InputScreenState extends State<InputScreen> {
             Expanded(
               child: TextField(
                 controller: _latCtrl,
-                keyboardType: const TextInputType.numberWithOptions(decimal: true, signed: true),
+                keyboardType: TextInputType.numberWithOptions(decimal: true, signed: true),
                 decoration: const InputDecoration(labelText: 'ಅಕ್ಷಾಂಶ'),
               ),
             ),
@@ -450,7 +450,7 @@ class _InputScreenState extends State<InputScreen> {
             Expanded(
               child: TextField(
                 controller: _lonCtrl,
-                keyboardType: const TextInputType.numberWithOptions(decimal: true, signed: true),
+                keyboardType: TextInputType.numberWithOptions(decimal: true, signed: true),
                 decoration: const InputDecoration(labelText: 'ರೇಖಾಂಶ'),
               ),
             ),
@@ -470,7 +470,7 @@ class _InputScreenState extends State<InputScreen> {
                       value: _ayanamsa,
                       decoration: const InputDecoration(labelText: 'ಅಯನಾಂಶ'),
                       items: ['ಲಾಹಿರಿ','ರಾಮನ್','ಕೆ.ಪಿ'].map((v) => DropdownMenuItem(
-                        value: v, child: Text(v, style: const TextStyle()))).toList(),
+                        value: v, child: Text(v, style: TextStyle()))).toList(),
                       onChanged: (v) => setState(() => _ayanamsa = v!),
                     ),
                   ),
@@ -480,7 +480,7 @@ class _InputScreenState extends State<InputScreen> {
                       value: _nodeMode,
                       decoration: const InputDecoration(labelText: 'ರಾಹು'),
                       items: ['ನಿಜ ರಾಹು','ಸರಾಸರಿ ರಾಹು'].map((v) => DropdownMenuItem(
-                        value: v, child: Text(v, style: const TextStyle()))).toList(),
+                        value: v, child: Text(v, style: TextStyle()))).toList(),
                       onChanged: (v) => setState(() => _nodeMode = v!),
                     ),
                   ),
