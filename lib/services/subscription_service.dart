@@ -7,8 +7,8 @@ class SubscriptionService {
   static const String _adFreeProductId = 'ad_free_yearly_500';
   static const String _subStatusKey = 'has_active_subscription';
 
-  static final InAppPurchase _iap = InAppPurchase.instance;
-  static late StreamSubscription<List<PurchaseDetails>> _purchaseSub;
+  static InAppPurchase get _iap => InAppPurchase.instance;
+  static StreamSubscription<List<PurchaseDetails>>? _purchaseSub;
 
   // Cache flag in memory for instant access
   static bool hasAdFree = false;
@@ -19,6 +19,8 @@ class SubscriptionService {
     final prefs = await SharedPreferences.getInstance();
     hasAdFree = prefs.getBool(_subStatusKey) ?? false;
 
+    if (kIsWeb) return; // The plugin crashes on the Web, exit early.
+
     // 2. Setup the purchase listener stream
     final purchaseUpdated = _iap.purchaseStream;
     _purchaseSub = purchaseUpdated.listen(
@@ -26,7 +28,7 @@ class SubscriptionService {
         _listenToPurchaseUpdated(purchaseDetailsList);
       },
       onDone: () {
-        _purchaseSub.cancel();
+        _purchaseSub?.cancel();
       },
       onError: (error) {
         debugPrint('Purchase stream error: $error');
@@ -42,7 +44,9 @@ class SubscriptionService {
   }
 
   static void dispose() {
-    _purchaseSub.cancel();
+    if (!kIsWeb) {
+      _purchaseSub?.cancel();
+    }
   }
 
   /// Trigger the purchase flow for the 500 INR Yearly Ad-Free logic
