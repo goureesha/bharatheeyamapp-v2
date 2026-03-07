@@ -51,7 +51,7 @@ class ShadbalaWidget extends StatelessWidget {
               child: SingleChildScrollView(
                 scrollDirection: Axis.horizontal,
                 child: DataTable(
-                  headingRowColor: MaterialStateProperty.all(kPurple1.withOpacity(0.1)),
+                  headingRowColor: WidgetStateProperty.all(kPurple1.withOpacity(0.1)),
                   columnSpacing: 20,
                   horizontalMargin: 16,
                   columns: const [
