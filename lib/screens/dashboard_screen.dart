@@ -7,6 +7,8 @@ import '../widgets/planet_detail_sheet.dart';
 import '../widgets/dasha_widget.dart';
 import '../widgets/shadbala_widget.dart';
 import '../services/ad_service.dart';
+import '../services/pdf_service.dart';
+import '../services/storage_service.dart';
 import 'match_making_tab.dart';
 
 class DashboardScreen extends StatefulWidget {
@@ -95,13 +97,34 @@ class _DashboardScreenState extends State<DashboardScreen>
                     icon: const Icon(Icons.arrow_back, color: kText),
                     onPressed: () => Navigator.pop(context),
                   ),
-                  IconButton(
-                    icon: const Icon(Icons.save, color: kText),
-                    onPressed: () {
-                      widget.onSave(_notes, _aroodhas, _janmaNakshatraIdx);
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('ಉಳಿಸಲಾಗಿದೆ!')));
-                    },
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      IconButton(
+                        icon: const Icon(Icons.picture_as_pdf, color: kPurple2),
+                        tooltip: 'Download PDF',
+                        onPressed: () async {
+                          final p = Profile(
+                            name: widget.name, date: widget.dob.toIso8601String().split('T')[0],
+                            hour: widget.hour, minute: widget.minute, ampm: widget.ampm,
+                            lat: widget.lat, lon: widget.lon, place: widget.place,
+                          );
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text('Generating PDF...')),
+                          );
+                          await PdfService.generateAndPrintHoroscope(profile: p, result: widget.result);
+                        },
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.save, color: kText),
+                        tooltip: 'Save Profile',
+                        onPressed: () {
+                          widget.onSave(_notes, _aroodhas, _janmaNakshatraIdx);
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text('ಉಳಿಸಲಾಗಿದೆ!')));
+                        },
+                      ),
+                    ],
                   ),
                 ],
               ),

@@ -16,6 +16,11 @@ dependencies:
   sweph: ^3.2.1+2.10.3
   shared_preferences: any
   google_mobile_ads: any
+  pdf: ^3.11.0
+  printing: ^5.13.1
+  google_sign_in: ^6.2.1
+  googleapis: ^7.3.0
+  googleapis_auth: ^1.6.0
 
 dev_dependencies:
   flutter_test:
