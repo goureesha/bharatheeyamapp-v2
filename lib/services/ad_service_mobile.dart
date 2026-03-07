@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
+import 'subscription_service.dart';
 
 class AdService {
   static Future<void> initialize() async {
+    if (SubscriptionService.hasAdFree) return;
     await MobileAds.instance.initialize();
   }
 
@@ -15,6 +17,8 @@ class AdService {
   }
 
   static Future<void> showInterstitialAd(BuildContext context) async {
+    if (SubscriptionService.hasAdFree) return;
+    
     InterstitialAd.load(
       adUnitId: interstitialAdUnitId,
       request: const AdRequest(),
@@ -52,6 +56,8 @@ class _BannerAdWidgetState extends State<BannerAdWidget> {
   }
 
   void _loadAd() {
+    if (SubscriptionService.hasAdFree) return;
+
     _bannerAd = BannerAd(
       adUnitId: AdService.bannerAdUnitId,
       request: const AdRequest(),
@@ -74,9 +80,8 @@ class _BannerAdWidgetState extends State<BannerAdWidget> {
     super.dispose();
   }
 
-  @override
   Widget build(BuildContext context) {
-    if (!_isLoaded || _bannerAd == null) {
+    if (SubscriptionService.hasAdFree || !_isLoaded || _bannerAd == null) {
       return const SizedBox.shrink();
     }
     return Container(

@@ -8,6 +8,7 @@ import '../widgets/dasha_widget.dart';
 import '../widgets/shadbala_widget.dart';
 import '../services/ad_service.dart';
 import '../services/storage_service.dart';
+import '../services/subscription_service.dart';
 import 'match_making_tab.dart';
 
 class DashboardScreen extends StatefulWidget {
@@ -598,6 +599,7 @@ class _DashboardScreenState extends State<DashboardScreen>
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // Theme selection
             SectionTitle('ಥೀಮ್ ಸೆಟ್ಟಿಂಗ್ಸ್'),
             const SizedBox(height: 10),
             ValueListenableBuilder<int>(
@@ -619,7 +621,84 @@ class _DashboardScreenState extends State<DashboardScreen>
                   }),
                 );
               }
-            )
+            ),
+            const SizedBox(height: 24),
+            Divider(color: kBorder),
+            const SizedBox(height: 24),
+            
+            // Purchase Premium
+            SectionTitle('ಪ್ರೀಮಿಯಂ ಚಂದಾದಾರಿಕೆ'),
+            const SizedBox(height: 12),
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: SubscriptionService.hasAdFree ? Colors.green.shade50 : kPurple1.withOpacity(0.05),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: SubscriptionService.hasAdFree ? Colors.green.shade200 : kPurple2.withOpacity(0.2)),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                   Row(
+                     children: [
+                       Icon(
+                         SubscriptionService.hasAdFree ? Icons.check_circle : Icons.star, 
+                         color: SubscriptionService.hasAdFree ? Colors.green.shade700 : kOrange,
+                         size: 28,
+                       ),
+                       const SizedBox(width: 12),
+                       Expanded(
+                         child: Text(
+                           SubscriptionService.hasAdFree 
+                              ? 'ನೀವು ಪ್ರೀಮಿಯಂ ಸದಸ್ಯರು! (Ad-Free Active)' 
+                              : 'ಜಾಹೀರಾತು ಮುಕ್ತ ಅನುಭವ ಪಡೆಯಿರಿ',
+                           style: TextStyle(
+                             fontSize: SubscriptionService.hasAdFree ? 16 : 18, 
+                             fontWeight: FontWeight.bold,
+                             color: SubscriptionService.hasAdFree ? Colors.green.shade800 : kPurple1
+                           ),
+                         ),
+                       ),
+                     ],
+                   ),
+                   if (!SubscriptionService.hasAdFree) ...[
+                     const SizedBox(height: 12),
+                     Text(
+                       'ವರ್ಷಕ್ಕೆ ಕೇವಲ ₹೫೦೦ ಪಾವತಿಸಿ ಮತ್ತು ಅಪ್ಲಿಕೇಶನ್ ಅನ್ನು ಯಾವುದೇ ಜಾಹೀರಾತುಗಳಿಲ್ಲದೆ ಬಳಸಿ.',
+                       style: TextStyle(fontSize: 14, color: kText, height: 1.4),
+                     ),
+                     const SizedBox(height: 20),
+                     ElevatedButton(
+                       onPressed: () async {
+                         final success = await SubscriptionService.buyAdFreeSubscription();
+                         if (!success && mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text('ಚಂದಾದಾರಿಕೆ ಪ್ರಕ್ರಿಯೆ ವಿಫಲವಾಗಿದೆ ಅಥವಾ ನೀವು ವೆಬ್ ಬಳಸುತ್ತಿದ್ದೀರಿ.'))
+                            );
+                         }
+                       },
+                       style: ElevatedButton.styleFrom(
+                         backgroundColor: kOrange,
+                         foregroundColor: Colors.white,
+                         padding: const EdgeInsets.symmetric(vertical: 14),
+                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                       ),
+                       child: const Text('₹500 / ವರ್ಷಕ್ಕೆ ಚಂದಾದಾರರಾಗಿ', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                     ),
+                     const SizedBox(height: 12),
+                     TextButton(
+                       onPressed: () async {
+                          await SubscriptionService.restorePurchases();
+                          ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text('ಹಿಂದಿನ ಖರೀದಿಗಳನ್ನು ಮರುಸ್ಥಾಪಿಸಲಾಗಿದೆ.'))
+                          );
+                       },
+                       child: Text('ಹಿಂದಿನ ಖರೀದಿಯನ್ನು ಮರುಸ್ಥಾಪಿಸಿ (Restore)', style: TextStyle(color: kPurple2, fontWeight: FontWeight.w600)),
+                     )
+                   ]
+                ],
+              ),
+            ),
           ],
         ),
       ),

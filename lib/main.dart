@@ -2,15 +2,31 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'screens/input_screen.dart';
 import 'widgets/common.dart';
+import 'services/subscription_service.dart';
 
-void main() {
+Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
+  SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp, DeviceOrientation.portraitDown]);
+  
+  // Setup Google Play Billing bindings right away
+  await SubscriptionService.initialize();
+
   runApp(const BharatheeyamApp());
 }
 
-class BharatheeyamApp extends StatelessWidget {
+class BharatheeyamApp extends StatefulWidget {
   const BharatheeyamApp({super.key});
+
+  @override
+  State<BharatheeyamApp> createState() => _BharatheeyamAppState();
+}
+
+class _BharatheeyamAppState extends State<BharatheeyamApp> {
+  @override
+  void dispose() {
+    SubscriptionService.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
