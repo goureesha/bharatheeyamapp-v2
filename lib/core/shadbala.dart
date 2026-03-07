@@ -1,4 +1,3 @@
-import 'package:sweph/sweph.dart';
 import 'dart:math';
 
 /// A comprehensive implementation of Parashari Shadbala (Six-fold planetary strength).
