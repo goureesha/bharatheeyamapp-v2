@@ -558,7 +558,7 @@ class _InputScreenState extends State<InputScreen> {
       lastDate: DateTime(2100),
       builder: (ctx, child) => Theme(
         data: Theme.of(ctx).copyWith(
-          colorScheme: const ColorScheme.light(primary: kPurple2),
+          colorScheme: ColorScheme.light(primary: kPurple2),
         ),
         child: child!,
       ),
@@ -575,7 +575,7 @@ class _InputScreenState extends State<InputScreen> {
       ),
       builder: (ctx, child) => Theme(
         data: Theme.of(ctx).copyWith(
-          colorScheme: const ColorScheme.light(primary: kPurple2),
+          colorScheme: ColorScheme.light(primary: kPurple2),
         ),
         child: child!,
       ),

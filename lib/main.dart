@@ -1,14 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'screens/input_screen.dart';
+import 'widgets/common.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
   SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
   runApp(const BharatheeyamApp());
 }
-
-import 'widgets/common.dart';
 
 class BharatheeyamApp extends StatelessWidget {
   const BharatheeyamApp({super.key});

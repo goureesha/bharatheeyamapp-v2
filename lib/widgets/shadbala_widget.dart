@@ -53,7 +53,7 @@ class ShadbalaWidget extends StatelessWidget {
                 child: DataTable(
                   columnSpacing: 16,
                   horizontalMargin: 12,
-                  columns: const [
+                  columns: [
                     DataColumn(label: Text('ಗ್ರಹ\nPlanet', style: TextStyle(fontWeight: FontWeight.bold))),
                     DataColumn(label: Text('ಸ್ಥಾನ\nSthana', style: TextStyle(fontWeight: FontWeight.bold))),
                     DataColumn(label: Text('ದಿಕ್\nDik', style: TextStyle(fontWeight: FontWeight.bold))),
