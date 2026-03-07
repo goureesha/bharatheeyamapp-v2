@@ -165,7 +165,7 @@ class _MatchMakingTabState extends State<MatchMakingTab> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                SectionTitle('ವಧುವಿನ ವಿವರಗಳು (Bride)', color: kOrange),
+                SectionTitle('ವಧುವಿನ ವಿವರಗಳು', color: kOrange),
                 const SizedBox(height: 12),
                 Row(
                   children: [
@@ -177,7 +177,7 @@ class _MatchMakingTabState extends State<MatchMakingTab> {
                 const SizedBox(height: 24),
                 Divider(),
                 const SizedBox(height: 8),
-                SectionTitle('ವರನ ವಿವರಗಳು (Groom)', color: kTeal),
+                SectionTitle('ವರನ ವಿವರಗಳು', color: kTeal),
                 const SizedBox(height: 12),
                 Row(
                   children: [

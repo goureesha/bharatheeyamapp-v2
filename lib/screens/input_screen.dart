@@ -231,7 +231,7 @@ class _InputScreenState extends State<InputScreen> {
                 const SizedBox(height: 24),
                 Text('ಇಂಟರ್ನೆಟ್ ಸಂಪರ್ಕ ಅಗತ್ಯವಿದೆ', style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.red), textAlign: TextAlign.center),
                 const SizedBox(height: 16),
-                Text('ನಿಮ್ಮ ಚಂದಾದಾರಿಕೆಯನ್ನು ಪರಿಶೀಲಿಸಲು ದಯವಿಟ್ಟು ೪೮ ಗಂಟೆಗಳಿಗೊಮ್ಮೆ ಇಂಟರ್ನೆಟ್ ಸಂಪರ್ಕ ಕಲ್ಪಿಸಿ\n(Internet required at least once every 48 hours).', 
+                Text('ನಿಮ್ಮ ಚಂದಾದಾರಿಕೆಯನ್ನು ಪರಿಶೀಲಿಸಲು ದಯವಿಟ್ಟು ೪೮ ಗಂಟೆಗಳಿಗೊಮ್ಮೆ ಇಂಟರ್ನೆಟ್ ಸಂಪರ್ಕ ಕಲ್ಪಿಸಿ.', 
                     style: TextStyle(fontSize: 16, height: 1.5), textAlign: TextAlign.center),
                 const SizedBox(height: 32),
                 ElevatedButton.icon(
@@ -240,7 +240,7 @@ class _InputScreenState extends State<InputScreen> {
                     _checkNetwork();
                   },
                   icon: Icon(Icons.refresh, color: Colors.white),
-                  label: Text('ಮರುಪ್ರಯತ್ನಿಸಿ (Retry)'),
+                  label: Text('ಮರುಪ್ರಯತ್ನಿಸಿ'),
                 ),
               ],
             ),
@@ -270,7 +270,7 @@ class _InputScreenState extends State<InputScreen> {
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       child: ElevatedButton.icon(
         icon: Icon(Icons.folder_open, color: Colors.white),
-        label: Text('ಉಳಿಸಿದ ಜಾತಕ (Saved Profiles)', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16, color: Colors.white)),
+        label: Text('ಉಳಿಸಿದ ಜಾತಕ', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16, color: Colors.white)),
         style: ElevatedButton.styleFrom(
           backgroundColor: const Color(0xFF2B6CB0),
           padding: const EdgeInsets.symmetric(vertical: 16),
@@ -295,7 +295,7 @@ class _InputScreenState extends State<InputScreen> {
         children: [
           Padding(
             padding: EdgeInsets.all(16),
-            child: Text('ಉಳಿಸಿದ ಜಾತಕಗಳು (Saved Profiles)', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: Color(0xFF2B6CB0))),
+            child: Text('ಉಳಿಸಿದ ಜಾತಕಗಳು', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: Color(0xFF2B6CB0))),
           ),
           if (_savedProfiles.isEmpty)
             Padding(padding: EdgeInsets.all(32), child: Text('ಯಾವುದೇ ಜಾತಕ ಉಳಿಸಿಲ್ಲ.'))
@@ -421,7 +421,7 @@ class _InputScreenState extends State<InputScreen> {
             Expanded(
               child: TextField(
                 controller: _placeCtrl,
-                decoration: const InputDecoration(labelText: 'ಊರು ಹುಡುಕಿ (Online)', prefixIcon: Icon(Icons.search)),
+                decoration: const InputDecoration(labelText: 'ಊರು ಹುಡುಕಿ', prefixIcon: Icon(Icons.search)),
               ),
             ),
             const SizedBox(width: 10),

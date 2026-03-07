@@ -54,16 +54,16 @@ class ShadbalaWidget extends StatelessWidget {
                   columnSpacing: 16,
                   horizontalMargin: 12,
                   columns: [
-                    DataColumn(label: Text('ಗ್ರಹ\nPlanet', style: TextStyle(fontWeight: FontWeight.bold))),
-                    DataColumn(label: Text('ಸ್ಥಾನ\nSthana', style: TextStyle(fontWeight: FontWeight.bold))),
-                    DataColumn(label: Text('ದಿಕ್\nDik', style: TextStyle(fontWeight: FontWeight.bold))),
-                    DataColumn(label: Text('ಕಾಲ\nKala', style: TextStyle(fontWeight: FontWeight.bold))),
-                    DataColumn(label: Text('ಚೇಷ್ಟಾ\nChesta', style: TextStyle(fontWeight: FontWeight.bold))),
-                    DataColumn(label: Text('ನೈಸರ್ಗಿಕ\nNaisarg.', style: TextStyle(fontWeight: FontWeight.bold))),
-                    DataColumn(label: Text('ದೃಕ್\nDrik', style: TextStyle(fontWeight: FontWeight.bold))),
-                    DataColumn(label: Text('ಒಟ್ಟು\nTotal', style: TextStyle(fontWeight: FontWeight.w900, color: kPurple2))),
-                    DataColumn(label: Text('ಅರ್ಹತೆ\nReq', style: TextStyle(fontWeight: FontWeight.bold))),
-                    DataColumn(label: Text('ಫಲಿತಾಂಶ\nStatus', style: TextStyle(fontWeight: FontWeight.bold))),
+                    DataColumn(label: Text('ಗ್ರಹ', style: TextStyle(fontWeight: FontWeight.bold))),
+                    DataColumn(label: Text('ಸ್ಥಾನ', style: TextStyle(fontWeight: FontWeight.bold))),
+                    DataColumn(label: Text('ದಿಕ್', style: TextStyle(fontWeight: FontWeight.bold))),
+                    DataColumn(label: Text('ಕಾಲ', style: TextStyle(fontWeight: FontWeight.bold))),
+                    DataColumn(label: Text('ಚೇಷ್ಟಾ', style: TextStyle(fontWeight: FontWeight.bold))),
+                    DataColumn(label: Text('ನೈಸರ್ಗಿಕ', style: TextStyle(fontWeight: FontWeight.bold))),
+                    DataColumn(label: Text('ದೃಕ್', style: TextStyle(fontWeight: FontWeight.bold))),
+                    DataColumn(label: Text('ಒಟ್ಟು', style: TextStyle(fontWeight: FontWeight.w900, color: kPurple2))),
+                    DataColumn(label: Text('ಅರ್ಹತೆ', style: TextStyle(fontWeight: FontWeight.bold))),
+                    DataColumn(label: Text('ಫಲಿತಾಂಶ', style: TextStyle(fontWeight: FontWeight.bold))),
                   ],
                   rows: List.generate(pKeysEng.length, (i) {
                     final eKey = pKeysEng[i];
@@ -93,7 +93,7 @@ class ShadbalaWidget extends StatelessWidget {
                               borderRadius: BorderRadius.circular(4),
                             ),
                             child: Text(
-                              isStrong ? 'Strong' : 'Weak',
+                              isStrong ? 'ಬಲಶಾಲಿ' : 'ದುರ್ಬಲ',
                               style: TextStyle(
                                 color: isStrong ? Colors.green.shade700 : Colors.red.shade700,
                                 fontWeight: FontWeight.bold,

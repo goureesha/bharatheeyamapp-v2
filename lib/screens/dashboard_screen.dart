@@ -154,11 +154,11 @@ class _DashboardScreenState extends State<DashboardScreen>
     final charts = [
       {'label': 'ರಾಶಿ ಕುಂಡಲಿ', 'varga': 1, 'isBhava': false},
       {'label': 'ಭಾವ ಕುಂಡಲಿ', 'varga': 1, 'isBhava': true},
-      {'label': 'ನವಾಂಶ ಕುಂಡಲಿ (D9)', 'varga': 9, 'isBhava': false},
-      {'label': 'ಹೋರಾ ಕುಂಡಲಿ (D2)', 'varga': 2, 'isBhava': false},
-      {'label': 'ದ್ರೇಕ್ಕಾಣ ಕುಂಡಲಿ (D3)', 'varga': 3, 'isBhava': false},
-      {'label': 'ದ್ವಾದಶಾಂಶ ಕುಂಡಲಿ (D12)', 'varga': 12, 'isBhava': false},
-      {'label': 'ತ್ರಿಂಶಾಂಶ ಕುಂಡಲಿ (D30)', 'varga': 30, 'isBhava': false},
+      {'label': 'ನವಾಂಶ ಕುಂಡಲಿ', 'varga': 9, 'isBhava': false},
+      {'label': 'ಹೋರಾ ಕುಂಡಲಿ', 'varga': 2, 'isBhava': false},
+      {'label': 'ದ್ರೇಕ್ಕಾಣ ಕುಂಡಲಿ', 'varga': 3, 'isBhava': false},
+      {'label': 'ದ್ವಾದಶಾಂಶ ಕುಂಡಲಿ', 'varga': 12, 'isBhava': false},
+      {'label': 'ತ್ರಿಂಶಾಂಶ ಕುಂಡಲಿ', 'varga': 30, 'isBhava': false},
     ];
 
     return SingleChildScrollView(
@@ -591,14 +591,14 @@ class _DashboardScreenState extends State<DashboardScreen>
   // TAB 11: SETTINGS
   // ─────────────────────────────────────────────
   Widget _buildSettingsTab() {
-    final themes = ['ಸ್ಟ್ಯಾಂಡರ್ಡ್ ಲೈಟ್ (Light)', 'ಡಾರ್ಕ್ ಮೋಡ್ (Dark)', 'ಸ್ವರ್ಣ (Sepia)', 'ಸಾಗರ (Blue)', 'ಹಸಿರು (Green)'];
+    final themes = ['ಸ್ಟ್ಯಾಂಡರ್ಡ್ ಲೈಟ್', 'ಡಾರ್ಕ್ ಮೋಡ್', 'ಸ್ವರ್ಣ', 'ಸಾಗರ', 'ಹಸಿರು'];
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
       child: AppCard(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            SectionTitle('ಥೀಮ್ ಸೆಟ್ಟಿಂಗ್ಸ್ (Theme Settings)'),
+            SectionTitle('ಥೀಮ್ ಸೆಟ್ಟಿಂಗ್ಸ್'),
             const SizedBox(height: 10),
             ValueListenableBuilder<int>(
               valueListenable: AppThemes.themeNotifier,
