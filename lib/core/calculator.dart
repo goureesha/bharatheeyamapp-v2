@@ -278,11 +278,6 @@ class AstroCalculator {
   }
 
   // ─────────────────────────────────────────────
-  // SHADBALA Logic applied externally
-  // ─────────────────────────────────────────────
-  }
-
-  // ─────────────────────────────────────────────
   // VIMSHOTTARI DASHA — exact Python port
   // ─────────────────────────────────────────────
   static List<DashaEntry> calcDasha(DateTime birthDate, int nIdx, double perc) {
