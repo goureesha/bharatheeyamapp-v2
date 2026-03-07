@@ -5,7 +5,6 @@ import '../widgets/common.dart';
 import '../widgets/kundali_chart.dart';
 import '../widgets/planet_detail_sheet.dart';
 import '../widgets/dasha_widget.dart';
-import '../widgets/shadbala_widget.dart';
 import '../services/ad_service.dart';
 import 'match_making_tab.dart';
 
@@ -55,7 +54,7 @@ class _DashboardScreenState extends State<DashboardScreen>
 
   static const _tabs = [
     'ಕುಂಡಲಿ', 'ಗ್ರಹ ಸ್ಫುಟ', 'ಉಪಗ್ರಹ ಸ್ಫುಟ', 'ಆರೂಢ',
-    'ದಶ', 'ಪಂಚಾಂಗ', 'ಭಾವ', 'ಷಡ್ಬಲ', 'ತಾರಾನುಕೂಲ', 'ಹೊಂದಾಣಿಕೆ',
+    'ದಶ', 'ಪಂಚಾಂಗ', 'ಭಾವ', 'ತಾರಾನುಕೂಲ', 'ಹೊಂದಾಣಿಕೆ',
     'ಟಿಪ್ಪಣಿ', 'ಬಗ್ಗೆ'
   ];
 
@@ -129,7 +128,6 @@ class _DashboardScreenState extends State<DashboardScreen>
                   _buildDashaTab(),
                   _buildPanchangTab(),
                   _buildBhavaTab(),
-                  _buildShadbalaTab(),
                   _buildTaranukoolaTab(),
                   const MatchMakingTab(),
                   _buildNotesTab(),
@@ -419,17 +417,7 @@ class _DashboardScreenState extends State<DashboardScreen>
   }
 
   // ─────────────────────────────────────────────
-  // TAB 8: SHADBALA
-  // ─────────────────────────────────────────────
-  Widget _buildShadbalaTab() {
-    return ShadbalaWidget(
-      key: UniqueKey(),
-      shadbala: widget.result.shadbala,
-    );
-  }
-
-  // ─────────────────────────────────────────────
-  // TAB 9: TARANUKOOLA
+  // TAB 8: TARANUKOOLA
   // ─────────────────────────────────────────────
   Widget _buildTaranukoolaTab() {
     int dinaNakIdx = _dinaNakshatraIdx ?? 0;

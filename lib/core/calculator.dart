@@ -3,7 +3,6 @@ import 'package:flutter/foundation.dart';
 import 'package:sweph/sweph.dart';
 import '../constants/strings.dart';
 import 'ephemeris.dart';
-import 'shadbala.dart';
 
 // ============================================================
 // KUNDALI RESULT DATA MODELS
@@ -111,7 +110,6 @@ class KundaliResult {
   final List<double> bhavas; // 12 house cusps
   final PanchangData panchang;
   final List<DashaEntry> dashas;
-  final Map<String, Map<String, double>> shadbala; // 6-fold planetary strength
   final Map<String, double> advSphutas; // 16 upagrahas
 
   KundaliResult({
@@ -119,7 +117,6 @@ class KundaliResult {
     required this.bhavas,
     required this.panchang,
     required this.dashas,
-    required this.shadbala,
     required this.advSphutas,
   });
 }
@@ -576,31 +573,6 @@ class AstroCalculator {
       // Dashas
       final dashas = calcDasha(DateTime(year, month, day), nIdx, perc);
 
-      // Shadbala Calculation
-      final shadbalaResults = ShadbalaLogic.calculateShadbala(
-        {
-          'Sun': positions['ರವಿ'] ?? 0.0,
-          'Moon': positions['ಚಂದ್ರ'] ?? 0.0,
-          'Mars': positions['ಕುಜ'] ?? 0.0,
-          'Mercury': positions['ಬುಧ'] ?? 0.0,
-          'Jupiter': positions['ಗುರು'] ?? 0.0,
-          'Venus': positions['ಶುಕ್ರ'] ?? 0.0,
-          'Saturn': positions['ಶನಿ'] ?? 0.0,
-        },
-        {
-          'Sun': speeds['ರವಿ'] ?? 0.0,
-          'Moon': speeds['ಚಂದ್ರ'] ?? 0.0,
-          'Mars': speeds['ಕುಜ'] ?? 0.0,
-          'Mercury': speeds['ಬುಧ'] ?? 0.0,
-          'Jupiter': speeds['ಗುರು'] ?? 0.0,
-          'Venus': speeds['ಶುಕ್ರ'] ?? 0.0,
-          'Saturn': speeds['ಶನಿ'] ?? 0.0,
-        },
-        positions['ಲಗ್ನ'] ?? 0.0,
-        srCivil, // sunRiseJd
-        jdBirth, // birthJd
-      );
-
       // Advanced Sphutas (16) — exact Python port
       final S   = positions['ರವಿ']!;
       final M   = positions['ಚಂದ್ರ']!;
@@ -642,7 +614,6 @@ class AstroCalculator {
         bhavas: bhavaSphutas,
         panchang: panchang,
         dashas: dashas,
-        shadbala: shadbalaResults,
         advSphutas: advSphutas,
       );
     } catch (e) {
