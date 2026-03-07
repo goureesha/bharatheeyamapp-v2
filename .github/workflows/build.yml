@@ -59,7 +59,18 @@ jobs:
         run: flutter config --enable-web
 
       - name: Build Web
-        run: flutter build web --release --base-href "/bharatheeyamapp/"
+        id: build_step
+        continue-on-error: true
+        run: flutter build web --release --base-href "/bharatheeyamapp/" > web_build_log.txt 2>&1
+
+      - name: Push Error Log
+        if: steps.build_step.outcome == 'failure' || steps.build_step.outcome == 'success'
+        run: |
+          git config --global user.name 'github-actions[bot]'
+          git config --global user.email 'github-actions[bot]@users.noreply.github.com'
+          git add web_build_log.txt
+          git commit -m "ci: upload build logs for debugging"
+          git push
 
       - name: Upload Web Artifact
         uses: actions/upload-artifact@v4
