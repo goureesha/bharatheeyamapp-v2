@@ -18,6 +18,21 @@ class _MatchMakingTabState extends State<MatchMakingTab> {
 
   Map<String, dynamic>? _result;
 
+  static const Map<int, List<int>> _rashiNakMap = {
+    0: [0, 1, 2],
+    1: [2, 3, 4],
+    2: [4, 5, 6],
+    3: [6, 7, 8],
+    4: [8, 9, 10],
+    5: [10, 11, 12],
+    6: [12, 13, 14],
+    7: [14, 15, 16],
+    8: [16, 17, 18],
+    9: [18, 19, 20],
+    10: [20, 21, 22],
+    11: [24, 25, 26], // Correct: Meena has Purvabhadra 4, Uttarabhadra, Revati
+  };
+
   void _calculateMatch() {
     if (_bNak == null || _bRashi == null || _gNak == null || _gRashi == null) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -31,7 +46,7 @@ class _MatchMakingTabState extends State<MatchMakingTab> {
     });
   }
 
-  Widget _buildDropdown(String label, int? value, List<String> items, ValueChanged<int?> onChanged) {
+  Widget _buildDropdown(String label, int? value, List<String> allItems, List<int> allowedIndices, ValueChanged<int?> onChanged) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -47,12 +62,13 @@ class _MatchMakingTabState extends State<MatchMakingTab> {
           child: DropdownButtonHideUnderline(
             child: DropdownButton<int>(
               isExpanded: true,
+              isExpanded: true,
               hint: Text('ಆಯ್ಕೆಮಾಡಿ', style: TextStyle(fontSize: 14)),
-              value: value,
-              items: List.generate(items.length, (i) => DropdownMenuItem<int>(
+              value: (allowedIndices.contains(value)) ? value : null,
+              items: allowedIndices.map((i) => DropdownMenuItem<int>(
                 value: i,
-                child: Text(items[i], style: TextStyle(fontSize: 14)),
-              )),
+                child: Text(allItems[i], style: TextStyle(fontSize: 14)),
+              )).toList(),
               onChanged: onChanged,
             ),
           ),
@@ -169,9 +185,11 @@ class _MatchMakingTabState extends State<MatchMakingTab> {
                 const SizedBox(height: 12),
                 Row(
                   children: [
-                    Expanded(child: _buildDropdown('ರಾಶಿ', _bRashi, knRashi, (v) => setState(() => _bRashi = v))),
+                    Expanded(child: _buildDropdown('ರಾಶಿ', _bRashi, knRashi, List.generate(12, (i) => i), (v) {
+                       setState(() { _bRashi = v; if (v != null && !_rashiNakMap[v]!.contains(_bNak)) _bNak = null; });
+                    })),
                     const SizedBox(width: 16),
-                    Expanded(child: _buildDropdown('ನಕ್ಷತ್ರ', _bNak, knNak, (v) => setState(() => _bNak = v))),
+                    Expanded(child: _buildDropdown('ನಕ್ಷತ್ರ', _bNak, knNak, _bRashi != null ? _rashiNakMap[_bRashi]! : List.generate(27, (i) => i), (v) => setState(() => _bNak = v))),
                   ],
                 ),
                 const SizedBox(height: 24),
@@ -181,9 +199,11 @@ class _MatchMakingTabState extends State<MatchMakingTab> {
                 const SizedBox(height: 12),
                 Row(
                   children: [
-                    Expanded(child: _buildDropdown('ರಾಶಿ', _gRashi, knRashi, (v) => setState(() => _gRashi = v))),
+                    Expanded(child: _buildDropdown('ರಾಶಿ', _gRashi, knRashi, List.generate(12, (i) => i), (v) {
+                       setState(() { _gRashi = v; if (v != null && !_rashiNakMap[v]!.contains(_gNak)) _gNak = null; });
+                    })),
                     const SizedBox(width: 16),
-                    Expanded(child: _buildDropdown('ನಕ್ಷತ್ರ', _gNak, knNak, (v) => setState(() => _gNak = v))),
+                    Expanded(child: _buildDropdown('ನಕ್ಷತ್ರ', _gNak, knNak, _gRashi != null ? _rashiNakMap[_gRashi]! : List.generate(27, (i) => i), (v) => setState(() => _gNak = v))),
                   ],
                 ),
                 const SizedBox(height: 32),
