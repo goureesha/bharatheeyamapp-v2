@@ -15,7 +15,12 @@ class Ephemeris {
 
   static Future<void> initSweph() async {
     if (_isInit) return;
-    await Sweph.init(epheAssets: []);
+    try {
+      await Sweph.init(epheAssets: []);
+    } catch (_) {
+      // On web/read-only filesystems, sweph may fail to create ephe_files dir.
+      // The internal Moshier ephemeris still works without file-based ephemeris.
+    }
     _isInit = true;
   }
   // ─────────────────────────────────────────────
