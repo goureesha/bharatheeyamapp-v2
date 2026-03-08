@@ -62,7 +62,6 @@ class _MatchMakingTabState extends State<MatchMakingTab> {
           child: DropdownButtonHideUnderline(
             child: DropdownButton<int>(
               isExpanded: true,
-              isExpanded: true,
               hint: Text('ಆಯ್ಕೆಮಾಡಿ', style: TextStyle(fontSize: 14)),
               value: (allowedIndices.contains(value)) ? value : null,
               items: allowedIndices.map((i) => DropdownMenuItem<int>(
