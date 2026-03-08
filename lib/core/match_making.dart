@@ -1,70 +1,67 @@
 class MatchMakingLogic {
-  // 1: Varna, 2: Vashya, 3: Tara, 4: Yoni, 5: Graha Maitri, 6: Gana, 7: Bhakoot, 8: Nadi
-  
-  // Nakshatra Index starts from 0 (Ashwini) to 26 (Revati)
-  // Rashi Index starts from 0 (Mesha) to 11 (Meena)
+  static const Map<int, List<int>> _rashiNakMap = {
+    0: [0, 1, 2],       // Mesha: Ashwini, Bharani, Krittika
+    1: [2, 3, 4],       // Vrishabha: Krittika, Rohini, Mrigashira
+    2: [4, 5, 6],       // Mithuna: Mrigashira, Ardra, Punarvasu
+    3: [6, 7, 8],       // Karka: Punarvasu, Pushya, Ashlesha
+    4: [9, 10, 11],     // Simha: Magha, Purva Phalguni, Uttara Phalguni
+    5: [11, 12, 13],    // Kanya: Uttara Phalguni, Hasta, Chitra
+    6: [13, 14, 15],    // Tula: Chitra, Swati, Vishakha
+    7: [15, 16, 17],    // Vrischika: Vishakha, Anuradha, Jyeshtha
+    8: [18, 19, 20],    // Dhanu: Mula, Purva Ashadha, Uttara Ashadha
+    9: [20, 21, 22],    // Makara: Uttara Ashadha, Shravana, Dhanishta
+    10: [22, 23, 24],   // Kumbha: Dhanishta, Shatabhisha, Purva Bhadrapada
+    11: [24, 25, 26],   // Meena: Purva Bhadrapada, Uttara Bhadrapada, Revati
+  };
 
-  // 1. Varna (1 Point) based on Rashi
-  // Brahmin: Karka, Vrishchika, Meena (3, 7, 11)
-  // Kshatriya: Mesha, Simha, Dhanu (0, 4, 8)
-  // Vaishya: Vrishabha, Kanya, Makara (1, 5, 9)
-  // Shudra: Mithuna, Tula, Kumbha (2, 6, 10)
-  static int _getVarna(int rashiIdx) {
-    if ([3, 7, 11].contains(rashiIdx)) return 4; // Brahmin highest
-    if ([0, 4, 8].contains(rashiIdx)) return 3; // Kshatriya
-    if ([1, 5, 9].contains(rashiIdx)) return 2; // Vaishya
-    return 1; // Shudra
-  }
-
+  // 1. Varna (1 Point) Based on Rashi
+  // Brahmin: 3, 7, 11
+  // Kshatriya: 0, 4, 8
+  // Vaishya: 1, 5, 9
+  // Shudra: 2, 6, 10
   static double getVarnaScore(int brideRashi, int groomRashi) {
-    int bVarna = _getVarna(brideRashi);
-    int gVarna = _getVarna(groomRashi);
-    if (gVarna >= bVarna) return 1.0;
-    return 0.0;
+    int getVarna(int rashi) {
+      if ([3, 7, 11].contains(rashi)) return 4;
+      if ([0, 4, 8].contains(rashi)) return 3;
+      if ([1, 5, 9].contains(rashi)) return 2;
+      return 1;
+    }
+    int bVarna = getVarna(brideRashi);
+    int gVarna = getVarna(groomRashi);
+    return (gVarna >= bVarna) ? 1.0 : 0.0;
   }
 
-  // 2. Vashya (2 Points) based on Rashi
-  // Chatushpada (0, 1, 8 first half, 9 first half)
-  // Manav (2, 5, 6, 8 second half, 10)
-  // Jalchar (3, 9 second half, 11)
-  // Vanchar (4)
-  // Keeta (7)
-  // Simplification for app based on standard matching grids
+  // 2. Vashya (2 Points) Based on Rashi Type
   static double getVashyaScore(int brideRashi, int groomRashi) {
-    // Simplified standard score matrix for Vashya (36 combinations approx)
-    // 2=Full, 1=Half, 0=Zero 
-    if (brideRashi == groomRashi) return 2.0;
-
-    int bTyp = _getVashyaType(brideRashi);
-    int gTyp = _getVashyaType(groomRashi);
+    int getType(int r) {
+      if ([0, 1, 8].contains(r)) return 0; // Quadruped
+      if ([2, 5, 6, 10].contains(r)) return 1; // Human
+      if ([3, 9, 11].contains(r)) return 2; // Water
+      if (r == 4) return 3; // Wild
+      if (r == 7) return 4; // Insect
+      return 0;
+    }
+    int bTyp = getType(brideRashi);
+    int gTyp = getType(groomRashi);
     
-    if (bTyp == gTyp) return 2.0;
-    // Human(1) & Quadruped(0) = 1.0 or 0.0 depending on text but generally partial
-    if ((bTyp == 1 && gTyp == 0) || (bTyp == 0 && gTyp == 1)) return 1.0;
-    // Jalchar(2) & Human(1) = 0.5 (rounded to 1 for simplicity or 0)
-    // Using simple mapping:
-    return 0.0; // Generally incompatible if not same or specific friendly pairs
+    const vashyaMatrix = [
+      // B=Q, B=H, B=Wa, B=Wi, B=I
+      [2.0, 1.0, 1.0, 0.5, 1.0], // G=Q
+      [1.0, 2.0, 0.5, 0.0, 1.0], // G=H
+      [1.0, 1.0, 2.0, 1.0, 1.0], // G=Wa
+      [0.0, 0.0, 0.0, 2.0, 0.0], // G=Wi
+      [1.0, 1.0, 1.0, 0.0, 2.0], // G=I
+    ];
+    return vashyaMatrix[gTyp][bTyp];
   }
 
-  static int _getVashyaType(int r) {
-    if ([0, 1, 8].contains(r)) return 0; // Quad
-    if ([2, 5, 6, 10].contains(r)) return 1; // Human
-    if ([3, 11, 9].contains(r)) return 2; // Water
-    if (r == 4) return 3; // Wild
-    return 4; // Insect
-  }
-
-  // 3. Tara (3 Points)
+  // 3. Tara (3 Points) Based on Nakshatra distance
   static double getTaraScore(int brideNak, int groomNak) {
-    int bTara = ((groomNak - brideNak + 27) % 27) % 9;
-    int gTara = ((brideNak - groomNak + 27) % 27) % 9;
-    
-    // 0 is technically 9th Tara which is param mitra usually 
-    if (bTara == 0) bTara = 9;
-    if (gTara == 0) gTara = 9;
+    int bTara = ((groomNak - brideNak + 27) % 27) % 9 + 1;
+    int gTara = ((brideNak - groomNak + 27) % 27) % 9 + 1;
 
-    bool bGood = [1, 2, 4, 6, 8, 9].contains(bTara); // 3,5,7 are bad
-    bool gGood = [1, 2, 4, 6, 8, 9].contains(gTara);
+    bool bGood = [2, 4, 6, 8, 9].contains(bTara);
+    bool gGood = [2, 4, 6, 8, 9].contains(gTara);
 
     if (bGood && gGood) return 3.0;
     if (bGood || gGood) return 1.5;
@@ -72,127 +69,89 @@ class MatchMakingLogic {
   }
 
   // 4. Yoni (4 Points)
-  // Animal representation of Nakshatra
-  static int _getYoni(int n) {
-    // 0: Horse, 1: Elephant, 2: Sheep, 3: Serpent, 4: Dog, 5: Cat, 6: Rat, 7: Cow
-    // 8: Buffalo, 9: Tiger, 10: Hare/Deer, 11: Monkey, 12: Mongoose, 13: Lion
-    const yoniMap = [
-      0, 1, 2, 3, 3, 4, 5, 2, 5, 6, 6, 7, 8, 9, 8, 9, 10, 10, 4, 11, 12, 11, 13, 0, 13, 7, 1
-    ];
-    return yoniMap[n % 27];
-  }
-
   static double getYoniScore(int brideNak, int groomNak) {
-    int bYoni = _getYoni(brideNak);
-    int gYoni = _getYoni(groomNak);
-    if (bYoni == gYoni) return 4.0;
+    const yoniMap = [0, 1, 2, 3, 3, 4, 5, 2, 5, 6, 6, 7, 8, 9, 8, 9, 10, 10, 4, 11, 12, 11, 13, 0, 13, 7, 1];
+    int bYoni = yoniMap[brideNak % 27];
+    int gYoni = yoniMap[groomNak % 27];
     
-    // Hostile pairs (0 points)
-    final enemies = [
-      [0, 8], [1, 13], [2, 11], [3, 12], [4, 10], [5, 6], [7, 9]
+    // Exact 14x14 Vedic Yoni Score Matrix
+    const matrix = [
+      // 0:Horse, 1:Elephant, 2:Sheep, 3:Snake, 4:Dog, 5:Cat, 6:Rat, 7:Cow, 8:Buffalo, 9:Tiger, 10:Deer, 11:Monkey, 12:Mongoose, 13:Lion
+      [4, 2, 2, 3, 2, 2, 2, 1, 0, 1, 3, 2, 2, 1], // 0 Horse
+      [2, 4, 3, 3, 2, 2, 2, 2, 3, 1, 2, 3, 2, 0], // 1 Elephant
+      [2, 3, 4, 2, 1, 2, 1, 3, 3, 1, 2, 0, 3, 1], // 2 Sheep
+      [3, 3, 2, 4, 2, 1, 1, 1, 1, 2, 2, 2, 0, 2], // 3 Snake
+      [2, 2, 1, 2, 4, 2, 1, 2, 2, 1, 0, 2, 1, 1], // 4 Dog
+      [2, 2, 2, 1, 2, 4, 0, 2, 2, 1, 3, 3, 2, 1], // 5 Cat
+      [2, 2, 1, 1, 1, 0, 4, 2, 2, 2, 2, 2, 1, 2], // 6 Rat
+      [1, 2, 3, 1, 2, 2, 2, 4, 3, 0, 3, 2, 2, 1], // 7 Cow
+      [0, 3, 3, 1, 2, 2, 2, 3, 4, 1, 2, 2, 2, 1], // 8 Buffalo
+      [1, 1, 1, 2, 1, 1, 2, 0, 1, 4, 1, 1, 2, 1], // 9 Tiger
+      [3, 2, 2, 2, 0, 3, 2, 3, 2, 1, 4, 2, 2, 1], // 10 Deer
+      [2, 3, 0, 2, 2, 3, 2, 2, 2, 1, 2, 4, 3, 2], // 11 Monkey
+      [2, 2, 3, 0, 1, 2, 1, 2, 2, 2, 2, 3, 4, 2], // 12 Mongoose
+      [1, 0, 1, 2, 1, 1, 2, 1, 1, 1, 1, 2, 2, 4], // 13 Lion
     ];
-    for (var pair in enemies) {
-      if ((pair[0] == bYoni && pair[1] == gYoni) || (pair[1] == bYoni && pair[0] == gYoni)) {
-        return 0.0; // Enmity
-      }
-    }
-    // Friendly / Neutral / Inimical scaling is usually 3, 2, 1
-    // Simplified fallback to average for others to keep implementation compact
-    return 2.0; 
+    return matrix[gYoni][bYoni].toDouble();
   }
 
   // 5. Graha Maitri (5 Points)
   static double getGrahaMaitriScore(int brideRashi, int groomRashi) {
-    // Lords: 
-    // Sun(0): 4, Moon(1): 3, Mars(2): 0, 7, Merc(3): 2, 5
-    // Jup(4): 8, 11, Ven(5): 1, 6, Sat(6): 9, 10
-    List<int> lords = [2, 5, 3, 1, 0, 3, 5, 2, 4, 6, 6, 4];
+    const lords = [2, 5, 3, 1, 0, 3, 5, 2, 4, 6, 6, 4];
     int bLord = lords[brideRashi];
     int gLord = lords[groomRashi];
-
-    if (bLord == gLord) return 5.0;
-
-    // Friendly relationships (simplified)
-    // Sun friends: Moon, Mars, Jup
-    // Moon friends: Sun, Merc
-    // Mars friends: Sun, Moon, Jup
-    // Merc friends: Sun, Ven
-    // Jup friends: Sun, Moon, Mars
-    // Ven friends: Merc, Sat
-    // Sat friends: Merc, Ven
-    const friends = [
-      [1, 2, 4], // Sun
-      [0, 3],    // Moon
-      [0, 1, 4], // Mars
-      [0, 5],    // Merc
-      [0, 1, 2], // Jup
-      [3, 6],    // Ven
-      [3, 5]     // Sat
-    ];
-
-    bool bFriendToG = friends[bLord].contains(gLord);
-    bool gFriendToB = friends[gLord].contains(bLord);
-
-    if (bFriendToG && gFriendToB) return 5.0; // Mutual friends
-    if ((bFriendToG && !gFriendToB) || (!bFriendToG && gFriendToB)) return 4.0; // One friend, one neutral
     
-    // One neutral, one neutral = 3
-    // One friend, one enemy = 1
-    // Mutual enemies = 0
-    return 1.0; // Defaulting to low score for strictness
+    // Relation Matrix: 2=Friend, 1=Neutral, 0=Enemy
+    // Sun(0), Moon(1), Mars(2), Merc(3), Jup(4), Ven(5), Sat(6)
+    const rel = [
+      [1, 2, 2, 1, 2, 0, 0], // Sun
+      [2, 1, 1, 2, 1, 1, 1], // Moon
+      [2, 2, 1, 0, 2, 1, 1], // Mars
+      [2, 0, 1, 1, 1, 2, 1], // Merc
+      [2, 2, 2, 0, 1, 0, 1], // Jup
+      [0, 0, 1, 2, 1, 1, 2], // Ven
+      [0, 0, 0, 2, 1, 2, 1], // Sat
+    ];
+    
+    int gRelToB = rel[gLord][bLord];
+    int bRelToG = rel[bLord][gLord];
+    
+    if (gRelToB == 2 && bRelToG == 2) return 5.0; // Friend-Friend
+    if ((gRelToB == 2 && bRelToG == 1) || (gRelToB == 1 && bRelToG == 2)) return 4.0; // Friend-Neutral
+    if (gRelToB == 1 && bRelToG == 1) return 3.0; // Neutral-Neutral
+    if ((gRelToB == 2 && bRelToG == 0) || (gRelToB == 0 && bRelToG == 2)) return 1.0; // Friend-Enemy
+    if ((gRelToB == 1 && bRelToG == 0) || (gRelToB == 0 && bRelToG == 1)) return 0.5; // Neutral-Enemy
+    return 0.0; // Enemy-Enemy
   }
 
   // 6. Gana (6 Points)
-  // 0: Deva, 1: Manushya, 2: Rakshasa
-  static int _getGana(int n) {
-    const ganaList = [
-      0, 1, 2, 1, 0, 1, 0, 0, 2, 2, 1, 1, 0, 2, 0, 2, 0, 2, 2, 1, 1, 0, 2, 2, 1, 1, 0
-    ];
-    return ganaList[n % 27];
-  }
-
   static double getGanaScore(int brideNak, int groomNak) {
-    int bGana = _getGana(brideNak);
-    int gGana = _getGana(groomNak);
+    const ganaList = [0, 1, 2, 1, 0, 1, 0, 0, 2, 2, 1, 1, 0, 2, 0, 2, 0, 2, 2, 1, 1, 0, 2, 2, 1, 1, 0];
+    int bGana = ganaList[brideNak % 27];
+    int gGana = ganaList[groomNak % 27];
     
-    if (bGana == gGana) return 6.0;
-    if (gGana == 0 && bGana == 1) return 6.0; // Boy Deva, Girl Manushya is acceptable
-    if (gGana == 1 && bGana == 0) return 5.0; // Girl Deva, Boy Manushya
-    
-    if (gGana == 2 && bGana == 0) return 1.0; 
-    if (gGana == 0 && bGana == 2) return 0.0; // Rakshasa girl, Deva boy
-    
-    if (gGana == 2 && bGana == 1) return 0.0;
-    if (gGana == 1 && bGana == 2) return 0.0; 
-
-    return 0.0;
+    const ganaMatrix = [
+      // Bride Deva(0), Manushya(1), Rakshasa(2)
+      [6.0, 5.0, 1.0], // Groom Deva
+      [6.0, 6.0, 0.0], // Groom Manushya
+      [0.0, 0.0, 0.0], // Groom Rakshasa
+    ];
+    return ganaMatrix[gGana][bGana];
   }
 
-  // 7. Bhakoot (7 Points) based on Rashi distance
+  // 7. Bhakoot (7 Points)
   static double getBhakootScore(int brideRashi, int groomRashi) {
-    if (brideRashi == groomRashi) return 7.0;
-    
-    int dist = ((groomRashi - brideRashi + 12) % 12) + 1; // Distance from Bride to Groom
-    
-    // Auspicious distances: 1/7, 3/11, 4/10
-    // Inauspicious: 2/12, 5/9, 6/8
-    if ([1, 7, 3, 11, 4, 10].contains(dist)) return 7.0;
-    return 0.0; 
+    int dist = ((groomRashi - brideRashi + 12) % 12);
+    const bhakootScores = [7.0, 0.0, 7.0, 7.0, 0.0, 0.0, 7.0, 0.0, 0.0, 7.0, 7.0, 0.0];
+    return bhakootScores[dist];
   }
 
   // 8. Nadi (8 Points)
-  // 0: Adi (Vata), 1: Madhya (Pitta), 2: Antya (Kapha)
-  static int _getNadi(int n) {
-    const nadiCycle = [0, 1, 2, 2, 1, 0, 0, 1, 2];
-    return nadiCycle[(n % 27) % 9];
-  }
-
   static double getNadiScore(int brideNak, int groomNak) {
-    int bNadi = _getNadi(brideNak);
-    int gNadi = _getNadi(groomNak);
-    
-    if (bNadi == gNadi) return 0.0; // Same Nadi is a dosha (0 points)
-    return 8.0; // Different Nadi gets full 8 points
+    const nadiCycle = [0, 1, 2, 2, 1, 0, 0, 1, 2];
+    int bNadi = nadiCycle[(brideNak % 27) % 9];
+    int gNadi = nadiCycle[(groomNak % 27) % 9];
+    return (bNadi == gNadi) ? 0.0 : 8.0;
   }
 
   static Map<String, dynamic> calculateCompatibility(int bRashi, int bNak, int gRashi, int gNak) {
