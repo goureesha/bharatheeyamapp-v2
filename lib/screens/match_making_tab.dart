@@ -19,18 +19,18 @@ class _MatchMakingTabState extends State<MatchMakingTab> {
   Map<String, dynamic>? _result;
 
   static const Map<int, List<int>> _rashiNakMap = {
-    0: [0, 1, 2],
-    1: [2, 3, 4],
-    2: [4, 5, 6],
-    3: [6, 7, 8],
-    4: [8, 9, 10],
-    5: [10, 11, 12],
-    6: [12, 13, 14],
-    7: [14, 15, 16],
-    8: [16, 17, 18],
-    9: [18, 19, 20],
-    10: [20, 21, 22],
-    11: [24, 25, 26], // Correct: Meena has Purvabhadra 4, Uttarabhadra, Revati
+    0: [0, 1, 2],       // Mesha: Ashwini, Bharani, Krittika
+    1: [2, 3, 4],       // Vrishabha: Krittika, Rohini, Mrigashira
+    2: [4, 5, 6],       // Mithuna: Mrigashira, Ardra, Punarvasu
+    3: [6, 7, 8],       // Karka: Punarvasu, Pushya, Ashlesha
+    4: [9, 10, 11],     // Simha: Magha, Purva Phalguni, Uttara Phalguni
+    5: [11, 12, 13],    // Kanya: Uttara Phalguni, Hasta, Chitra
+    6: [13, 14, 15],    // Tula: Chitra, Swati, Vishakha
+    7: [15, 16, 17],    // Vrischika: Vishakha, Anuradha, Jyeshtha
+    8: [18, 19, 20],    // Dhanu: Mula, Purva Ashadha, Uttara Ashadha
+    9: [20, 21, 22],    // Makara: Uttara Ashadha, Shravana, Dhanishta
+    10: [22, 23, 24],   // Kumbha: Dhanishta, Shatabhisha, Purva Bhadrapada
+    11: [24, 25, 26],   // Meena: Purva Bhadrapada, Uttara Bhadrapada, Revati
   };
 
   void _calculateMatch() {
