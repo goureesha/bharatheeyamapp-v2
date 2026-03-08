@@ -72,6 +72,25 @@ class _DashboardScreenState extends State<DashboardScreen>
     final panchangNakName = widget.result.panchang.nakshatra.split(' ')[0];
     int panchangNakIdx = knNak.indexWhere((n) => panchangNakName.startsWith(n));
     _dinaNakshatraIdx = panchangNakIdx != -1 ? panchangNakIdx : 0;
+    
+    _loadJanmaNakshatra();
+  }
+
+  Future<void> _loadJanmaNakshatra() async {
+    final prefs = await SharedPreferences.getInstance();
+    if (mounted) {
+      setState(() {
+        final val = prefs.getInt('dashboard_janma_nakshatra');
+        if (val != null) _janmaNakshatraIdx = val;
+      });
+    }
+  }
+
+  Future<void> _saveSelectedJanmaNakshatra(int? idx) async {
+    if (idx != null) {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setInt('dashboard_janma_nakshatra', idx);
+    }
   }
 
   @override
