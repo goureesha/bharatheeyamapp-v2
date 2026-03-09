@@ -495,16 +495,81 @@ class AstroCalculator {
       final knSouraMasa = ['ಮೇಷ','ವೃಷಭ','ಮಿಥುನ','ಕರ್ಕಾಟಕ','ಸಿಂಹ','ಕನ್ಯಾ','ತುಲಾ','ವೃಶ್ಚಿಕ','ಧನು','ಮಕರ','ಕುಂಭ','ಮೀನ'];
       final sunRashiIdx = (sunDeg / 30).floor() % 12;
       final souraMasa = knSouraMasa[sunRashiIdx];
-      final souraMasaGataDina = ((sunDeg % 30)).toStringAsFixed(1);
       
-      // Chandra Masa (Amavasyanta system - based on Sun's rashi position)
-      // In Amavasyanta: month is named after the rashi the Sun is in at Purnima
-      // Sun in Meena = Chaitra, Sun in Mesha = Vaishakha, etc.
-      final knChandraMasa = ['ವೈಶಾಖ','ಜ್ಯೇಷ್ಠ','ಆಷಾಢ','ಶ್ರಾವಣ','ಭಾದ್ರಪದ','ಆಶ್ವಿನ','ಕಾರ್ತಿಕ','ಮಾರ್ಗಶಿರ','ಪುಷ್ಯ','ಮಾಘ','ಫಾಲ್ಗುಣ','ಚೈತ್ರ'];
-      final chandraMasa = knChandraMasa[sunRashiIdx];
+      // Soura Masa Gata Dina - convert Sun's degree within sign to day count
+      // Sun moves about 1 degree per day, so degree within rashi ≈ days elapsed
+      final sunDegInSign = sunDeg % 30;
+      final souraMasaGataDina = (sunDegInSign.floor() + 1).toString();
+      
+      // === Chandra Masa (Amavasyanta system) ===
+      // In Amavasyanta: month runs from Amavasya to Amavasya
+      // Month is named after the Rashi the Sun occupies at Purnima of that month
+      // Adhika Masa: when Sun stays in the same Rashi across two consecutive Amavasyas
+      
+      final knChandraMasa = ['ಚೈತ್ರ','ವೈಶಾಖ','ಜ್ಯೇಷ್ಠ','ಆಷಾಢ','ಶ್ರಾವಣ','ಭಾದ್ರಪದ','ಆಶ್ವಿನ','ಕಾರ್ತಿಕ','ಮಾರ್ಗಶಿರ','ಪುಷ್ಯ','ಮಾಘ','ಫಾಲ್ಗುಣ'];
+      
+      // Find previous Amavasya (tithi = 30/0, i.e. Sun-Moon conjunction)
+      // and next Amavasya by scanning Julian days
+      String chandraMasa;
+      try {
+        // Calculate Sun-Moon elongation to find Amavasya
+        final moonDeg = positions['ಚಂದ್ರ'] ?? 0.0;
+        
+        // Current tithi index (0-29), tIdx is already computed above
+        // In Amavasyanta: Amavasya is the END of month (tithi index 29)
+        // tIdx 0-14 = Shukla Paksha, tIdx 15-29 = Krishna Paksha
+        
+        // Find Sun's Rashi at previous Amavasya
+        // Step back approximately (30 - tIdx) tithis to find last Amavasya
+        // Each tithi ≈ 0.9847 days (synodic month / 30)
+        double daysBackToAmavasya;
+        if (tIdx == 29) {
+          daysBackToAmavasya = 0; // We are at Amavasya
+        } else {
+          // Days remaining in current tithi cycle to previous Amavasya
+          // tIdx 0 means 1 tithi after Amavasya, tIdx 14 means 15 tithis after, etc.
+          daysBackToAmavasya = (tIdx + 1) * (29.530589 / 30.0);
+        }
+        
+        double daysForwardToNextAmavasya = (29 - tIdx) * (29.530589 / 30.0);
+        if (tIdx == 29) daysForwardToNextAmavasya = 29.530589;
+        
+        // Get Sun's Rashi at previous Amavasya
+        final jdPrevAmavasya = jdBirth - daysBackToAmavasya;
+        final sunAtPrevAmavasyaCalc = Sweph.swe_calc_ut(
+            jdPrevAmavasya, HeavenlyBody.SE_SUN, SwephFlag.SEFLG_SWIEPH);
+        final sunAtPrevAmavasya = sunAtPrevAmavasyaCalc.longitude - ayn;
+        final prevAmaRashi = (((sunAtPrevAmavasya % 360 + 360) % 360) / 30).floor() % 12;
+        
+        // Get Sun's Rashi at next Amavasya
+        final jdNextAmavasya = jdBirth + daysForwardToNextAmavasya;
+        final sunAtNextAmavasyaCalc = Sweph.swe_calc_ut(
+            jdNextAmavasya, HeavenlyBody.SE_SUN, SwephFlag.SEFLG_SWIEPH);
+        final sunAtNextAmavasya = sunAtNextAmavasyaCalc.longitude - ayn;
+        final nextAmaRashi = (((sunAtNextAmavasya % 360 + 360) % 360) / 30).floor() % 12;
+        
+        // Determine Chandra Masa name
+        // The month is named after the Rashi where Purnima falls
+        // In Amavasyanta: Purnima occurs mid-month
+        // The Masa name = Sun's Rashi at Purnima mapped to lunar month
+        // Mesha(0)=Vaishakha, Vrishabha(1)=Jyeshtha, ... Meena(11)=Chaitra
+        
+        // Current month's reference rashi = Sun's rashi at start of this lunar month (prev Amavasya)
+        final masaRashi = prevAmaRashi;
+        final masaName = knChandraMasa[masaRashi];
+        
+        // Adhika Masa check: if Sun doesn't change rashi between prev and next Amavasya
+        if (prevAmaRashi == nextAmaRashi) {
+          chandraMasa = 'ಅಧಿಕ $masaName';
+        } else {
+          chandraMasa = 'ನಿಜ $masaName';
+        }
+      } catch (_) {
+        // Fallback: simple mapping from Sun's Rashi
+        chandraMasa = knChandraMasa[sunRashiIdx];
+      }
       
       // Samvatsara (Shalivahana Shaka - changes at Ugadi/Chaitra Shukla Pratipada)
-      // Shaka year = Gregorian year - 78; before Ugadi (~March/April), use previous year
       final knSamvatsara = [
         'ಪ್ರಭವ','ವಿಭವ','ಶುಕ್ಲ','ಪ್ರಮೋದೂತ','ಪ್ರಜೋತ್ಪತ್ತಿ','ಆಂಗೀರಸ','ಶ್ರೀಮುಖ','ಭಾವ','ಯುವ','ಧಾತೃ',
         'ಈಶ್ವರ','ಬಹುಧಾನ್ಯ','ಪ್ರಮಾಥಿ','ವಿಕ್ರಮ','ವೃಷ','ಚಿತ್ರಭಾನು','ಸುಭಾನು','ತಾರಣ','ಪಾರ್ಥಿವ','ವ್ಯಯ',
@@ -513,29 +578,20 @@ class AstroCalculator {
         'ಪ್ಲವಂಗ','ಕೀಲಕ','ಸೌಮ್ಯ','ಸಾಧಾರಣ','ವಿರೋಧಕೃತ್','ಪರಿಧಾವಿ','ಪ್ರಮಾದೀಚ','ಆನಂದ','ರಾಕ್ಷಸ','ಅನಲ',
         'ಪಿಂಗಳ','ಕಾಳಯುಕ್ತಿ','ಸಿದ್ಧಾರ್ಥಿ','ರೌದ್ರಿ','ದುರ್ಮತಿ','ದುಂದುಭಿ','ರುಧಿರೋದ್ಗಾರಿ','ರಕ್ತಾಕ್ಷಿ','ಕ್ರೋಧನ','ಅಕ್ಷಯ',
       ];
-      // Shalivahana Shaka year: Ugadi = Chaitra Shukla Pratipada (Moon-based)
-      // Ugadi occurs when the first new moon (Amavasya) passes while Sun is in Meena (11)
-      // Before this: still in previous samvatsara. After: new samvatsara.
-      // Chaitra = Sun in Meena (11). If Sun hasn't reached Meena yet = before Ugadi.
-      // If Sun is in Meena AND tithi is in Shukla paksha (0-14) = Chaitra has started = after Ugadi.
-      // If Sun is past Meena (in Mesha 0 or later) = definitely after Ugadi.
       int shakaYear = year - 78;
       bool beforeUgadi;
       if (sunRashiIdx == 9 || sunRashiIdx == 10) {
-        // Sun in Makara or Kumbha (Jan-Mar before Meena) = before Ugadi
         beforeUgadi = true;
       } else if (sunRashiIdx == 11 && tIdx >= 15) {
-        // Sun entered Meena but still in Krishna paksha (before new moon) = before Ugadi
         beforeUgadi = true;
       } else {
-        // Sun past Meena or in Meena Shukla paksha = after Ugadi
         beforeUgadi = false;
       }
       if (beforeUgadi) shakaYear -= 1;
       final samvatsaraIdx = ((shakaYear + 11) % 60);
       final samvatsara = '${knSamvatsara[samvatsaraIdx]} (ಶಕ $shakaYear)';
       
-      // Visha Praghati & Amruta Praghati (per nakshatra, in ghatis from sunrise)
+      // Visha Praghati & Amruta Praghati
       final vishaGhatis = [30,28,22,20,18,26,24,10,14,12,8,6,4,2,30,22,20,14,12,10,8,6,4,2,28,26,24,22,20,18];
       final amrutaGhatis = [6,8,10,4,28,26,20,22,12,16,18,14,24,2,6,8,10,4,28,26,20,22,12,16,18,14,24,2,6,8];
       final vishaG = nIdx < vishaGhatis.length ? vishaGhatis[nIdx] : 0;
@@ -561,7 +617,7 @@ class AstroCalculator {
         suryaNakshatra: knNak[sunNakIdx],
         suryaPada: '$sunPada',
         souraMasa: souraMasa,
-        souraMasaGataDina: '$souraMasaGataDina°',
+        souraMasaGataDina: souraMasaGataDina,
         chandraMasa: chandraMasa,
         samvatsara: samvatsara,
         vishaPraghati: '$vishaG ಘಟಿ',
