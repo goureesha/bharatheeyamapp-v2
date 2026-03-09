@@ -92,33 +92,92 @@ class _InputScreenState extends State<InputScreen> {
     });
   }
 
-  Future<void> _geocode() async {
-    if (_placeCtrl.text.trim().isEmpty) return;
+  Future<void> _geocodeMultiple(String placeName) async {
+    if (placeName.trim().isEmpty) return;
     setState(() { _geoLoading = true; _geoStatus = ''; });
     try {
-      final q = Uri.encodeComponent(_placeCtrl.text.trim());
+      final q = Uri.encodeComponent(placeName.trim());
       final url = Uri.parse(
-          'https://nominatim.openstreetmap.org/search?q=$q&format=json&limit=1');
+          'https://nominatim.openstreetmap.org/search?q=$q&format=json&limit=5');
       final resp = await http.get(url, headers: {'User-Agent': 'BharatheeyamApp/1.0'})
           .timeout(const Duration(seconds: 10));
       if (resp.statusCode == 200) {
         final data = jsonDecode(resp.body) as List;
-        if (data.isNotEmpty) {
+        if (data.isEmpty) {
+          setState(() => _geoStatus = 'ಸ್ಥಳ ಕಂಡುಬಂದಿಲ್ಲ.');
+        } else if (data.length == 1) {
+          // Single result — auto-fill
           final lat = double.parse(data[0]['lat']);
           final lon = double.parse(data[0]['lon']);
           setState(() {
+            _placeCtrl.text = placeName.trim();
             _latCtrl.text = lat.toStringAsFixed(4);
             _lonCtrl.text = lon.toStringAsFixed(4);
-            _geoStatus    = '📍 ${data[0]['display_name']}';
+            _geoStatus = '📍 ${data[0]['display_name']}';
           });
         } else {
-          setState(() => _geoStatus = 'ಸ್ಥಳ ಕಂಡುಬಂದಿಲ್ಲ.');
+          // Multiple results — show disambiguation dialog
+          if (mounted) {
+            _showPlaceDisambiguation(data);
+          }
         }
       }
     } catch (_) {
       setState(() => _geoStatus = 'ಸ್ಥಳ ಸಂಪರ್ಕ ದೋಷ. ನೇರವಾಗಿ ಅಕ್ಷಾಂಶ/ರೇಖಾಂಶ ನಮೂದಿಸಿ.');
     }
     setState(() => _geoLoading = false);
+  }
+
+  void _showPlaceDisambiguation(List<dynamic> results) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (ctx) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Padding(
+              padding: const EdgeInsets.all(16),
+              child: Text('ಸ್ಥಳ ಆಯ್ಕೆಮಾಡಿ', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: kPurple1)),
+            ),
+            Text('ಒಂದೇ ಹೆಸರಿನ ಹಲವು ಸ್ಥಳಗಳು ಕಂಡುಬಂದಿವೆ:', style: TextStyle(fontSize: 13, color: Colors.grey.shade600)),
+            const SizedBox(height: 8),
+            Flexible(
+              child: ListView.separated(
+                shrinkWrap: true,
+                itemCount: results.length,
+                separatorBuilder: (_, __) => Divider(height: 1),
+                itemBuilder: (_, i) {
+                  final place = results[i];
+                  final displayName = place['display_name'] ?? '';
+                  return ListTile(
+                    leading: CircleAvatar(
+                      backgroundColor: kPurple1.withOpacity(0.1),
+                      child: Icon(Icons.location_on, color: kPurple1, size: 20),
+                    ),
+                    title: Text(displayName, style: TextStyle(fontSize: 13), maxLines: 2, overflow: TextOverflow.ellipsis),
+                    onTap: () {
+                      Navigator.pop(ctx);
+                      final lat = double.parse(place['lat']);
+                      final lon = double.parse(place['lon']);
+                      setState(() {
+                        _latCtrl.text = lat.toStringAsFixed(4);
+                        _lonCtrl.text = lon.toStringAsFixed(4);
+                        _geoStatus = '📍 $displayName';
+                      });
+                    },
+                  );
+                },
+              ),
+            ),
+            const SizedBox(height: 16),
+          ],
+        ),
+      ),
+    );
   }
 
   Future<void> _calculate() async {
@@ -388,53 +447,84 @@ class _InputScreenState extends State<InputScreen> {
           ),
           const SizedBox(height: 14),
 
-          // Offline place selector
-          DropdownButtonFormField<String>(
-            decoration: const InputDecoration(
-              labelText: 'ಊರು ಆಯ್ಕೆ',
-              prefixIcon: Icon(Icons.location_city),
-            ),
-            isExpanded: true,
-            items: offlinePlaces.keys.map((name) => DropdownMenuItem(
-              value: name, child: Text(name, style: TextStyle(fontSize: 13)),
-            )).toList(),
-            onChanged: (v) {
-              if (v != null && offlinePlaces.containsKey(v)) {
-                final coords = offlinePlaces[v]!;
+          // Searchable Place Selector (Offline + Online)
+          Autocomplete<String>(
+            optionsBuilder: (TextEditingValue textEditingValue) {
+              if (textEditingValue.text.isEmpty) {
+                return offlinePlaces.keys.take(15);
+              }
+              final query = textEditingValue.text.toLowerCase();
+              return offlinePlaces.keys.where(
+                  (name) => name.toLowerCase().contains(query));
+            },
+            fieldViewBuilder: (context, textEditingController, focusNode, onFieldSubmitted) {
+              return TextField(
+                controller: textEditingController,
+                focusNode: focusNode,
+                decoration: InputDecoration(
+                  labelText: 'ಊರು ಹುಡುಕಿ',
+                  prefixIcon: Icon(Icons.search),
+                  suffixIcon: _geoLoading
+                    ? Padding(
+                        padding: const EdgeInsets.all(12),
+                        child: SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2)),
+                      )
+                    : IconButton(
+                        icon: Icon(Icons.my_location, color: kTeal),
+                        onPressed: () {
+                          _placeCtrl.text = textEditingController.text;
+                          _geocodeMultiple(textEditingController.text);
+                        },
+                      ),
+                ),
+                onSubmitted: (_) {
+                  _placeCtrl.text = textEditingController.text;
+                  _geocodeMultiple(textEditingController.text);
+                },
+              );
+            },
+            onSelected: (String selection) {
+              if (offlinePlaces.containsKey(selection)) {
+                final coords = offlinePlaces[selection]!;
                 setState(() {
-                  _placeCtrl.text = v;
+                  _placeCtrl.text = selection;
                   _latCtrl.text = coords[0].toStringAsFixed(4);
                   _lonCtrl.text = coords[1].toStringAsFixed(4);
-                  _geoStatus = 'ಊರು: $v';
+                  _geoStatus = '📍 $selection';
                 });
               }
+            },
+            optionsViewBuilder: (context, onSelected, options) {
+              return Align(
+                alignment: Alignment.topLeft,
+                child: Material(
+                  elevation: 4.0,
+                  borderRadius: BorderRadius.circular(8),
+                  child: ConstrainedBox(
+                    constraints: BoxConstraints(maxHeight: 250, maxWidth: MediaQuery.of(context).size.width - 64),
+                    child: ListView.builder(
+                      padding: EdgeInsets.zero,
+                      itemCount: options.length,
+                      shrinkWrap: true,
+                      itemBuilder: (context, index) {
+                        final option = options.elementAt(index);
+                        return ListTile(
+                          dense: true,
+                          leading: Icon(Icons.location_on, size: 18, color: kPurple2),
+                          title: Text(option, style: TextStyle(fontSize: 13)),
+                          onTap: () => onSelected(option),
+                        );
+                      },
+                    ),
+                  ),
+                ),
+              );
             },
           ),
           if (_geoStatus.isNotEmpty) ...[
             const SizedBox(height: 6),
             Text(_geoStatus, style: TextStyle(fontSize: 12, color: kGreen)),
           ],
-          const SizedBox(height: 10),
-
-          // Online place search
-          Row(children: [
-            Expanded(
-              child: TextField(
-                controller: _placeCtrl,
-                decoration: const InputDecoration(labelText: 'ಊರು ಹುಡುಕಿ', prefixIcon: Icon(Icons.search)),
-              ),
-            ),
-            const SizedBox(width: 10),
-            ElevatedButton(
-              onPressed: _geoLoading ? null : _geocode,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: kTeal,
-                padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 14)),
-              child: _geoLoading
-                  ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-                  : Text('ಹುಡುಕಿ', style: TextStyle(fontWeight: FontWeight.w800)),
-            ),
-          ]),
           const SizedBox(height: 14),
 
           // Lat/Lon
