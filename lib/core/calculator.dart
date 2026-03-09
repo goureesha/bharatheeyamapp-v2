@@ -496,76 +496,90 @@ class AstroCalculator {
       final sunRashiIdx = (sunDeg / 30).floor() % 12;
       final souraMasa = knSouraMasa[sunRashiIdx];
       
-      // Soura Masa Gata Dina - convert Sun's degree within sign to day count
-      // Sun moves about 1 degree per day, so degree within rashi ≈ days elapsed
-      final sunDegInSign = sunDeg % 30;
-      final souraMasaGataDina = (sunDegInSign.floor() + 1).toString();
+      // Soura Masa Gata Dina - completed days since Sun entered this Rashi (last Sankranti)
+      // Find when Sun entered the current Rashi by searching backwards
+      String souraMasaGataDina;
+      try {
+        final currentRashiBoundary = sunRashiIdx * 30.0;
+        // Search backwards day by day to find when Sun crossed into this Rashi
+        int dayCount = 0;
+        for (int d = 0; d <= 35; d++) {
+          final jdCheck = jdBirth - d;
+          final sunCheck = Sweph.swe_calc_ut(jdCheck, HeavenlyBody.SE_SUN, SwephFlag.SEFLG_SWIEPH);
+          final sunSid = ((sunCheck.longitude - ayn) % 360 + 360) % 360;
+          final rashiCheck = (sunSid / 30).floor() % 12;
+          if (rashiCheck != sunRashiIdx) {
+            dayCount = d;
+            break;
+          }
+        }
+        souraMasaGataDina = '$dayCount';
+      } catch (_) {
+        souraMasaGataDina = (sunDeg % 30).floor().toString();
+      }
       
       // === Chandra Masa (Amavasyanta system) ===
-      // In Amavasyanta: month runs from Amavasya to Amavasya
-      // Month is named after the Rashi the Sun occupies at Purnima of that month
-      // Adhika Masa: when Sun stays in the same Rashi across two consecutive Amavasyas
+      // Rule: In Amavasyanta, a lunar month runs from one Amavasya to the next.
+      // The month is named after the Rashi where a Sankranti occurs during that month.
+      // ADHIKA MASA: If NO Sankranti occurs between prev Amavasya and next Amavasya.
+      // NIJA MASA: If a Sankranti does occur.
       
       final knChandraMasa = ['ಚೈತ್ರ','ವೈಶಾಖ','ಜ್ಯೇಷ್ಠ','ಆಷಾಢ','ಶ್ರಾವಣ','ಭಾದ್ರಪದ','ಆಶ್ವಿನ','ಕಾರ್ತಿಕ','ಮಾರ್ಗಶಿರ','ಪುಷ್ಯ','ಮಾಘ','ಫಾಲ್ಗುಣ'];
       
-      // Find previous Amavasya (tithi = 30/0, i.e. Sun-Moon conjunction)
-      // and next Amavasya by scanning Julian days
       String chandraMasa;
       try {
-        // Calculate Sun-Moon elongation to find Amavasya
-        final moonDeg = positions['ಚಂದ್ರ'] ?? 0.0;
-        
-        // Current tithi index (0-29), tIdx is already computed above
-        // In Amavasyanta: Amavasya is the END of month (tithi index 29)
-        // tIdx 0-14 = Shukla Paksha, tIdx 15-29 = Krishna Paksha
-        
-        // Find Sun's Rashi at previous Amavasya
-        // Step back approximately (30 - tIdx) tithis to find last Amavasya
-        // Each tithi ≈ 0.9847 days (synodic month / 30)
+        // Approximate days from birth to previous Amavasya
+        // tIdx: 0 = Shukla Pratipada (1 tithi after Amavasya)
+        // tIdx: 29 = Amavasya itself
+        final tithiDuration = 29.530589 / 30.0; // ~0.9844 days per tithi
         double daysBackToAmavasya;
         if (tIdx == 29) {
-          daysBackToAmavasya = 0; // We are at Amavasya
+          daysBackToAmavasya = 0;
         } else {
-          // Days remaining in current tithi cycle to previous Amavasya
-          // tIdx 0 means 1 tithi after Amavasya, tIdx 14 means 15 tithis after, etc.
-          daysBackToAmavasya = (tIdx + 1) * (29.530589 / 30.0);
+          daysBackToAmavasya = (tIdx + 1) * tithiDuration;
         }
         
-        double daysForwardToNextAmavasya = (29 - tIdx) * (29.530589 / 30.0);
-        if (tIdx == 29) daysForwardToNextAmavasya = 29.530589;
+        double daysForwardToNextAmavasya;
+        if (tIdx == 29) {
+          daysForwardToNextAmavasya = 29.530589;
+        } else {
+          daysForwardToNextAmavasya = (29 - tIdx) * tithiDuration;
+        }
         
-        // Get Sun's Rashi at previous Amavasya
+
+        
         final jdPrevAmavasya = jdBirth - daysBackToAmavasya;
-        final sunAtPrevAmavasyaCalc = Sweph.swe_calc_ut(
-            jdPrevAmavasya, HeavenlyBody.SE_SUN, SwephFlag.SEFLG_SWIEPH);
-        final sunAtPrevAmavasya = sunAtPrevAmavasyaCalc.longitude - ayn;
-        final prevAmaRashi = (((sunAtPrevAmavasya % 360 + 360) % 360) / 30).floor() % 12;
-        
-        // Get Sun's Rashi at next Amavasya
         final jdNextAmavasya = jdBirth + daysForwardToNextAmavasya;
-        final sunAtNextAmavasyaCalc = Sweph.swe_calc_ut(
-            jdNextAmavasya, HeavenlyBody.SE_SUN, SwephFlag.SEFLG_SWIEPH);
-        final sunAtNextAmavasya = sunAtNextAmavasyaCalc.longitude - ayn;
-        final nextAmaRashi = (((sunAtNextAmavasya % 360 + 360) % 360) / 30).floor() % 12;
         
-        // Determine Chandra Masa name
-        // The month is named after the Rashi where Purnima falls
-        // In Amavasyanta: Purnima occurs mid-month
-        // The Masa name = Sun's Rashi at Purnima mapped to lunar month
-        // Mesha(0)=Vaishakha, Vrishabha(1)=Jyeshtha, ... Meena(11)=Chaitra
+        // Get Sun's sidereal Rashi at previous Amavasya
+        final sunPrevCalc = Sweph.swe_calc_ut(jdPrevAmavasya, HeavenlyBody.SE_SUN, SwephFlag.SEFLG_SWIEPH);
+        final sunPrevSid = ((sunPrevCalc.longitude - ayn) % 360 + 360) % 360;
+        final prevAmaRashi = (sunPrevSid / 30).floor() % 12;
         
-        // Current month's reference rashi = Sun's rashi at start of this lunar month (prev Amavasya)
-        final masaRashi = prevAmaRashi;
-        final masaName = knChandraMasa[masaRashi];
+        // Get Sun's sidereal Rashi at next Amavasya
+        final sunNextCalc = Sweph.swe_calc_ut(jdNextAmavasya, HeavenlyBody.SE_SUN, SwephFlag.SEFLG_SWIEPH);
+        final sunNextSid = ((sunNextCalc.longitude - ayn) % 360 + 360) % 360;
+        final nextAmaRashi = (sunNextSid / 30).floor() % 12;
         
-        // Adhika Masa check: if Sun doesn't change rashi between prev and next Amavasya
-        if (prevAmaRashi == nextAmaRashi) {
+        // Check if a Sankranti occurred: Sun must have changed Rashi
+        final bool hasSankranti = (prevAmaRashi != nextAmaRashi);
+        
+        // The month name comes from the Rashi the Sun occupies during Purnima
+        // In Amavasyanta Purnima falls roughly mid-month
+        // Approximate Purnima JD = prev Amavasya + ~14.77 days
+        final jdPurnima = jdPrevAmavasya + (29.530589 / 2);
+        final sunPurnimaCalc = Sweph.swe_calc_ut(jdPurnima, HeavenlyBody.SE_SUN, SwephFlag.SEFLG_SWIEPH);
+        final sunPurnimaSid = ((sunPurnimaCalc.longitude - ayn) % 360 + 360) % 360;
+        final purnimaRashi = (sunPurnimaSid / 30).floor() % 12;
+        
+        final masaName = knChandraMasa[purnimaRashi];
+        
+        if (!hasSankranti) {
           chandraMasa = 'ಅಧಿಕ $masaName';
         } else {
           chandraMasa = 'ನಿಜ $masaName';
         }
       } catch (_) {
-        // Fallback: simple mapping from Sun's Rashi
         chandraMasa = knChandraMasa[sunRashiIdx];
       }
       
