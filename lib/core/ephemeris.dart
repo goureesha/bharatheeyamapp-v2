@@ -15,12 +15,22 @@ class Ephemeris {
 
   static Future<void> initSweph() async {
     if (_isInit) return;
-    try {
-      await Sweph.init(epheAssets: []);
-    } catch (_) {
-      // On web/read-only filesystems, sweph may fail to create ephe_files dir.
-      // The internal Moshier ephemeris still works without file-based ephemeris.
+    // Retry up to 3 times – the first attempt may fail on some platforms
+    // with a transient FileSystemException for 'ephe_files' directory,
+    // but succeeds on subsequent attempts.
+    for (int attempt = 0; attempt < 3; attempt++) {
+      try {
+        await Sweph.init(epheAssets: []);
+        _isInit = true;
+        return;
+      } catch (_) {
+        if (attempt < 2) {
+          await Future.delayed(const Duration(milliseconds: 200));
+        }
+      }
     }
+    // If all retries failed, try one last time and let the error propagate
+    await Sweph.init(epheAssets: []);
     _isInit = true;
   }
   // ─────────────────────────────────────────────
