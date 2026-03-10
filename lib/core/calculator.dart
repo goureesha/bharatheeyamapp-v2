@@ -564,15 +564,11 @@ class AstroCalculator {
         // Check if a Sankranti occurred: Sun must have changed Rashi
         final bool hasSankranti = (prevAmaRashi != nextAmaRashi);
         
-        // The month name comes from the Rashi the Sun occupies during Purnima
-        // In Amavasyanta Purnima falls roughly mid-month
-        // Approximate Purnima JD = prev Amavasya + ~14.77 days
-        final jdPurnima = jdPrevAmavasya + (29.530589 / 2);
-        final sunPurnimaCalc = Sweph.swe_calc_ut(jdPurnima, HeavenlyBody.SE_SUN, SwephFlag.SEFLG_SWIEPH);
-        final sunPurnimaSid = ((sunPurnimaCalc.longitude - ayn) % 360 + 360) % 360;
-        final purnimaRashi = (sunPurnimaSid / 30).floor() % 12;
-        
-        final masaName = knChandraMasa[purnimaRashi];
+        // Month name is based on Sun's Rashi at the START of the lunar month
+        // Both Adhika and the following Nija month share the same prevAmaRashi,
+        // so they get the same month name (only prefix differs)
+        // Example: Adhika Jyeshtha → Nija Jyeshtha → Nija Ashadha
+        final masaName = knChandraMasa[prevAmaRashi];
         
         if (!hasSankranti) {
           chandraMasa = 'ಅಧಿಕ $masaName';
