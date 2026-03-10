@@ -13,11 +13,9 @@ class ExportService {
     final file = File(filePath);
     await file.writeAsString(csvContent);
 
-    await SharePlus.instance.share(
-      ShareParams(
-        text: shareText,
-        files: [XFile(filePath, mimeType: 'text/csv')],
-      ),
+    await Share.shareXFiles(
+      [XFile(filePath, mimeType: 'text/csv')],
+      text: shareText,
     );
   }
 }
