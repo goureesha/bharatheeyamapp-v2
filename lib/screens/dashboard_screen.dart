@@ -62,7 +62,7 @@ class _DashboardScreenState extends State<DashboardScreen>
   bool _panchangLoading = false;
 
   static const _tabs = [
-    'ಕುಂಡಲಿ', 'ಗ್ರಹ ಸ್ಫುಟ', 'ಉಪಗ್ರಹ ಸ್ಫುಟ', 'ಆರೂಢ',
+    'ಕುಂಡಲಿ', 'ಸ್ಫುಟ', 'ಆರೂಢ',
     'ದಶ', 'ಪಂಚಾಂಗ', 'ಭಾವ', 'ಷಡ್ಬಲ', 'ತಾರಾನುಕೂಲ', 'ಹೊಂದಾಣಿಕೆ',
     'ಟಿಪ್ಪಣಿ', 'ಸೆಟ್ಟಿಂಗ್ಸ್'
   ];
@@ -153,8 +153,7 @@ class _DashboardScreenState extends State<DashboardScreen>
                 controller: _tabCtrl,
                 children: [
                   _buildKundaliTab(),
-                  _buildGrahaSphutas(),
-                  _buildUpagrahaTab(),
+                  _buildSphutas(),
                   _buildAroodhaTab(),
                   _buildDashaTab(),
                   _buildPanchangTab(),
@@ -238,50 +237,57 @@ class _DashboardScreenState extends State<DashboardScreen>
   }
 
   // ─────────────────────────────────────────────
-  // TAB 2: GRAHA SPHUTA TABLE
+  // TAB 2: COMBINED SPHUTA (Graha + Upagraha)
   // ─────────────────────────────────────────────
-  Widget _buildGrahaSphutas() {
+  Widget _buildSphutas() {
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
-      child: AppCard(
-        padding: EdgeInsets.zero,
-        child: Column(
-          children: [
-            _tableHeader(['ಗ್ರಹ', 'ಸ್ಫುಟ', 'ನಕ್ಷತ್ರ - ಪಾದ']),
-            ...planetOrder.map((p) {
-              final info = widget.result.planets[p];
-              if (info == null) return const SizedBox.shrink();
-              return _tableRow([p, formatDeg(info.longitude), '${info.nakshatra} - ${info.pada}'],
-                bold0: true);
-            }),
-          ],
-        ),
-      ),
-    );
-  }
+      child: Column(
+        children: [
+          // Graha Sphuta Table
+          Text('ಗ್ರಹ ಸ್ಫುಟ', style: TextStyle(
+            fontWeight: FontWeight.w800, fontSize: 15, color: kPurple2)),
+          const SizedBox(height: 8),
+          AppCard(
+            padding: EdgeInsets.zero,
+            child: Column(
+              children: [
+                _tableHeader(['ಗ್ರಹ', 'ರಾಶಿ', 'ಸ್ಫುಟ', 'ನಕ್ಷತ್ರ - ಪಾದ']),
+                ...planetOrder.map((p) {
+                  final info = widget.result.planets[p];
+                  if (info == null) return const SizedBox.shrink();
+                  final ri = (info.longitude / 30).floor() % 12;
+                  return _tableRow([p, knRashi[ri], formatDeg(info.longitude), '${info.nakshatra} - ${info.pada}'],
+                    bold0: true);
+                }),
+              ],
+            ),
+          ),
+          const SizedBox(height: 24),
 
-  // ─────────────────────────────────────────────
-  // TAB 3: UPAGRAHA SPHUTA TABLE
-  // ─────────────────────────────────────────────
-  Widget _buildUpagrahaTab() {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(16),
-      child: AppCard(
-        padding: EdgeInsets.zero,
-        child: Column(
-          children: [
-            _tableHeader(['ಉಪಗ್ರಹ', 'ರಾಶಿ', 'ಅಂಶ', 'ನಕ್ಷತ್ರ']),
-            ...sphutas16Order.map((sp) {
-              final deg = widget.result.advSphutas[sp];
-              if (deg == null) return const SizedBox.shrink();
-              final ri = (deg / 30).floor() % 12;
-              final nakIdx = (deg / 13.333333).floor() % 27;
-              final pada = ((deg % 13.333333) / 3.333333).floor() + 1;
-              return _tableRow([sp, knRashi[ri], formatDeg(deg), '${knNak[nakIdx]}-$pada'],
-                bold0: true);
-            }),
-          ],
-        ),
+          // Upagraha Sphuta Table
+          Text('ಉಪಗ್ರಹ ಸ್ಫುಟ', style: TextStyle(
+            fontWeight: FontWeight.w800, fontSize: 15, color: kPurple2)),
+          const SizedBox(height: 8),
+          AppCard(
+            padding: EdgeInsets.zero,
+            child: Column(
+              children: [
+                _tableHeader(['ಉಪಗ್ರಹ', 'ರಾಶಿ', 'ಅಂಶ', 'ನಕ್ಷತ್ರ']),
+                ...sphutas16Order.map((sp) {
+                  final deg = widget.result.advSphutas[sp];
+                  if (deg == null) return const SizedBox.shrink();
+                  final ri = (deg / 30).floor() % 12;
+                  final nakIdx = (deg / 13.333333).floor() % 27;
+                  final pada = ((deg % 13.333333) / 3.333333).floor() + 1;
+                  return _tableRow([sp, knRashi[ri], formatDeg(deg), '${knNak[nakIdx]}-$pada'],
+                    bold0: true);
+                }),
+              ],
+            ),
+          ),
+          const SizedBox(height: 24),
+        ],
       ),
     );
   }

@@ -529,22 +529,19 @@ class AstroCalculator {
       String chandraMasa;
       try {
         // Approximate days from birth to previous Amavasya
-        // tIdx: 0 = Shukla Pratipada (1 tithi after Amavasya)
-        // tIdx: 29 = Amavasya itself
+        // tIdx: 0 = Shukla Pratipada (start of month, 1 tithi after previous Amavasya)
+        // tIdx: 29 = Amavasya (END of month in Amavasyanta)
         final tithiDuration = 29.530589 / 30.0; // ~0.9844 days per tithi
-        double daysBackToAmavasya;
-        if (tIdx == 29) {
-          daysBackToAmavasya = 0;
-        } else {
-          daysBackToAmavasya = (tIdx + 1) * tithiDuration;
-        }
         
-        double daysForwardToNextAmavasya;
-        if (tIdx == 29) {
-          daysForwardToNextAmavasya = 29.530589;
-        } else {
-          daysForwardToNextAmavasya = (29 - tIdx) * tithiDuration;
-        }
+        // Days back to the previous Amavasya (the one that marks the start boundary)
+        // At tIdx=0 (Shukla Pratipada): ~1 tithi back to previous Amavasya
+        // At tIdx=29 (Amavasya): ~30 tithis back (full month) to PREVIOUS Amavasya
+        final daysBackToAmavasya = (tIdx + 1) * tithiDuration;
+        
+        // Days forward to the next Amavasya (the one that marks the end boundary)
+        // At tIdx=0: ~29 tithis forward
+        // At tIdx=29 (Amavasya): 0 days (we ARE at the end Amavasya)
+        final daysForwardToNextAmavasya = (29 - tIdx) * tithiDuration;
         
 
         
