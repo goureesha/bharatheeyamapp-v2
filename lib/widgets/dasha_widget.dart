@@ -76,8 +76,8 @@ class _AntarBlock extends StatelessWidget {
           ]),
           children: ad.antardashas.map((pd) => Container(
             decoration: BoxDecoration(
-              border: Border(bottom: BorderSide(color: Color(0xFFEDF2F7))),
-              color: Color(0xFFFFFFFF),
+              border: Border(bottom: BorderSide(color: kBorder)),
+              color: kCard,
             ),
             padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 9),
             child: Row(children: [

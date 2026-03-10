@@ -56,7 +56,7 @@ class _MatchMakingTabState extends State<MatchMakingTab> {
           decoration: BoxDecoration(
             border: Border.all(color: Colors.grey.shade300),
             borderRadius: BorderRadius.circular(8),
-            color: Colors.white,
+            color: kCard,
           ),
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
           child: DropdownButtonHideUnderline(

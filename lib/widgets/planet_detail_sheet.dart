@@ -82,7 +82,7 @@ class PlanetDetailSheet extends StatelessWidget {
           ),
           ...rows.map((r) => Container(
             decoration: BoxDecoration(
-              border: Border(top: BorderSide(color: Color(0xFFEDF2F7)))),
+              border: Border(top: BorderSide(color: kBorder))),
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
             child: Row(children: [
               Text(r[0], style: TextStyle(

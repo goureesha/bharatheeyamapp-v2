@@ -131,7 +131,7 @@ class _InputScreenState extends State<InputScreen> {
   void _showPlaceDisambiguation(List<dynamic> results) {
     showModalBottomSheet(
       context: context,
-      backgroundColor: Colors.white,
+      backgroundColor: kBg,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
@@ -338,7 +338,7 @@ class _InputScreenState extends State<InputScreen> {
         onPressed: () {
           showModalBottomSheet(
             context: context,
-            backgroundColor: Colors.white,
+            backgroundColor: kBg,
             shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
             builder: (_) => _buildProfileListSheet(),
           );
@@ -354,7 +354,7 @@ class _InputScreenState extends State<InputScreen> {
         children: [
           Padding(
             padding: EdgeInsets.all(16),
-            child: Text('ಉಳಿಸಿದ ಜಾತಕಗಳು', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: Color(0xFF2B6CB0))),
+            child: Text('ಉಳಿಸಿದ ಜಾತಕಗಳು', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: kPurple2)),
           ),
           if (_savedProfiles.isEmpty)
             Padding(padding: EdgeInsets.all(32), child: Text('ಯಾವುದೇ ಜಾತಕ ಉಳಿಸಿಲ್ಲ.'))
@@ -367,7 +367,7 @@ class _InputScreenState extends State<InputScreen> {
                 itemBuilder: (ctx, i) {
                   final name = _savedProfiles.keys.elementAt(i);
                   return ListTile(
-                    leading: const CircleAvatar(backgroundColor: Color(0xFFEDF2F7), child: Icon(Icons.person, color: Color(0xFF2B6CB0))),
+                    leading: CircleAvatar(backgroundColor: kBorder, child: Icon(Icons.person, color: kPurple2)),
                     title: Text(name, style: TextStyle(fontWeight: FontWeight.w800)),
                     subtitle: Text('${_savedProfiles[name]!.date} | ${_savedProfiles[name]!.place}'),
                     trailing: Icon(Icons.chevron_right, color: Colors.grey),
@@ -409,7 +409,7 @@ class _InputScreenState extends State<InputScreen> {
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: kCard,
                 border: Border.all(color: kBorder),
                 borderRadius: BorderRadius.circular(12),
               ),
@@ -431,7 +431,7 @@ class _InputScreenState extends State<InputScreen> {
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: kCard,
                 border: Border.all(color: kBorder),
                 borderRadius: BorderRadius.circular(12),
               ),
@@ -588,7 +588,7 @@ class _InputScreenState extends State<InputScreen> {
                 onPressed: () {
                   showModalBottomSheet(
                     context: context,
-                    backgroundColor: Colors.white,
+                    backgroundColor: kCard,
                     shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
                     builder: (_) => _buildProfileListSheet(),
                   );

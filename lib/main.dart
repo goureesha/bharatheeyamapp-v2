@@ -11,6 +11,9 @@ Future<void> main() async {
   // Setup Google Play Billing bindings right away
   await SubscriptionService.initialize();
 
+  // Load saved theme before starting the app
+  await AppThemes.loadTheme();
+
   runApp(const BharatheeyamApp());
 }
 

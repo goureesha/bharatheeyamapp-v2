@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 // ─────────────────────────────────────────────
 // Shared app-wide decorators / constants
 // ─────────────────────────────────────────────
@@ -65,6 +66,14 @@ class AppThemes {
     kBorder = p['border']!;
     kMuted = p['muted']!;
     themeNotifier.value = i;
+    // Persist theme choice
+    SharedPreferences.getInstance().then((prefs) => prefs.setInt('app_theme', i));
+  }
+
+  static Future<void> loadTheme() async {
+    final prefs = await SharedPreferences.getInstance();
+    final idx = prefs.getInt('app_theme') ?? 0;
+    setTheme(idx);
   }
 }
 
@@ -169,7 +178,7 @@ class SectionTitle extends StatelessWidget {
         style: TextStyle(
           fontSize: 16,
           fontWeight: FontWeight.w800,
-          color: color ?? const Color(0xFF2B6CB0),
+          color: color ?? kPurple2,
         ),
       ),
     );

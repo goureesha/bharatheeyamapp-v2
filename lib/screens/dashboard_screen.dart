@@ -233,7 +233,7 @@ class _DashboardScreenState extends State<DashboardScreen>
 
             // Tab bar
             Container(
-              color: Colors.white,
+              color: kCard,
               child: TabBar(
                 controller: _tabCtrl,
                 isScrollable: true,
@@ -294,7 +294,7 @@ class _DashboardScreenState extends State<DashboardScreen>
                   chart['label'] as String,
                   style: TextStyle(
                     fontSize: 17, fontWeight: FontWeight.w800,
-                    color: Color(0xFF2B6CB0)),
+                    color: kPurple2)),
                 ),
                 const SizedBox(height: 6),
                 KundaliChart(
@@ -306,7 +306,7 @@ class _DashboardScreenState extends State<DashboardScreen>
                   onPlanetTap: _showPlanetDetail,
                 ),
                 const SizedBox(height: 8),
-                Divider(thickness: 1, color: Color(0xFFE2E8F0)),
+                Divider(thickness: 1, color: kBorder),
               ],
             ),
           )),
@@ -659,7 +659,7 @@ class _DashboardScreenState extends State<DashboardScreen>
               decoration: BoxDecoration(
                 border: Border.all(color: Colors.grey.shade300),
                 borderRadius: BorderRadius.circular(8),
-                color: Colors.white,
+                color: kCard,
               ),
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
               child: DropdownButtonHideUnderline(
@@ -720,7 +720,7 @@ class _DashboardScreenState extends State<DashboardScreen>
                         flex: 3,
                         child: Text(
                           nakshatrasText,
-                          style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: Colors.black87),
+                          style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: kText),
                         )
                       ),
                     ],
@@ -757,16 +757,16 @@ class _DashboardScreenState extends State<DashboardScreen>
           hintText: 'ನಿಮ್ಮ ಟಿಪ್ಪಣಿಗಳನ್ನು ಇಲ್ಲಿ ಬರೆಯಿರಿ...',
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
-            borderSide: BorderSide(color: Color(0xFFE2E8F0)),
+            borderSide: BorderSide(color: kBorder),
           ),
           enabledBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
-            borderSide: BorderSide(color: Color(0xFFE2E8F0)),
+            borderSide: BorderSide(color: kBorder),
           ),
-          fillColor: Colors.white,
+          fillColor: kCard,
           filled: true,
         ),
-        style: TextStyle(fontSize: 15, height: 1.5, color: Color(0xFF2D3748)),
+        style: TextStyle(fontSize: 15, height: 1.5, color: kText),
       ),
     );
   }
@@ -909,7 +909,7 @@ class _DashboardScreenState extends State<DashboardScreen>
 
   Widget _tableRow(List<String> cols, {bool bold0 = false}) {
     return Container(
-      decoration: BoxDecoration(border: Border(bottom: BorderSide(color: Color(0xFFEDF2F7)))),
+      decoration: BoxDecoration(border: Border(bottom: BorderSide(color: kBorder))),
       child: Row(
         children: cols.asMap().entries.map((e) => Expanded(
           child: Padding(
