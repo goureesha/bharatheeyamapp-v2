@@ -1,4 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
+import 'dart:io' show Directory, File, Platform;
+import 'package:share_plus/share_plus.dart';
+import 'package:path_provider/path_provider.dart';
 import '../core/calculator.dart';
 import '../constants/strings.dart';
 import '../widgets/common.dart';
@@ -101,6 +105,98 @@ class _DashboardScreenState extends State<DashboardScreen>
     }
   }
 
+  Future<void> _exportAndShareCSV() async {
+    try {
+      final r = widget.result;
+      final pan = r.panchang;
+      final dateStr = '${widget.dob.day.toString().padLeft(2,'0')}-${widget.dob.month.toString().padLeft(2,'0')}-${widget.dob.year}';
+      final timeStr = '${widget.hour}:${widget.minute.toString().padLeft(2,'0')} ${widget.ampm}';
+      final name = widget.name.isNotEmpty ? widget.name : 'Unknown';
+
+      final buf = StringBuffer();
+      // BOM for Excel UTF-8
+      buf.write('\uFEFF');
+
+      // Personal Info
+      buf.writeln('ಜಾತಕ ವಿವರ,,');
+      buf.writeln('ಹೆಸರು,$name,');
+      buf.writeln('ಸ್ಥಳ,${widget.place},');
+      buf.writeln('ದಿನಾಂಕ,$dateStr,');
+      buf.writeln('ಸಮಯ,$timeStr,');
+      buf.writeln('ಅಕ್ಷಾಂಶ,${widget.lat},');
+      buf.writeln('ರೇಖಾಂಶ,${widget.lon},');
+      buf.writeln(',');
+
+      // Panchanga
+      buf.writeln('ಪಂಚಾಂಗ,,');
+      buf.writeln('ಸಂವತ್ಸರ,${pan.samvatsara},');
+      buf.writeln('ವಾರ,${pan.vara},');
+      buf.writeln('ತಿಥಿ,${pan.tithi},');
+      buf.writeln('ನಕ್ಷತ್ರ,${pan.nakshatra},');
+      buf.writeln('ಯೋಗ,${pan.yoga},');
+      buf.writeln('ಕರಣ,${pan.karana},');
+      buf.writeln('ಚಂದ್ರ ರಾಶಿ,${pan.chandraRashi},');
+      buf.writeln('ಚಂದ್ರ ಮಾಸ,${pan.chandraMasa},');
+      buf.writeln('ಸೌರ ಮಾಸ,${pan.souraMasa},');
+      buf.writeln('ಸೂರ್ಯೋದಯ,${pan.sunrise},');
+      buf.writeln('ಸೂರ್ಯಾಸ್ತ,${pan.sunset},');
+      buf.writeln('ದಶಾ ನಾಥ,${pan.dashaLord},');
+      buf.writeln('ದಶಾ ಉಳಿಕೆ,${pan.dashaBalance},');
+      buf.writeln(',');
+
+      // Graha Sphuta
+      buf.writeln('ಗ್ರಹ ಸ್ಫುಟ,,,');
+      buf.writeln('ಗ್ರಹ,ರಾಶಿ,ಸ್ಫುಟ,ನಕ್ಷತ್ರ - ಪಾದ');
+      for (final p in planetOrder) {
+        final info = r.planets[p];
+        if (info == null) continue;
+        final ri = (info.longitude / 30).floor() % 12;
+        buf.writeln('$p,${knRashi[ri]},${formatDeg(info.longitude)},${info.nakshatra} - ${info.pada}');
+      }
+      buf.writeln(',');
+
+      // Upagraha Sphuta
+      buf.writeln('ಉಪಗ್ರಹ ಸ್ಫುಟ,,,');
+      buf.writeln('ಉಪಗ್ರಹ,ರಾಶಿ,ಅಂಶ,ನಕ್ಷತ್ರ');
+      for (final sp in sphutas16Order) {
+        final deg = r.advSphutas[sp];
+        if (deg == null) continue;
+        final ri = (deg / 30).floor() % 12;
+        final nakIdx = (deg / 13.333333).floor() % 27;
+        final pada = ((deg % 13.333333) / 3.333333).floor() + 1;
+        buf.writeln('$sp,${knRashi[ri]},${formatDeg(deg)},${knNak[nakIdx]}-$pada');
+      }
+
+      // Save CSV to temp and share
+      if (kIsWeb) {
+        // On web, just show a message
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('ವೆಬ್‌ನಲ್ಲಿ ಹಂಚಿಕೊಳ್ಳಲು ಸಾಧ್ಯವಿಲ್ಲ.')));
+        }
+        return;
+      }
+
+      final dir = await getTemporaryDirectory();
+      final fileName = '${name.replaceAll(' ', '_')}_$dateStr.csv';
+      final filePath = '${dir.path}/$fileName';
+      final file = File(filePath);
+      await file.writeAsString(buf.toString());
+
+      await SharePlus.instance.share(
+        ShareParams(
+          text: '$name ಜಾತಕ - $dateStr',
+          files: [XFile(filePath, mimeType: 'text/csv')],
+        ),
+      );
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('ದೋಷ: $e'), backgroundColor: Colors.red));
+      }
+    }
+  }
+
   @override
   void dispose() {
     _tabCtrl.dispose();
@@ -124,15 +220,22 @@ class _DashboardScreenState extends State<DashboardScreen>
                     icon: Icon(Icons.arrow_back, color: kText),
                     onPressed: () => Navigator.pop(context),
                   ),
-                  IconButton(
-                    icon: Icon(Icons.save, color: kText),
-                    tooltip: 'Save Profile',
-                    onPressed: () {
-                      widget.onSave(_notes, _aroodhas, _janmaNakshatraIdx);
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('ಉಳಿಸಲಾಗಿದೆ!')));
-                    },
-                  ),
+                  Row(children: [
+                    IconButton(
+                      icon: Icon(Icons.share, color: kTeal),
+                      tooltip: 'Share CSV',
+                      onPressed: _exportAndShareCSV,
+                    ),
+                    IconButton(
+                      icon: Icon(Icons.save, color: kText),
+                      tooltip: 'Save Profile',
+                      onPressed: () {
+                        widget.onSave(_notes, _aroodhas, _janmaNakshatraIdx);
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('ಉಳಿಸಲಾಗಿದೆ!')));
+                      },
+                    ),
+                  ]),
                 ],
               ),
             ),
