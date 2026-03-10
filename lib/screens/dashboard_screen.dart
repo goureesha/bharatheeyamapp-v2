@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
-import 'dart:io' show Directory, File, Platform;
-import 'package:share_plus/share_plus.dart';
-import 'package:path_provider/path_provider.dart';
+import '../services/export_service.dart';
 import '../core/calculator.dart';
 import '../constants/strings.dart';
 import '../widgets/common.dart';
@@ -169,7 +167,6 @@ class _DashboardScreenState extends State<DashboardScreen>
 
       // Save CSV to temp and share
       if (kIsWeb) {
-        // On web, just show a message
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('ವೆಬ್‌ನಲ್ಲಿ ಹಂಚಿಕೊಳ್ಳಲು ಸಾಧ್ಯವಿಲ್ಲ.')));
@@ -177,17 +174,11 @@ class _DashboardScreenState extends State<DashboardScreen>
         return;
       }
 
-      final dir = await getTemporaryDirectory();
       final fileName = '${name.replaceAll(' ', '_')}_$dateStr.csv';
-      final filePath = '${dir.path}/$fileName';
-      final file = File(filePath);
-      await file.writeAsString(buf.toString());
-
-      await SharePlus.instance.share(
-        ShareParams(
-          text: '$name ಜಾತಕ - $dateStr',
-          files: [XFile(filePath, mimeType: 'text/csv')],
-        ),
+      await ExportService.shareCSV(
+        csvContent: buf.toString(),
+        fileName: fileName,
+        shareText: '$name ಜಾತಕ - $dateStr',
       );
     } catch (e) {
       if (mounted) {
