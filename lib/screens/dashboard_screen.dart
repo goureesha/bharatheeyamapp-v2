@@ -294,7 +294,7 @@ class _DashboardScreenState extends State<DashboardScreen>
                   chart['label'] as String,
                   style: TextStyle(
                     fontSize: 17, fontWeight: FontWeight.w800,
-                    color: kPurple2)),
+                    color: kPurple2),
                 ),
                 const SizedBox(height: 6),
                 KundaliChart(
