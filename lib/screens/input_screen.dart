@@ -143,7 +143,7 @@ class _InputScreenState extends State<InputScreen> {
               padding: const EdgeInsets.all(16),
               child: Text('ಸ್ಥಳ ಆಯ್ಕೆಮಾಡಿ', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: kPurple1)),
             ),
-            Text('ಒಂದೇ ಹೆಸರಿನ ಹಲವು ಸ್ಥಳಗಳು ಕಂಡುಬಂದಿವೆ:', style: TextStyle(fontSize: 13, color: Colors.grey.shade600)),
+            Text('ಒಂದೇ ಹೆಸರಿನ ಹಲವು ಸ್ಥಳಗಳು ಕಂಡುಬಂದಿವೆ:', style: TextStyle(fontSize: 13, color: kMuted)),
             const SizedBox(height: 8),
             Flexible(
               child: ListView.separated(
@@ -370,7 +370,7 @@ class _InputScreenState extends State<InputScreen> {
                     leading: CircleAvatar(backgroundColor: kBorder, child: Icon(Icons.person, color: kPurple2)),
                     title: Text(name, style: TextStyle(fontWeight: FontWeight.w800)),
                     subtitle: Text('${_savedProfiles[name]!.date} | ${_savedProfiles[name]!.place}'),
-                    trailing: Icon(Icons.chevron_right, color: Colors.grey),
+                    trailing: Icon(Icons.chevron_right, color: kMuted),
                     onTap: () {
                       Navigator.pop(ctx);
                       _loadProfile(name);

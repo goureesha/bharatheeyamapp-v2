@@ -657,7 +657,7 @@ class _DashboardScreenState extends State<DashboardScreen>
             const SizedBox(height: 8),
             Container(
               decoration: BoxDecoration(
-                border: Border.all(color: Colors.grey.shade300),
+                border: Border.all(color: kBorder),
                 borderRadius: BorderRadius.circular(8),
                 color: kCard,
               ),
@@ -731,8 +731,8 @@ class _DashboardScreenState extends State<DashboardScreen>
                Container(
                  padding: const EdgeInsets.all(16),
                  alignment: Alignment.center,
-                 decoration: BoxDecoration(color: Colors.grey.shade100, borderRadius: BorderRadius.circular(8)),
-                 child: Text('ಫಲಿತಾಂಶವನ್ನು ನೋಡಲು ನಕ್ಷತ್ರವನ್ನು ಆಯ್ಕೆಮಾಡಿ.', style: TextStyle(color: Colors.grey.shade600))
+                 decoration: BoxDecoration(color: kBorder.withOpacity(0.3), borderRadius: BorderRadius.circular(8)),
+                 child: Text('ಫಲಿತಾಂಶವನ್ನು ನೋಡಲು ನಕ್ಷತ್ರವನ್ನು ಆಯ್ಕೆಮಾಡಿ.', style: TextStyle(color: kMuted))
                )
             ]
           ],
@@ -895,12 +895,12 @@ class _DashboardScreenState extends State<DashboardScreen>
   // ─────────────────────────────────────────────
   Widget _tableHeader(List<String> cols) {
     return Container(
-      color: const Color(0xFFEDF2F7),
+      color: kPurple2.withOpacity(0.12),
       child: Row(
         children: cols.asMap().entries.map((e) => Expanded(
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
-            child: Text(e.value, style: TextStyle(fontWeight: FontWeight.w800, fontSize: 12)),
+            child: Text(e.value, style: TextStyle(fontWeight: FontWeight.w800, fontSize: 12, color: kText)),
           ),
         )).toList(),
       ),
@@ -918,6 +918,7 @@ class _DashboardScreenState extends State<DashboardScreen>
               style: TextStyle(
                 fontSize: 12,
                 fontWeight: (e.key == 0 && bold0) ? FontWeight.w700 : FontWeight.normal,
+                color: kText,
               ),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
@@ -932,7 +933,7 @@ class _DashboardScreenState extends State<DashboardScreen>
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4),
       child: Row(children: [
-        Text('$k: ', style: TextStyle(fontWeight: FontWeight.w800, color: const Color(0xFF2B6CB0))),
+        Text('$k: ', style: TextStyle(fontWeight: FontWeight.w800, color: kPurple2)),
         Expanded(child: Text(v, style: TextStyle())),
       ]),
     );

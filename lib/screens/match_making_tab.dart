@@ -54,7 +54,7 @@ class _MatchMakingTabState extends State<MatchMakingTab> {
         const SizedBox(height: 6),
         Container(
           decoration: BoxDecoration(
-            border: Border.all(color: Colors.grey.shade300),
+            border: Border.all(color: kBorder),
             borderRadius: BorderRadius.circular(8),
             color: kCard,
           ),
@@ -97,11 +97,11 @@ class _MatchMakingTabState extends State<MatchMakingTab> {
 
     TableRow row(String name, double pts, int max) {
       return TableRow(
-        decoration: BoxDecoration(border: Border(bottom: BorderSide(color: Colors.grey.shade200))),
+        decoration: BoxDecoration(border: Border(bottom: BorderSide(color: kBorder))),
         children: [
           Padding(padding: const EdgeInsets.all(12), child: Text(name, style: TextStyle(fontWeight: FontWeight.w600))),
           Padding(padding: const EdgeInsets.all(12), child: Text(pts.toStringAsFixed(1), textAlign: TextAlign.center)),
-          Padding(padding: const EdgeInsets.all(12), child: Text(max.toString(), textAlign: TextAlign.center, style: TextStyle(color: Colors.grey))),
+          Padding(padding: const EdgeInsets.all(12), child: Text(max.toString(), textAlign: TextAlign.center, style: TextStyle(color: kMuted))),
         ],
       );
     }
@@ -120,7 +120,7 @@ class _MatchMakingTabState extends State<MatchMakingTab> {
             },
             children: [
               TableRow(
-                decoration: BoxDecoration(color: Colors.grey.shade100, borderRadius: const BorderRadius.vertical(top: Radius.circular(8))),
+                decoration: BoxDecoration(color: kPurple2.withOpacity(0.12), borderRadius: const BorderRadius.vertical(top: Radius.circular(8))),
                 children: const [
                   Padding(padding: EdgeInsets.all(12), child: Text('ಕೂಟ', style: TextStyle(fontWeight: FontWeight.bold))),
                   Padding(padding: EdgeInsets.all(12), child: Text('ಪಡೆದ\nಗುಣ', textAlign: TextAlign.center, style: TextStyle(fontWeight: FontWeight.bold))),
@@ -140,7 +140,7 @@ class _MatchMakingTabState extends State<MatchMakingTab> {
                 children: [
                   Padding(padding: EdgeInsets.all(12), child: Text('ಒಟ್ಟು ಗುಣ', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16))),
                   Padding(padding: const EdgeInsets.all(12), child: Text(total.toStringAsFixed(1), textAlign: TextAlign.center, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: kPurple1))),
-                  Padding(padding: EdgeInsets.all(12), child: Text('36', textAlign: TextAlign.center, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.grey))),
+                  Padding(padding: EdgeInsets.all(12), child: Text('36', textAlign: TextAlign.center, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: kMuted))),
                 ],
               ),
             ],

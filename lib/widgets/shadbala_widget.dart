@@ -84,7 +84,7 @@ class ShadbalaWidget extends StatelessWidget {
                         DataCell(Text((data['Naisargika'] ?? 0.0).toStringAsFixed(2))),
                         DataCell(Text((data['Drik'] ?? 0.0).toStringAsFixed(2))),
                         DataCell(Text(totalVal.toStringAsFixed(2), style: TextStyle(fontWeight: FontWeight.w900))),
-                        DataCell(Text(reqVal.toStringAsFixed(1), style: TextStyle(color: Colors.grey.shade700))),
+                        DataCell(Text(reqVal.toStringAsFixed(1), style: TextStyle(color: kMuted))),
                         DataCell(
                           Container(
                             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
