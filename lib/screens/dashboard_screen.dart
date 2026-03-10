@@ -56,6 +56,11 @@ class _DashboardScreenState extends State<DashboardScreen>
   int? _janmaNakshatraIdx;
   int? _dinaNakshatraIdx;
 
+  // Panchanga calendar state
+  late DateTime _panchangSelectedDate;
+  PanchangData? _panchangCalendarData;
+  bool _panchangLoading = false;
+
   static const _tabs = [
     'ಕುಂಡಲಿ', 'ಗ್ರಹ ಸ್ಫುಟ', 'ಉಪಗ್ರಹ ಸ್ಫುಟ', 'ಆರೂಢ',
     'ದಶ', 'ಪಂಚಾಂಗ', 'ಭಾವ', 'ಷಡ್ಬಲ', 'ತಾರಾನುಕೂಲ', 'ಹೊಂದಾಣಿಕೆ',
@@ -69,6 +74,8 @@ class _DashboardScreenState extends State<DashboardScreen>
     _notes = widget.initialNotes;
     _aroodhas = Map.from(widget.initialAroodhas);
     _janmaNakshatraIdx = widget.initialJanmaNakshatraIdx;
+    _panchangSelectedDate = widget.dob;
+    _panchangCalendarData = widget.result.panchang;
 
     final panchangNakName = widget.result.panchang.nakshatra.split(' ')[0];
     int panchangNakIdx = knNak.indexWhere((n) => panchangNakName.startsWith(n));
@@ -373,44 +380,115 @@ class _DashboardScreenState extends State<DashboardScreen>
   }
 
   // ─────────────────────────────────────────────
-  // TAB 6: PANCHANG
+  // TAB 6: PANCHANG (Calendar-based)
   // ─────────────────────────────────────────────
+  Future<void> _recalcPanchangForDate(DateTime date) async {
+    if (_panchangLoading) return;
+    setState(() => _panchangLoading = true);
+    try {
+      // Use sunrise time (6:00 AM) for the selected date
+      final localHour = 6.0;
+      final result = await AstroCalculator.calculate(
+        year: date.year, month: date.month, day: date.day,
+        hourUtcOffset: 5.5,
+        hour24: localHour,
+        lat: widget.lat, lon: widget.lon,
+        ayanamsaMode: 'lahiri',
+        trueNode: true,
+      );
+      if (result != null && mounted) {
+        setState(() {
+          _panchangCalendarData = result.panchang;
+          _panchangSelectedDate = date;
+        });
+      }
+    } catch (_) {}
+    if (mounted) setState(() => _panchangLoading = false);
+  }
+
   Widget _buildPanchangTab() {
-    final pan = widget.result.panchang;
-    final dateStr = '${widget.dob.day.toString().padLeft(2,'0')}-${widget.dob.month.toString().padLeft(2,'0')}-${widget.dob.year}';
-    final timeStr = '${widget.hour}:${widget.minute.toString().padLeft(2,'0')} ${widget.ampm}';
+    final pan = _panchangCalendarData ?? widget.result.panchang;
+    final selDate = _panchangSelectedDate;
+    final dateStr = '${selDate.day.toString().padLeft(2,'0')}-${selDate.month.toString().padLeft(2,'0')}-${selDate.year}';
+    final isBirthDate = selDate.year == widget.dob.year && selDate.month == widget.dob.month && selDate.day == widget.dob.day;
+
     return SingleChildScrollView(
       child: Column(
         children: [
+          // Calendar card
+          AppCard(
+            child: Column(children: [
+              Row(children: [
+                Icon(Icons.calendar_month, color: kPurple2, size: 20),
+                const SizedBox(width: 8),
+                Text('ಪಂಚಾಂಗ ಕ್ಯಾಲೆಂಡರ್', style: TextStyle(
+                  fontWeight: FontWeight.w800, fontSize: 15, color: kPurple2)),
+                const Spacer(),
+                if (!isBirthDate)
+                  TextButton.icon(
+                    onPressed: () => _recalcPanchangForDate(widget.dob),
+                    icon: Icon(Icons.person, size: 16),
+                    label: Text('ಜನ್ಮ ದಿನ', style: TextStyle(fontSize: 12)),
+                    style: TextButton.styleFrom(padding: EdgeInsets.symmetric(horizontal: 8)),
+                  ),
+              ]),
+              const SizedBox(height: 8),
+              Container(
+                decoration: BoxDecoration(
+                  border: Border.all(color: kBorder),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: CalendarDatePicker(
+                  initialDate: selDate,
+                  firstDate: DateTime(1800),
+                  lastDate: DateTime(2100),
+                  onDateChanged: (date) => _recalcPanchangForDate(date),
+                ),
+              ),
+            ]),
+          ),
+
+          // Date & Place
           AppCard(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
             _kv('ಸ್ಥಳ', widget.place),
             _kv('ದಿನಾಂಕ', dateStr),
-            _kv('ಸಮಯ', timeStr),
+            if (isBirthDate)
+              _kv('ಸಮಯ', '${widget.hour}:${widget.minute.toString().padLeft(2,'0')} ${widget.ampm}')
+            else
+              _kv('ಸಮಯ', 'ಸೂರ್ಯೋದಯ'),
           ])),
-          AppCard(
-            padding: EdgeInsets.zero,
-            child: Column(children: [
-              _tableRow(['ಸಂವತ್ಸರ', pan.samvatsara]),
-              _tableRow(['ವಾರ', pan.vara]),
-              _tableRow(['ತಿಥಿ', pan.tithi]),
-              _tableRow(['ಚಂದ್ರ ನಕ್ಷತ್ರ', pan.nakshatra]),
-              _tableRow(['ಯೋಗ', pan.yoga]),
-              _tableRow(['ಕರಣ', pan.karana]),
-              _tableRow(['ಚಂದ್ರ ರಾಶಿ', pan.chandraRashi]),
-              _tableRow(['ಚಂದ್ರ ಮಾಸ', pan.chandraMasa]),
-              _tableRow(['ಸೂರ್ಯ ನಕ್ಷತ್ರ', '${pan.suryaNakshatra} - ಪಾದ ${pan.suryaPada}']),
-              _tableRow(['ಸೌರ ಮಾಸ', pan.souraMasa]),
-              _tableRow(['ಸೌರ ಮಾಸ ಗತ ದಿನ', pan.souraMasaGataDina]),
-              _tableRow(['ಸೂರ್ಯೋದಯ', pan.sunrise]),
-              _tableRow(['ಸೂರ್ಯಾಸ್ತ', pan.sunset]),
-              _tableRow(['ಉದಯಾದಿ ಘಟಿ', pan.udayadiGhati]),
-              _tableRow(['ಗತ ಘಟಿ', pan.gataGhati]),
-              _tableRow(['ಪರಮ ಘಟಿ', pan.paramaGhati]),
-              _tableRow(['ಶೇಷ ಘಟಿ', pan.shesha]),
-              _tableRow(['ವಿಷ ಪ್ರಘಟಿ', pan.vishaPraghati]),
-              _tableRow(['ಅಮೃತ ಪ್ರಘಟಿ', pan.amrutaPraghati]),
-            ]),
-          ),
+
+          // Loading or Panchanga data
+          if (_panchangLoading)
+            Padding(
+              padding: const EdgeInsets.all(32),
+              child: CircularProgressIndicator(color: kPurple2),
+            )
+          else
+            AppCard(
+              padding: EdgeInsets.zero,
+              child: Column(children: [
+                _tableRow(['ಸಂವತ್ಸರ', pan.samvatsara]),
+                _tableRow(['ವಾರ', pan.vara]),
+                _tableRow(['ತಿಥಿ', pan.tithi]),
+                _tableRow(['ಚಂದ್ರ ನಕ್ಷತ್ರ', pan.nakshatra]),
+                _tableRow(['ಯೋಗ', pan.yoga]),
+                _tableRow(['ಕರಣ', pan.karana]),
+                _tableRow(['ಚಂದ್ರ ರಾಶಿ', pan.chandraRashi]),
+                _tableRow(['ಚಂದ್ರ ಮಾಸ', pan.chandraMasa]),
+                _tableRow(['ಸೂರ್ಯ ನಕ್ಷತ್ರ', '${pan.suryaNakshatra} - ಪಾದ ${pan.suryaPada}']),
+                _tableRow(['ಸೌರ ಮಾಸ', pan.souraMasa]),
+                _tableRow(['ಸೌರ ಮಾಸ ಗತ ದಿನ', pan.souraMasaGataDina]),
+                _tableRow(['ಸೂರ್ಯೋದಯ', pan.sunrise]),
+                _tableRow(['ಸೂರ್ಯಾಸ್ತ', pan.sunset]),
+                _tableRow(['ಉದಯಾದಿ ಘಟಿ', pan.udayadiGhati]),
+                _tableRow(['ಗತ ಘಟಿ', pan.gataGhati]),
+                _tableRow(['ಪರಮ ಘಟಿ', pan.paramaGhati]),
+                _tableRow(['ಶೇಷ ಘಟಿ', pan.shesha]),
+                _tableRow(['ವಿಷ ಪ್ರಘಟಿ', pan.vishaPraghati]),
+                _tableRow(['ಅಮೃತ ಪ್ರಘಟಿ', pan.amrutaPraghati]),
+              ]),
+            ),
           const SizedBox(height: 24),
         ],
       ),
