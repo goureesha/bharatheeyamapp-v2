@@ -19,9 +19,9 @@ dependencies:
   in_app_purchase: ^3.2.0
   share_plus: ^10.0.0
   path_provider: any
-  google_sign_in: any
+  google_sign_in: ^6.2.0
   googleapis: any
-  extension_google_sign_in_as_googleapis_auth: any
+  extension_google_sign_in_as_googleapis_auth: ^2.0.0
   url_launcher: any
 
 dev_dependencies:
