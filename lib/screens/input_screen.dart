@@ -8,6 +8,8 @@ import '../core/calculator.dart';
 import '../constants/places.dart';
 import '../core/ephemeris.dart';
 import '../services/network_service.dart';
+import '../services/google_auth_service.dart';
+import '../services/calendar_service.dart';
 import 'dashboard_screen.dart';
 
 class InputScreen extends StatefulWidget {
@@ -315,6 +317,9 @@ class _InputScreenState extends State<InputScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
+              // Google sign-in + appointment row
+              _buildGoogleRow(),
+              const SizedBox(height: 8),
               _buildInputCard(),
               const SizedBox(height: 32),
             ],
@@ -331,7 +336,7 @@ class _InputScreenState extends State<InputScreen> {
         icon: Icon(Icons.folder_open, color: Colors.white),
         label: Text('ಉಳಿಸಿದ ಜಾತಕ', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16, color: Colors.white)),
         style: ElevatedButton.styleFrom(
-          backgroundColor: const Color(0xFF2B6CB0),
+          backgroundColor: kPurple2,
           padding: const EdgeInsets.symmetric(vertical: 16),
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         ),
@@ -412,6 +417,161 @@ class _InputScreenState extends State<InputScreen> {
           ),
         );
       },
+    );
+  }
+
+  Widget _buildGoogleRow() {
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: kCard,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: kBorder),
+      ),
+      child: GoogleAuthService.isSignedIn
+        ? Row(children: [
+            Icon(Icons.check_circle, color: Colors.green, size: 20),
+            const SizedBox(width: 8),
+            Expanded(child: Text(
+              GoogleAuthService.userEmail ?? '',
+              style: TextStyle(fontSize: 12, color: kMuted),
+              overflow: TextOverflow.ellipsis,
+            )),
+            const SizedBox(width: 8),
+            ElevatedButton.icon(
+              onPressed: () => _showAppointmentDialog(),
+              icon: Icon(Icons.event, size: 16),
+              label: Text('ಅಪಾಯಿಂಟ್\u200cಮೆಂಟ್', style: TextStyle(fontSize: 12)),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: kTeal,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                minimumSize: Size.zero,
+              ),
+            ),
+          ])
+        : Row(children: [
+            Icon(Icons.account_circle, color: kPurple2, size: 20),
+            const SizedBox(width: 8),
+            Expanded(child: Text(
+              'Google Sign In ಮಾಡಿ',
+              style: TextStyle(fontSize: 13, color: kText),
+            )),
+            ElevatedButton.icon(
+              onPressed: () async {
+                final ok = await GoogleAuthService.signIn();
+                if (mounted) {
+                  setState(() {});
+                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                    content: Text(ok ? 'Google Sign In ಯಶಸ್ವಿ!' : 'Sign In ವಿಫಲ'),
+                  ));
+                }
+              },
+              icon: Icon(Icons.login, size: 16),
+              label: Text('Sign In', style: TextStyle(fontSize: 12)),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: kPurple2,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                minimumSize: Size.zero,
+              ),
+            ),
+          ]),
+    );
+  }
+
+  void _showAppointmentDialog() {
+    DateTime selectedDate = DateTime.now().add(const Duration(days: 1));
+    TimeOfDay selectedTime = const TimeOfDay(hour: 10, minute: 0);
+    int durationMinutes = 60;
+    final clientNameCtrl = TextEditingController(text: _nameCtrl.text);
+
+    showDialog(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setDialogState) => AlertDialog(
+          backgroundColor: kCard,
+          title: Text('ಅಪಾಯಿಂಟ್\u200cಮೆಂಟ್ ರಚಿಸಿ', style: TextStyle(color: kText)),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: clientNameCtrl,
+                decoration: InputDecoration(
+                  labelText: 'ಗ್ರಾಹಕರ ಹೆಸರು',
+                  labelStyle: TextStyle(color: kMuted),
+                  isDense: true,
+                ),
+                style: TextStyle(color: kText),
+              ),
+              const SizedBox(height: 8),
+              ListTile(
+                leading: Icon(Icons.calendar_today, color: kPurple2),
+                title: Text('${selectedDate.day}/${selectedDate.month}/${selectedDate.year}', style: TextStyle(color: kText)),
+                onTap: () async {
+                  final d = await showDatePicker(
+                    context: ctx,
+                    initialDate: selectedDate,
+                    firstDate: DateTime.now(),
+                    lastDate: DateTime.now().add(const Duration(days: 365)),
+                  );
+                  if (d != null) setDialogState(() => selectedDate = d);
+                },
+              ),
+              ListTile(
+                leading: Icon(Icons.access_time, color: kPurple2),
+                title: Text(selectedTime.format(ctx), style: TextStyle(color: kText)),
+                onTap: () async {
+                  final t = await showTimePicker(context: ctx, initialTime: selectedTime);
+                  if (t != null) setDialogState(() => selectedTime = t);
+                },
+              ),
+              ListTile(
+                leading: Icon(Icons.timer, color: kPurple2),
+                title: Text('$durationMinutes ನಿಮಿಷ', style: TextStyle(color: kText)),
+                trailing: Row(mainAxisSize: MainAxisSize.min, children: [
+                  IconButton(icon: Icon(Icons.remove, color: kMuted), onPressed: () {
+                    if (durationMinutes > 15) setDialogState(() => durationMinutes -= 15);
+                  }),
+                  IconButton(icon: Icon(Icons.add, color: kMuted), onPressed: () {
+                    setDialogState(() => durationMinutes += 15);
+                  }),
+                ]),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: Text('ರದ್ದು', style: TextStyle(color: kMuted)),
+            ),
+            ElevatedButton(
+              onPressed: () async {
+                Navigator.pop(ctx);
+                final startTime = DateTime(
+                  selectedDate.year, selectedDate.month, selectedDate.day,
+                  selectedTime.hour, selectedTime.minute,
+                );
+                final name = clientNameCtrl.text.isEmpty ? 'ಗ್ರಾಹಕ' : clientNameCtrl.text;
+                final ok = await CalendarService.createAppointment(
+                  clientName: name,
+                  startTime: startTime,
+                  duration: Duration(minutes: durationMinutes),
+                  description: 'ಜಾತಕ ವಿಶ್ಲೇಷಣೆ - $name',
+                );
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                    content: Text(ok ? 'Calendar ಗೆ ಅಪಾಯಿಂಟ್\u200cಮೆಂಟ್ ಸೇರಿಸಲಾಗಿದೆ!' : 'ಅಪಾಯಿಂಟ್\u200cಮೆಂಟ್ ವಿಫಲ'),
+                  ));
+                }
+              },
+              style: ElevatedButton.styleFrom(backgroundColor: kTeal, foregroundColor: Colors.white),
+              child: Text('ರಚಿಸಿ'),
+            ),
+          ],
+        ),
+      ),
     );
   }
 

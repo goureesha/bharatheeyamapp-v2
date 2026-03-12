@@ -20,6 +20,7 @@ class GoogleAuthService {
   static GoogleSignIn get _instance {
     _googleSignIn ??= GoogleSignIn(
       scopes: _scopes,
+      clientId: _webClientId,
       serverClientId: _webClientId,
     );
     return _googleSignIn!;
@@ -33,6 +34,9 @@ class GoogleAuthService {
   static Future<bool> signIn() async {
     try {
       _currentUser = await _instance.signIn();
+      if (_currentUser != null) {
+        debugPrint('Google Sign-In success: ${_currentUser!.email}');
+      }
       return _currentUser != null;
     } catch (e) {
       debugPrint('Google Sign-In error: $e');
