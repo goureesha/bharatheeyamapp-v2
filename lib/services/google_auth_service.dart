@@ -36,6 +36,11 @@ class GoogleAuthService {
       _currentUser = await _instance.signIn();
       if (_currentUser != null) {
         debugPrint('Google Sign-In success: ${_currentUser!.email}');
+        // Ensure all scopes are granted (required on web)
+        final granted = await _instance.requestScopes(_scopes);
+        if (!granted) {
+          debugPrint('Not all scopes granted');
+        }
       }
       return _currentUser != null;
     } catch (e) {
