@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'screens/input_screen.dart';
 import 'widgets/common.dart';
 import 'services/subscription_service.dart';
+import 'services/google_auth_service.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -13,6 +14,9 @@ Future<void> main() async {
 
   // Load saved theme before starting the app
   await AppThemes.loadTheme();
+
+  // Try to restore Google sign-in silently
+  await GoogleAuthService.signInSilently();
 
   runApp(const BharatheeyamApp());
 }

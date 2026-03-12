@@ -11,6 +11,10 @@ import '../widgets/shadbala_widget.dart';
 import '../services/ad_service.dart';
 import '../services/storage_service.dart';
 import '../services/subscription_service.dart';
+import '../services/google_auth_service.dart';
+import '../services/sheets_service.dart';
+import '../services/docs_service.dart';
+import '../services/calendar_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'match_making_tab.dart';
 
@@ -62,6 +66,7 @@ class _DashboardScreenState extends State<DashboardScreen>
   late DateTime _panchangSelectedDate;
   PanchangData? _panchangCalendarData;
   bool _panchangLoading = false;
+  bool _syncing = false;
 
   static const _tabs = [
     'ಕುಂಡಲಿ', 'ಸ್ಫುಟ', 'ಆರೂಢ',
@@ -218,12 +223,41 @@ class _DashboardScreenState extends State<DashboardScreen>
                       onPressed: _exportAndShareCSV,
                     ),
                     IconButton(
-                      icon: Icon(Icons.save, color: kText),
-                      tooltip: 'Save Profile',
-                      onPressed: () {
+                      icon: _syncing
+                        ? SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: kTeal))
+                        : Icon(Icons.save, color: kText),
+                      tooltip: 'Save & Sync',
+                      onPressed: _syncing ? null : () async {
                         widget.onSave(_notes, _aroodhas, _janmaNakshatraIdx);
                         ScaffoldMessenger.of(context).showSnackBar(
                           const SnackBar(content: Text('ಉಳಿಸಲಾಗಿದೆ!')));
+
+                        // Sync to Google if signed in
+                        if (GoogleAuthService.isSignedIn) {
+                          setState(() => _syncing = true);
+                          final profile = Profile(
+                            name: widget.name,
+                            date: '${widget.dob.year}-${widget.dob.month.toString().padLeft(2,'0')}-${widget.dob.day.toString().padLeft(2,'0')}',
+                            hour: widget.hour,
+                            minute: widget.minute,
+                            ampm: widget.ampm,
+                            lat: widget.lat,
+                            lon: widget.lon,
+                            place: widget.place,
+                            notes: _notes,
+                            aroodhas: _aroodhas,
+                            janmaNakshatraIdx: _janmaNakshatraIdx,
+                          );
+                          final sheetOk = await SheetsService.syncProfile(profile);
+                          final docOk = await DocsService.syncNotes(widget.name, _notes);
+                          if (mounted) {
+                            setState(() => _syncing = false);
+                            final msg = (sheetOk && docOk)
+                              ? 'Google Sheets ಮತ್ತು Docs ಗೆ ಸಿಂಕ್ ಆಗಿದೆ!'
+                              : 'ಸಿಂಕ್ ವಿಫಲವಾಗಿದೆ. ದಯವಿಟ್ಟು ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ.';
+                            ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
+                          }
+                        }
                       },
                     ),
                   ]),
@@ -747,26 +781,169 @@ class _DashboardScreenState extends State<DashboardScreen>
   Widget _buildNotesTab() {
     return Padding(
       padding: const EdgeInsets.all(16),
-      child: TextField(
-        maxLines: null,
-        expands: true,
-        textAlignVertical: TextAlignVertical.top,
-        onChanged: (v) => _notes = v,
-        controller: TextEditingController(text: _notes),
-        decoration: InputDecoration(
-          hintText: 'ನಿಮ್ಮ ಟಿಪ್ಪಣಿಗಳನ್ನು ಇಲ್ಲಿ ಬರೆಯಿರಿ...',
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-            borderSide: BorderSide(color: kBorder),
+      child: Column(
+        children: [
+          // Action buttons
+          Row(
+            children: [
+              if (GoogleAuthService.isSignedIn) ...[
+                Expanded(
+                  child: ElevatedButton.icon(
+                    onPressed: () async {
+                      final ok = await DocsService.openDoc(widget.name);
+                      if (!ok && mounted) {
+                        // Create doc first if doesn't exist
+                        await DocsService.syncNotes(widget.name, _notes);
+                        await DocsService.openDoc(widget.name);
+                      }
+                    },
+                    icon: Icon(Icons.description, size: 18),
+                    label: Text('Google Docs', style: TextStyle(fontSize: 13)),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: kPurple2,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 10),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: ElevatedButton.icon(
+                    onPressed: () => _showAppointmentDialog(),
+                    icon: Icon(Icons.event, size: 18),
+                    label: Text('ಅಪಾಯಿಂಟ್‌ಮೆಂಟ್', style: TextStyle(fontSize: 13)),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: kTeal,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 10),
+                    ),
+                  ),
+                ),
+              ] else
+                Expanded(
+                  child: Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: kBorder.withOpacity(0.3),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Row(children: [
+                      Icon(Icons.info_outline, size: 16, color: kMuted),
+                      const SizedBox(width: 8),
+                      Expanded(child: Text('ಸೆಟ್ಟಿಂಗ್ಸ್‌ನಲ್ಲಿ Google Sign In ಮಾಡಿ Docs & Calendar ಬಳಸಿ', style: TextStyle(fontSize: 12, color: kMuted))),
+                    ]),
+                  ),
+                ),
+            ],
           ),
-          enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-            borderSide: BorderSide(color: kBorder),
+          const SizedBox(height: 12),
+          // Notes text field
+          Expanded(
+            child: TextField(
+              maxLines: null,
+              expands: true,
+              textAlignVertical: TextAlignVertical.top,
+              onChanged: (v) => _notes = v,
+              controller: TextEditingController(text: _notes),
+              decoration: InputDecoration(
+                hintText: 'ನಿಮ್ಮ ಟಿಪ್ಪಣಿಗಳನ್ನು ಇಲ್ಲಿ ಬರೆಯಿರಿ...',
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide(color: kBorder),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide(color: kBorder),
+                ),
+                fillColor: kCard,
+                filled: true,
+              ),
+              style: TextStyle(fontSize: 15, height: 1.5, color: kText),
+            ),
           ),
-          fillColor: kCard,
-          filled: true,
+        ],
+      ),
+    );
+  }
+
+  void _showAppointmentDialog() {
+    DateTime selectedDate = DateTime.now().add(const Duration(days: 1));
+    TimeOfDay selectedTime = const TimeOfDay(hour: 10, minute: 0);
+    int durationMinutes = 60;
+
+    showDialog(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setDialogState) => AlertDialog(
+          backgroundColor: kCard,
+          title: Text('ಅಪಾಯಿಂಟ್‌ಮೆಂಟ್ ರಚಿಸಿ', style: TextStyle(color: kText)),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ListTile(
+                leading: Icon(Icons.calendar_today, color: kPurple2),
+                title: Text('${selectedDate.day}/${selectedDate.month}/${selectedDate.year}', style: TextStyle(color: kText)),
+                onTap: () async {
+                  final d = await showDatePicker(
+                    context: ctx,
+                    initialDate: selectedDate,
+                    firstDate: DateTime.now(),
+                    lastDate: DateTime.now().add(const Duration(days: 365)),
+                  );
+                  if (d != null) setDialogState(() => selectedDate = d);
+                },
+              ),
+              ListTile(
+                leading: Icon(Icons.access_time, color: kPurple2),
+                title: Text(selectedTime.format(ctx), style: TextStyle(color: kText)),
+                onTap: () async {
+                  final t = await showTimePicker(context: ctx, initialTime: selectedTime);
+                  if (t != null) setDialogState(() => selectedTime = t);
+                },
+              ),
+              ListTile(
+                leading: Icon(Icons.timer, color: kPurple2),
+                title: Text('$durationMinutes ನಿಮಿಷ', style: TextStyle(color: kText)),
+                trailing: Row(mainAxisSize: MainAxisSize.min, children: [
+                  IconButton(icon: Icon(Icons.remove, color: kMuted), onPressed: () {
+                    if (durationMinutes > 15) setDialogState(() => durationMinutes -= 15);
+                  }),
+                  IconButton(icon: Icon(Icons.add, color: kMuted), onPressed: () {
+                    setDialogState(() => durationMinutes += 15);
+                  }),
+                ]),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: Text('ರದ್ದು', style: TextStyle(color: kMuted)),
+            ),
+            ElevatedButton(
+              onPressed: () async {
+                Navigator.pop(ctx);
+                final startTime = DateTime(
+                  selectedDate.year, selectedDate.month, selectedDate.day,
+                  selectedTime.hour, selectedTime.minute,
+                );
+                final ok = await CalendarService.createAppointment(
+                  clientName: widget.name,
+                  startTime: startTime,
+                  duration: Duration(minutes: durationMinutes),
+                  description: 'ಜಾತಕ ವಿಶ್ಲೇಷಣೆ - ${widget.name}\nಸ್ಥಳ: ${widget.place}',
+                );
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                    content: Text(ok ? 'Calendar ಗೆ ಅಪಾಯಿಂಟ್‌ಮೆಂಟ್ ಸೇರಿಸಲಾಗಿದೆ!' : 'ಅಪಾಯಿಂಟ್‌ಮೆಂಟ್ ವಿಫಲ'),
+                  ));
+                }
+              },
+              style: ElevatedButton.styleFrom(backgroundColor: kTeal, foregroundColor: Colors.white),
+              child: Text('ರಚಿಸಿ'),
+            ),
+          ],
         ),
-        style: TextStyle(fontSize: 15, height: 1.5, color: kText),
       ),
     );
   }
@@ -807,6 +984,76 @@ class _DashboardScreenState extends State<DashboardScreen>
                 );
               }
             ),
+            const SizedBox(height: 24),
+            Divider(color: kBorder),
+            const SizedBox(height: 24),
+
+            // Google Account
+            SectionTitle('Google ಖಾತೆ'),
+            const SizedBox(height: 12),
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: GoogleAuthService.isSignedIn ? Colors.green.withOpacity(0.08) : kBorder.withOpacity(0.3),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: GoogleAuthService.isSignedIn ? Colors.green.withOpacity(0.3) : kBorder),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  if (GoogleAuthService.isSignedIn) ...[
+                    Row(children: [
+                      Icon(Icons.check_circle, color: Colors.green, size: 28),
+                      const SizedBox(width: 12),
+                      Expanded(child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(GoogleAuthService.userName ?? '', style: TextStyle(fontWeight: FontWeight.bold, color: kText)),
+                          Text(GoogleAuthService.userEmail ?? '', style: TextStyle(fontSize: 12, color: kMuted)),
+                        ],
+                      )),
+                    ]),
+                    const SizedBox(height: 12),
+                    Text('Sheets, Docs, Calendar ಸಿಂಕ್ ಸಕ್ರಿಯವಾಗಿದೆ', style: TextStyle(fontSize: 13, color: Colors.green)),
+                    const SizedBox(height: 12),
+                    OutlinedButton(
+                      onPressed: () async {
+                        await GoogleAuthService.signOut();
+                        if (mounted) setState(() {});
+                      },
+                      child: Text('Sign Out', style: TextStyle(color: kMuted)),
+                    ),
+                  ] else ...[
+                    Row(children: [
+                      Icon(Icons.account_circle, color: kPurple2, size: 28),
+                      const SizedBox(width: 12),
+                      Expanded(child: Text('Google ಗೆ ಸೈನ್ ಇನ್ ಮಾಡಿ Sheets, Docs ಮತ್ತು Calendar ಸಿಂಕ್ ಬಳಸಿ',
+                        style: TextStyle(fontSize: 14, color: kText))),
+                    ]),
+                    const SizedBox(height: 12),
+                    ElevatedButton.icon(
+                      onPressed: () async {
+                        final ok = await GoogleAuthService.signIn();
+                        if (mounted) {
+                          setState(() {});
+                          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                            content: Text(ok ? 'Google Sign In ಯಶಸ್ವಿ!' : 'Sign In ವಿಫಲ'),
+                          ));
+                        }
+                      },
+                      icon: Icon(Icons.login),
+                      label: Text('Google Sign In'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: kPurple2,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+
             const SizedBox(height: 24),
             Divider(color: kBorder),
             const SizedBox(height: 24),

@@ -348,39 +348,70 @@ class _InputScreenState extends State<InputScreen> {
   }
 
   Widget _buildProfileListSheet() {
-    return SafeArea(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Padding(
-            padding: EdgeInsets.all(16),
-            child: Text('ಉಳಿಸಿದ ಜಾತಕಗಳು', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: kPurple2)),
-          ),
-          if (_savedProfiles.isEmpty)
-            Padding(padding: EdgeInsets.all(32), child: Text('ಯಾವುದೇ ಜಾತಕ ಉಳಿಸಿಲ್ಲ.'))
-          else
-            Flexible(
-              child: ListView.separated(
-                shrinkWrap: true,
-                itemCount: _savedProfiles.length,
-                separatorBuilder: (_, __) => Divider(height: 1),
-                itemBuilder: (ctx, i) {
-                  final name = _savedProfiles.keys.elementAt(i);
-                  return ListTile(
-                    leading: CircleAvatar(backgroundColor: kBorder, child: Icon(Icons.person, color: kPurple2)),
-                    title: Text(name, style: TextStyle(fontWeight: FontWeight.w800)),
-                    subtitle: Text('${_savedProfiles[name]!.date} | ${_savedProfiles[name]!.place}'),
-                    trailing: Icon(Icons.chevron_right, color: kMuted),
-                    onTap: () {
-                      Navigator.pop(ctx);
-                      _loadProfile(name);
-                    },
-                  );
-                },
+    String searchQuery = '';
+    return StatefulBuilder(
+      builder: (ctx, setSheetState) {
+        final filtered = searchQuery.isEmpty
+          ? _savedProfiles
+          : Map.fromEntries(_savedProfiles.entries.where((e) =>
+              e.key.toLowerCase().contains(searchQuery.toLowerCase()) ||
+              e.value.place.toLowerCase().contains(searchQuery.toLowerCase()) ||
+              e.value.date.contains(searchQuery)));
+
+        return SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Padding(
+                padding: EdgeInsets.all(16),
+                child: Text('ಉಳಿಸಿದ ಜಾತಕಗಳು', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: kPurple2)),
               ),
-            ),
-        ],
-      ),
+              // Search bar
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: TextField(
+                  onChanged: (v) => setSheetState(() => searchQuery = v),
+                  decoration: InputDecoration(
+                    hintText: 'ಹೆಸರು, ಸ್ಥಳ ಅಥವಾ ದಿನಾಂಕ ಹುಡುಕಿ...',
+                    prefixIcon: Icon(Icons.search, color: kMuted),
+                    isDense: true,
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide(color: kBorder)),
+                    enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide(color: kBorder)),
+                    fillColor: kCard,
+                    filled: true,
+                  ),
+                  style: TextStyle(color: kText),
+                ),
+              ),
+              const SizedBox(height: 8),
+              if (filtered.isEmpty)
+                Padding(padding: EdgeInsets.all(32), child: Text(searchQuery.isEmpty ? 'ಯಾವುದೇ ಜಾತಕ ಉಳಿಸಿಲ್ಲ.' : 'ಯಾವುದೇ ಫಲಿತಾಂಶ ಕಂಡುಬಂದಿಲ್ಲ.', style: TextStyle(color: kMuted)))
+              else
+                Flexible(
+                  child: ListView.separated(
+                    shrinkWrap: true,
+                    itemCount: filtered.length,
+                    separatorBuilder: (_, __) => Divider(height: 1),
+                    itemBuilder: (ctx, i) {
+                      final name = filtered.keys.elementAt(i);
+                      return ListTile(
+                        leading: CircleAvatar(backgroundColor: kBorder, child: Icon(Icons.person, color: kPurple2)),
+                        title: Text(name, style: TextStyle(fontWeight: FontWeight.w800, color: kText)),
+                        subtitle: Text('${filtered[name]!.date} | ${filtered[name]!.place}', style: TextStyle(color: kMuted)),
+                        trailing: Icon(Icons.chevron_right, color: kMuted),
+                        onTap: () {
+                          Navigator.pop(ctx);
+                          _loadProfile(name);
+                        },
+                      );
+                    },
+                  ),
+                ),
+            ],
+          ),
+        );
+      },
     );
   }
 
@@ -390,7 +421,7 @@ class _InputScreenState extends State<InputScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text('✨ ಹೊಸ ಜಾತಕ', style: TextStyle(
-            fontWeight: FontWeight.w800, fontSize: 15, color: const Color(0xFF2B6CB0))),
+            fontWeight: FontWeight.w800, fontSize: 15, color: kPurple2)),
           const SizedBox(height: 16),
 
           // Name
