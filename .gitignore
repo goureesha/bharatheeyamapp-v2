@@ -12,6 +12,7 @@ android/local.properties
 android/.gradle/
 android/captures/
 android/key.properties
+*.jks
 
 # IDE
 .idea/
