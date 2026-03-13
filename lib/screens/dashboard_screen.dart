@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import '../services/export_service.dart';
 import '../core/calculator.dart';
@@ -18,6 +18,7 @@ import '../services/calendar_service.dart';
 import '../services/pdf_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'match_making_tab.dart';
+import 'privacy_policy_screen.dart';
 
 class DashboardScreen extends StatefulWidget {
   final KundaliResult result;
@@ -1165,6 +1166,19 @@ class _DashboardScreenState extends State<DashboardScreen>
                      )
                    ]
                 ],
+              ),
+            ),
+
+            // Privacy Policy
+            const Divider(height: 1),
+            ListTile(
+              leading: Icon(Icons.shield_outlined, color: kPurple2),
+              title: Text('ಗೌಪ್ಯತಾ ನೀತಿ / Privacy Policy',
+                  style: TextStyle(color: kText, fontSize: 14)),
+              trailing: Icon(Icons.chevron_right, color: kMuted),
+              onTap: () => Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const PrivacyPolicyScreen()),
               ),
             ),
           ],
