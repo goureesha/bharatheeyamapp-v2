@@ -39,6 +39,7 @@ class _InputScreenState extends State<InputScreen> {
 
   bool _isInitStatus = true;
   bool _isNetworkBlocked = false;
+  bool _loadedFromSaved = false; // true when user opened an existing profile
 
   String _loadedNotes = '';
   Map<String, int> _loadedAroodhas = {};
@@ -69,6 +70,7 @@ class _InputScreenState extends State<InputScreen> {
   void _loadProfile(String name) {
     final p = _savedProfiles[name]!;
     setState(() {
+      _loadedFromSaved = true; // mark as existing — updates go in-place
       _nameCtrl.text  = name;
       _placeCtrl.text = p.place;
       _latCtrl.text   = p.lat.toStringAsFixed(4);
@@ -89,7 +91,7 @@ class _InputScreenState extends State<InputScreen> {
           );
         }
       } catch (_) {
-        _dob = DateTime.now(); // Fallback if corrupted
+        _dob = DateTime.now();
       }
     });
   }
@@ -222,7 +224,8 @@ class _InputScreenState extends State<InputScreen> {
             initialNotes: _loadedNotes,
             initialAroodhas: _loadedAroodhas,
             initialJanmaNakshatraIdx: _loadedJanmaNakshatraIdx,
-            onSave: (notes, aroodhas, janmaIdx) => _saveProfile(notes: notes, aroodhas: aroodhas, janmaNakshatraIdx: janmaIdx),
+            onSave: (notes, aroodhas, janmaIdx, {bool isNew = true}) =>
+                _saveProfile(notes: notes, aroodhas: aroodhas, janmaNakshatraIdx: janmaIdx, isNew: !_loadedFromSaved),
           ),
         ));
 
@@ -230,6 +233,7 @@ class _InputScreenState extends State<InputScreen> {
         if (mounted) {
           final now = DateTime.now();
           setState(() {
+            _loadedFromSaved = false; // reset for next entry
             _nameCtrl.clear();
             _placeCtrl.clear();
             _latCtrl.clear();
@@ -250,7 +254,7 @@ class _InputScreenState extends State<InputScreen> {
     setState(() => _loading = false);
   }
 
-  void _saveProfile({String notes = '', Map<String, int> aroodhas = const {}, int? janmaNakshatraIdx}) async {
+  void _saveProfile({String notes = '', Map<String, int> aroodhas = const {}, int? janmaNakshatraIdx, bool isNew = true}) async {
     String name = _nameCtrl.text.trim();
     if (name.isEmpty) name = 'Unknown_${_dob.toIso8601String().substring(0, 10)}';
     final p = Profile(

@@ -31,7 +31,7 @@ class DashboardScreen extends StatefulWidget {
   final String initialNotes;
   final Map<String, int> initialAroodhas;
   final int? initialJanmaNakshatraIdx;
-  final void Function(String notes, Map<String, int> aroodhas, int? janmaNakshatraIdx) onSave;
+  final void Function(String notes, Map<String, int> aroodhas, int? janmaNakshatraIdx, {bool isNew}) onSave;
 
   const DashboardScreen({
     super.key,
@@ -228,7 +228,7 @@ class _DashboardScreenState extends State<DashboardScreen>
                         : Icon(Icons.save, color: kText),
                       tooltip: 'Save & Sync',
                       onPressed: _syncing ? null : () async {
-                        widget.onSave(_notes, _aroodhas, _janmaNakshatraIdx);
+                        widget.onSave(_notes, _aroodhas, _janmaNakshatraIdx, isNew: false);
                         ScaffoldMessenger.of(context).showSnackBar(
                           const SnackBar(content: Text('ಉಳಿಸಲಾಗಿದೆ!')));
 
@@ -248,7 +248,7 @@ class _DashboardScreenState extends State<DashboardScreen>
                             aroodhas: _aroodhas,
                             janmaNakshatraIdx: _janmaNakshatraIdx,
                           );
-                          final sheetOk = await SheetsService.syncProfile(profile);
+                          final sheetOk = await SheetsService.syncProfile(profile, isNew: false);
                           final docOk = await DocsService.syncNotes(widget.name, _notes);
                           if (mounted) {
                             setState(() => _syncing = false);
