@@ -5,8 +5,12 @@ import 'package:printing/printing.dart';
 import '../core/calculator.dart';
 import '../constants/strings.dart';
 
+// Deep purple matching app theme: #3B1F8C
+const _kPurple = PdfColor(0.231, 0.122, 0.549); // RGB 59/31/140
+const _kPurpleLight = PdfColor(0.231, 0.122, 0.549, 0.08);
+
 class PdfService {
-  /// Generates and downloads/prints a full Kundali PDF for [result].
+  /// Generates and downloads/prints a full Kundali PDF.
   static Future<void> downloadKundaliPdf({
     required BuildContext context,
     required KundaliResult result,
@@ -61,7 +65,7 @@ class PdfService {
 
         pw.SizedBox(height: 16),
 
-        // ─── Bhava Cusps ────────────────────────────────────────────
+        // ─── Bhava Cusps ─────────────────────────────────────────────
         _sectionTitle('ಭಾವ ಸ್ಫುಟ'),
         pw.SizedBox(height: 6),
         _bhavaTable(result.bhavas),
@@ -85,8 +89,7 @@ class PdfService {
               borderRadius: pw.BorderRadius.circular(6),
             ),
             child: pw.Text(notes,
-                style: const pw.TextStyle(fontSize: 10),
-                textDirection: pw.TextDirection.ltr),
+                style: const pw.TextStyle(fontSize: 10)),
           ),
         ],
       ],
@@ -101,7 +104,7 @@ class PdfService {
   // ─── Section header ──────────────────────────────────────────────────────
   static pw.Widget _sectionTitle(String title) => pw.Container(
         padding: const pw.EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-        color: const PdfColor.fromInt(0xFF3B1F8C),
+        color: _kPurple,
         child: pw.Text(title,
             style: pw.TextStyle(
               fontSize: 12,
@@ -112,7 +115,7 @@ class PdfService {
 
   // ─── Page header ─────────────────────────────────────────────────────────
   static pw.Widget _buildHeader(
-      String name, String place, String date, String time) =>
+          String name, String place, String date, String time) =>
       pw.Column(crossAxisAlignment: pw.CrossAxisAlignment.start, children: [
         pw.Row(
             mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
@@ -121,13 +124,13 @@ class PdfService {
                   style: pw.TextStyle(
                     fontSize: 18,
                     fontWeight: pw.FontWeight.bold,
-                    color: const PdfColor.fromInt(0xFF3B1F8C),
+                    color: _kPurple,
                   )),
               pw.Text('ಜಾತಕ ವಿವರ',
                   style: const pw.TextStyle(
                       fontSize: 11, color: PdfColors.grey600)),
             ]),
-        pw.Divider(color: const PdfColor.fromInt(0xFF3B1F8C), thickness: 1.5),
+        pw.Divider(color: _kPurple, thickness: 1.5),
         pw.Row(children: [
           pw.Text('ಹೆಸರು: ',
               style: pw.TextStyle(
@@ -201,64 +204,62 @@ class PdfService {
 
   // ─── Planet table ────────────────────────────────────────────────────────
   static pw.Widget _planetTable(Map<String, PlanetInfo> planets) {
-    final headers = ['ಗ್ರಹ', 'ರಾಶಿ', 'ನಕ್ಷತ್ರ', 'ಪಾದ', 'ಸ್ಫುಟ'];
-    final rows = planets.entries.map((e) {
-      final p = e.value;
-      return [
-        e.key,
-        p.rashi,
-        p.nakshatra,
-        p.pada.toString(),
-        formatDeg(p.longitude),
-      ];
-    }).toList();
-
-    return _dataTable(headers, rows);
+    return _dataTable(
+      ['ಗ್ರಹ', 'ರಾಶಿ', 'ನಕ್ಷತ್ರ', 'ಪಾದ', 'ಸ್ಫುಟ'],
+      planets.entries.map((e) {
+        final p = e.value;
+        return [
+          e.key,
+          p.rashi,
+          p.nakshatra,
+          p.pada.toString(),
+          formatDeg(p.longitude),
+        ];
+      }).toList(),
+    );
   }
 
   // ─── Bhava table ─────────────────────────────────────────────────────────
   static pw.Widget _bhavaTable(List<double> bhavas) {
-    final headers = ['ಭಾವ', 'ರಾಶಿ', 'ಸ್ಫುಟ'];
-    final rashis = ['ಮೇಷ','ವೃಷಭ','ಮಿಥುನ','ಕರ್ಕ','ಸಿಂಹ','ಕನ್ಯ',
-                    'ತುಲಾ','ವೃಶ್ಚಿಕ','ಧನು','ಮಕರ','ಕುಂಭ','ಮೀನ'];
-    final rows = bhavas.asMap().entries.map((e) {
-      final rashi = rashis[(e.value / 30).floor() % 12];
-      return [(e.key + 1).toString(), rashi, formatDeg(e.value)];
-    }).toList();
-    return _dataTable(headers, rows);
+    const rashis = [
+      'ಮೇಷ', 'ವೃಷಭ', 'ಮಿಥುನ', 'ಕರ್ಕ', 'ಸಿಂಹ', 'ಕನ್ಯ',
+      'ತುಲಾ', 'ವೃಶ್ಚಿಕ', 'ಧನು', 'ಮಕರ', 'ಕುಂಭ', 'ಮೀನ'
+    ];
+    return _dataTable(
+      ['ಭಾವ', 'ರಾಶಿ', 'ಸ್ಫುಟ'],
+      bhavas.asMap().entries.map((e) {
+        final rashi = rashis[(e.value / 30).floor() % 12];
+        return [(e.key + 1).toString(), rashi, formatDeg(e.value)];
+      }).toList(),
+    );
   }
 
   // ─── Dasha table ─────────────────────────────────────────────────────────
   static pw.Widget _dashaTable(List<DashaEntry> dashas) {
-    final headers = ['ದಶ', 'ಆರಂಭ', 'ಅಂತ'];
     final rows = <List<String>>[];
     for (final d in dashas) {
       rows.add([
         d.lord,
-        '${d.start.day}/${d.start.month}/${d.start.year}',
-        '${d.end.day}/${d.end.month}/${d.end.year}',
+        _fmtDate(d.start),
+        _fmtDate(d.end),
       ]);
-      // Add antardashas indented
       for (final a in d.antardashas) {
-        rows.add([
-          '  └ ${a.lord}',
-          '${a.start.day}/${a.start.month}/${a.start.year}',
-          '${a.end.day}/${a.end.month}/${a.end.year}',
-        ]);
+        rows.add(['  └ ${a.lord}', _fmtDate(a.start), _fmtDate(a.end)]);
       }
     }
-    return _dataTable(headers, rows);
+    return _dataTable(['ದಶ', 'ಆರಂಭ', 'ಅಂತ'], rows);
   }
+
+  static String _fmtDate(DateTime d) =>
+      '${d.day.toString().padLeft(2,'0')}/${d.month.toString().padLeft(2,'0')}/${d.year}';
 
   // ─── Generic data table ──────────────────────────────────────────────────
   static pw.Widget _dataTable(List<String> headers, List<List<String>> rows) {
     return pw.Table(
       border: pw.TableBorder.all(color: PdfColors.grey300, width: 0.5),
       children: [
-        // Header
         pw.TableRow(
-          decoration:
-              const pw.BoxDecoration(color: PdfColor.fromInt(0xFF3B1F8C)),
+          decoration: const pw.BoxDecoration(color: _kPurple),
           children: headers
               .map((h) => pw.Padding(
                     padding: const pw.EdgeInsets.symmetric(
@@ -271,7 +272,6 @@ class PdfService {
                   ))
               .toList(),
         ),
-        // Data rows
         ...rows.asMap().entries.map((entry) {
           final isEven = entry.key % 2 == 0;
           return pw.TableRow(
