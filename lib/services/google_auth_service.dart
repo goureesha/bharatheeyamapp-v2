@@ -36,11 +36,6 @@ class GoogleAuthService {
       _currentUser = await _instance.signIn();
       if (_currentUser != null) {
         debugPrint('Google Sign-In success: ${_currentUser!.email}');
-        // Ensure all scopes are granted (required on web)
-        final granted = await _instance.requestScopes(_scopes);
-        if (!granted) {
-          debugPrint('Not all scopes granted');
-        }
       }
       return _currentUser != null;
     } catch (e) {
@@ -64,9 +59,26 @@ class GoogleAuthService {
     }
   }
 
+  /// Request additional scopes if needed (call before API operations)
+  static Future<bool> ensureScopes() async {
+    if (_currentUser == null) return false;
+    try {
+      final granted = await _instance.requestScopes(_scopes);
+      debugPrint('Scopes granted: $granted');
+      return granted;
+    } catch (e) {
+      debugPrint('Scope request error: $e');
+      return false;
+    }
+  }
+
   static Future<gauth.AuthClient?> getAuthClient() async {
     if (_currentUser == null) return null;
     try {
+      // On web, ensure scopes are granted before getting client
+      if (kIsWeb) {
+        await ensureScopes();
+      }
       return await _instance.authenticatedClient();
     } catch (e) {
       debugPrint('Auth client error: $e');
