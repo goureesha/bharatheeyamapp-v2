@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../widgets/common.dart';
 
@@ -51,19 +51,6 @@ class AboutScreen extends StatelessWidget {
             ),
 
             const SizedBox(height: 24),
-
-            _sectionHeader('ಅಪ್ ಬಗ್ಗೆ / About the App'),
-            _bodyCard(
-              'ಭಾರತೀಯಮ್ ಒಂದು ಮುಕ್ತ-ಮೂಲ ವೈದಿಕ ಜ್ಯೋತಿಷ್ಯ ಅಪ್ಲಿಕೇಶನ್ — '
-              'ಜನ್ಮಕುಂಡಲಿ, ದಶ, ಪಂಚಾಂಗ, ಷಡ್ಬಲ, ಆರೂಢ, ತಾರಾನುಕೂಲ ಮತ್ತು ಮೇಳಾಪಕ '
-              'ಲೆಕ್ಕಾಚಾರಗಳನ್ನು ನಿಖರವಾದ Swiss Ephemeris ಬಳಸಿ ಒದಗಿಸುತ್ತದೆ.\n\n'
-              'Bharatheeyam is a free, open-source Vedic Astrology app providing '
-              'precise Kundali calculations, Dasha periods, Panchanga, Shadbala, '
-              'Arudha Lagna, Taranukula, and Melapaka — all powered by the '
-              'globally trusted Swiss Ephemeris engine.',
-            ),
-
-            const SizedBox(height: 20),
 
             // ─── Calculation Engine ────────────────────────────────────
             _sectionHeader('ಲೆಕ್ಕಾಚಾರ ಎಂಜಿನ್ / Calculation Engine'),
@@ -348,6 +335,21 @@ class AboutScreen extends StatelessWidget {
             const SizedBox(height: 16),
 
             // ─── Source Code (prominent at bottom) ────────────────────
+
+
+            _sectionHeader('ಅಪ್ ಬಗ್ಗೆ / About the App'),
+            _bodyCard(
+              'ಭಾರತೀಯಮ್ ಒಂದು ಮುಕ್ತ-ಮೂಲ ವೈದಿಕ ಜ್ಯೋತಿಷ್ಯ ಅಪ್ಲಿಕೇಶನ್ — '
+              'ಜನ್ಮಕುಂಡಲಿ, ದಶ, ಪಂಚಾಂಗ, ಷಡ್ಬಲ, ಆರೂಢ, ತಾರಾನುಕೂಲ ಮತ್ತು ಮೇಳಾಪಕ '
+              'ಲೆಕ್ಕಾಚಾರಗಳನ್ನು ನಿಖರವಾದ Swiss Ephemeris ಬಳಸಿ ಒದಗಿಸುತ್ತದೆ.\n\n'
+              'Bharatheeyam is a free, open-source Vedic Astrology app providing '
+              'precise Kundali calculations, Dasha periods, Panchanga, Shadbala, '
+              'Arudha Lagna, Taranukula, and Melapaka — all powered by the '
+              'globally trusted Swiss Ephemeris engine.',
+            ),
+
+            const SizedBox(height: 20),
+
             _sectionHeader('📂 Source Code'),
             const SizedBox(height: 8),
             GestureDetector(
