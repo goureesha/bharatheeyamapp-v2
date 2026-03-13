@@ -15,7 +15,6 @@ import '../services/google_auth_service.dart';
 import '../services/sheets_service.dart';
 import '../services/docs_service.dart';
 import '../services/calendar_service.dart';
-import '../services/pdf_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'match_making_tab.dart';
 import 'about_screen.dart';
@@ -236,22 +235,6 @@ class _DashboardScreenState extends State<DashboardScreen>
                     onPressed: () => Navigator.pop(context),
                   ),
                   Row(children: [
-                    IconButton(
-                      icon: Icon(Icons.picture_as_pdf, color: Colors.redAccent),
-                      tooltip: 'PDF ಡೌನ್ಲೋಡ್',
-                      onPressed: () => PdfService.downloadKundaliPdf(
-                        context: context,
-                        result: widget.result,
-                        name: widget.name,
-                        place: widget.place,
-                        dob: widget.dob,
-                        hour: widget.hour,
-                        minute: widget.minute,
-                        ampm: widget.ampm,
-                        notes: _notes,
-                        extraInfo: widget.extraInfo,
-                      ),
-                    ),
                     IconButton(
                       icon: Icon(Icons.share, color: kTeal),
                       tooltip: 'Share CSV',
