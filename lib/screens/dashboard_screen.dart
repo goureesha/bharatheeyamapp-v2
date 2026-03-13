@@ -68,6 +68,10 @@ class _DashboardScreenState extends State<DashboardScreen>
   bool _panchangLoading = false;
   bool _syncing = false;
 
+  // Ad tabs: show interstitial once per session on these tab indices
+  static const _adTabs = {3, 4, 9}; // Dasha, Panchanga, Notes
+  final _adTabsShown = <int>{}; // tracks which tabs already showed ad this session
+
   static const _tabs = [
     'ಕುಂಡಲಿ', 'ಸ್ಫುಟ', 'ಆರೂಢ',
     'ದಶ', 'ಪಂಚಾಂಗ', 'ಭಾವ', 'ಷಡ್ಬಲ', 'ತಾರಾನುಕೂಲ', 'ಹೊಂದಾಣಿಕೆ',
@@ -87,8 +91,18 @@ class _DashboardScreenState extends State<DashboardScreen>
     final panchangNakName = widget.result.panchang.nakshatra.split(' ')[0];
     int panchangNakIdx = knNak.indexWhere((n) => panchangNakName.startsWith(n));
     _dinaNakshatraIdx = panchangNakIdx != -1 ? panchangNakIdx : 0;
-    
+
     _loadJanmaNakshatra();
+
+    // Show interstitial ad when switching to Dasha / Panchanga / Notes tabs
+    _tabCtrl.addListener(() {
+      if (!_tabCtrl.indexIsChanging) return;
+      final idx = _tabCtrl.index;
+      if (_adTabs.contains(idx) && !_adTabsShown.contains(idx)) {
+        _adTabsShown.add(idx);
+        AdService.showInterstitialAd(context);
+      }
+    });
   }
 
   Future<void> _loadJanmaNakshatra() async {
@@ -227,37 +241,43 @@ class _DashboardScreenState extends State<DashboardScreen>
                         ? SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: kTeal))
                         : Icon(Icons.save, color: kText),
                       tooltip: 'Save & Sync',
-                      onPressed: _syncing ? null : () async {
-                        widget.onSave(_notes, _aroodhas, _janmaNakshatraIdx, isNew: false);
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('ಉಳಿಸಲಾಗಿದೆ!')));
+                      onPressed: _syncing ? null : () {
+                        // Non-skippable rewarded ad before saving
+                        AdService.showRewardedInterstitialAd(
+                          context,
+                          onCompleted: () async {
+                            widget.onSave(_notes, _aroodhas, _janmaNakshatraIdx, isNew: false);
+                            if (!mounted) return;
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text('ಉಳಿಸಲಾಗಿದೆ!')));
 
-                        // Sync to Google if signed in
-                        if (GoogleAuthService.isSignedIn) {
-                          setState(() => _syncing = true);
-                          final profile = Profile(
-                            name: widget.name,
-                            date: '${widget.dob.year}-${widget.dob.month.toString().padLeft(2,'0')}-${widget.dob.day.toString().padLeft(2,'0')}',
-                            hour: widget.hour,
-                            minute: widget.minute,
-                            ampm: widget.ampm,
-                            lat: widget.lat,
-                            lon: widget.lon,
-                            place: widget.place,
-                            notes: _notes,
-                            aroodhas: _aroodhas,
-                            janmaNakshatraIdx: _janmaNakshatraIdx,
-                          );
-                          final sheetOk = await SheetsService.syncProfile(profile, isNew: false);
-                          final docOk = await DocsService.syncNotes(widget.name, _notes);
-                          if (mounted) {
-                            setState(() => _syncing = false);
-                            final msg = (sheetOk && docOk)
-                              ? 'Google Sheets ಮತ್ತು Docs ಗೆ ಸಿಂಕ್ ಆಗಿದೆ!'
-                              : 'ಸಿಂಕ್ ವಿಫಲವಾಗಿದೆ. ದಯವಿಟ್ಟು ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ.';
-                            ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
-                          }
-                        }
+                            if (GoogleAuthService.isSignedIn) {
+                              setState(() => _syncing = true);
+                              final profile = Profile(
+                                name: widget.name,
+                                date: '${widget.dob.year}-${widget.dob.month.toString().padLeft(2,'0')}-${widget.dob.day.toString().padLeft(2,'0')}',
+                                hour: widget.hour,
+                                minute: widget.minute,
+                                ampm: widget.ampm,
+                                lat: widget.lat,
+                                lon: widget.lon,
+                                place: widget.place,
+                                notes: _notes,
+                                aroodhas: _aroodhas,
+                                janmaNakshatraIdx: _janmaNakshatraIdx,
+                              );
+                              final sheetOk = await SheetsService.syncProfile(profile, isNew: false);
+                              final docOk = await DocsService.syncNotes(widget.name, _notes);
+                              if (mounted) {
+                                setState(() => _syncing = false);
+                                final msg = (sheetOk && docOk)
+                                  ? 'Google Sheets ಮತ್ತು Docs ಗೆ ಸಿಂಕ್ ಆಗಿದೆ!'
+                                  : 'ಸಿಂಕ್ ವಿಫಲವಾಗಿದೆ. ದಯವಿಟ್ಟು ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ.';
+                                ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
+                              }
+                            }
+                          },
+                        );
                       },
                     ),
                   ]),

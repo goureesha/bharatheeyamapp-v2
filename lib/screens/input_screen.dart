@@ -10,6 +10,7 @@ import '../core/ephemeris.dart';
 import '../services/network_service.dart';
 import '../services/google_auth_service.dart';
 import '../services/calendar_service.dart';
+import '../services/ad_service.dart';
 import 'dashboard_screen.dart';
 
 class InputScreen extends StatefulWidget {
@@ -210,24 +211,31 @@ class _InputScreenState extends State<InputScreen> {
       );
 
       if (result != null && mounted) {
-        await Navigator.push(context, MaterialPageRoute(
-          builder: (_) => DashboardScreen(
-            result: result,
-            name: _nameCtrl.text,
-            place: _placeCtrl.text,
-            dob: _dob,
-            hour: _hour,
-            minute: _minute,
-            ampm: _ampm,
-            lat: lat,
-            lon: lon,
-            initialNotes: _loadedNotes,
-            initialAroodhas: _loadedAroodhas,
-            initialJanmaNakshatraIdx: _loadedJanmaNakshatraIdx,
-            onSave: (notes, aroodhas, janmaIdx, {bool isNew = true}) =>
-                _saveProfile(notes: notes, aroodhas: aroodhas, janmaNakshatraIdx: janmaIdx, isNew: !_loadedFromSaved),
-          ),
-        ));
+        // Show interstitial ad before opening Dashboard
+        void navigateToDashboard() {
+          if (!mounted) return;
+          Navigator.push(context, MaterialPageRoute(
+            builder: (_) => DashboardScreen(
+              result: result,
+              name: _nameCtrl.text,
+              place: _placeCtrl.text,
+              dob: _dob,
+              hour: _hour,
+              minute: _minute,
+              ampm: _ampm,
+              lat: lat,
+              lon: lon,
+              initialNotes: _loadedNotes,
+              initialAroodhas: _loadedAroodhas,
+              initialJanmaNakshatraIdx: _loadedJanmaNakshatraIdx,
+              onSave: (notes, aroodhas, janmaIdx, {bool isNew = true}) =>
+                  _saveProfile(notes: notes, aroodhas: aroodhas, janmaNakshatraIdx: janmaIdx, isNew: !_loadedFromSaved),
+            ),
+          ));
+        }
+        setState(() => _loading = false);
+        AdService.showInterstitialAd(context, onDismissed: navigateToDashboard);
+        return; // loading flag already cleared above
 
         // Reset the form back to current time/empty strings when returning
         if (mounted) {
