@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
@@ -45,6 +45,13 @@ class _InputScreenState extends State<InputScreen> {
   String _loadedNotes = '';
   Map<String, int> _loadedAroodhas = {};
   int? _loadedJanmaNakshatraIdx;
+
+  // Additional info
+  final _gotraCtrl  = TextEditingController();
+  final _fatherCtrl = TextEditingController();
+  final _motherCtrl = TextEditingController();
+  String _gender = 'ಗಂಡು';
+  bool _showExtraInfo = false;
 
   @override
   void initState() {
@@ -228,6 +235,12 @@ class _InputScreenState extends State<InputScreen> {
               initialNotes: _loadedNotes,
               initialAroodhas: _loadedAroodhas,
               initialJanmaNakshatraIdx: _loadedJanmaNakshatraIdx,
+              extraInfo: {
+                'gotra': _gotraCtrl.text.trim(),
+                'father': _fatherCtrl.text.trim(),
+                'mother': _motherCtrl.text.trim(),
+                'gender': _gender,
+              },
               onSave: (notes, aroodhas, janmaIdx, {bool isNew = true}) =>
                   _saveProfile(notes: notes, aroodhas: aroodhas, janmaNakshatraIdx: janmaIdx, isNew: !_loadedFromSaved),
             ),
@@ -241,11 +254,16 @@ class _InputScreenState extends State<InputScreen> {
         if (mounted) {
           final now = DateTime.now();
           setState(() {
-            _loadedFromSaved = false; // reset for next entry
+            _loadedFromSaved = false;
             _nameCtrl.clear();
             _placeCtrl.clear();
             _latCtrl.clear();
             _lonCtrl.clear();
+            _gotraCtrl.clear();
+            _fatherCtrl.clear();
+            _motherCtrl.clear();
+            _gender = 'ಗಂಡು';
+            _showExtraInfo = false;
             _dob = now;
             _hour = now.hour % 12 == 0 ? 12 : now.hour % 12;
             _minute = now.minute;
@@ -783,6 +801,89 @@ class _InputScreenState extends State<InputScreen> {
             ),
           ),
           const SizedBox(height: 16),
+          // ─── Additional Info dropdown ───────────────────────────
+          const SizedBox(height: 8),
+          GestureDetector(
+            onTap: () => setState(() => _showExtraInfo = !_showExtraInfo),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
+              decoration: BoxDecoration(
+                color: kCard,
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: kBorder),
+              ),
+              child: Row(children: [
+                Icon(Icons.person_outline, color: kPurple2, size: 20),
+                const SizedBox(width: 10),
+                Expanded(child: Text('ಹೆಚ್ಚಿನ ವಿವರ (ಗೋತ್ರ, ತಂದೆ, ತಾಯಿ)', style: TextStyle(color: kText, fontSize: 13))),
+                Icon(_showExtraInfo ? Icons.expand_less : Icons.expand_more, color: kMuted),
+              ]),
+            ),
+          ),
+          if (_showExtraInfo) ...[
+            const SizedBox(height: 8),
+            // Gender
+            Row(children: [
+              Text('ಲಿಂಗ: ', style: TextStyle(color: kText, fontSize: 13)),
+              const SizedBox(width: 8),
+              ...['ಗಂಡು', 'ಹೆಂಣು', 'ಇತರ'].map((g) => Padding(
+                padding: const EdgeInsets.only(right: 8),
+                child: ChoiceChip(
+                  label: Text(g, style: TextStyle(color: _gender == g ? Colors.white : kText)),
+                  selected: _gender == g,
+                  selectedColor: kPurple2,
+                  backgroundColor: kCard,
+                  side: BorderSide(color: kBorder),
+                  onSelected: (_) => setState(() => _gender = g),
+                ),
+              )).toList(),
+            ]),
+            const SizedBox(height: 8),
+            TextField(
+              controller: _gotraCtrl,
+              style: TextStyle(color: kText),
+              decoration: InputDecoration(
+                labelText: 'ಗೋತ್ರ (Gotra)',
+                labelStyle: TextStyle(color: kMuted),
+                prefixIcon: Icon(Icons.family_restroom, color: kPurple2),
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide(color: kBorder)),
+                enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide(color: kBorder)),
+                fillColor: kCard, filled: true,
+                isDense: true,
+                contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+              ),
+            ),
+            const SizedBox(height: 8),
+            TextField(
+              controller: _fatherCtrl,
+              style: TextStyle(color: kText),
+              decoration: InputDecoration(
+                labelText: 'ತಂದೆ ಹೆಸರು',
+                labelStyle: TextStyle(color: kMuted),
+                prefixIcon: Icon(Icons.man, color: kPurple2),
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide(color: kBorder)),
+                enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide(color: kBorder)),
+                fillColor: kCard, filled: true,
+                isDense: true,
+                contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+              ),
+            ),
+            const SizedBox(height: 8),
+            TextField(
+              controller: _motherCtrl,
+              style: TextStyle(color: kText),
+              decoration: InputDecoration(
+                labelText: 'ತಾಯಿ ಹೆಸರು',
+                labelStyle: TextStyle(color: kMuted),
+                prefixIcon: Icon(Icons.woman, color: kPurple2),
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide(color: kBorder)),
+                enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide(color: kBorder)),
+                fillColor: kCard, filled: true,
+                isDense: true,
+                contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+              ),
+            ),
+          ],
 
           // Three action buttons
           Row(children: [

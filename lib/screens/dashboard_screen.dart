@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import '../services/export_service.dart';
 import '../core/calculator.dart';
@@ -34,6 +34,7 @@ class DashboardScreen extends StatefulWidget {
   final String initialNotes;
   final Map<String, int> initialAroodhas;
   final int? initialJanmaNakshatraIdx;
+  final Map<String, String> extraInfo;
   final void Function(String notes, Map<String, int> aroodhas, int? janmaNakshatraIdx, {bool isNew}) onSave;
 
   const DashboardScreen({
@@ -50,6 +51,7 @@ class DashboardScreen extends StatefulWidget {
     this.initialNotes = '',
     this.initialAroodhas = const {},
     this.initialJanmaNakshatraIdx,
+    this.extraInfo = const {},
     required this.onSave,
   });
 
@@ -247,6 +249,7 @@ class _DashboardScreenState extends State<DashboardScreen>
                         minute: widget.minute,
                         ampm: widget.ampm,
                         notes: _notes,
+                        extraInfo: widget.extraInfo,
                       ),
                     ),
                     IconButton(
