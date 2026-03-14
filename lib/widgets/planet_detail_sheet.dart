@@ -78,7 +78,7 @@ class PlanetDetailSheet extends StatelessWidget {
           Padding(
             padding: const EdgeInsets.fromLTRB(12, 12, 12, 4),
             child: Text(title, style: TextStyle(
-              fontWeight: FontWeight.w800, fontSize: 14, color: const Color(0xFF2B6CB0))),
+              fontWeight: FontWeight.w800, fontSize: 14, color: kPurple2)),
           ),
           ...rows.map((r) => Container(
             decoration: BoxDecoration(
@@ -86,9 +86,9 @@ class PlanetDetailSheet extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
             child: Row(children: [
               Text(r[0], style: TextStyle(
-                fontWeight: FontWeight.w700, color: const Color(0xFF4A5568))),
+                fontWeight: FontWeight.w700, color: kMuted)),
               const Spacer(),
-              Text(r[1], style: TextStyle(fontWeight: FontWeight.w700)),
+              Text(r[1], style: TextStyle(fontWeight: FontWeight.w700, color: kText)),
             ]),
           )),
         ],
