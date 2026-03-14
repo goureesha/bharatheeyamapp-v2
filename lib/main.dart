@@ -88,10 +88,7 @@ class _BharatheeyamAppState extends State<BharatheeyamApp> {
             timePickerTheme: TimePickerThemeData(
               backgroundColor: kBg,
               dialBackgroundColor: kCard,
-              dialTextColor: WidgetStateProperty.resolveWith((states) {
-                if (states.contains(WidgetState.selected)) return Colors.white;
-                return kText;
-              }),
+              dialTextColor: kText,
               hourMinuteTextColor: kText,
             ),
             appBarTheme: AppBarTheme(
