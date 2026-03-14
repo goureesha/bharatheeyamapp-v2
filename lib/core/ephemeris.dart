@@ -131,13 +131,6 @@ class Ephemeris {
   static Map<String, List<double>> calcAll(
       double jd, String ayanamsaMode, bool trueNode) {
 
-    double ayn = 0.0;
-    switch (ayanamsaMode) {
-      case 'raman': ayn = ayanamsaRaman(jd); break;
-      case 'kp': ayn = ayanamsaKP(jd); break;
-      default: ayn = ayanamsaLahiri(jd); break;
-    }
-
     final flags = SwephFlag.SEFLG_SWIEPH | SwephFlag.SEFLG_SIDEREAL | SwephFlag.SEFLG_SPEED;
 
     Map<String, List<double>> res = {};

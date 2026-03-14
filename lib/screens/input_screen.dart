@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
@@ -248,8 +248,6 @@ class _InputScreenState extends State<InputScreen> {
         }
         setState(() => _loading = false);
         AdService.showInterstitialAd(context, onDismissed: navigateToDashboard);
-        return; // loading flag already cleared above
-
         // Reset the form back to current time/empty strings when returning
         if (mounted) {
           final now = DateTime.now();
