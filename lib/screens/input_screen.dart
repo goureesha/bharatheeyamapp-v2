@@ -348,6 +348,28 @@ class _InputScreenState extends State<InputScreen> {
               // Google sign-in + appointment row
               _buildGoogleRow(),
               const SizedBox(height: 8),
+
+              // App Logo Header
+              Center(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  child: Column(children: [
+                    Image.asset(
+                      'assets/images/logo.png',
+                      width: 72, height: 72,
+                    ),
+                    const SizedBox(height: 8),
+                    Text('ಭಾರತೀಯಮ್', style: TextStyle(
+                      fontSize: 22, fontWeight: FontWeight.w900, color: kOrange,
+                      letterSpacing: 1.2,
+                    )),
+                    Text('Vedic Astrology', style: TextStyle(
+                      fontSize: 12, color: kMuted, letterSpacing: 0.5,
+                    )),
+                  ]),
+                ),
+              ),
+
               _buildInputCard(),
               const SizedBox(height: 32),
             ],

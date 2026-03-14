@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../widgets/common.dart';
 
@@ -29,13 +29,12 @@ class AboutScreen extends StatelessWidget {
             // ─── App Identity ──────────────────────────────────────────
             Center(
               child: Column(children: [
-                Container(
-                  width: 80, height: 80,
-                  decoration: BoxDecoration(
-                      color: kPurple2,
-                      borderRadius: BorderRadius.circular(20)),
-                  child: const Icon(Icons.stars_rounded,
-                      color: Colors.white, size: 48),
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(20),
+                  child: Image.asset(
+                    'assets/images/logo.png',
+                    width: 80, height: 80, fit: BoxFit.contain,
+                  ),
                 ),
                 const SizedBox(height: 12),
                 Text('ಭಾರತೀಯಮ್',

@@ -241,14 +241,24 @@ class KundaliChart extends StatelessWidget {
         ],
       ),
       child: Center(
-        child: Text(label,
-          textAlign: TextAlign.center,
-          style: TextStyle(
-            fontSize: 20, 
-            fontWeight: FontWeight.w900, 
-            color: Color(0xFFDD6B20),
-            letterSpacing: 1.2,
-          )),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Image.asset(
+              'assets/images/logo.png',
+              width: 48, height: 48,
+            ),
+            const SizedBox(height: 4),
+            Text(label,
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w900,
+                color: Color(0xFFDD6B20),
+                letterSpacing: 1.0,
+              )),
+          ],
+        ),
       ),
     );
   }
