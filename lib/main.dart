@@ -46,6 +46,8 @@ class _BharatheeyamAppState extends State<BharatheeyamApp> {
           theme: ThemeData(
             useMaterial3: true,
             scaffoldBackgroundColor: kBg,
+            canvasColor: kCard,
+            dialogBackgroundColor: kCard,
             colorScheme: ColorScheme.fromSeed(
               seedColor: kPurple2,
               brightness: themeIndex == 1 ? Brightness.dark : Brightness.light,
@@ -53,15 +55,51 @@ class _BharatheeyamAppState extends State<BharatheeyamApp> {
               secondary: kOrange,
               surface: kCard,
             ),
-            textTheme: Theme.of(context).textTheme.copyWith(
+            textTheme: Theme.of(context).textTheme.apply(
+              bodyColor: kText,
+              displayColor: kText,
+            ).copyWith(
               bodyMedium: TextStyle(color: kText, fontSize: 14),
               bodyLarge: TextStyle(color: kText, fontSize: 16, fontWeight: FontWeight.w600),
+            ),
+            listTileTheme: ListTileThemeData(
+              textColor: kText,
+              iconColor: kPurple2,
+            ),
+            textSelectionTheme: TextSelectionThemeData(
+              cursorColor: kPurple2,
+              selectionColor: kPurple2.withOpacity(0.3),
+              selectionHandleColor: kPurple2,
+            ),
+            datePickerTheme: DatePickerThemeData(
+              backgroundColor: kBg,
+              headerBackgroundColor: kPurple2,
+              headerForegroundColor: Colors.white,
+              dayForegroundColor: WidgetStateProperty.resolveWith((states) {
+                if (states.contains(WidgetState.selected)) return Colors.white;
+                if (states.contains(WidgetState.disabled)) return kMuted;
+                return kText;
+              }),
+              yearForegroundColor: WidgetStateProperty.resolveWith((states) {
+                if (states.contains(WidgetState.selected)) return Colors.white;
+                return kText;
+              }),
+            ),
+            timePickerTheme: TimePickerThemeData(
+              backgroundColor: kBg,
+              dialBackgroundColor: kCard,
+              dialTextColor: WidgetStateProperty.resolveWith((states) {
+                if (states.contains(WidgetState.selected)) return Colors.white;
+                return kText;
+              }),
+              hourMinuteTextColor: kText,
             ),
             appBarTheme: AppBarTheme(
               backgroundColor: Colors.transparent,
               elevation: 0,
               centerTitle: true,
-              titleTextStyle: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.w800),
+              titleTextStyle: TextStyle(color: kText, fontSize: 20, fontWeight: FontWeight.w800),
+              iconTheme: IconThemeData(color: kText),
             ),
             inputDecorationTheme: InputDecorationTheme(
               filled: true,
