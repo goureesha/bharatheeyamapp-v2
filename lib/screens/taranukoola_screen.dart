@@ -22,7 +22,7 @@ class _TaranukoolaScreenState extends State<TaranukoolaScreen> {
     'ಕ್ಷೇಮ ತಾರೆ (ಶುಭ)',
     'ಪ್ರತ್ಯಕ್ ತಾರೆ (ಅಶುಭ)',
     'ಸಾಧಕ ತಾರೆ (ಶುಭ)',
-    'ನೈಧನ ತಾರೆ (ಅಶುಭ)',
+    'ವಧ ತಾರೆ (ಅಶುಭ)',
     'ಮಿತ್ರ ತಾರೆ (ಶುಭ)',
     'ಪರಮ ಮಿತ್ರ ತಾರೆ (ಅತ್ಯುತ್ತಮ)',
   ];
@@ -185,57 +185,12 @@ class _TaranukoolaScreenState extends State<TaranukoolaScreen> {
                           );
                         }
                       ),
-                    ],
-
-                    if (_janmaNakshatraIdx != null) ...[
-                      Text('ನಿಮ್ಮ ಜನ್ಮ ನಕ್ಷತ್ರಕ್ಕೆ ಅನುಗುಣವಾಗಿ ಸಂಪೂರ್ಣ ತಾರೆಗಳ ಪಟ್ಟಿ:', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: kText)),
-                      const SizedBox(height: 12),
-                      ...List.generate(9, (taraIdx) {
-                        bool isShubha = (taraIdx == 1 || taraIdx == 3 || taraIdx == 5 || taraIdx == 7 || taraIdx == 8);
-                        Color bgColor = isShubha ? Colors.green.shade50 : Colors.red.shade50;
-                        Color borderColor = isShubha ? Colors.green.shade200 : Colors.red.shade200;
-                        Color textColor = isShubha ? Colors.green.shade800 : Colors.red.shade800;
-
-                        int n1 = (_janmaNakshatraIdx! + taraIdx) % 27;
-                        int n2 = (_janmaNakshatraIdx! + taraIdx + 9) % 27;
-                        int n3 = (_janmaNakshatraIdx! + taraIdx + 18) % 27;
-                        String nakshatrasText = '${knNak[n1]}, ${knNak[n2]}, ${knNak[n3]}';
-
-                        return Container(
-                          margin: const EdgeInsets.only(bottom: 12),
-                          padding: const EdgeInsets.all(12),
-                          decoration: BoxDecoration(
-                            color: bgColor,
-                            border: Border.all(color: borderColor),
-                            borderRadius: BorderRadius.circular(8)
-                          ),
-                          child: Row(
-                            children: [
-                              Expanded(
-                                flex: 2,
-                                child: Text(
-                                  _taras[taraIdx],
-                                  style: TextStyle(fontWeight: FontWeight.bold, color: textColor, fontSize: 14),
-                                )
-                              ),
-                              Container(width: 1, height: 40, color: borderColor, margin: const EdgeInsets.symmetric(horizontal: 12)),
-                              Expanded(
-                                flex: 3,
-                                child: Text(
-                                  nakshatrasText,
-                                  style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: kText),
-                                )
-                              ),
-                            ],
-                          ),
-                        );
-                      }),
                     ] else ...[
                        Container(
                          padding: const EdgeInsets.all(16),
                          alignment: Alignment.center,
                          decoration: BoxDecoration(color: kBorder.withOpacity(0.3), borderRadius: BorderRadius.circular(8)),
-                         child: Text('ಫಲಿತಾಂಶವನ್ನು ನೋಡಲು ನಕ್ಷತ್ರವನ್ನು ಆಯ್ಕೆಮಾಡಿ.', style: TextStyle(color: kMuted))
+                         child: Text('ಫಲಿತಾಂಶವನ್ನು ನೋಡಲು ಎರಡೂ ನಕ್ಷತ್ರಗಳನ್ನು ಆಯ್ಕೆಮಾಡಿ.', style: TextStyle(color: kMuted))
                        )
                     ]
                   ],
