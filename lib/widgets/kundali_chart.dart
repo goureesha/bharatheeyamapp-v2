@@ -87,7 +87,16 @@ class KundaliChart extends StatelessWidget {
     final Map<int, List<Widget>> boxes = {for (int i = 0; i < 12; i++) i: []};
 
     if (aroodhas != null) {
-      // Aroodha chart mode
+      // Aroodha chart mode: show planets first
+      for (final pName in planetOrder) {
+        final info = result.planets[pName];
+        if (info == null) continue;
+        final ri = _rashinFor(info.longitude);
+        if (ri >= 0 && ri < 12) {
+          boxes[ri]!.add(_planetChip(pName, pName == 'ಲಗ್ನ' ? ChipType.lagna : ChipType.planet));
+        }
+      }
+      // Then add aroodha labels
       for (final entry in aroodhas!.entries) {
         boxes[entry.value]!.add(_planetChip(entry.key, ChipType.lagna));
       }
