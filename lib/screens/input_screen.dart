@@ -217,7 +217,7 @@ class _InputScreenState extends State<InputScreen> {
         Navigator.push(context, MaterialPageRoute(
           builder: (_) => DashboardScreen(
             result: result,
-            name: _nameCtrl.text,
+            name: _nameCtrl.text.trim().isNotEmpty ? _nameCtrl.text.trim() : 'ಅಜ್ಞಾತ ಜಾತಕ (Unknown)',
             place: _placeCtrl.text,
             dob: _dob,
             hour: _hour,
