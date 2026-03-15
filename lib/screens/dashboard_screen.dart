@@ -16,9 +16,7 @@ import '../services/sheets_service.dart';
 import '../services/docs_service.dart';
 import '../services/calendar_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'match_making_tab.dart';
-import 'about_screen.dart';
-import 'privacy_policy_screen.dart';
+
 
 class DashboardScreen extends StatefulWidget {
   final KundaliResult result;
@@ -73,13 +71,13 @@ class _DashboardScreenState extends State<DashboardScreen>
   bool _syncing = false;
 
   // Ad tabs: show interstitial once per session on these tab indices
-  static const _adTabs = {3, 4, 9}; // Dasha, Panchanga, Notes
+  static const _adTabs = {3, 4, 7}; // Dasha, Panchanga, Notes
   final _adTabsShown = <int>{}; // tracks which tabs already showed ad this session
 
   static const _tabs = [
     'ಕುಂಡಲಿ', 'ಸ್ಫುಟ', 'ಆರೂಢ',
-    'ದಶ', 'ಪಂಚಾಂಗ', 'ಭಾವ', 'ಷಡ್ಬಲ', 'ತಾರಾನುಕೂಲ', 'ಹೊಂದಾಣಿಕೆ',
-    'ಟಿಪ್ಪಣಿ', 'ಸೆಟ್ಟಿಂಗ್ಸ್'
+    'ದಶ', 'ಪಂಚಾಂಗ', 'ಭಾವ', 'ಷಡ್ಬಲ',
+    'ಟಿಪ್ಪಣಿ'
   ];
 
   @override
@@ -311,10 +309,7 @@ class _DashboardScreenState extends State<DashboardScreen>
                   _buildPanchangTab(),
                   _buildBhavaTab(),
                   _buildShadbalaTab(),
-                  _buildTaranukoolaTab(),
-                  const MatchMakingTab(),
                   _buildNotesTab(),
-                  _buildSettingsTab(),
                 ],
               ),
             ),
@@ -687,117 +682,7 @@ class _DashboardScreenState extends State<DashboardScreen>
     );
   }
 
-  // ─────────────────────────────────────────────
-  // TAB 9: TARANUKOOLA
-  // ─────────────────────────────────────────────
-  Widget _buildTaranukoolaTab() {
-    final taras = [
-      'ಜನ್ಮ ತಾರೆ (ಅಶುಭ)',        
-      'ಸಂಪತ್ ತಾರೆ (ಶುಭ)',           
-      'ವಿಪತ್ ತಾರೆ (ಅಶುಭ)',       
-      'ಕ್ಷೇಮ ತಾರೆ (ಶುಭ)',           
-      'ಪ್ರತ್ಯಕ್ ತಾರೆ (ಅಶುಭ)',      
-      'ಸಾಧಕ ತಾರೆ (ಶುಭ)',           
-      'ನೈಧನ ತಾರೆ (ಅಶುಭ)',        
-      'ಮಿತ್ರ ತಾರೆ (ಶುಭ)',           
-      'ಪರಮ ಮಿತ್ರ ತಾರೆ (ಅತ್ಯುತ್ತಮ)',      
-    ];
 
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(16),
-      child: AppCard(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Text('ತಾರಾನುಕೂಲ ಫಲಿತಾಂಶಗಳು', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: kPurple1)),
-            const SizedBox(height: 16),
-            Text('ನಿಮ್ಮ ಜನ್ಮ ನಕ್ಷತ್ರವನ್ನು ಆಯ್ಕೆಮಾಡಿ:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
-            const SizedBox(height: 8),
-            Container(
-              decoration: BoxDecoration(
-                border: Border.all(color: kBorder),
-                borderRadius: BorderRadius.circular(8),
-                color: kCard,
-              ),
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-              child: DropdownButtonHideUnderline(
-                child: DropdownButton<int>(
-                  isExpanded: true,
-                  hint: Text('ನಕ್ಷತ್ರ ಆಯ್ಕೆಮಾಡಿ'),
-                  value: _janmaNakshatraIdx,
-                  items: List.generate(27, (i) => DropdownMenuItem<int>(
-                    value: i,
-                    child: Text(knNak[i], style: TextStyle(fontSize: 16)),
-                  )),
-                  onChanged: (val) {
-                    setState(() {
-                      _janmaNakshatraIdx = val;
-                      _saveSelectedJanmaNakshatra(val);
-                    });
-                  },
-                ),
-              ),
-            ),
-            const SizedBox(height: 24),
-            
-            if (_janmaNakshatraIdx != null) ...[
-              Text('ನಿಮ್ಮ ನಕ್ಷತ್ರಕ್ಕೆ ಅನುಗುಣವಾಗಿ ತಾರೆಗಳ ಪಟ್ಟಿ:', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-              const SizedBox(height: 12),
-              ...List.generate(9, (taraIdx) {
-                // Determine if this Tara is Shubha or Ashubha
-                bool isShubha = (taraIdx == 1 || taraIdx == 3 || taraIdx == 5 || taraIdx == 7 || taraIdx == 8);
-                Color bgColor = isShubha ? Colors.green.shade50 : Colors.red.shade50;
-                Color borderColor = isShubha ? Colors.green.shade200 : Colors.red.shade200;
-                Color textColor = isShubha ? Colors.green.shade800 : Colors.red.shade800;
-
-                // Calculate the 3 Nakshatras that fall under this Tara
-                int n1 = (_janmaNakshatraIdx! + taraIdx) % 27;
-                int n2 = (_janmaNakshatraIdx! + taraIdx + 9) % 27;
-                int n3 = (_janmaNakshatraIdx! + taraIdx + 18) % 27;
-                String nakshatrasText = '${knNak[n1]}, ${knNak[n2]}, ${knNak[n3]}';
-
-                return Container(
-                  margin: const EdgeInsets.only(bottom: 12),
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: bgColor,
-                    border: Border.all(color: borderColor),
-                    borderRadius: BorderRadius.circular(8)
-                  ),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        flex: 2,
-                        child: Text(
-                          taras[taraIdx],
-                          style: TextStyle(fontWeight: FontWeight.bold, color: textColor, fontSize: 14),
-                        )
-                      ),
-                      Container(width: 1, height: 40, color: borderColor, margin: const EdgeInsets.symmetric(horizontal: 12)),
-                      Expanded(
-                        flex: 3,
-                        child: Text(
-                          nakshatrasText,
-                          style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: kText),
-                        )
-                      ),
-                    ],
-                  ),
-                );
-              }),
-            ] else ...[
-               Container(
-                 padding: const EdgeInsets.all(16),
-                 alignment: Alignment.center,
-                 decoration: BoxDecoration(color: kBorder.withOpacity(0.3), borderRadius: BorderRadius.circular(8)),
-                 child: Text('ಫಲಿತಾಂಶವನ್ನು ನೋಡಲು ನಕ್ಷತ್ರವನ್ನು ಆಯ್ಕೆಮಾಡಿ.', style: TextStyle(color: kMuted))
-               )
-            ]
-          ],
-        ),
-      ),
-    );
-  }
 
   // ─────────────────────────────────────────────
   // TAB 10: NOTES
@@ -974,217 +859,6 @@ class _DashboardScreenState extends State<DashboardScreen>
 
 
 
-  // ─────────────────────────────────────────────
-  // TAB 11: SETTINGS
-  // ─────────────────────────────────────────────
-  Widget _buildSettingsTab() {
-    final themes = ['ಸ್ಟ್ಯಾಂಡರ್ಡ್ ಲೈಟ್', 'ಡಾರ್ಕ್ ಮೋಡ್', 'ಸ್ವರ್ಣ', 'ಸಾಗರ', 'ಹಸಿರು'];
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(16),
-      child: AppCard(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Theme selection
-            SectionTitle('ಥೀಮ್ ಸೆಟ್ಟಿಂಗ್ಸ್'),
-            const SizedBox(height: 10),
-            ValueListenableBuilder<int>(
-              valueListenable: AppThemes.themeNotifier,
-              builder: (context, currentTheme, _) {
-                return Column(
-                  children: List.generate(themes.length, (i) {
-                    return RadioListTile<int>(
-                      value: i,
-                      groupValue: currentTheme,
-                      title: Text(themes[i], style: TextStyle(fontWeight: FontWeight.w800, color: kText)),
-                      activeColor: kPurple2,
-                      onChanged: (val) {
-                        if (val != null) {
-                          AppThemes.setTheme(val);
-                        }
-                      },
-                    );
-                  }),
-                );
-              }
-            ),
-            const SizedBox(height: 24),
-            Divider(color: kBorder),
-            const SizedBox(height: 24),
-
-            // Google Account
-            SectionTitle('Google ಖಾತೆ'),
-            const SizedBox(height: 12),
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: GoogleAuthService.isSignedIn ? Colors.green.withOpacity(0.08) : kBorder.withOpacity(0.3),
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: GoogleAuthService.isSignedIn ? Colors.green.withOpacity(0.3) : kBorder),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  if (GoogleAuthService.isSignedIn) ...[
-                    Row(children: [
-                      Icon(Icons.check_circle, color: Colors.green, size: 28),
-                      const SizedBox(width: 12),
-                      Expanded(child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(GoogleAuthService.userName ?? '', style: TextStyle(fontWeight: FontWeight.bold, color: kText)),
-                          Text(GoogleAuthService.userEmail ?? '', style: TextStyle(fontSize: 12, color: kMuted)),
-                        ],
-                      )),
-                    ]),
-                    const SizedBox(height: 12),
-                    Text('Sheets, Docs, Calendar ಸಿಂಕ್ ಸಕ್ರಿಯವಾಗಿದೆ', style: TextStyle(fontSize: 13, color: Colors.green)),
-                    const SizedBox(height: 12),
-                    OutlinedButton(
-                      onPressed: () async {
-                        await GoogleAuthService.signOut();
-                        if (mounted) setState(() {});
-                      },
-                      child: Text('Sign Out', style: TextStyle(color: kMuted)),
-                    ),
-                  ] else ...[
-                    Row(children: [
-                      Icon(Icons.account_circle, color: kPurple2, size: 28),
-                      const SizedBox(width: 12),
-                      Expanded(child: Text('Google ಗೆ ಸೈನ್ ಇನ್ ಮಾಡಿ Sheets, Docs ಮತ್ತು Calendar ಸಿಂಕ್ ಬಳಸಿ',
-                        style: TextStyle(fontSize: 14, color: kText))),
-                    ]),
-                    const SizedBox(height: 12),
-                    ElevatedButton.icon(
-                      onPressed: () async {
-                        final ok = await GoogleAuthService.signIn();
-                        if (mounted) {
-                          setState(() {});
-                          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                            content: Text(ok ? 'Google Sign In ಯಶಸ್ವಿ!' : 'Sign In ವಿಫಲ'),
-                          ));
-                        }
-                      },
-                      icon: Icon(Icons.login),
-                      label: Text('Google Sign In'),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: kPurple2,
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(vertical: 12),
-                      ),
-                    ),
-                  ],
-                ],
-              ),
-            ),
-
-            const SizedBox(height: 24),
-            Divider(color: kBorder),
-            const SizedBox(height: 24),
-            
-            // Purchase Premium
-            SectionTitle('ಪ್ರೀಮಿಯಂ ಚಂದಾದಾರಿಕೆ'),
-            const SizedBox(height: 12),
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: SubscriptionService.hasAdFree ? Colors.green.shade50 : kPurple1.withOpacity(0.05),
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: SubscriptionService.hasAdFree ? Colors.green.shade200 : kPurple2.withOpacity(0.2)),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                   Row(
-                     children: [
-                       Icon(
-                         SubscriptionService.hasAdFree ? Icons.check_circle : Icons.star, 
-                         color: SubscriptionService.hasAdFree ? Colors.green.shade700 : kOrange,
-                         size: 28,
-                       ),
-                       const SizedBox(width: 12),
-                       Expanded(
-                         child: Text(
-                           SubscriptionService.hasAdFree 
-                              ? 'ನೀವು ಪ್ರೀಮಿಯಂ ಸದಸ್ಯರು! (Ad-Free Active)' 
-                              : 'ಜಾಹೀರಾತು ಮುಕ್ತ ಅನುಭವ ಪಡೆಯಿರಿ',
-                           style: TextStyle(
-                             fontSize: SubscriptionService.hasAdFree ? 16 : 18, 
-                             fontWeight: FontWeight.bold,
-                             color: SubscriptionService.hasAdFree ? Colors.green.shade800 : kPurple1
-                           ),
-                         ),
-                       ),
-                     ],
-                   ),
-                   if (!SubscriptionService.hasAdFree) ...[
-                     const SizedBox(height: 12),
-                     Text(
-                       'ವರ್ಷಕ್ಕೆ ಕೇವಲ ₹೫೦೦ ಪಾವತಿಸಿ ಮತ್ತು ಅಪ್ಲಿಕೇಶನ್ ಅನ್ನು ಯಾವುದೇ ಜಾಹೀರಾತುಗಳಿಲ್ಲದೆ ಬಳಸಿ.',
-                       style: TextStyle(fontSize: 14, color: kText, height: 1.4),
-                     ),
-                     const SizedBox(height: 20),
-                     ElevatedButton(
-                       onPressed: () async {
-                         final success = await SubscriptionService.buyAdFreeSubscription();
-                         if (!success && mounted) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(content: Text('ಚಂದಾದಾರಿಕೆ ಪ್ರಕ್ರಿಯೆ ವಿಫಲವಾಗಿದೆ ಅಥವಾ ನೀವು ವೆಬ್ ಬಳಸುತ್ತಿದ್ದೀರಿ.'))
-                            );
-                         }
-                       },
-                       style: ElevatedButton.styleFrom(
-                         backgroundColor: kOrange,
-                         foregroundColor: Colors.white,
-                         padding: const EdgeInsets.symmetric(vertical: 14),
-                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                       ),
-                       child: const Text('₹500 / ವರ್ಷಕ್ಕೆ ಚಂದಾದಾರರಾಗಿ', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-                     ),
-                     const SizedBox(height: 12),
-                     TextButton(
-                       onPressed: () async {
-                          await SubscriptionService.restorePurchases();
-                          ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(content: Text('ಹಿಂದಿನ ಖರೀದಿಗಳನ್ನು ಮರುಸ್ಥಾಪಿಸಲಾಗಿದೆ.'))
-                          );
-                       },
-                       child: Text('ಹಿಂದಿನ ಖರೀದಿಯನ್ನು ಮರುಸ್ಥಾಪಿಸಿ (Restore)', style: TextStyle(color: kPurple2, fontWeight: FontWeight.w600)),
-                     )
-                   ]
-                ],
-              ),
-            ),
-
-            // About Us
-            const Divider(height: 1),
-            ListTile(
-              leading: Icon(Icons.info_outline, color: kPurple2),
-              title: Text('ನಮ್ಮ ಬಗ್ಗೆ / About Us',
-                  style: TextStyle(color: kText, fontSize: 14)),
-              trailing: Icon(Icons.chevron_right, color: kMuted),
-              onTap: () => Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => const AboutScreen()),
-              ),
-            ),
-            // Privacy Policy
-            const Divider(height: 1),
-            ListTile(
-              leading: Icon(Icons.shield_outlined, color: kPurple2),
-              title: Text('ಗೌಪ್ಯತಾ ನೀತಿ / Privacy Policy',
-                  style: TextStyle(color: kText, fontSize: 14)),
-              trailing: Icon(Icons.chevron_right, color: kMuted),
-              onTap: () => Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => const PrivacyPolicyScreen()),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
 
   // ─────────────────────────────────────────────
   // HELPERS
