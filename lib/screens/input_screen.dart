@@ -46,12 +46,7 @@ class _InputScreenState extends State<InputScreen> {
   Map<String, int> _loadedAroodhas = {};
   int? _loadedJanmaNakshatraIdx;
 
-  // Additional info
-  final _gotraCtrl  = TextEditingController();
-  final _fatherCtrl = TextEditingController();
-  final _motherCtrl = TextEditingController();
-  String _gender = 'ಗಂಡು';
-  bool _showExtraInfo = false;
+
 
   @override
   void initState() {
@@ -235,12 +230,7 @@ class _InputScreenState extends State<InputScreen> {
               initialNotes: _loadedNotes,
               initialAroodhas: _loadedAroodhas,
               initialJanmaNakshatraIdx: _loadedJanmaNakshatraIdx,
-              extraInfo: {
-                'gotra': _gotraCtrl.text.trim(),
-                'father': _fatherCtrl.text.trim(),
-                'mother': _motherCtrl.text.trim(),
-                'gender': _gender,
-              },
+
               onSave: (notes, aroodhas, janmaIdx, {bool isNew = true}) =>
                   _saveProfile(notes: notes, aroodhas: aroodhas, janmaNakshatraIdx: janmaIdx, isNew: !_loadedFromSaved),
             ),
@@ -257,11 +247,7 @@ class _InputScreenState extends State<InputScreen> {
             _placeCtrl.clear();
             _latCtrl.clear();
             _lonCtrl.clear();
-            _gotraCtrl.clear();
-            _fatherCtrl.clear();
-            _motherCtrl.clear();
-            _gender = 'ಗಂಡು';
-            _showExtraInfo = false;
+
             _dob = now;
             _hour = now.hour % 12 == 0 ? 12 : now.hour % 12;
             _minute = now.minute;
@@ -345,30 +331,7 @@ class _InputScreenState extends State<InputScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              // Google sign-in + appointment row
-              _buildGoogleRow(),
               const SizedBox(height: 8),
-
-              // App Logo Header
-              Center(
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  child: Column(children: [
-                    Image.asset(
-                      'assets/images/logo.png',
-                      width: 72, height: 72,
-                    ),
-                    const SizedBox(height: 8),
-                    Text('ಭಾರತೀಯಮ್', style: TextStyle(
-                      fontSize: 22, fontWeight: FontWeight.w900, color: kOrange,
-                      letterSpacing: 1.2,
-                    )),
-                    Text('Vedic Astrology', style: TextStyle(
-                      fontSize: 12, color: kMuted, letterSpacing: 0.5,
-                    )),
-                  ]),
-                ),
-              ),
 
               _buildInputCard(),
               const SizedBox(height: 32),
@@ -470,160 +433,7 @@ class _InputScreenState extends State<InputScreen> {
     );
   }
 
-  Widget _buildGoogleRow() {
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: kCard,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: kBorder),
-      ),
-      child: GoogleAuthService.isSignedIn
-        ? Row(children: [
-            Icon(Icons.check_circle, color: Colors.green, size: 20),
-            const SizedBox(width: 8),
-            Expanded(child: Text(
-              GoogleAuthService.userEmail ?? '',
-              style: TextStyle(fontSize: 12, color: kMuted),
-              overflow: TextOverflow.ellipsis,
-            )),
-            const SizedBox(width: 8),
-            ElevatedButton.icon(
-              onPressed: () => _showAppointmentDialog(),
-              icon: Icon(Icons.event, size: 16),
-              label: Text('ಅಪಾಯಿಂಟ್\u200cಮೆಂಟ್', style: TextStyle(fontSize: 12)),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: kTeal,
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                minimumSize: Size.zero,
-              ),
-            ),
-          ])
-        : Row(children: [
-            Icon(Icons.account_circle, color: kPurple2, size: 20),
-            const SizedBox(width: 8),
-            Expanded(child: Text(
-              'Google Sign In ಮಾಡಿ',
-              style: TextStyle(fontSize: 13, color: kText),
-            )),
-            ElevatedButton.icon(
-              onPressed: () async {
-                final ok = await GoogleAuthService.signIn();
-                if (mounted) {
-                  setState(() {});
-                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                    content: Text(ok ? 'Google Sign In ಯಶಸ್ವಿ!' : 'Sign In ವಿಫಲ'),
-                  ));
-                }
-              },
-              icon: Icon(Icons.login, size: 16),
-              label: Text('Sign In', style: TextStyle(fontSize: 12)),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: kPurple2,
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                minimumSize: Size.zero,
-              ),
-            ),
-          ]),
-    );
-  }
 
-  void _showAppointmentDialog() {
-    DateTime selectedDate = DateTime.now().add(const Duration(days: 1));
-    TimeOfDay selectedTime = const TimeOfDay(hour: 10, minute: 0);
-    int durationMinutes = 60;
-    final clientNameCtrl = TextEditingController(text: _nameCtrl.text);
-
-    showDialog(
-      context: context,
-      builder: (ctx) => StatefulBuilder(
-        builder: (ctx, setDialogState) => AlertDialog(
-          backgroundColor: kCard,
-          title: Text('ಅಪಾಯಿಂಟ್\u200cಮೆಂಟ್ ರಚಿಸಿ', style: TextStyle(color: kText)),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextField(
-                controller: clientNameCtrl,
-                decoration: InputDecoration(
-                  labelText: 'ಗ್ರಾಹಕರ ಹೆಸರು',
-                  labelStyle: TextStyle(color: kMuted),
-                  isDense: true,
-                ),
-                style: TextStyle(color: kText),
-              ),
-              const SizedBox(height: 8),
-              ListTile(
-                leading: Icon(Icons.calendar_today, color: kPurple2),
-                title: Text('${selectedDate.day}/${selectedDate.month}/${selectedDate.year}', style: TextStyle(color: kText)),
-                onTap: () async {
-                  final d = await showDatePicker(
-                    context: ctx,
-                    initialDate: selectedDate,
-                    firstDate: DateTime.now(),
-                    lastDate: DateTime.now().add(const Duration(days: 365)),
-                  );
-                  if (d != null) setDialogState(() => selectedDate = d);
-                },
-              ),
-              ListTile(
-                leading: Icon(Icons.access_time, color: kPurple2),
-                title: Text(selectedTime.format(ctx), style: TextStyle(color: kText)),
-                onTap: () async {
-                  final t = await showTimePicker(context: ctx, initialTime: selectedTime);
-                  if (t != null) setDialogState(() => selectedTime = t);
-                },
-              ),
-              ListTile(
-                leading: Icon(Icons.timer, color: kPurple2),
-                title: Text('$durationMinutes ನಿಮಿಷ', style: TextStyle(color: kText)),
-                trailing: Row(mainAxisSize: MainAxisSize.min, children: [
-                  IconButton(icon: Icon(Icons.remove, color: kMuted), onPressed: () {
-                    if (durationMinutes > 15) setDialogState(() => durationMinutes -= 15);
-                  }),
-                  IconButton(icon: Icon(Icons.add, color: kMuted), onPressed: () {
-                    setDialogState(() => durationMinutes += 15);
-                  }),
-                ]),
-              ),
-            ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(ctx),
-              child: Text('ರದ್ದು', style: TextStyle(color: kMuted)),
-            ),
-            ElevatedButton(
-              onPressed: () async {
-                Navigator.pop(ctx);
-                final startTime = DateTime(
-                  selectedDate.year, selectedDate.month, selectedDate.day,
-                  selectedTime.hour, selectedTime.minute,
-                );
-                final name = clientNameCtrl.text.isEmpty ? 'ಗ್ರಾಹಕ' : clientNameCtrl.text;
-                final ok = await CalendarService.createAppointment(
-                  clientName: name,
-                  startTime: startTime,
-                  duration: Duration(minutes: durationMinutes),
-                  description: 'ಜಾತಕ ವಿಶ್ಲೇಷಣೆ - $name',
-                );
-                if (mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                    content: Text(ok ? 'Calendar ಗೆ ಅಪಾಯಿಂಟ್\u200cಮೆಂಟ್ ಸೇರಿಸಲಾಗಿದೆ!' : 'ಅಪಾಯಿಂಟ್\u200cಮೆಂಟ್ ವಿಫಲ'),
-                  ));
-                }
-              },
-              style: ElevatedButton.styleFrom(backgroundColor: kTeal, foregroundColor: Colors.white),
-              child: Text('ರಚಿಸಿ'),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
 
   Widget _buildInputCard() {
     return AppCard(
@@ -820,90 +630,8 @@ class _InputScreenState extends State<InputScreen> {
               ],
             ),
           ),
-          const SizedBox(height: 16),
-          // ─── Additional Info dropdown ───────────────────────────
-          const SizedBox(height: 8),
-          GestureDetector(
-            onTap: () => setState(() => _showExtraInfo = !_showExtraInfo),
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
-              decoration: BoxDecoration(
-                color: kCard,
-                borderRadius: BorderRadius.circular(10),
-                border: Border.all(color: kBorder),
-              ),
-              child: Row(children: [
-                Icon(Icons.person_outline, color: kPurple2, size: 20),
-                const SizedBox(width: 10),
-                Expanded(child: Text('ಹೆಚ್ಚಿನ ವಿವರ (ಗೋತ್ರ, ತಂದೆ, ತಾಯಿ)', style: TextStyle(color: kText, fontSize: 13))),
-                Icon(_showExtraInfo ? Icons.expand_less : Icons.expand_more, color: kMuted),
-              ]),
-            ),
-          ),
-          if (_showExtraInfo) ...[
-            const SizedBox(height: 8),
-            // Gender
-            Row(children: [
-              Text('ಲಿಂಗ: ', style: TextStyle(color: kText, fontSize: 13)),
-              const SizedBox(width: 8),
-              ...['ಗಂಡು', 'ಹೆಂಣು', 'ಇತರ'].map((g) => Padding(
-                padding: const EdgeInsets.only(right: 8),
-                child: ChoiceChip(
-                  label: Text(g, style: TextStyle(color: _gender == g ? Colors.white : kText)),
-                  selected: _gender == g,
-                  selectedColor: kPurple2,
-                  backgroundColor: kCard,
-                  side: BorderSide(color: kBorder),
-                  onSelected: (_) => setState(() => _gender = g),
-                ),
-              )).toList(),
-            ]),
-            const SizedBox(height: 8),
-            TextField(
-              controller: _gotraCtrl,
-              style: TextStyle(color: kText),
-              decoration: InputDecoration(
-                labelText: 'ಗೋತ್ರ (Gotra)',
-                labelStyle: TextStyle(color: kMuted),
-                prefixIcon: Icon(Icons.family_restroom, color: kPurple2),
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide(color: kBorder)),
-                enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide(color: kBorder)),
-                fillColor: kCard, filled: true,
-                isDense: true,
-                contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-              ),
-            ),
-            const SizedBox(height: 8),
-            TextField(
-              controller: _fatherCtrl,
-              style: TextStyle(color: kText),
-              decoration: InputDecoration(
-                labelText: 'ತಂದೆ ಹೆಸರು',
-                labelStyle: TextStyle(color: kMuted),
-                prefixIcon: Icon(Icons.man, color: kPurple2),
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide(color: kBorder)),
-                enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide(color: kBorder)),
-                fillColor: kCard, filled: true,
-                isDense: true,
-                contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-              ),
-            ),
-            const SizedBox(height: 8),
-            TextField(
-              controller: _motherCtrl,
-              style: TextStyle(color: kText),
-              decoration: InputDecoration(
-                labelText: 'ತಾಯಿ ಹೆಸರು',
-                labelStyle: TextStyle(color: kMuted),
-                prefixIcon: Icon(Icons.woman, color: kPurple2),
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide(color: kBorder)),
-                enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide(color: kBorder)),
-                fillColor: kCard, filled: true,
-                isDense: true,
-                contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-              ),
-            ),
-          ],
+
+
 
           // Three action buttons
           Row(children: [

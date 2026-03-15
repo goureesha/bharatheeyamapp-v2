@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import '../widgets/common.dart';
 import '../services/ad_service.dart';
+import '../services/google_auth_service.dart';
+import '../services/calendar_service.dart';
 import 'input_screen.dart';
 import 'panchanga_screen.dart';
 import 'taranukoola_screen.dart';
@@ -39,38 +41,164 @@ class HomeScreen extends StatelessWidget {
       body: SafeArea(
         child: Column(
           children: [
-            // Logo Header
-            Padding(
-              padding: const EdgeInsets.symmetric(vertical: 24),
-              child: Column(children: [
-                Image.asset('assets/images/logo.png', width: 80, height: 80),
-                const SizedBox(height: 10),
-                Text('ಭಾರತೀಯಮ್', style: TextStyle(
-                  fontSize: 26, fontWeight: FontWeight.w900, color: kOrange,
-                  letterSpacing: 1.5,
-                )),
-                const SizedBox(height: 4),
-                Text('Vedic Astrology', style: TextStyle(
-                  fontSize: 13, color: kMuted, letterSpacing: 0.5,
-                )),
-              ]),
-            ),
-
-            // Sections Grid
             Expanded(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: GridView.count(
-                  crossAxisCount: 2,
-                  mainAxisSpacing: 14,
-                  crossAxisSpacing: 14,
-                  childAspectRatio: 1.15,
-                  children: sections.map((s) => _buildCard(s)).toList(),
+              child: SingleChildScrollView(
+                child: Column(
+                  children: [
+                    // Scrollable Logo Header
+                    Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 24),
+                      child: Column(children: [
+                        Image.asset('assets/images/logo.png', width: 80, height: 80),
+                        const SizedBox(height: 10),
+                        Text('ಭಾರತೀಯಮ್', style: TextStyle(
+                          fontSize: 26, fontWeight: FontWeight.w900, color: kOrange,
+                          letterSpacing: 1.5,
+                        )),
+                        const SizedBox(height: 4),
+                        Text('Vedic Astrology', style: TextStyle(
+                          fontSize: 13, color: kMuted, letterSpacing: 0.5,
+                        )),
+                      ]),
+                    ),
+
+                    // Appointment Button
+                    if (GoogleAuthService.isSignedIn)
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        child: GestureDetector(
+                          onTap: () => _showAppointmentDialog(context),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                            decoration: BoxDecoration(
+                              color: kTeal.withOpacity(0.1),
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(color: kTeal.withOpacity(0.3)),
+                            ),
+                            child: Row(children: [
+                              Icon(Icons.event, color: kTeal, size: 22),
+                              const SizedBox(width: 10),
+                              Expanded(child: Text('ಅಪಾಯಿಂಟ್\u200cಮೆಂಟ್ ರಚಿಸಿ',
+                                style: TextStyle(color: kTeal, fontWeight: FontWeight.w700, fontSize: 14))),
+                              Icon(Icons.chevron_right, color: kTeal),
+                            ]),
+                          ),
+                        ),
+                      ),
+                    const SizedBox(height: 12),
+
+                    // Sections Grid
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      child: GridView.count(
+                        crossAxisCount: 2,
+                        mainAxisSpacing: 14,
+                        crossAxisSpacing: 14,
+                        childAspectRatio: 1.15,
+                        shrinkWrap: true,
+                        physics: const NeverScrollableScrollPhysics(),
+                        children: sections.map((s) => _buildCard(s)).toList(),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                  ],
                 ),
               ),
             ),
-
             const BannerAdWidget(),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showAppointmentDialog(BuildContext context) {
+    DateTime selectedDate = DateTime.now().add(const Duration(days: 1));
+    TimeOfDay selectedTime = const TimeOfDay(hour: 10, minute: 0);
+    int durationMinutes = 60;
+    final clientNameCtrl = TextEditingController();
+
+    showDialog(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setDialogState) => AlertDialog(
+          backgroundColor: kCard,
+          title: Text('ಅಪಾಯಿಂಟ್\u200cಮೆಂಟ್ ರಚಿಸಿ', style: TextStyle(color: kText)),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: clientNameCtrl,
+                decoration: InputDecoration(
+                  labelText: 'ಗ್ರಾಹಕರ ಹೆಸರು',
+                  labelStyle: TextStyle(color: kMuted),
+                  isDense: true,
+                ),
+                style: TextStyle(color: kText),
+              ),
+              const SizedBox(height: 8),
+              ListTile(
+                leading: Icon(Icons.calendar_today, color: kPurple2),
+                title: Text('${selectedDate.day}/${selectedDate.month}/${selectedDate.year}', style: TextStyle(color: kText)),
+                onTap: () async {
+                  final d = await showDatePicker(
+                    context: ctx,
+                    initialDate: selectedDate,
+                    firstDate: DateTime.now(),
+                    lastDate: DateTime.now().add(const Duration(days: 365)),
+                  );
+                  if (d != null) setDialogState(() => selectedDate = d);
+                },
+              ),
+              ListTile(
+                leading: Icon(Icons.access_time, color: kPurple2),
+                title: Text(selectedTime.format(ctx), style: TextStyle(color: kText)),
+                onTap: () async {
+                  final t = await showTimePicker(context: ctx, initialTime: selectedTime);
+                  if (t != null) setDialogState(() => selectedTime = t);
+                },
+              ),
+              ListTile(
+                leading: Icon(Icons.timer, color: kPurple2),
+                title: Text('$durationMinutes ನಿಮಿಷ', style: TextStyle(color: kText)),
+                trailing: Row(mainAxisSize: MainAxisSize.min, children: [
+                  IconButton(icon: Icon(Icons.remove, color: kMuted), onPressed: () {
+                    if (durationMinutes > 15) setDialogState(() => durationMinutes -= 15);
+                  }),
+                  IconButton(icon: Icon(Icons.add, color: kMuted), onPressed: () {
+                    setDialogState(() => durationMinutes += 15);
+                  }),
+                ]),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: Text('ರದ್ದು', style: TextStyle(color: kMuted)),
+            ),
+            ElevatedButton(
+              onPressed: () async {
+                Navigator.pop(ctx);
+                final startTime = DateTime(
+                  selectedDate.year, selectedDate.month, selectedDate.day,
+                  selectedTime.hour, selectedTime.minute,
+                );
+                final ok = await CalendarService.createAppointment(
+                  clientName: clientNameCtrl.text.isNotEmpty ? clientNameCtrl.text : 'ಅಪಾಯಿಂಟ್\u200cಮೆಂಟ್',
+                  startTime: startTime,
+                  duration: Duration(minutes: durationMinutes),
+                  description: 'ಜಾತಕ ವಿಶ್ಲೇಷಣೆ',
+                );
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                    content: Text(ok ? 'Calendar ಗೆ ಅಪಾಯಿಂಟ್\u200cಮೆಂಟ್ ಸೇರಿಸಲಾಗಿದೆ!' : 'ಅಪಾಯಿಂಟ್\u200cಮೆಂಟ್ ವಿಫಲ'),
+                  ));
+                }
+              },
+              style: ElevatedButton.styleFrom(backgroundColor: kTeal, foregroundColor: Colors.white),
+              child: Text('ರಚಿಸಿ'),
+            ),
           ],
         ),
       ),
