@@ -525,6 +525,7 @@ class _DashboardScreenState extends State<DashboardScreen>
         children: [
           // Date & Time info
           AppCard(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            if (widget.name.isNotEmpty) _kv('ಹೆಸರು', widget.name),
             _kv('ಸ್ಥಳ', widget.place),
             _kv('ದಿನಾಂಕ', dateStr),
             _kv('ಸಮಯ', timeStr),
