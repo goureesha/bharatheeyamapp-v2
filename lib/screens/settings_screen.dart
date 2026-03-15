@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import '../widgets/common.dart';
-import '../services/ad_service.dart';
+
 import '../services/subscription_service.dart';
 import '../services/google_auth_service.dart';
 import 'about_screen.dart';
@@ -239,7 +239,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               ),
             ),
           ),
-          const BannerAdWidget(),
+
         ],
       ),
     );

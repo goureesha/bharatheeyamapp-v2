@@ -3,7 +3,7 @@ import '../widgets/common.dart';
 import '../constants/strings.dart';
 import '../core/calculator.dart';
 import '../core/ephemeris.dart';
-import '../services/ad_service.dart';
+
 
 class PanchangaScreen extends StatefulWidget {
   const PanchangaScreen({super.key});
@@ -200,7 +200,7 @@ class _PanchangaScreenState extends State<PanchangaScreen> {
               ),
             ),
           ),
-          const BannerAdWidget(),
+
         ],
       ),
     );

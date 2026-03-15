@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'screens/home_screen.dart';
+import 'screens/paywall_screen.dart';
 import 'widgets/common.dart';
 import 'services/subscription_service.dart';
 import 'services/google_auth_service.dart';
@@ -126,7 +127,7 @@ class _BharatheeyamAppState extends State<BharatheeyamApp> {
               indicatorSize: TabBarIndicatorSize.tab,
             ),
           ),
-          home: const HomeScreen(),
+          home: SubscriptionService.hasAccess ? const HomeScreen() : const PaywallScreen(),
         );
       },
     );

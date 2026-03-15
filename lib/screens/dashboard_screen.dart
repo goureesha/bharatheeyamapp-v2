@@ -8,7 +8,7 @@ import '../widgets/kundali_chart.dart';
 import '../widgets/planet_detail_sheet.dart';
 import '../widgets/dasha_widget.dart';
 import '../widgets/shadbala_widget.dart';
-import '../services/ad_service.dart';
+
 import '../services/storage_service.dart';
 import '../services/subscription_service.dart';
 import '../services/google_auth_service.dart';
@@ -70,9 +70,7 @@ class _DashboardScreenState extends State<DashboardScreen>
   bool _panchangLoading = false;
   bool _syncing = false;
 
-  // Ad tabs: show interstitial once per session on these tab indices
-  static const _adTabs = {3, 4, 7}; // Dasha, Panchanga, Notes
-  final _adTabsShown = <int>{}; // tracks which tabs already showed ad this session
+
 
   static const _tabs = [
     'ಕುಂಡಲಿ', 'ಸ್ಫುಟ', 'ಆರೂಢ',
@@ -96,15 +94,7 @@ class _DashboardScreenState extends State<DashboardScreen>
 
     _loadJanmaNakshatra();
 
-    // Show interstitial ad when switching to Dasha / Panchanga / Notes tabs
-    _tabCtrl.addListener(() {
-      if (!_tabCtrl.indexIsChanging) return;
-      final idx = _tabCtrl.index;
-      if (_adTabs.contains(idx) && !_adTabsShown.contains(idx)) {
-        _adTabsShown.add(idx);
-        AdService.showInterstitialAd(context);
-      }
-    });
+
   }
 
   Future<void> _loadJanmaNakshatra() async {
@@ -243,11 +233,7 @@ class _DashboardScreenState extends State<DashboardScreen>
                         ? SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: kTeal))
                         : Icon(Icons.save, color: kText),
                       tooltip: 'Save & Sync',
-                      onPressed: _syncing ? null : () {
-                        // Non-skippable rewarded ad before saving
-                        AdService.showRewardedInterstitialAd(
-                          context,
-                          onCompleted: () async {
+                      onPressed: _syncing ? null : () async {
                             widget.onSave(_notes, _aroodhas, _janmaNakshatraIdx, isNew: false);
                             if (!mounted) return;
                             ScaffoldMessenger.of(context).showSnackBar(
@@ -278,8 +264,6 @@ class _DashboardScreenState extends State<DashboardScreen>
                                 ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
                               }
                             }
-                          },
-                        );
                       },
                     ),
                   ]),
@@ -313,7 +297,7 @@ class _DashboardScreenState extends State<DashboardScreen>
                 ],
               ),
             ),
-            const BannerAdWidget(),
+
           ],
         ),
       ),

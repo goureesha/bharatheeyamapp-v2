@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../widgets/common.dart';
 import '../constants/strings.dart';
-import '../services/ad_service.dart';
+
 
 class TaranukoolaScreen extends StatefulWidget {
   const TaranukoolaScreen({super.key});
@@ -156,7 +156,7 @@ class _TaranukoolaScreenState extends State<TaranukoolaScreen> {
               ),
             ),
           ),
-          const BannerAdWidget(),
+
         ],
       ),
     );

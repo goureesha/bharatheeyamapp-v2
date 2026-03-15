@@ -1,7 +1,6 @@
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter/foundation.dart';
-import 'ad_service.dart';
 
 class NetworkService {
   static const String _timeKey = 'last_online_time';
@@ -23,8 +22,6 @@ class NetworkService {
 
     if (isConnected) {
       await prefs.setString(_timeKey, DateTime.now().toIso8601String());
-      // Initialize ads in background - don't block app startup
-      AdService.initialize();
       return true;
     } else {
       final lastOnlineStr = prefs.getString(_timeKey);

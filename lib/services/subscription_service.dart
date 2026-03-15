@@ -4,24 +4,58 @@ import 'package:in_app_purchase/in_app_purchase.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class SubscriptionService {
-  static const String _adFreeProductId = 'ad_free_yearly_500';
+  static const String _subscriptionProductId = 'ad_free_yearly_500';
   static const String _subStatusKey = 'has_active_subscription';
+  static const String _trialStartKey = 'trial_start_timestamp';
+  static const int _trialDays = 3;
 
   static InAppPurchase get _iap => InAppPurchase.instance;
   static StreamSubscription<List<PurchaseDetails>>? _purchaseSub;
 
-  // Cache flag in memory for instant access
-  static bool hasAdFree = false;
+  // Subscription status
+  static bool hasSubscription = false;
+
+  // Trial tracking
+  static DateTime? trialStartDate;
+
+  /// True if the user has access to the app (either subscribed or within trial)
+  static bool get hasAccess => hasSubscription || isTrialActive;
+
+  /// True if the free trial is still active
+  static bool get isTrialActive {
+    if (trialStartDate == null) return false;
+    final elapsed = DateTime.now().difference(trialStartDate!);
+    return elapsed.inDays < _trialDays;
+  }
+
+  /// Days remaining in trial (0 if expired)
+  static int get trialDaysRemaining {
+    if (trialStartDate == null) return 0;
+    final elapsed = DateTime.now().difference(trialStartDate!);
+    final remaining = _trialDays - elapsed.inDays;
+    return remaining > 0 ? remaining : 0;
+  }
 
   /// Call this when the app starts
   static Future<void> initialize() async {
-    // 1. Load cached status immediately
     final prefs = await SharedPreferences.getInstance();
-    hasAdFree = prefs.getBool(_subStatusKey) ?? false;
 
-    if (kIsWeb) return; // The plugin crashes on the Web, exit early.
+    // Load subscription status
+    hasSubscription = prefs.getBool(_subStatusKey) ?? false;
 
-    // 2. Setup the purchase listener stream
+    // Load or set trial start date
+    final trialTs = prefs.getInt(_trialStartKey);
+    if (trialTs != null) {
+      trialStartDate = DateTime.fromMillisecondsSinceEpoch(trialTs);
+    } else {
+      // First install — start trial now
+      trialStartDate = DateTime.now();
+      await prefs.setInt(_trialStartKey, trialStartDate!.millisecondsSinceEpoch);
+    }
+
+    if (kIsWeb) return;
+
+    // Setup the purchase listener stream
     final purchaseUpdated = _iap.purchaseStream;
     _purchaseSub = purchaseUpdated.listen(
       (purchaseDetailsList) {
@@ -35,9 +69,6 @@ class SubscriptionService {
       },
     );
 
-    // 3. (Optional) Check to restore previous purchases dynamically from the Play Store
-    // Usually, you might do this behind a "Restore Purchases" button to avoid spamming the API,
-    // but doing a quick check ensures the flag stays updated if they bought it on another device.
     if (!kIsWeb) {
        await _restorePurchasesSilently();
     }
@@ -49,9 +80,9 @@ class SubscriptionService {
     }
   }
 
-  /// Trigger the purchase flow for the 500 INR Yearly Ad-Free logic
-  static Future<bool> buyAdFreeSubscription() async {
-    if (kIsWeb) return false; // In-app billing is not supported on Web
+  /// Trigger the purchase flow
+  static Future<bool> buySubscription() async {
+    if (kIsWeb) return false;
 
     final bool available = await _iap.isAvailable();
     if (!available) {
@@ -59,12 +90,11 @@ class SubscriptionService {
       return false;
     }
 
-    // Query the exact product from Google Play
     final ProductDetailsResponse detailResponse = 
-        await _iap.queryProductDetails({_adFreeProductId});
+        await _iap.queryProductDetails({_subscriptionProductId});
 
     if (detailResponse.notFoundIDs.isNotEmpty) {
-      debugPrint('Product $_adFreeProductId not found on the Store. Ensure it is configured in Play Console.');
+      debugPrint('Product $_subscriptionProductId not found on the Store.');
       return false;
     }
 
@@ -73,13 +103,7 @@ class SubscriptionService {
     }
 
     final ProductDetails productDetails = detailResponse.productDetails.first;
-
-    // Launch the billing flow
     final PurchaseParam purchaseParam = PurchaseParam(productDetails: productDetails);
-    
-    // Using buyNonConsumable since a yearly subscription functions exactly like a non-consumable 
-    // in terms of the initial purchase hook, though true Subscriptions have their own renewals.
-    // The `in_app_purchase` package handles both under `buyNonConsumable`
     return _iap.buyNonConsumable(purchaseParam: purchaseParam);
   }
 
@@ -89,7 +113,6 @@ class SubscriptionService {
   }
 
   static Future<void> _restorePurchasesSilently() async {
-    // This silently requests Google Play to push past purchases down the purchaseStream
     try {
       await _iap.restorePurchases();
     } catch (e) {
@@ -97,23 +120,20 @@ class SubscriptionService {
     }
   }
 
-  /// Process the transactions streaming in from Google Play
   static Future<void> _listenToPurchaseUpdated(List<PurchaseDetails> purchaseDetailsList) async {
     for (final purchaseDetails in purchaseDetailsList) {
       if (purchaseDetails.status == PurchaseStatus.pending) {
-        // Show pending UI if needed
+        // pending
       } else {
         if (purchaseDetails.status == PurchaseStatus.error) {
           debugPrint('Purchase error: ${purchaseDetails.error}');
         } else if (purchaseDetails.status == PurchaseStatus.purchased ||
                    purchaseDetails.status == PurchaseStatus.restored) {
-          
-          if (purchaseDetails.productID == _adFreeProductId) {
-             await _grantAdFreeAccess();
+          if (purchaseDetails.productID == _subscriptionProductId) {
+             await _grantAccess();
           }
         }
         
-        // Always complete the pending purchase, otherwise the user is refunded!
         if (purchaseDetails.pendingCompletePurchase) {
           await _iap.completePurchase(purchaseDetails);
         }
@@ -121,10 +141,14 @@ class SubscriptionService {
     }
   }
 
-  static Future<void> _grantAdFreeAccess() async {
-    hasAdFree = true;
+  static Future<void> _grantAccess() async {
+    hasSubscription = true;
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool(_subStatusKey, true);
-    debugPrint('Ad-Free Subscription Granted and Cached!');
+    debugPrint('Subscription Granted!');
   }
+
+  // Legacy compatibility
+  static bool get hasAdFree => hasSubscription;
+  static Future<bool> buyAdFreeSubscription() => buySubscription();
 }

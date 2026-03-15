@@ -10,7 +10,7 @@ import '../core/ephemeris.dart';
 import '../services/network_service.dart';
 import '../services/google_auth_service.dart';
 import '../services/calendar_service.dart';
-import '../services/ad_service.dart';
+
 import 'dashboard_screen.dart';
 
 class InputScreen extends StatefulWidget {
@@ -237,7 +237,7 @@ class _InputScreenState extends State<InputScreen> {
           ));
         }
         setState(() => _loading = false);
-        AdService.showInterstitialAd(context, onDismissed: navigateToDashboard);
+        navigateToDashboard();
         // Reset the form back to current time/empty strings when returning
         if (mounted) {
           final now = DateTime.now();

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import '../widgets/common.dart';
-import '../services/ad_service.dart';
+
 import '../services/google_auth_service.dart';
 import '../services/calendar_service.dart';
 import 'input_screen.dart';
@@ -105,7 +105,7 @@ class HomeScreen extends StatelessWidget {
                 ),
               ),
             ),
-            const BannerAdWidget(),
+
           ],
         ),
       ),
@@ -271,12 +271,7 @@ class MatchMakingScreen extends StatelessWidget {
         iconTheme: IconThemeData(color: kText),
         elevation: 0,
       ),
-      body: Column(
-        children: [
-          const Expanded(child: MatchMakingTab()),
-          const BannerAdWidget(),
-        ],
-      ),
+      body: const MatchMakingTab(),
     );
   }
 }

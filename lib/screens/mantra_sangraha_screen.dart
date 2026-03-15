@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import '../widgets/common.dart';
-import '../services/ad_service.dart';
+
 
 class MantraSangrahaScreen extends StatelessWidget {
   const MantraSangrahaScreen({super.key});
@@ -91,7 +91,7 @@ class MantraSangrahaScreen extends StatelessWidget {
               ),
             ),
           ),
-          const BannerAdWidget(),
+
         ],
       ),
     );
