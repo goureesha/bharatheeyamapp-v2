@@ -213,50 +213,46 @@ class _InputScreenState extends State<InputScreen> {
       );
 
       if (result != null && mounted) {
-        // Show interstitial ad before opening Dashboard
-        void navigateToDashboard() {
-          if (!mounted) return;
-          Navigator.push(context, MaterialPageRoute(
-            builder: (_) => DashboardScreen(
-              result: result,
-              name: _nameCtrl.text,
-              place: _placeCtrl.text,
-              dob: _dob,
-              hour: _hour,
-              minute: _minute,
-              ampm: _ampm,
-              lat: lat,
-              lon: lon,
-              initialNotes: _loadedNotes,
-              initialAroodhas: _loadedAroodhas,
-              initialJanmaNakshatraIdx: _loadedJanmaNakshatraIdx,
+        // Navigate to Dashboard
+        Navigator.push(context, MaterialPageRoute(
+          builder: (_) => DashboardScreen(
+            result: result,
+            name: _nameCtrl.text,
+            place: _placeCtrl.text,
+            dob: _dob,
+            hour: _hour,
+            minute: _minute,
+            ampm: _ampm,
+            lat: lat,
+            lon: lon,
+            initialNotes: _loadedNotes,
+            initialAroodhas: _loadedAroodhas,
+            initialJanmaNakshatraIdx: _loadedJanmaNakshatraIdx,
+            onSave: (notes, aroodhas, janmaIdx, {bool isNew = true}) =>
+                _saveProfile(notes: notes, aroodhas: aroodhas, janmaNakshatraIdx: janmaIdx, isNew: !_loadedFromSaved),
+          ),
+        )).then((_) {
+          // Reset the form back to current time/empty strings when returning FROM dashboard
+          if (mounted) {
+            final now = DateTime.now();
+            setState(() {
+              _loadedFromSaved = false;
+              _nameCtrl.clear();
+              _placeCtrl.clear();
+              _latCtrl.clear();
+              _lonCtrl.clear();
 
-              onSave: (notes, aroodhas, janmaIdx, {bool isNew = true}) =>
-                  _saveProfile(notes: notes, aroodhas: aroodhas, janmaNakshatraIdx: janmaIdx, isNew: !_loadedFromSaved),
-            ),
-          ));
-        }
+              _dob = now;
+              _hour = now.hour % 12 == 0 ? 12 : now.hour % 12;
+              _minute = now.minute;
+              _ampm = now.hour >= 12 ? 'PM' : 'AM';
+              _loadedNotes = '';
+              _loadedAroodhas = {};
+              _loadedJanmaNakshatraIdx = null;
+            });
+          }
+        });
         setState(() => _loading = false);
-        navigateToDashboard();
-        // Reset the form back to current time/empty strings when returning
-        if (mounted) {
-          final now = DateTime.now();
-          setState(() {
-            _loadedFromSaved = false;
-            _nameCtrl.clear();
-            _placeCtrl.clear();
-            _latCtrl.clear();
-            _lonCtrl.clear();
-
-            _dob = now;
-            _hour = now.hour % 12 == 0 ? 12 : now.hour % 12;
-            _minute = now.minute;
-            _ampm = now.hour >= 12 ? 'PM' : 'AM';
-            _loadedNotes = '';
-            _loadedAroodhas = {};
-            _loadedJanmaNakshatraIdx = null;
-          });
-        }
       }
     } catch (e) {
       _showError('ದೋಷ: $e');
