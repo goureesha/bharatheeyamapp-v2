@@ -39,74 +39,78 @@ class HomeScreen extends StatelessWidget {
     return Scaffold(
       backgroundColor: kBg,
       body: SafeArea(
-        child: Column(
-          children: [
-            Expanded(
-              child: SingleChildScrollView(
-                child: Column(
-                  children: [
-                    // Scrollable Logo Header
-                    Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 24),
-                      child: Column(children: [
-                        Image.asset('assets/images/logo.png', width: 80, height: 80),
-                        const SizedBox(height: 10),
-                        Text('ಭಾರತೀಯಮ್', style: TextStyle(
-                          fontSize: 26, fontWeight: FontWeight.w900, color: kOrange,
-                          letterSpacing: 1.5,
-                        )),
-                        const SizedBox(height: 4),
-                        Text('Vedic Astrology', style: TextStyle(
-                          fontSize: 13, color: kMuted, letterSpacing: 0.5,
-                        )),
-                      ]),
-                    ),
+        child: SingleChildScrollView(
+          child: ResponsiveCenter(
+            maxWidth: 700,
+            child: Builder(builder: (context) {
+              final tablet = isTablet(context);
+              return Column(
+                children: [
+                  // Scrollable Logo Header
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 24),
+                    child: Column(children: [
+                      Image.asset('assets/images/logo.png',
+                        width: tablet ? 110 : 80,
+                        height: tablet ? 110 : 80),
+                      const SizedBox(height: 10),
+                      Text('ಭಾರತೀಯಮ್', style: TextStyle(
+                        fontSize: tablet ? 32 : 26,
+                        fontWeight: FontWeight.w900,
+                        color: kOrange,
+                        letterSpacing: 1.5,
+                      )),
+                      const SizedBox(height: 4),
+                      Text('Vedic Astrology', style: TextStyle(
+                        fontSize: tablet ? 15 : 13,
+                        color: kMuted, letterSpacing: 0.5,
+                      )),
+                    ]),
+                  ),
 
-                    // Appointment Button
-                    if (GoogleAuthService.isSignedIn)
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 16),
-                        child: GestureDetector(
-                          onTap: () => _showAppointmentDialog(context),
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                            decoration: BoxDecoration(
-                              color: kTeal.withOpacity(0.1),
-                              borderRadius: BorderRadius.circular(12),
-                              border: Border.all(color: kTeal.withOpacity(0.3)),
-                            ),
-                            child: Row(children: [
-                              Icon(Icons.event, color: kTeal, size: 22),
-                              const SizedBox(width: 10),
-                              Expanded(child: Text('ಅಪಾಯಿಂಟ್\u200cಮೆಂಟ್ ರಚಿಸಿ',
-                                style: TextStyle(color: kTeal, fontWeight: FontWeight.w700, fontSize: 14))),
-                              Icon(Icons.chevron_right, color: kTeal),
-                            ]),
-                          ),
-                        ),
-                      ),
-                    const SizedBox(height: 12),
-
-                    // Sections Grid
+                  // Appointment Button
+                  if (GoogleAuthService.isSignedIn)
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 16),
-                      child: GridView.count(
-                        crossAxisCount: 2,
-                        mainAxisSpacing: 14,
-                        crossAxisSpacing: 14,
-                        childAspectRatio: 1.15,
-                        shrinkWrap: true,
-                        physics: const NeverScrollableScrollPhysics(),
-                        children: sections.map((s) => _buildCard(s)).toList(),
+                      child: GestureDetector(
+                        onTap: () => _showAppointmentDialog(context),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                          decoration: BoxDecoration(
+                            color: kTeal.withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: kTeal.withOpacity(0.3)),
+                          ),
+                          child: Row(children: [
+                            Icon(Icons.event, color: kTeal, size: 22),
+                            const SizedBox(width: 10),
+                            Expanded(child: Text('ಅಪಾಯಿಂಟ್\u200cಮೆಂಟ್ ರಚಿಸಿ',
+                              style: TextStyle(color: kTeal, fontWeight: FontWeight.w700, fontSize: 14))),
+                            Icon(Icons.chevron_right, color: kTeal),
+                          ]),
+                        ),
                       ),
                     ),
-                    const SizedBox(height: 16),
-                  ],
-                ),
-              ),
-            ),
+                  const SizedBox(height: 12),
 
-          ],
+                  // Sections Grid
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    child: GridView.count(
+                      crossAxisCount: tablet ? 3 : 2,
+                      mainAxisSpacing: 14,
+                      crossAxisSpacing: 14,
+                      childAspectRatio: tablet ? 1.1 : 1.15,
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      children: sections.map((s) => _buildCard(s)).toList(),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                ],
+              );
+            }),
+          ),
         ),
       ),
     );

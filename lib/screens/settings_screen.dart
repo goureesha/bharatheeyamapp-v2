@@ -31,7 +31,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           Expanded(
             child: SingleChildScrollView(
               padding: const EdgeInsets.all(16),
-              child: AppCard(
+              child: ResponsiveCenter(child: AppCard(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -236,7 +236,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     ),
                   ],
                 ),
-              ),
+              )),
             ),
           ),
 

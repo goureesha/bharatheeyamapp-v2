@@ -21,7 +21,7 @@ class MantraSangrahaScreen extends StatelessWidget {
           Expanded(
             child: SingleChildScrollView(
               padding: const EdgeInsets.all(16),
-              child: Column(
+              child: ResponsiveCenter(child: Column(
                 children: [
                   // Header
                   Center(
@@ -88,7 +88,7 @@ class MantraSangrahaScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: 24),
                 ],
-              ),
+              )),
             ),
           ),
 

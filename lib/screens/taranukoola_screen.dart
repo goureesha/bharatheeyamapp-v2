@@ -64,7 +64,7 @@ class _TaranukoolaScreenState extends State<TaranukoolaScreen> {
           Expanded(
             child: SingleChildScrollView(
               padding: const EdgeInsets.all(16),
-              child: AppCard(
+              child: ResponsiveCenter(child: AppCard(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
@@ -153,7 +153,7 @@ class _TaranukoolaScreenState extends State<TaranukoolaScreen> {
                     ]
                   ],
                 ),
-              ),
+              )),
             ),
           ),
 

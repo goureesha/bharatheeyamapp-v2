@@ -13,7 +13,7 @@ class PaywallScreen extends StatelessWidget {
         child: Center(
           child: SingleChildScrollView(
             padding: const EdgeInsets.all(24),
-            child: Column(
+            child: ResponsiveCenter(child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 // Logo
@@ -112,7 +112,7 @@ class PaywallScreen extends StatelessWidget {
                     style: TextStyle(color: kPurple2, fontWeight: FontWeight.w600, fontSize: 14)),
                 ),
               ],
-            ),
+            )),
           ),
         ),
       ),

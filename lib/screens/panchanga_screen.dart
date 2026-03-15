@@ -74,7 +74,7 @@ class _PanchangaScreenState extends State<PanchangaScreen> {
         children: [
           Expanded(
             child: SingleChildScrollView(
-              child: Column(
+              child: ResponsiveCenter(child: Column(
                 children: [
                   // Calendar Card
                   AppCard(
@@ -197,7 +197,7 @@ class _PanchangaScreenState extends State<PanchangaScreen> {
                     ),
                   const SizedBox(height: 24),
                 ],
-              ),
+              )),
             ),
           ),
 

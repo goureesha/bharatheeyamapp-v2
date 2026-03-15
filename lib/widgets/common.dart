@@ -90,6 +90,32 @@ Color kText    = AppThemes.palettes[0]['text']!;
 Color kMuted   = AppThemes.palettes[0]['muted']!;
 
 // ─────────────────────────────────────────────
+// Responsive helpers
+// ─────────────────────────────────────────────
+bool isTablet(BuildContext context) => MediaQuery.of(context).size.width >= 600;
+
+/// Wraps content with a max-width constraint on tablets.
+/// On mobile, renders child full-width. On tablets, centers
+/// child with maxWidth (default 600px).
+class ResponsiveCenter extends StatelessWidget {
+  final Widget child;
+  final double maxWidth;
+  const ResponsiveCenter({super.key, required this.child, this.maxWidth = 600});
+
+  @override
+  Widget build(BuildContext context) {
+    if (!isTablet(context)) return child;
+    return Center(
+      child: ConstrainedBox(
+        constraints: BoxConstraints(maxWidth: maxWidth),
+        child: child,
+      ),
+    );
+  }
+}
+
+
+// ─────────────────────────────────────────────
 // Header widget (purple gradient banner)
 // ─────────────────────────────────────────────
 class AppHeader extends StatelessWidget {

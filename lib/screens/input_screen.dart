@@ -328,7 +328,7 @@ class _InputScreenState extends State<InputScreen> {
       backgroundColor: kBg,
       body: SafeArea(
         child: SingleChildScrollView(
-          child: Column(
+          child: ResponsiveCenter(child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               const SizedBox(height: 8),
@@ -336,7 +336,7 @@ class _InputScreenState extends State<InputScreen> {
               _buildInputCard(),
               const SizedBox(height: 32),
             ],
-          ),
+          )),
         ),
       ),
     );
