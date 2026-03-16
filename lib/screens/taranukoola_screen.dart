@@ -17,7 +17,7 @@ class _TaranukoolaScreenState extends State<TaranukoolaScreen> {
   int? _janmaNakshatraIdx1;
   int? _janmaNakshatraIdx2;
   
-  DateTime _focusedDay = DateTime.now();
+  DateTime _focusedDay = DateTime.utc(DateTime.now().year, DateTime.now().month, DateTime.now().day);
   DateTime? _selectedDay;
   Map<DateTime, int> _dailyNakshatraCache = {};
 
@@ -130,7 +130,7 @@ class _TaranukoolaScreenState extends State<TaranukoolaScreen> {
       backgroundColor: kBg,
       appBar: AppBar(
         backgroundColor: kCard,
-        title: Text('ತಾರಾನುಕೂಲ / Taranukoola',
+        title: Text('ತಾರಾನುಕೂಲ',
             style: TextStyle(color: kText, fontSize: 16, fontWeight: FontWeight.w800)),
         iconTheme: IconThemeData(color: kText),
         elevation: 0,
@@ -160,12 +160,12 @@ class _TaranukoolaScreenState extends State<TaranukoolaScreen> {
                       color: kText,
                       constraints: const BoxConstraints(minHeight: 40, minWidth: 100),
                       children: const [
-                        Padding(padding: EdgeInsets.symmetric(horizontal: 16), child: Text('೧ ವ್ಯಕ್ತಿ (1 Person)')),
-                        Padding(padding: EdgeInsets.symmetric(horizontal: 16), child: Text('೨ ವ್ಯಕ್ತಿಗಳು (2 Persons)')),
+                        Padding(padding: EdgeInsets.symmetric(horizontal: 16), child: Text('೧ ವ್ಯಕ್ತಿ')),
+                        Padding(padding: EdgeInsets.symmetric(horizontal: 16), child: Text('೨ ವ್ಯಕ್ತಿಗಳು')),
                       ],
                     ),
                     const SizedBox(height: 24),
-                    Text(_isTwoPersonMode ? 'ವ್ಯಕ್ತಿ 1ರ ಜನ್ಮ ನಕ್ಷತ್ರ (Person 1):' : 'ನಿಮ್ಮ ಜನ್ಮ ನಕ್ಷತ್ರವನ್ನು ಆಯ್ಕೆಮಾಡಿ:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: kText)),
+                    Text(_isTwoPersonMode ? 'ವ್ಯಕ್ತಿ 1ರ ಜನ್ಮ ನಕ್ಷತ್ರ:' : 'ನಿಮ್ಮ ಜನ್ಮ ನಕ್ಷತ್ರವನ್ನು ಆಯ್ಕೆಮಾಡಿ:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: kText)),
                     const SizedBox(height: 8),
                     Container(
                       decoration: BoxDecoration(
@@ -197,7 +197,7 @@ class _TaranukoolaScreenState extends State<TaranukoolaScreen> {
                     ),
                     if (_isTwoPersonMode) ...[
                       const SizedBox(height: 16),
-                      Text('ವ್ಯಕ್ತಿ 2ರ ಜನ್ಮ ನಕ್ಷತ್ರ (Person 2):', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: kText)),
+                      Text('ವ್ಯಕ್ತಿ 2ರ ಜನ್ಮ ನಕ್ಷತ್ರ:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: kText)),
                       const SizedBox(height: 8),
                       Container(
                         decoration: BoxDecoration(
@@ -237,8 +237,8 @@ class _TaranukoolaScreenState extends State<TaranukoolaScreen> {
                         color: kCard,
                       ),
                       child: TableCalendar(
-                        firstDay: DateTime.now().subtract(const Duration(days: 365)),
-                        lastDay: DateTime.now().add(const Duration(days: 365)),
+                        firstDay: DateTime.utc(DateTime.now().year - 1, DateTime.now().month, DateTime.now().day),
+                        lastDay: DateTime.utc(DateTime.now().year + 1, DateTime.now().month, DateTime.now().day),
                         focusedDay: _focusedDay,
                         selectedDayPredicate: (day) => isSameDay(_selectedDay, day),
                         onDaySelected: (selectedDay, focusedDay) {
@@ -252,6 +252,22 @@ class _TaranukoolaScreenState extends State<TaranukoolaScreen> {
                         },
                         calendarBuilders: CalendarBuilders(
                           markerBuilder: (context, date, events) => _buildMarker(date, events),
+                          dowBuilder: (context, day) {
+                            const days = ['ಸೋಮ', 'ಮಂಗಳ', 'ಬುಧ', 'ಗುರು', 'ಶುಕ್ರ', 'ಶನಿ', 'ರವಿ'];
+                            return Center(
+                              child: Text(
+                                days[day.weekday - 1],
+                                style: TextStyle(color: day.weekday == 7 ? Colors.red.shade300 : kText, fontWeight: FontWeight.bold),
+                              ),
+                            );
+                          },
+                          headerTitleBuilder: (context, day) {
+                            const months = ['ಜನವರಿ', 'ಫೆಬ್ರವರಿ', 'ಮಾರ್ಚ್', 'ಏಪ್ರಿಲ್', 'ಮೇ', 'ಜೂನ್', 'ಜುಲೈ', 'ಆಗಸ್ಟ್', 'ಸೆಪ್ಟೆಂಬರ್', 'ಅಕ್ಟೋಬರ್', 'ನವೆಂಬರ್', 'ಡಿಸೆಂಬರ್'];
+                            return Text(
+                              '${months[day.month - 1]} ${day.year}',
+                              style: TextStyle(color: kText, fontWeight: FontWeight.bold, fontSize: 16),
+                            );
+                          },
                         ),
                         headerStyle: HeaderStyle(
                           titleTextStyle: TextStyle(color: kText, fontWeight: FontWeight.bold, fontSize: 16),
