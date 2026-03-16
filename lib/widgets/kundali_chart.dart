@@ -271,7 +271,22 @@ class KundaliChart extends StatelessWidget {
     switch (type) {
       case ChipType.lagna:  color = const Color(0xFFE53E3E); break;
       case ChipType.sphuta: color = const Color(0xFF805AD5); break;
-      default:              color = const Color(0xFF2B6CB0);
+      default:
+        // Assign specific colors to planets, ensuring they remain dark enough to be visible on light backgrounds
+        switch (name) {
+          case 'ರವಿ': color = const Color(0xFFC53030); break; // Sun: Deep Red
+          case 'ಚಂದ್ರ': color = const Color(0xFF2C5282); break; // Moon: Indigo/Deep Blue
+          case 'ಕುಜ':
+          case 'ಮಂಗಳ': color = const Color(0xFFE53E3E); break; // Mars: Bright Red
+          case 'ಬುಧ': color = const Color(0xFF2F855A); break; // Mercury: Green
+          case 'ಗುರು': color = const Color(0xFFDD6B20); break; // Jupiter: Orange/Gold
+          case 'ಶುಕ್ರ': color = const Color(0xFFB83280); break; // Venus: Magenta/Pink
+          case 'ಶನಿ': color = const Color(0xFF1A202C); break; // Saturn: Near Black
+          case 'ರಾಹು': color = const Color(0xFF744210); break; // Rahu: Dark Brown
+          case 'ಕೇತು': color = const Color(0xFF4A5568); break; // Ketu: Dark Greyish Blue
+          default: color = const Color(0xFF2B6CB0); // Default Blue
+        }
+        break;
     }
 
     String displayName = name;
@@ -298,7 +313,7 @@ class KundaliChart extends StatelessWidget {
         padding: const EdgeInsets.symmetric(vertical: 2, horizontal: 4),
         child: Text(
           displayName,
-          style: TextStyle(fontSize: 13, fontWeight: FontWeight.w800, color: color),
+          style: TextStyle(fontSize: 15, fontWeight: FontWeight.w900, color: color),
         ),
       ),
     );
