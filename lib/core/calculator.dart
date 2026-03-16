@@ -21,6 +21,7 @@ class PlanetInfo {
   final String subDrekD9;
   final String subDrekD12;
   final String d9OfD9;
+  final bool isCombust;
 
   PlanetInfo({
     required this.name,
@@ -34,6 +35,7 @@ class PlanetInfo {
     required this.subDrekD9,
     required this.subDrekD12,
     required this.d9OfD9,
+    this.isCombust = false,
   });
 }
 
@@ -430,13 +432,33 @@ class AstroCalculator {
 
       // Create PlanetInfo for each
       final Map<String, PlanetInfo> planetInfoMap = {};
+      final double sunLng = positions['ರವಿ'] ?? 0.0;
+      
       for (final kn in [...positions.keys]) {
         final deg = positions[kn]!;
         final (nak, pada) = nakFromDeg(deg);
         final ri = (deg / 30).floor() % 12;
         final speed = speeds[kn] ?? 0.0;
-        final extra = getPlanetDetail(kn, deg, speed, positions['ರವಿ']!);
+        final extra = getPlanetDetail(kn, deg, speed, sunLng);
         
+        bool isCombust = false;
+        if (kn != 'ರವಿ' && kn != 'ಚಂದ್ರ' && kn != 'ರಾಹು' && kn != 'ಕೇತು' && kn != 'ಲಗ್ನ' && kn != 'ಮಾಂದಿ') {
+          double distFromSun = (deg - sunLng).abs();
+          if (distFromSun > 180) distFromSun = 360 - distFromSun;
+
+          double orb = 0.0;
+          switch (kn) {
+            case 'ಮಂಗಳ': orb = 17.0; break;
+            case 'ಬುಧ': orb = (speed < 0) ? 12.0 : 14.0; break;
+            case 'ಗುರು': orb = 11.0; break;
+            case 'ಶುಕ್ರ': orb = (speed < 0) ? 8.0 : 10.0; break;
+            case 'ಶನಿ': orb = 15.0; break;
+          }
+          if (distFromSun <= orb) {
+            isCombust = true;
+          }
+        }
+
         planetInfoMap[kn] = PlanetInfo(
           name: kn,
           longitude: deg,
@@ -449,6 +471,7 @@ class AstroCalculator {
           subDrekD9: extra['subDrekD9'] as String,
           subDrekD12: extra['subDrekD12'] as String,
           d9OfD9: extra['d9OfD9'] as String,
+          isCombust: isCombust,
         );
       }
 

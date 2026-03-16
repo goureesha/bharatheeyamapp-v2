@@ -93,12 +93,12 @@ class KundaliChart extends StatelessWidget {
         if (info == null) continue;
         final ri = _rashinFor(info.longitude);
         if (ri >= 0 && ri < 12) {
-          boxes[ri]!.add(_planetChip(pName, pName == 'ಲಗ್ನ' ? ChipType.lagna : ChipType.planet));
+          boxes[ri]!.add(_planetChip(pName, info: info, type: pName == 'ಲಗ್ನ' ? ChipType.lagna : ChipType.planet));
         }
       }
       // Then add aroodha labels
       for (final entry in aroodhas!.entries) {
-        boxes[entry.value]!.add(_planetChip(entry.key, ChipType.lagna));
+        boxes[entry.value]!.add(_planetChip(entry.key, type: ChipType.lagna));
       }
     } else {
       // Normal planets
@@ -149,7 +149,7 @@ class KundaliChart extends StatelessWidget {
         final type = (pName == 'ಲಗ್ನ' || pName == 'ಮಾಂದಿ')
             ? ChipType.lagna
             : ChipType.planet;
-        boxes[ri]!.add(_planetChip(pName, type));
+        boxes[ri]!.add(_planetChip(pName, info: info, type: type));
       }
 
       // Advanced sphutas overlay
@@ -157,7 +157,7 @@ class KundaliChart extends StatelessWidget {
         for (final entry in result.advSphutas.entries) {
           final ri = _rashinFor(entry.value);
           if (ri < 0 || ri > 11) continue;
-          boxes[ri]!.add(_planetChip(entry.key, ChipType.sphuta));
+          boxes[ri]!.add(_planetChip(entry.key, type: ChipType.sphuta));
         }
       }
     }
@@ -213,12 +213,6 @@ class KundaliChart extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Padding(
-            padding: const EdgeInsets.only(left: 3, top: 2),
-            child: Text(knRashi[rashiIdx],
-              style: TextStyle(
-                fontSize: 11, color: Color(0xFF2F855A), fontWeight: FontWeight.w900)),
-          ),
           Expanded(
             child: SingleChildScrollView(
               padding: const EdgeInsets.all(2),
@@ -272,13 +266,29 @@ class KundaliChart extends StatelessWidget {
     );
   }
 
-  Widget _planetChip(String name, ChipType type) {
+  Widget _planetChip(String name, {PlanetInfo? info, required ChipType type}) {
     Color color;
     switch (type) {
       case ChipType.lagna:  color = const Color(0xFFE53E3E); break;
       case ChipType.sphuta: color = const Color(0xFF805AD5); break;
       default:              color = const Color(0xFF2B6CB0);
     }
+
+    String displayName = name;
+    if (info != null) {
+      // 1. Asta (Combust) -> Wrap in brackets
+      if (info.isCombust) {
+        displayName = '($displayName)';
+      }
+      // 2. Vakri (Retrograde) -> Reverse Arrow
+      if (info.speed < 0 && !['ರಾಹು', 'ಕೇತು'].contains(info.name)) {
+        displayName = '$displayName ↩';
+      } else if (info.speed < 0 && ['ರಾಹು', 'ಕೇತು'].contains(info.name)) {
+        // Technically Rahu/Ketu are always retrograde, usually we don't need to put arrows on them. 
+        // We'll skip the arrow for Rahu/Ketu to keep it clean.
+      }
+    }
+
     return GestureDetector(
       onTap: () {
         if (onPlanetTap != null) onPlanetTap!(name);
@@ -287,7 +297,7 @@ class KundaliChart extends StatelessWidget {
       child: Padding(
         padding: const EdgeInsets.symmetric(vertical: 2, horizontal: 4),
         child: Text(
-          name,
+          displayName,
           style: TextStyle(fontSize: 13, fontWeight: FontWeight.w800, color: color),
         ),
       ),
