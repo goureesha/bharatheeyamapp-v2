@@ -8,6 +8,7 @@ import 'panchanga_screen.dart';
 import 'taranukoola_screen.dart';
 import 'match_making_tab.dart';
 import 'mantra_sangraha_screen.dart';
+import 'planets_screen.dart';
 import 'settings_screen.dart';
 
 class HomeScreen extends StatelessWidget {
@@ -27,6 +28,9 @@ class HomeScreen extends StatelessWidget {
       }),
       _Section('ಹೊಂದಾಣಿಕೆ', 'Match Making', Icons.favorite, const Color(0xFFE53E3E), () {
         Navigator.push(context, MaterialPageRoute(builder: (_) => const MatchMakingScreen()));
+      }),
+      _Section('ಗ್ರಹಗಳು', 'Planets', Icons.blur_circular, const Color(0xFFc0392b), () {
+        Navigator.push(context, MaterialPageRoute(builder: (_) => const PlanetsScreen()));
       }),
       _Section('ಮಂತ್ರ ಸಂಗ್ರಹ', 'Mantra Sangraha', Icons.menu_book_rounded, kTeal, () {
         Navigator.push(context, MaterialPageRoute(builder: (_) => const MantraSangrahaScreen()));
