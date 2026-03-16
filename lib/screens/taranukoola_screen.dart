@@ -124,6 +124,58 @@ class _TaranukoolaScreenState extends State<TaranukoolaScreen> {
     }
   }
 
+  Widget _buildTaraChart(int janmaIdx, String title) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Padding(
+          padding: const EdgeInsets.symmetric(vertical: 16),
+          child: Text(title, style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: kPurple1)),
+        ),
+        Container(
+          decoration: BoxDecoration(
+            border: Border.all(color: kBorder),
+            borderRadius: BorderRadius.circular(8),
+            color: kCard,
+          ),
+          child: ListView.separated(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            itemCount: 9,
+            separatorBuilder: (context, index) => Divider(height: 1, color: kBorder),
+            itemBuilder: (context, i) {
+              bool isGood = _isGoodTara(i);
+              Color bgColor = isGood ? Colors.green.withValues(alpha: 0.05) : Colors.red.withValues(alpha: 0.05);
+              Color textColor = isGood ? Colors.green.shade700 : Colors.red.shade700;
+              
+              int n1 = (janmaIdx + i) % 27;
+              int n2 = (janmaIdx + i + 9) % 27;
+              int n3 = (janmaIdx + i + 18) % 27;
+              String nakshatras = '${knNak[n1]}, ${knNak[n2]}, ${knNak[n3]}';
+
+              return Container(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                decoration: BoxDecoration(color: bgColor),
+                child: Row(
+                  children: [
+                    Expanded(
+                      flex: 2,
+                      child: Text(_taras[i], style: TextStyle(fontWeight: FontWeight.bold, color: textColor, fontSize: 13)),
+                    ),
+                    Expanded(
+                      flex: 3,
+                      child: Text(nakshatras, style: TextStyle(color: kText, fontSize: 13), textAlign: TextAlign.right),
+                    ),
+                  ],
+                ),
+              );
+            },
+          ),
+        ),
+      ],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -378,14 +430,21 @@ class _TaranukoolaScreenState extends State<TaranukoolaScreen> {
                           }
                         }
                       ),
-                    ] else ...[
+                     ] else ...[
                        Container(
                          padding: const EdgeInsets.all(16),
                          alignment: Alignment.center,
-                         decoration: BoxDecoration(color: kBorder.withOpacity(0.3), borderRadius: BorderRadius.circular(8)),
+                         decoration: BoxDecoration(color: kBorder.withValues(alpha: 0.3), borderRadius: BorderRadius.circular(8)),
                          child: Text('ಫಲಿತಾಂಶವನ್ನು ನೋಡಲು ಎರಡೂ ನಕ್ಷತ್ರಗಳನ್ನು ಆಯ್ಕೆಮಾಡಿ.', style: TextStyle(color: kMuted))
                        )
-                    ]
+                    ],
+
+                    if (_janmaNakshatraIdx1 != null)
+                      _buildTaraChart(_janmaNakshatraIdx1!, _isTwoPersonMode ? 'ವ್ಯಕ್ತಿ 1ರ ತಾರಾನುಕೂಲ ಚಾರ್ಟ್' : 'ನಿಮ್ಮ ತಾರಾನುಕೂಲ ಚಾರ್ಟ್'),
+                    
+                    if (_isTwoPersonMode && _janmaNakshatraIdx2 != null)
+                      _buildTaraChart(_janmaNakshatraIdx2!, 'ವ್ಯಕ್ತಿ 2ರ ತಾರಾನುಕೂಲ ಚಾರ್ಟ್'),
+
                   ],
                 ),
               )),
