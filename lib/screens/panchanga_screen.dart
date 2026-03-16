@@ -175,11 +175,12 @@ class _PanchangaScreenState extends State<PanchangaScreen> {
                       padding: EdgeInsets.zero,
                       child: Column(children: [
                         _tableRow(['ಸಂವತ್ಸರ', _panchang!.samvatsara]),
+                        _tableRow(['ಋತು', _panchang!.rutu]),
                         _tableRow(['ವಾರ', _panchang!.vara]),
-                        _tableRow(['ತಿಥಿ', _panchang!.tithi]),
-                        _tableRow(['ಚಂದ್ರ ನಕ್ಷತ್ರ', _panchang!.nakshatra]),
-                        _tableRow(['ಯೋಗ', _panchang!.yoga]),
-                        _tableRow(['ಕರಣ', _panchang!.karana]),
+                        _tableRow(['ತಿಥಿ', _formatEnd(_panchang!.tithi, _panchang!.tithiEndTime, _panchang!.tithiEndsNextDay)]),
+                        _tableRow(['ಚಂದ್ರ ನಕ್ಷತ್ರ', _formatEnd(_panchang!.nakshatra, _panchang!.nakEndTime, _panchang!.nakEndsNextDay)]),
+                        _tableRow(['ಯೋಗ', _formatEnd(_panchang!.yoga, _panchang!.yogaEndTime, _panchang!.yogaEndsNextDay)]),
+                        _tableRow(['ಕರಣ', _formatEnd(_panchang!.karana, _panchang!.karanaEndTime, _panchang!.karanaEndsNextDay)]),
                         _tableRow(['ಚಂದ್ರ ರಾಶಿ', _panchang!.chandraRashi]),
                         _tableRow(['ಚಂದ್ರ ಮಾಸ', _panchang!.chandraMasa]),
                         _tableRow(['ಸೂರ್ಯ ನಕ್ಷತ್ರ', '${_panchang!.suryaNakshatra} - ಪಾದ ${_panchang!.suryaPada}']),
@@ -187,6 +188,8 @@ class _PanchangaScreenState extends State<PanchangaScreen> {
                         _tableRow(['ಸೌರ ಮಾಸ ಗತ ದಿನ', _panchang!.souraMasaGataDina]),
                         _tableRow(['ಸೂರ್ಯೋದಯ', _panchang!.sunrise]),
                         _tableRow(['ಸೂರ್ಯಾಸ್ತ', _panchang!.sunset]),
+                        _tableRow(['ಹಗಲಿನ ಪ್ರಮಾಣ', _panchang!.divamana]),
+                        _tableRow(['ರಾತ್ರಿಯ ಪ್ರಮಾಣ', _panchang!.ratrimana]),
                         _tableRow(['ಉದಯಾದಿ ಘಟಿ', _panchang!.udayadiGhati]),
                         _tableRow(['ಗತ ಘಟಿ', _panchang!.gataGhati]),
                         _tableRow(['ಪರಮ ಘಟಿ', _panchang!.paramaGhati]),
@@ -214,6 +217,11 @@ class _PanchangaScreenState extends State<PanchangaScreen> {
         Expanded(child: Text(v, style: TextStyle(color: kText))),
       ]),
     );
+  }
+
+  String _formatEnd(String base, String endTime, bool nextDay) {
+    if (endTime.isEmpty) return base;
+    return '$base (ಅಂತ್ಯ: $endTime${nextDay ? ' ಮುಂದಿನ ದಿನ' : ''})';
   }
 
   Widget _tableRow(List<String> cols) {

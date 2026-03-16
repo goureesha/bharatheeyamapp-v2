@@ -65,6 +65,18 @@ class PanchangData {
   final String samvatsara;
   final String vishaPraghati;
   final String amrutaPraghati;
+  // New Kannada End Times and Durations
+  final String tithiEndTime;
+  final bool tithiEndsNextDay;
+  final String karanaEndTime;
+  final bool karanaEndsNextDay;
+  final String yogaEndTime;
+  final bool yogaEndsNextDay;
+  final String nakEndTime;
+  final bool nakEndsNextDay;
+  final String divamana;
+  final String ratrimana;
+  final String rutu;
 
   PanchangData({
     required this.vara,
@@ -91,6 +103,17 @@ class PanchangData {
     this.samvatsara = '',
     this.vishaPraghati = '',
     this.amrutaPraghati = '',
+    this.tithiEndTime = '',
+    this.tithiEndsNextDay = false,
+    this.karanaEndTime = '',
+    this.karanaEndsNextDay = false,
+    this.yogaEndTime = '',
+    this.yogaEndsNextDay = false,
+    this.nakEndTime = '',
+    this.nakEndsNextDay = false,
+    this.divamana = '',
+    this.ratrimana = '',
+    this.rutu = '',
   });
 }
 
@@ -272,11 +295,51 @@ class AstroCalculator {
     double low = jd - 1.2, high = jd + 1.2;
     for (int i = 0; i < 20; i++) {
       final mid = (low + high) / 2;
-      final ayn = _getAyanamsa(mid, ayanamsaMode);
       final planets = Ephemeris.calcAll(mid, ayanamsaMode, true);
-      final moonTrop = planets['Moon']![0] + ayn; // back to tropical
-      final mDeg = normDeg(moonTrop - ayn);
+      final mDeg = normDeg(planets['Moon']![0]);
       final diff = ((mDeg - targetDeg + 180) % 360) - 180;
+      if (diff < 0) low = mid; else high = mid;
+    }
+    return (low + high) / 2;
+  }
+
+  static double findTithiLimit(double jd, double targetDeg, String ayanamsaMode) {
+    double low = jd - 1.5, high = jd + 1.5;
+    for (int i = 0; i < 20; i++) {
+      final mid = (low + high) / 2;
+      final planets = Ephemeris.calcAll(mid, ayanamsaMode, true);
+      final mDeg = normDeg(planets['Moon']![0]);
+      final sDeg = normDeg(planets['Sun']![0]);
+      final tithiDeg = normDeg(mDeg - sDeg);
+      final diff = ((tithiDeg - targetDeg + 180) % 360) - 180;
+      if (diff < 0) low = mid; else high = mid;
+    }
+    return (low + high) / 2;
+  }
+
+  static double findKaranaLimit(double jd, double targetDeg, String ayanamsaMode) {
+    double low = jd - 0.8, high = jd + 0.8;
+    for (int i = 0; i < 20; i++) {
+      final mid = (low + high) / 2;
+      final planets = Ephemeris.calcAll(mid, ayanamsaMode, true);
+      final mDeg = normDeg(planets['Moon']![0]);
+      final sDeg = normDeg(planets['Sun']![0]);
+      final tithiDeg = normDeg(mDeg - sDeg);
+      final diff = ((tithiDeg - targetDeg + 180) % 360) - 180;
+      if (diff < 0) low = mid; else high = mid;
+    }
+    return (low + high) / 2;
+  }
+
+  static double findYogaLimit(double jd, double targetDeg, String ayanamsaMode) {
+    double low = jd - 1.5, high = jd + 1.5;
+    for (int i = 0; i < 20; i++) {
+      final mid = (low + high) / 2;
+      final planets = Ephemeris.calcAll(mid, ayanamsaMode, true);
+      final mDeg = normDeg(planets['Moon']![0]);
+      final sDeg = normDeg(planets['Sun']![0]);
+      final yogaDeg = normDeg(mDeg + sDeg);
+      final diff = ((yogaDeg - targetDeg + 180) % 360) - 180;
       if (diff < 0) low = mid; else high = mid;
     }
     return (low + high) / 2;
@@ -627,6 +690,40 @@ class AstroCalculator {
       final vishaG = nIdx < vishaGhatis.length ? vishaGhatis[nIdx] : 0;
       final amrutaG = nIdx < amrutaGhatis.length ? amrutaGhatis[nIdx] : 0;
 
+      // === End Times, Divamana, Ratrimana, Rutu ===
+      // Rutu
+      final knRutu = ['ವಸಂತ ಋತು', 'ವಸಂತ ಋತು', 'ಗ್ರೀಷ್ಮ ಋತು', 'ಗ್ರೀಷ್ಮ ಋತು', 'ವರ್ಷಾ ಋತು', 'ವರ್ಷಾ ಋತು', 'ಶರದೃತು', 'ಶರದೃತು', 'ಹೇಮಂತ ಋತು', 'ಹೇಮಂತ ಋತು', 'ಶಿಶಿರ ಋತು', 'ಶಿಶಿರ ಋತು'];
+      final rutuStr = knRutu[sunRashiIdx];
+
+      // Divamana & Ratrimana
+      final nextD = dob.add(const Duration(days: 1));
+      final nextSrSs = Ephemeris.findSunriseSetForDate(nextD.year, nextD.month, nextD.day, lat, lon);
+      final nextSr = nextSrSs[0];
+
+      final divamanaHours = (ssCivil - srCivil) * 24.0;
+      final divamanaGhatis = (ssCivil - srCivil) * 60.0;
+      final ratrimanaHours = (nextSr - ssCivil) * 24.0;
+      final ratrimanaGhatis = (nextSr - ssCivil) * 60.0;
+
+      String formatDuration(double hours, double ghatis) {
+        int h = hours.floor();
+        int m = ((hours - h) * 60).round();
+        if (m == 60) { h += 1; m = 0; }
+        return '$h ಗಂಟೆ $m ನಿಮಿಷ (${formatGhati(ghatis)} ಘಟಿ)';
+      }
+      final divamanaStr = formatDuration(divamanaHours, divamanaGhatis);
+      final ratrimanaStr = formatDuration(ratrimanaHours, ratrimanaGhatis);
+
+      bool isNextDay(double jdBase, double jdTarget) {
+        final offset = 0.5 + 5.5 / 24.0; // IST Offset
+        return (jdTarget + offset).floor() > (jdBase + offset).floor();
+      }
+
+      // End Times
+      final jdTEnd = findTithiLimit(jdBirth, (tIdx + 1) * 12.0, ayanamsaMode);
+      final jdKEnd = findKaranaLimit(jdBirth, (kIdx + 1) * 6.0, ayanamsaMode);
+      final jdYEnd = findYogaLimit(jdBirth, (yIdx + 1) * _nakSize, ayanamsaMode);
+
       final panchang = PanchangData(
         vara: knVara[wIdx],
         tithi: knTithi[tIdx],
@@ -652,6 +749,17 @@ class AstroCalculator {
         samvatsara: samvatsara,
         vishaPraghati: '$vishaG ಘಟಿ',
         amrutaPraghati: '$amrutaG ಘಟಿ',
+        tithiEndTime: formatTimeFromJd(jdTEnd),
+        tithiEndsNextDay: isNextDay(jdBirth, jdTEnd),
+        karanaEndTime: formatTimeFromJd(jdKEnd),
+        karanaEndsNextDay: isNextDay(jdBirth, jdKEnd),
+        yogaEndTime: formatTimeFromJd(jdYEnd),
+        yogaEndsNextDay: isNextDay(jdBirth, jdYEnd),
+        nakEndTime: formatTimeFromJd(je),
+        nakEndsNextDay: isNextDay(jdBirth, je),
+        divamana: divamanaStr,
+        ratrimana: ratrimanaStr,
+        rutu: rutuStr,
       );
 
       // Dashas
