@@ -1,4 +1,5 @@
 import 'package:sweph/sweph.dart';
+import 'package:flutter/foundation.dart';
 import 'dart:math';
 
 double _rad(double d) => d * pi / 180.0;
@@ -15,6 +16,10 @@ class Ephemeris {
 
   static Future<void> initSweph() async {
     if (_isInit) return;
+    if (!kIsWeb) {
+      _isInit = true;
+      return;
+    }
     // Retry up to 3 times – the first attempt may fail on some platforms
     // with a transient FileSystemException for 'ephe_files' directory,
     // but succeeds on subsequent attempts.

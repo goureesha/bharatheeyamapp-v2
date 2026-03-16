@@ -5,11 +5,14 @@ import 'screens/paywall_screen.dart';
 import 'widgets/common.dart';
 import 'services/subscription_service.dart';
 import 'services/google_auth_service.dart';
+import 'package:flutter/foundation.dart';
 import 'package:sweph/sweph.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await Sweph.init(epheAssets: []);
+  if (kIsWeb) {
+    await Sweph.init(epheAssets: []);
+  }
   SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp, DeviceOrientation.portraitDown]);
   
   // Setup Google Play Billing bindings right away
