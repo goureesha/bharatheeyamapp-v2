@@ -7,12 +7,19 @@ import 'services/subscription_service.dart';
 import 'services/google_auth_service.dart';
 import 'package:flutter/foundation.dart';
 import 'package:sweph/sweph.dart';
+import 'core/ephemeris.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  if (kIsWeb) {
-    await Sweph.init(epheAssets: []);
+  
+  try {
+    // Attempt graceful initialization with retries for WASM/Assets.
+    // If it completely fails, we still boot the app so it doesn't crash on the logo screen.
+    await Ephemeris.initSweph();
+  } catch (e) {
+    debugPrint("Failed to initialize Sweph: $e");
   }
+
   SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp, DeviceOrientation.portraitDown]);
   
   // Setup Google Play Billing bindings right away
