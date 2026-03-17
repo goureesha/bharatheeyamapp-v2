@@ -3,6 +3,8 @@ import '../widgets/common.dart';
 import '../constants/strings.dart';
 import '../core/calculator.dart';
 import '../core/ephemeris.dart';
+import '../core/events.dart';
+import 'package:table_calendar/table_calendar.dart';
 
 
 class PanchangaScreen extends StatefulWidget {
@@ -23,10 +25,64 @@ class _PanchangaScreenState extends State<PanchangaScreen> {
   final double _lon = 74.73;
   final String _place = 'Yellapur';
 
+  DateTime _focusedDay = DateTime.now();
+
+  // Events for current selected day (computed from _calcPanchang)
+  List<AstroEvent> _currentEvents = [];
+  
+  // Cache: stores events for all dates in the month (for green dots)
+  Map<DateTime, List<AstroEvent>> _eventsCache = {};
+  bool _monthLoading = false;
+
   @override
   void initState() {
     super.initState();
-    _calcPanchang();
+    _initLoad();
+  }
+
+  Future<void> _initLoad() async {
+    await _calcPanchang();
+    _loadMonthEvents(_focusedDay);
+  }
+
+  Future<void> _loadMonthEvents(DateTime month) async {
+    if (_monthLoading) return;
+    _monthLoading = true;
+
+    final year = month.year;
+    final m = month.month;
+    final daysInMonth = DateTime(year, m + 1, 0).day;
+
+    for (int d = 1; d <= daysInMonth; d++) {
+      if (!mounted) break;
+      final dateKey = DateTime(year, m, d);
+      if (_eventsCache.containsKey(dateKey)) continue;
+
+      try {
+        final res = await AstroCalculator.calculate(
+          year: year, month: m, day: d,
+          hourUtcOffset: 5.5,
+          hour24: 6.0,
+          lat: _lat, lon: _lon,
+          ayanamsaMode: 'lahiri',
+          trueNode: true,
+        );
+        if (res != null && mounted) {
+          final events = EventCalculator.getEventsForPanchang(res.panchang);
+          setState(() {
+            _eventsCache[dateKey] = events;
+          });
+        }
+      } catch (_) {}
+      // Small delay between calculations
+      await Future.delayed(const Duration(milliseconds: 100));
+    }
+    _monthLoading = false;
+  }
+
+  List<AstroEvent> _getEventsForDay(DateTime day) {
+    final key = DateTime(day.year, day.month, day.day);
+    return _eventsCache[key] ?? [];
   }
 
   Future<void> _calcPanchang() async {
@@ -44,14 +100,18 @@ class _PanchangaScreenState extends State<PanchangaScreen> {
       );
 
       if (result != null && mounted) {
+        final events = EventCalculator.getEventsForPanchang(result.panchang);
+        final dateKey = DateTime(_selectedDate.year, _selectedDate.month, _selectedDate.day);
         setState(() {
           _panchang = result.panchang;
+          _currentEvents = events;
+          _eventsCache[dateKey] = events; // Cache for green dots
           _loading = false;
         });
       } else {
         if (mounted) setState(() => _loading = false);
       }
-    } catch (_) {
+    } catch (e) {
       if (mounted) setState(() => _loading = false);
     }
   }
@@ -103,15 +163,52 @@ class _PanchangaScreenState extends State<PanchangaScreen> {
                         decoration: BoxDecoration(
                           border: Border.all(color: kBorder),
                           borderRadius: BorderRadius.circular(12),
+                          color: kBg,
                         ),
-                        child: CalendarDatePicker(
-                          initialDate: _selectedDate,
-                          firstDate: DateTime(1800),
-                          lastDate: DateTime(2100),
-                          onDateChanged: (date) {
-                            setState(() => _selectedDate = date);
+                        child: TableCalendar<AstroEvent>(
+                          firstDay: DateTime.utc(1800, 1, 1),
+                          lastDay: DateTime.utc(2100, 12, 31),
+                          focusedDay: _focusedDay,
+                          currentDay: DateTime.now(),
+                          selectedDayPredicate: (day) => isSameDay(_selectedDate, day),
+                          calendarFormat: CalendarFormat.month,
+                          availableCalendarFormats: const {CalendarFormat.month: 'Month'},
+                          eventLoader: _getEventsForDay,
+                          startingDayOfWeek: StartingDayOfWeek.sunday,
+                          onDaySelected: (selectedDay, focusedDay) {
+                            setState(() {
+                              _selectedDate = selectedDay;
+                              _focusedDay = focusedDay;
+                            });
                             _calcPanchang();
                           },
+                          onPageChanged: (focusedDay) {
+                            _focusedDay = focusedDay;
+                            _loadMonthEvents(focusedDay);
+                          },
+                          calendarStyle: CalendarStyle(
+                            todayDecoration: BoxDecoration(
+                              color: kPurple2.withOpacity(0.3),
+                              shape: BoxShape.circle,
+                            ),
+                            selectedDecoration: BoxDecoration(
+                              color: kPurple2,
+                              shape: BoxShape.circle,
+                            ),
+                            markerDecoration: BoxDecoration(
+                              color: Colors.green,
+                              shape: BoxShape.circle,
+                            ),
+                          ),
+                          headerStyle: HeaderStyle(
+                            titleCentered: true,
+                            formatButtonVisible: false,
+                            titleTextStyle: TextStyle(color: kPurple2, fontWeight: FontWeight.bold, fontSize: 16),
+                          ),
+                          daysOfWeekStyle: DaysOfWeekStyle(
+                            weekdayStyle: TextStyle(color: kText, fontWeight: FontWeight.bold),
+                            weekendStyle: TextStyle(color: Colors.redAccent, fontWeight: FontWeight.bold),
+                          ),
                         ),
                       ),
                     ]),
@@ -163,6 +260,85 @@ class _PanchangaScreenState extends State<PanchangaScreen> {
                     _kv('ದಿನಾಂಕ', dateStr),
                     _kv('ಸಮಯ', timeStr),
                   ])),
+
+                  // Events Card - ALWAYS show events for the selected day
+                  if (_currentEvents.isNotEmpty)
+                    AppCard(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Icon(Icons.festival, color: Colors.green, size: 22),
+                              const SizedBox(width: 8),
+                              Expanded(child: Text('ಹಬ್ಬಗಳು ಮತ್ತು ವಿಶೇಷ ದಿನಗಳು', 
+                                style: TextStyle(color: Colors.green, fontWeight: FontWeight.bold, fontSize: 16))),
+                            ],
+                          ),
+                          const SizedBox(height: 12),
+                          ..._currentEvents.map((e) => Padding(
+                            padding: const EdgeInsets.only(bottom: 12.0),
+                            child: Container(
+                              padding: const EdgeInsets.all(12),
+                              decoration: BoxDecoration(
+                                color: Colors.green.withOpacity(0.05),
+                                borderRadius: BorderRadius.circular(8),
+                                border: Border.all(color: Colors.green.withOpacity(0.3)),
+                              ),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(e.name, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: kPurple2)),
+                                  const SizedBox(height: 4),
+                                  Text(e.description, style: TextStyle(color: kText, fontSize: 14)),
+                                  const SizedBox(height: 12),
+                                  Container(
+                                    width: double.infinity,
+                                    padding: const EdgeInsets.all(8),
+                                    decoration: BoxDecoration(
+                                      color: Colors.white,
+                                      borderRadius: BorderRadius.circular(4),
+                                    ),
+                                    child: Text(e.shloka, 
+                                      style: TextStyle(fontStyle: FontStyle.italic, color: kPurple2, fontSize: 13),
+                                      textAlign: TextAlign.center,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 8),
+                                  Row(
+                                    mainAxisAlignment: MainAxisAlignment.end,
+                                    children: [
+                                      Text('- ಆಕರ: ', style: TextStyle(fontSize: 12, color: Colors.grey[600])),
+                                      Flexible(child: Text(e.source, style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: kPurple2))),
+                                    ],
+                                  ),
+                                  if (e.meaning.isNotEmpty) ...[
+                                    const SizedBox(height: 10),
+                                    Container(
+                                      width: double.infinity,
+                                      padding: const EdgeInsets.all(10),
+                                      decoration: BoxDecoration(
+                                        color: Colors.amber.withOpacity(0.08),
+                                        borderRadius: BorderRadius.circular(6),
+                                        border: Border.all(color: Colors.amber.withOpacity(0.3)),
+                                      ),
+                                      child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          Text('ಅರ್ಥ:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Colors.amber[800])),
+                                          const SizedBox(height: 4),
+                                          Text(e.meaning, style: TextStyle(color: kText, fontSize: 13)),
+                                        ],
+                                      ),
+                                    ),
+                                  ],
+                                ],
+                              ),
+                            ),
+                          )).toList(),
+                        ],
+                      ),
+                    ),
 
                   // Loading or Panchanga data
                   if (_loading)
@@ -237,7 +413,7 @@ class _PanchangaScreenState extends State<PanchangaScreen> {
                 fontWeight: e.key == 0 ? FontWeight.w700 : FontWeight.normal,
                 color: kText,
               ),
-              maxLines: 1,
+              maxLines: 2,
               overflow: TextOverflow.ellipsis,
             ),
           ),

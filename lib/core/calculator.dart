@@ -56,6 +56,8 @@ class PanchangData {
   final double nakPercent;
   final String sunrise;
   final String sunset;
+  final int tithiIndex; // 0 to 29
+  final String chandraMasaRaw; // Unprefixed masa name like 'ಚೈತ್ರ'
   // New Panchanga fields
   final String suryaNakshatra;
   final String suryaPada;
@@ -95,6 +97,8 @@ class PanchangData {
     required this.nakPercent,
     required this.sunrise,
     required this.sunset,
+    required this.tithiIndex,
+    required this.chandraMasaRaw,
     this.suryaNakshatra = '',
     this.suryaPada = '',
     this.souraMasa = '',
@@ -612,7 +616,8 @@ class AstroCalculator {
       
       final knChandraMasa = ['ವೈಶಾಖ','ಜ್ಯೇಷ್ಠ','ಆಷಾಢ','ಶ್ರಾವಣ','ಭಾದ್ರಪದ','ಆಶ್ವಿನ','ಕಾರ್ತಿಕ','ಮಾರ್ಗಶಿರ','ಪುಷ್ಯ','ಮಾಘ','ಫಾಲ್ಗುಣ','ಚೈತ್ರ'];
       
-      String chandraMasa;
+      String chandraMasaRaw = '';
+      String chandraMasa = '';
       try {
         // Approximate days from birth to previous Amavasya
         // tIdx: 0 = Shukla Pratipada (start of month, 1 tithi after previous Amavasya)
@@ -652,6 +657,7 @@ class AstroCalculator {
         // so they get the same month name (only prefix differs)
         // Example: Adhika Jyeshtha → Nija Jyeshtha → Nija Ashadha
         final masaName = knChandraMasa[prevAmaRashi];
+        chandraMasaRaw = masaName;
         
         if (!hasSankranti) {
           chandraMasa = 'ಅಧಿಕ $masaName';
@@ -660,6 +666,7 @@ class AstroCalculator {
         }
       } catch (_) {
         chandraMasa = knChandraMasa[sunRashiIdx];
+        chandraMasaRaw = knChandraMasa[sunRashiIdx];
       }
       
       // Samvatsara (Shalivahana Shaka - changes at Ugadi/Chaitra Shukla Pratipada)
@@ -741,6 +748,8 @@ class AstroCalculator {
         nakPercent: perc,
         sunrise: formatTimeFromJd(srCivil),
         sunset: formatTimeFromJd(ssCivil),
+        tithiIndex: tIdx,
+        chandraMasaRaw: chandraMasaRaw, // raw name assigned above
         suryaNakshatra: knNak[sunNakIdx],
         suryaPada: '$sunPada',
         souraMasa: souraMasa,
