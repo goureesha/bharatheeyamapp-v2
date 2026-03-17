@@ -10,6 +10,7 @@ import 'match_making_tab.dart';
 import 'mantra_sangraha_screen.dart';
 import 'planets_screen.dart';
 import 'settings_screen.dart';
+import 'vedic_clock_screen.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -34,6 +35,9 @@ class HomeScreen extends StatelessWidget {
       }),
       _Section('ಮಂತ್ರ ಸಂಗ್ರಹ', 'Mantra Sangraha', Icons.menu_book_rounded, kTeal, () {
         Navigator.push(context, MaterialPageRoute(builder: (_) => const MantraSangrahaScreen()));
+      }),
+      _Section('ವೈದಿಕ ಘಡಿಯಾರ', 'Vedic Clock', Icons.watch_later_rounded, const Color(0xFF5B2C6F), () {
+        Navigator.push(context, MaterialPageRoute(builder: (_) => const VedicClockScreen()));
       }),
       _Section('ಸೆಟ್ಟಿಂಗ್ಸ್', 'Settings', Icons.settings, kMuted, () {
         Navigator.push(context, MaterialPageRoute(builder: (_) => const SettingsScreen()));
