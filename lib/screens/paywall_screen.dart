@@ -92,7 +92,7 @@ class PaywallScreen extends StatelessWidget {
                       padding: const EdgeInsets.symmetric(vertical: 16),
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                     ),
-                    child: const Text('₹500 / ವರ್ಷಕ್ಕೆ ಚಂದಾದಾರರಾಗಿ',
+                    child: const Text('₹700 / ವರ್ಷಕ್ಕೆ ಚಂದಾದಾರರಾಗಿ',
                       style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900)),
                   ),
                 ),

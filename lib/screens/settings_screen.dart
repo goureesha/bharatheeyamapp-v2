@@ -197,7 +197,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                            if (!SubscriptionService.hasAdFree) ...[
                              const SizedBox(height: 12),
                              Text(
-                               'ವರ್ಷಕ್ಕೆ ಕೇವಲ ₹೫೦೦ ಪಾವತಿಸಿ ಮತ್ತು ಅಪ್ಲಿಕೇಶನ್ ಅನ್ನು ಯಾವುದೇ ಜಾಹೀರಾತುಗಳಿಲ್ಲದೆ ಬಳಸಿ.',
+                               'ವರ್ಷಕ್ಕೆ ಕೇವಲ ₹೭೦೦ ಪಾವತಿಸಿ ಮತ್ತು ಅಪ್ಲಿಕೇಶನ್ ಅನ್ನು ಯಾವುದೇ ಜಾಹೀರಾತುಗಳಿಲ್ಲದೆ ಬಳಸಿ.',
                                style: TextStyle(fontSize: 14, color: kText, height: 1.4),
                              ),
                              const SizedBox(height: 20),
@@ -216,7 +216,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                  padding: const EdgeInsets.symmetric(vertical: 14),
                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                                ),
-                               child: const Text('₹500 / ವರ್ಷಕ್ಕೆ ಚಂದಾದಾರರಾಗಿ', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                               child: const Text('₹700 / ವರ್ಷಕ್ಕೆ ಚಂದಾದಾರರಾಗಿ', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
                              ),
                              const SizedBox(height: 12),
                              TextButton(
