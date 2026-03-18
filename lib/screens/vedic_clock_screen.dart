@@ -252,8 +252,8 @@ class _RashiClockPainter extends CustomPainter {
         Colors.white.withOpacity(0.4), outerR * 0.035, false);
     }
 
-    // === ARROW HANDS ===
-    final order = ['ಕೇತು','ರಾಹು','ಶನಿ','ಶುಕ್ರ','ಗುರು','ಬುಧ','ಕುಜ','ಚಂದ್ರ','ರವಿ','ಲಗ್ನ'];
+    // === ARROW HANDS (Lagna only) ===
+    final order = ['ಲಗ್ನ'];
     for (final name in order) {
       final deg = planetLongs[name];
       if (deg == null) continue;
