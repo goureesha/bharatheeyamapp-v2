@@ -3,6 +3,7 @@ import '../widgets/common.dart';
 
 import '../services/subscription_service.dart';
 import '../services/google_auth_service.dart';
+import '../services/device_binding_service.dart';
 import 'about_screen.dart';
 import 'privacy_policy_screen.dart';
 
@@ -96,6 +97,32 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                 if (mounted) setState(() {});
                               },
                               child: Text('Sign Out', style: TextStyle(color: kMuted)),
+                            ),
+                            const SizedBox(height: 8),
+                            OutlinedButton.icon(
+                              icon: Icon(Icons.swap_horiz, color: kPurple2, size: 18),
+                              label: Text('ಸಾಧನ ಬದಲಾಯಿಸಿ / Migrate Device', style: TextStyle(color: kPurple2, fontSize: 13)),
+                              onPressed: () async {
+                                final confirm = await showDialog<bool>(context: context, builder: (ctx) => AlertDialog(
+                                  backgroundColor: kCard,
+                                  title: Text('ಸಾಧನ ಬದಲಾಯಿಸಿ?', style: TextStyle(color: kText)),
+                                  content: Text('ಈ ಸಾಧನವನ್ನು ನಿಮ್ಮ ಪ್ರಾಥಮಿಕ ಸಾಧನವಾಗಿ ಹೊಂದಿಸಲಾಗುವುದು. ಬೇರೆ ಸಾಧನದಲ್ಲಿ ಈ ಖಾತೆ ಬ್ಲಾಕ್ ಆಗುತ್ತದೆ.', style: TextStyle(color: kText)),
+                                  actions: [
+                                    TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text('ರದ್ದು', style: TextStyle(color: kMuted))),
+                                    ElevatedButton(onPressed: () => Navigator.pop(ctx, true),
+                                      style: ElevatedButton.styleFrom(backgroundColor: kPurple2),
+                                      child: Text('ಹೌದು, ಬದಲಾಯಿಸಿ')),
+                                  ],
+                                ));
+                                if (confirm == true) {
+                                  final ok = await DeviceBindingService.migrateDevice();
+                                  if (mounted) {
+                                    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                                      content: Text(ok ? 'ಸಾಧನ ಯಶಸ್ವಿಯಾಗಿ ಬದಲಾಯಿಸಲಾಗಿದೆ!' : 'ವಿಫಲವಾಗಿದೆ'),
+                                      backgroundColor: ok ? Colors.green : Colors.red));
+                                  }
+                                }
+                              },
                             ),
                           ] else ...[
                             Row(children: [
