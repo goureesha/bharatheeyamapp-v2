@@ -185,7 +185,6 @@ class _PanchangaScreenState extends State<PanchangaScreen> {
                   AppCard(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                     _kv('ಸ್ಥಳ', _place),
                     _kv('ದಿನಾಂಕ', dateStr),
-                    _kv('ಸಮಯ', timeStr),
                   ])),
 
                   // Events Card - ALWAYS show events for the selected day

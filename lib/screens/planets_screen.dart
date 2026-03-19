@@ -213,12 +213,12 @@ class _PlanetsScreenState extends State<PlanetsScreen> with SingleTickerProvider
           elevation: 0,
           shape: RoundedRectangleBorder(
              borderRadius: BorderRadius.circular(12),
-             side: BorderSide(color: pColor.withOpacity(0.3)),
+             side: BorderSide(color: pColor.withValues(alpha: 0.3)),
           ),
           margin: const EdgeInsets.only(bottom: 12),
           child: ListTile(
             leading: CircleAvatar(
-              backgroundColor: pColor.withOpacity(0.1),
+              backgroundColor: pColor.withValues(alpha: 0.1),
               child: Text(
                 _planetIcons[ev.planetName] ?? ev.planetName.substring(0, 1),
                 style: TextStyle(color: pColor, fontWeight: FontWeight.bold, fontSize: 18),
@@ -255,10 +255,10 @@ class _PlanetsScreenState extends State<PlanetsScreen> with SingleTickerProvider
         
         return Card(
           elevation: 0,
-          color: pColor.withOpacity(0.05),
+          color: pColor.withValues(alpha: 0.05),
           shape: RoundedRectangleBorder(
              borderRadius: BorderRadius.circular(12),
-             side: BorderSide(color: pColor.withOpacity(0.3)),
+             side: BorderSide(color: pColor.withValues(alpha: 0.3)),
           ),
           margin: const EdgeInsets.only(bottom: 12),
           child: Padding(
@@ -266,7 +266,7 @@ class _PlanetsScreenState extends State<PlanetsScreen> with SingleTickerProvider
             child: Row(
               children: [
                 CircleAvatar(
-                  backgroundColor: pColor.withOpacity(0.15),
+                  backgroundColor: pColor.withValues(alpha: 0.15),
                   child: Text(
                     _planetIcons[vp.planetName] ?? '♦',
                     style: TextStyle(color: pColor, fontSize: 18),
@@ -285,8 +285,8 @@ class _PlanetsScreenState extends State<PlanetsScreen> with SingleTickerProvider
                         ],
                       ),
                       const SizedBox(height: 8),
-                      Text('ಪ್ರಾರಂಭ: $startStr', style: TextStyle(color: pColor.withOpacity(0.8), fontSize: 13)),
-                      Text('ಅಂತ್ಯ: $endStr', style: TextStyle(color: pColor.withOpacity(0.8), fontSize: 13)),
+                      Text('ಪ್ರಾರಂಭ: $startStr', style: TextStyle(color: pColor.withValues(alpha: 0.8), fontSize: 13)),
+                      Text('ಅಂತ್ಯ: $endStr', style: TextStyle(color: pColor.withValues(alpha: 0.8), fontSize: 13)),
                     ],
                   ),
                 ),
@@ -320,10 +320,10 @@ class _PlanetsScreenState extends State<PlanetsScreen> with SingleTickerProvider
         
         return Card(
           elevation: 0,
-          color: pColor.withOpacity(0.05),
+          color: pColor.withValues(alpha: 0.05),
           shape: RoundedRectangleBorder(
              borderRadius: BorderRadius.circular(12),
-             side: BorderSide(color: pColor.withOpacity(0.3)),
+             side: BorderSide(color: pColor.withValues(alpha: 0.3)),
           ),
           margin: const EdgeInsets.only(bottom: 12),
           child: Padding(
@@ -331,7 +331,7 @@ class _PlanetsScreenState extends State<PlanetsScreen> with SingleTickerProvider
             child: Row(
               children: [
                 CircleAvatar(
-                  backgroundColor: pColor.withOpacity(0.15),
+                  backgroundColor: pColor.withValues(alpha: 0.15),
                   child: Text(
                     _planetIcons[ap.planetName] ?? '◉',
                     style: TextStyle(color: pColor, fontSize: 18),
@@ -350,8 +350,8 @@ class _PlanetsScreenState extends State<PlanetsScreen> with SingleTickerProvider
                         ],
                       ),
                       const SizedBox(height: 8),
-                      Text('ಪ್ರಾರಂಭ: $startStr', style: TextStyle(color: pColor.withOpacity(0.8), fontSize: 13)),
-                      Text('ಅಂತ್ಯ: $endStr', style: TextStyle(color: pColor.withOpacity(0.8), fontSize: 13)),
+                      Text('ಪ್ರಾರಂಭ: $startStr', style: TextStyle(color: pColor.withValues(alpha: 0.8), fontSize: 13)),
+                      Text('ಅಂತ್ಯ: $endStr', style: TextStyle(color: pColor.withValues(alpha: 0.8), fontSize: 13)),
                     ],
                   ),
                 ),
