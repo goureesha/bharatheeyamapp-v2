@@ -26,13 +26,13 @@ class _PlanetsScreenState extends State<PlanetsScreen> with SingleTickerProvider
   ];
 
   // Planet emoji icons
-  static const _planetIcons = {
+  static const _planetIcons = <String, String>{
     'ಸೂರ್ಯ': '☉', 'ಚಂದ್ರ': '☽', 'ಮಂಗಳ': '♂', 'ಬುಧ': '☿',
     'ಗುರು': '♃', 'ಶುಕ್ರ': '♀', 'ಶನಿ': '♄', 'ರಾಹು': '☊', 'ಕೇತು': '☋',
   };
 
   // Planet colors
-  static const _planetColors = {
+  static final _planetColors = <String, Color>{
     'ಸೂರ್ಯ': Color(0xFFFF6B00), 'ಚಂದ್ರ': Color(0xFF4A90D9),
     'ಮಂಗಳ': Color(0xFFE53935), 'ಬುಧ': Color(0xFF43A047),
     'ಗುರು': Color(0xFFFFC107), 'ಶುಕ್ರ': Color(0xFFE91E8C),
