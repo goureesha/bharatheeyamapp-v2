@@ -94,11 +94,11 @@ class TransitCalculator {
          
          double orb = 0.0;
          switch(p) {
-            case 'Mars': orb = 17.0; break;
-            case 'Mercury': orb = (speed < 0) ? 12.0 : 14.0; break;
-            case 'Jupiter': orb = 11.0; break;
-            case 'Venus': orb = (speed < 0) ? 8.0 : 10.0; break;
-            case 'Saturn': orb = 15.0; break;
+            case 'Mars': orb = 15.0; break;
+            case 'Mercury': orb = 11.0; break;
+            case 'Jupiter': orb = 9.0; break;
+            case 'Venus': orb = 6.6; break;
+            case 'Saturn': orb = 13.0; break;
          }
          prevAsta[p] = distSun <= orb;
       }
@@ -169,11 +169,11 @@ class TransitCalculator {
              if (distSun > 180) distSun = 360 - distSun;
              double orb = 0.0;
              switch(p) {
-                case 'Mars': orb = 17.0; break;
-                case 'Mercury': orb = isVakri ? 12.0 : 14.0; break;
-                case 'Jupiter': orb = 11.0; break;
-                case 'Venus': orb = isVakri ? 8.0 : 10.0; break;
-                case 'Saturn': orb = 15.0; break;
+                case 'Mars': orb = 15.0; break;
+                case 'Mercury': orb = 11.0; break;
+                case 'Jupiter': orb = 9.0; break;
+                case 'Venus': orb = 6.6; break;
+                case 'Saturn': orb = 13.0; break;
              }
              final isAsta = distSun <= orb;
              

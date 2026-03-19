@@ -4,6 +4,7 @@ import '../constants/strings.dart';
 import '../core/calculator.dart';
 import '../core/ephemeris.dart';
 import '../core/events.dart';
+import '../services/festival_cache_service.dart';
 import 'package:table_calendar/table_calendar.dart';
 
 
@@ -16,7 +17,7 @@ class PanchangaScreen extends StatefulWidget {
 
 class _PanchangaScreenState extends State<PanchangaScreen> {
   DateTime _selectedDate = DateTime.now();
-  TimeOfDay _selectedTime = const TimeOfDay(hour: 6, minute: 0);
+
   PanchangData? _panchang;
   bool _loading = false;
 
@@ -27,12 +28,8 @@ class _PanchangaScreenState extends State<PanchangaScreen> {
 
   DateTime _focusedDay = DateTime.now();
 
-  // Events for current selected day (computed from _calcPanchang)
+  // Events for current selected day
   List<AstroEvent> _currentEvents = [];
-  
-  // Cache: stores events for all dates in the month (for green dots)
-  Map<DateTime, List<AstroEvent>> _eventsCache = {};
-  bool _monthLoading = false;
 
   @override
   void initState() {
@@ -42,54 +39,22 @@ class _PanchangaScreenState extends State<PanchangaScreen> {
 
   Future<void> _initLoad() async {
     await _calcPanchang();
-    _loadMonthEvents(_focusedDay);
-  }
-
-  Future<void> _loadMonthEvents(DateTime month) async {
-    if (_monthLoading) return;
-    _monthLoading = true;
-
-    final year = month.year;
-    final m = month.month;
-    final daysInMonth = DateTime(year, m + 1, 0).day;
-
-    for (int d = 1; d <= daysInMonth; d++) {
-      if (!mounted) break;
-      final dateKey = DateTime(year, m, d);
-      if (_eventsCache.containsKey(dateKey)) continue;
-
-      try {
-        final res = await AstroCalculator.calculate(
-          year: year, month: m, day: d,
-          hourUtcOffset: 5.5,
-          hour24: 6.0,
-          lat: _lat, lon: _lon,
-          ayanamsaMode: 'lahiri',
-          trueNode: true,
-        );
-        if (res != null && mounted) {
-          final events = EventCalculator.getEventsForPanchang(res.panchang);
-          setState(() {
-            _eventsCache[dateKey] = events;
-          });
-        }
-      } catch (_) {}
-      // Small delay between calculations
-      await Future.delayed(const Duration(milliseconds: 100));
+    // If cache not loaded yet for this year, load the current month quickly
+    if (!FestivalCacheService.isLoaded) {
+      await FestivalCacheService.loadMonth(_focusedDay.year, _focusedDay.month);
+      if (mounted) setState(() {});
     }
-    _monthLoading = false;
   }
 
   List<AstroEvent> _getEventsForDay(DateTime day) {
-    final key = DateTime(day.year, day.month, day.day);
-    return _eventsCache[key] ?? [];
+    return FestivalCacheService.getEventsForDate(day);
   }
 
   Future<void> _calcPanchang() async {
     setState(() => _loading = true);
 
     try {
-      final hour24 = _selectedTime.hour + _selectedTime.minute / 60.0;
+      const hour24 = 6.0; // Fixed sunrise time for festival calculation
       final result = await AstroCalculator.calculate(
         year: _selectedDate.year, month: _selectedDate.month, day: _selectedDate.day,
         hourUtcOffset: 5.5,
@@ -100,12 +65,12 @@ class _PanchangaScreenState extends State<PanchangaScreen> {
       );
 
       if (result != null && mounted) {
-        final events = EventCalculator.getEventsForPanchang(result.panchang);
-        final dateKey = DateTime(_selectedDate.year, _selectedDate.month, _selectedDate.day);
+        final events = FestivalCacheService.getEventsForDate(_selectedDate);
+        // If cache miss, compute from panchang
+        final finalEvents = events.isNotEmpty ? events : EventCalculator.getEventsForPanchang(result.panchang);
         setState(() {
           _panchang = result.panchang;
-          _currentEvents = events;
-          _eventsCache[dateKey] = events; // Cache for green dots
+          _currentEvents = finalEvents;
           _loading = false;
         });
       } else {
@@ -119,7 +84,6 @@ class _PanchangaScreenState extends State<PanchangaScreen> {
   @override
   Widget build(BuildContext context) {
     final dateStr = '${_selectedDate.day.toString().padLeft(2,'0')}-${_selectedDate.month.toString().padLeft(2,'0')}-${_selectedDate.year}';
-    final timeStr = _selectedTime.format(context);
 
     return Scaffold(
       backgroundColor: kBg,
@@ -149,7 +113,6 @@ class _PanchangaScreenState extends State<PanchangaScreen> {
                           onPressed: () {
                             setState(() {
                               _selectedDate = DateTime.now();
-                              _selectedTime = TimeOfDay.now();
                             });
                             _calcPanchang();
                           },
@@ -184,7 +147,10 @@ class _PanchangaScreenState extends State<PanchangaScreen> {
                           },
                           onPageChanged: (focusedDay) {
                             _focusedDay = focusedDay;
-                            _loadMonthEvents(focusedDay);
+                            // Load this month's festivals from cache or compute
+                            FestivalCacheService.loadMonth(focusedDay.year, focusedDay.month).then((_) {
+                              if (mounted) setState(() {});
+                            });
                           },
                           calendarStyle: CalendarStyle(
                             todayDecoration: BoxDecoration(
@@ -214,45 +180,6 @@ class _PanchangaScreenState extends State<PanchangaScreen> {
                     ]),
                   ),
 
-                  // Time Selector Card
-                  AppCard(
-                    child: GestureDetector(
-                      onTap: () async {
-                        final picked = await showTimePicker(
-                          context: context,
-                          initialTime: _selectedTime,
-                          builder: (ctx, child) => Theme(
-                            data: Theme.of(ctx).copyWith(
-                              colorScheme: ColorScheme.light(primary: kPurple2),
-                            ),
-                            child: child!,
-                          ),
-                        );
-                        if (picked != null) {
-                          setState(() => _selectedTime = picked);
-                          _calcPanchang();
-                        }
-                      },
-                      child: Row(children: [
-                        Icon(Icons.access_time, color: kPurple2, size: 20),
-                        const SizedBox(width: 10),
-                        Text('ಸಮಯ: ', style: TextStyle(
-                          fontWeight: FontWeight.w800, fontSize: 15, color: kPurple2)),
-                        Text(timeStr, style: TextStyle(
-                          fontSize: 16, fontWeight: FontWeight.w700, color: kText)),
-                        const Spacer(),
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                          decoration: BoxDecoration(
-                            color: kPurple2.withOpacity(0.1),
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: Text('ಬದಲಿಸಿ', style: TextStyle(
-                            color: kPurple2, fontSize: 12, fontWeight: FontWeight.w700)),
-                        ),
-                      ]),
-                    ),
-                  ),
 
                   // Date & Place info
                   AppCard(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
@@ -325,7 +252,7 @@ class _PanchangaScreenState extends State<PanchangaScreen> {
                                       child: Column(
                                         crossAxisAlignment: CrossAxisAlignment.start,
                                         children: [
-                                          Text('ಅರ್ಥ:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Colors.amber[800])),
+                                          Text('ನಿಯಮ:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Colors.amber[800])),
                                           const SizedBox(height: 4),
                                           Text(e.meaning, style: TextStyle(color: kText, fontSize: 13)),
                                         ],

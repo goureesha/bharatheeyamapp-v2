@@ -20,7 +20,8 @@ class GoogleAuthService {
   static GoogleSignIn get _instance {
     _googleSignIn ??= GoogleSignIn(
       scopes: _scopes,
-      clientId: _webClientId,
+      // clientId is only needed for web; on Android, SHA-1 fingerprint is used
+      clientId: kIsWeb ? _webClientId : null,
       serverClientId: _webClientId,
     );
     return _googleSignIn!;

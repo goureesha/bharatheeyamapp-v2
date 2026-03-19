@@ -7,6 +7,7 @@ import 'services/subscription_service.dart';
 import 'services/google_auth_service.dart';
 import 'services/install_checker.dart';
 import 'services/device_binding_service.dart';
+import 'services/festival_cache_service.dart';
 import 'package:flutter/foundation.dart';
 import 'package:sweph/sweph.dart';
 import 'core/ephemeris.dart';
@@ -41,6 +42,9 @@ Future<void> main() async {
     await DeviceBindingService.checkBinding();
   }
 
+  // Pre-load festival events for current year (async, non-blocking)
+  FestivalCacheService.loadYear(DateTime.now().year);
+
   runApp(const BharatheeyamApp());
 }
 
@@ -64,6 +68,7 @@ class _BharatheeyamAppState extends State<BharatheeyamApp> {
       valueListenable: AppThemes.themeNotifier,
       builder: (context, themeIndex, child) {
         return MaterialApp(
+          key: ValueKey('theme_$themeIndex'), // Forces full rebuild on theme change
           title: 'ಭಾರತೀಯಮ್',
           debugShowCheckedModeBanner: false,
           theme: ThemeData(
