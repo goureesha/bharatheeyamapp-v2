@@ -19,7 +19,10 @@ class SubscriptionService {
   static DateTime? trialStartDate;
 
   /// True if the user has access to the app (either subscribed or within trial)
-  static bool get hasAccess => hasSubscription || isTrialActive;
+  static bool get hasAccess {
+    if (kIsWeb) return true; // Web version is free (no Play Billing available)
+    return hasSubscription || isTrialActive;
+  }
 
   /// True if the free trial is still active
   static bool get isTrialActive {
