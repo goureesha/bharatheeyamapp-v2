@@ -47,11 +47,10 @@ class _AppointmentScreenState extends State<AppointmentScreen> {
         elevation: 0,
         centerTitle: true,
         actions: [
-          // Share available slots for selected day
           IconButton(
             icon: Icon(Icons.share, color: kTeal),
-            tooltip: 'ಲಭ್ಯ ಸ್ಲಾಟ್ ಹಂಚಿಕೊಳ್ಳಿ',
-            onPressed: () => _shareAvailableSlots(),
+            tooltip: 'ಕ್ಯಾಲೆಂಡರ್ ಹಂಚಿಕೊಳ್ಳಿ',
+            onPressed: () => _showShareConfigDialog(),
           ),
         ],
       ),
@@ -546,6 +545,185 @@ class _AppointmentScreenState extends State<AppointmentScreen> {
     final message = AppointmentService.weeklyCalendarMessage(days: days);
     final encoded = Uri.encodeComponent(message);
     launchUrl(Uri.parse('https://wa.me/?text=$encoded'), mode: LaunchMode.externalApplication);
+  }
+
+  // ─── Share Config Dialog ────────────────────────────────────
+
+  void _showShareConfigDialog() {
+    DateTime fromDate = DateTime.now().add(const Duration(days: 1));
+    DateTime toDate = DateTime.now().add(const Duration(days: 7));
+    TimeOfDay fromTime = const TimeOfDay(hour: 9, minute: 0);
+    TimeOfDay toTime = const TimeOfDay(hour: 17, minute: 0);
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: kCard,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setSheetState) {
+          return Padding(
+            padding: EdgeInsets.fromLTRB(20, 20, 20, MediaQuery.of(ctx).viewInsets.bottom + 20),
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Center(
+                    child: Container(width: 40, height: 4, decoration: BoxDecoration(color: kMuted.withOpacity(0.3), borderRadius: BorderRadius.circular(2))),
+                  ),
+                  const SizedBox(height: 16),
+                  Text('\u0c95\u0ccd\u0caf\u0cbe\u0cb2\u0cc6\u0c82\u0ca1\u0cb0\u0ccd \u0cb9\u0c82\u0c9a\u0cbf\u0c95\u0cca\u0cb3\u0ccd\u0cb3\u0cbf', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w900, color: kText)),
+                  const SizedBox(height: 6),
+                  Text('\u0ca6\u0cbf\u0ca8\u0cbe\u0c82\u0c95 \u0cae\u0ca4\u0ccd\u0ca4\u0cc1 \u0cb8\u0cae\u0caf \u0c86\u0caf\u0ccd\u0c95\u0cc6 \u0cae\u0cbe\u0ca1\u0cbf', style: TextStyle(color: kMuted, fontSize: 13)),
+                  const SizedBox(height: 20),
+
+                  // FROM DATE
+                  _configTile(
+                    icon: Icons.calendar_today,
+                    label: '\u0caa\u0ccd\u0cb0\u0cbe\u0cb0\u0c82\u0cad \u0ca6\u0cbf\u0ca8\u0cbe\u0c82\u0c95',
+                    value: _formatDate(fromDate),
+                    onTap: () async {
+                      final d = await showDatePicker(
+                        context: ctx, initialDate: fromDate,
+                        firstDate: DateTime.now(),
+                        lastDate: DateTime.now().add(const Duration(days: 365)),
+                      );
+                      if (d != null) setSheetState(() => fromDate = d);
+                    },
+                  ),
+                  const SizedBox(height: 10),
+
+                  // TO DATE
+                  _configTile(
+                    icon: Icons.event,
+                    label: '\u0c85\u0c82\u0ca4\u0ccd\u0caf \u0ca6\u0cbf\u0ca8\u0cbe\u0c82\u0c95',
+                    value: _formatDate(toDate),
+                    onTap: () async {
+                      final d = await showDatePicker(
+                        context: ctx, initialDate: toDate,
+                        firstDate: fromDate,
+                        lastDate: DateTime.now().add(const Duration(days: 365)),
+                      );
+                      if (d != null) setSheetState(() => toDate = d);
+                    },
+                  ),
+                  const SizedBox(height: 10),
+
+                  // FROM TIME
+                  _configTile(
+                    icon: Icons.access_time,
+                    label: '\u0caa\u0ccd\u0cb0\u0cbe\u0cb0\u0c82\u0cad \u0cb8\u0cae\u0caf',
+                    value: fromTime.format(ctx),
+                    onTap: () async {
+                      final t = await showTimePicker(context: ctx, initialTime: fromTime);
+                      if (t != null) setSheetState(() => fromTime = t);
+                    },
+                  ),
+                  const SizedBox(height: 10),
+
+                  // TO TIME
+                  _configTile(
+                    icon: Icons.access_time_filled,
+                    label: '\u0c85\u0c82\u0ca4\u0ccd\u0caf \u0cb8\u0cae\u0caf',
+                    value: toTime.format(ctx),
+                    onTap: () async {
+                      final t = await showTimePicker(context: ctx, initialTime: toTime);
+                      if (t != null) setSheetState(() => toTime = t);
+                    },
+                  ),
+
+                  const SizedBox(height: 24),
+
+                  // SHARE VIA WHATSAPP
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton.icon(
+                      icon: const Icon(Icons.share),
+                      label: const Text('WhatsApp \u0ca8\u0cb2\u0ccd\u0cb2\u0cbf \u0cb9\u0c82\u0c9a\u0cbf\u0c95\u0cca\u0cb3\u0ccd\u0cb3\u0cbf', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 15)),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF25D366),
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      ),
+                      onPressed: () {
+                        Navigator.pop(ctx);
+                        final message = AppointmentService.customCalendarMessage(
+                          fromDate: fromDate, toDate: toDate,
+                          fromHour: fromTime.hour, fromMinute: fromTime.minute,
+                          toHour: toTime.hour, toMinute: toTime.minute,
+                        );
+                        final encoded = Uri.encodeComponent(message);
+                        launchUrl(Uri.parse('https://wa.me/?text=$encoded'), mode: LaunchMode.externalApplication);
+                      },
+                    ),
+                  ),
+
+                  const SizedBox(height: 10),
+
+                  // CREATE GOOGLE CALENDAR BOOKING
+                  SizedBox(
+                    width: double.infinity,
+                    child: OutlinedButton.icon(
+                      icon: Icon(Icons.calendar_month, color: kTeal),
+                      label: Text('Google Calendar \u0cac\u0cc1\u0c95\u0cbf\u0c82\u0c97\u0ccd \u0cb2\u0cbf\u0c82\u0c95\u0ccd \u0cb0\u0c9a\u0cbf\u0cb8\u0cbf', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 15, color: kTeal)),
+                      style: OutlinedButton.styleFrom(
+                        side: BorderSide(color: kTeal),
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      ),
+                      onPressed: () async {
+                        Navigator.pop(ctx);
+                        setState(() => _isLoading = true);
+                        final link = await AppointmentService.createGoogleCalendarBookingLink(
+                          fromDate: fromDate, toDate: toDate,
+                          fromTime: '${fromTime.hour.toString().padLeft(2, '0')}:${fromTime.minute.toString().padLeft(2, '0')}',
+                          toTime: '${toTime.hour.toString().padLeft(2, '0')}:${toTime.minute.toString().padLeft(2, '0')}',
+                        );
+                        if (mounted) setState(() => _isLoading = false);
+                        if (link != null && mounted) {
+                          final msg = '\u0ca8\u0cae\u0cb8\u0ccd\u0c95\u0cbe\u0cb0,\n\n\u0c85\u0caa\u0cbe\u0caf\u0cbf\u0c82\u0c9f\u0ccd\u200c\u0cae\u0cc6\u0c82\u0c9f\u0ccd \u0cac\u0cc1\u0c95\u0ccd \u0cae\u0cbe\u0ca1\u0cb2\u0cc1 \u0c88 \u0cb2\u0cbf\u0c82\u0c95\u0ccd \u0cac\u0cb3\u0cb8\u0cbf:\n$link\n\n- \u0cad\u0cbe\u0cb0\u0ca4\u0cc0\u0caf\u0cae\u0ccd \u2728';
+                          final encoded = Uri.encodeComponent(msg);
+                          launchUrl(Uri.parse('https://wa.me/?text=$encoded'), mode: LaunchMode.externalApplication);
+                        }
+                      },
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _configTile({required IconData icon, required String label, required String value, required VoidCallback onTap}) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        decoration: BoxDecoration(
+          color: kBg,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: kTeal.withOpacity(0.2)),
+        ),
+        child: Row(
+          children: [
+            Icon(icon, color: kTeal, size: 22),
+            const SizedBox(width: 12),
+            Expanded(child: Text(label, style: TextStyle(color: kMuted, fontSize: 13))),
+            Text(value, style: TextStyle(color: kText, fontWeight: FontWeight.w700, fontSize: 15)),
+            const SizedBox(width: 6),
+            Icon(Icons.edit, color: kMuted, size: 16),
+          ],
+        ),
+      ),
+    );
   }
 
   // ─── Helpers ───────────────────────────────────────────
