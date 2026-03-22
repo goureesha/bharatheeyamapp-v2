@@ -14,38 +14,51 @@ import 'core/ephemeris.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  
+
+  SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp, DeviceOrientation.portraitDown]);
+
+  // Run the 3 critical startup tasks in PARALLEL (not sequentially)
+  // These are needed before the first frame renders:
+  //   1. Ephemeris engine (for calculations)
+  //   2. Subscription status (to decide paywall vs home)
+  //   3. Theme (to render with correct colors)
+  await Future.wait([
+    _initEphemeris(),
+    SubscriptionService.initialize(),
+    AppThemes.loadTheme(),
+  ]);
+
+  // Show the app immediately — don't block on network calls
+  runApp(const BharatheeyamApp());
+
+  // Defer non-critical checks to AFTER the first frame renders
+  // This makes the app feel instant while these run in the background
+  WidgetsBinding.instance.addPostFrameCallback((_) {
+    _deferredInit();
+  });
+}
+
+/// Ephemeris init with error handling (non-blocking on failure)
+Future<void> _initEphemeris() async {
   try {
-    // Attempt graceful initialization with retries for WASM/Assets.
-    // If it completely fails, we still boot the app so it doesn't crash on the logo screen.
     await Ephemeris.initSweph();
   } catch (e) {
     debugPrint("Failed to initialize Sweph: $e");
   }
+}
 
-  SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp, DeviceOrientation.portraitDown]);
-  
-  // Setup Google Play Billing bindings right away
-  await SubscriptionService.initialize();
-
-  // Load saved theme before starting the app
-  await AppThemes.loadTheme();
-
-  // Check if app is from Play Store
+/// Non-critical startup tasks that run AFTER the app is visible
+Future<void> _deferredInit() async {
+  // These don't affect initial screen rendering
   await InstallChecker.check();
-
-  // Try to restore Google sign-in silently
   await GoogleAuthService.signInSilently();
 
-  // Check device binding if signed in
   if (GoogleAuthService.isSignedIn) {
-    await DeviceBindingService.checkBinding();
+    DeviceBindingService.checkBinding(); // fire-and-forget, don't await
   }
 
-  // Pre-load festival events for current year (async, non-blocking)
+  // Pre-load festival events lazily (non-blocking)
   FestivalCacheService.loadYear(DateTime.now().year);
-
-  runApp(const BharatheeyamApp());
 }
 
 class BharatheeyamApp extends StatefulWidget {

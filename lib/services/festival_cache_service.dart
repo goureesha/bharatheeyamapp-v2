@@ -36,6 +36,7 @@ class FestivalCacheService {
 
     debugPrint('FestivalCache: Loading festivals for year $year...');
 
+    int count = 0;
     for (int month = 1; month <= 12; month++) {
       final daysInMonth = DateTime(year, month + 1, 0).day;
       for (int day = 1; day <= daysInMonth; day++) {
@@ -59,6 +60,12 @@ class FestivalCacheService {
           }
         } catch (e) {
           debugPrint('FestivalCache: Error computing $dateKey: $e');
+        }
+
+        // Yield to UI thread every 5 days to prevent jank
+        count++;
+        if (count % 5 == 0) {
+          await Future.delayed(Duration.zero);
         }
       }
     }
