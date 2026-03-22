@@ -4,6 +4,8 @@ import 'package:url_launcher/url_launcher.dart';
 import '../widgets/common.dart';
 import '../services/appointment_service.dart';
 import '../services/google_auth_service.dart';
+import '../services/client_service.dart';
+import 'client_detail_screen.dart';
 
 class AppointmentScreen extends StatefulWidget {
   const AppointmentScreen({super.key});
@@ -12,20 +14,30 @@ class AppointmentScreen extends StatefulWidget {
   State<AppointmentScreen> createState() => _AppointmentScreenState();
 }
 
-class _AppointmentScreenState extends State<AppointmentScreen> {
+class _AppointmentScreenState extends State<AppointmentScreen> with SingleTickerProviderStateMixin {
   DateTime _selectedDate = DateTime.now();
   DateTime _focusedDay = DateTime.now();
   bool _isLoading = true;
+  late TabController _tabCtrl;
+  String _clientSearch = '';
 
   @override
   void initState() {
     super.initState();
+    _tabCtrl = TabController(length: 2, vsync: this);
     _loadData();
+  }
+
+  @override
+  void dispose() {
+    _tabCtrl.dispose();
+    super.dispose();
   }
 
   Future<void> _loadData() async {
     setState(() => _isLoading = true);
     await AppointmentService.loadAll();
+    await ClientService.loadAll();
     if (mounted) setState(() => _isLoading = false);
   }
 
@@ -53,114 +65,128 @@ class _AppointmentScreenState extends State<AppointmentScreen> {
             onPressed: () => _showShareConfigDialog(),
           ),
         ],
+        bottom: TabBar(
+          controller: _tabCtrl,
+          indicatorColor: kTeal,
+          labelColor: kTeal,
+          unselectedLabelColor: kMuted,
+          labelStyle: const TextStyle(fontWeight: FontWeight.w800, fontSize: 14),
+          tabs: const [
+            Tab(icon: Icon(Icons.calendar_today, size: 18), text: 'ಅಪಾಯಿಂಟ್\u200cಮೆಂಟ್'),
+            Tab(icon: Icon(Icons.people, size: 18), text: 'ಗ್ರಾಹಕರು'),
+          ],
+        ),
       ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : !GoogleAuthService.isSignedIn
               ? _buildSignInPrompt()
-              : Column(
+              : TabBarView(
+                  controller: _tabCtrl,
                   children: [
-                    // Calendar
-                    AppCard(
-                      child: TableCalendar(
-                        firstDay: DateTime.now().subtract(const Duration(days: 365)),
-                        lastDay: DateTime.now().add(const Duration(days: 365)),
-                        focusedDay: _focusedDay,
-                        selectedDayPredicate: (d) => isSameDay(d, _selectedDate),
-                        onDaySelected: (selected, focused) {
-                          setState(() {
-                            _selectedDate = selected;
-                            _focusedDay = focused;
-                          });
-                        },
-                        onPageChanged: (focused) {
-                          _focusedDay = focused;
-                        },
-                        eventLoader: (day) => _getEventsForDay(day),
-                        calendarBuilders: CalendarBuilders(
-                          markerBuilder: (_, date, events) {
-                            if (events.isEmpty) return null;
-                            return Positioned(
-                              bottom: 4,
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: List.generate(
-                                  events.length > 3 ? 3 : events.length,
-                                  (_) => Container(
-                                    width: 6, height: 6,
-                                    margin: const EdgeInsets.symmetric(horizontal: 1),
-                                    decoration: BoxDecoration(color: kTeal, shape: BoxShape.circle),
+                    // Tab 1: Appointments (calendar + list)
+                    Column(
+                      children: [
+                        AppCard(
+                          child: TableCalendar(
+                            firstDay: DateTime.now().subtract(const Duration(days: 365)),
+                            lastDay: DateTime.now().add(const Duration(days: 365)),
+                            focusedDay: _focusedDay,
+                            selectedDayPredicate: (d) => isSameDay(d, _selectedDate),
+                            onDaySelected: (selected, focused) {
+                              setState(() {
+                                _selectedDate = selected;
+                                _focusedDay = focused;
+                              });
+                            },
+                            onPageChanged: (focused) {
+                              _focusedDay = focused;
+                            },
+                            eventLoader: (day) => _getEventsForDay(day),
+                            calendarBuilders: CalendarBuilders(
+                              markerBuilder: (_, date, events) {
+                                if (events.isEmpty) return null;
+                                return Positioned(
+                                  bottom: 4,
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: List.generate(
+                                      events.length > 3 ? 3 : events.length,
+                                      (_) => Container(
+                                        width: 6, height: 6,
+                                        margin: const EdgeInsets.symmetric(horizontal: 1),
+                                        decoration: BoxDecoration(color: kTeal, shape: BoxShape.circle),
+                                      ),
+                                    ),
                                   ),
-                                ),
-                              ),
-                            );
-                          },
-                        ),
-                        headerStyle: HeaderStyle(
-                          titleCentered: true,
-                          formatButtonVisible: false,
-                          titleTextStyle: TextStyle(color: kPurple2, fontWeight: FontWeight.bold, fontSize: 16),
-                        ),
-                        calendarStyle: CalendarStyle(
-                          todayDecoration: BoxDecoration(
-                            color: kPurple2.withOpacity(0.3),
-                            shape: BoxShape.circle,
-                          ),
-                          selectedDecoration: BoxDecoration(
-                            color: kTeal,
-                            shape: BoxShape.circle,
-                          ),
-                          todayTextStyle: TextStyle(color: kText, fontWeight: FontWeight.bold),
-                          selectedTextStyle: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-                          defaultTextStyle: TextStyle(color: kText),
-                          weekendTextStyle: TextStyle(color: Colors.redAccent),
-                        ),
-                        daysOfWeekStyle: DaysOfWeekStyle(
-                          weekdayStyle: TextStyle(color: kText, fontWeight: FontWeight.bold),
-                          weekendStyle: TextStyle(color: Colors.redAccent, fontWeight: FontWeight.bold),
-                        ),
-                      ),
-                    ),
-
-                    // Selected date header
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                      child: Row(
-                        children: [
-                          Icon(Icons.event_note, color: kTeal, size: 20),
-                          const SizedBox(width: 8),
-                          Text(
-                            _formatDate(_selectedDate),
-                            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: kText),
-                          ),
-                          const Spacer(),
-                          Text(
-                            '${dayAppointments.length} ಅಪಾಯಿಂಟ್\u200cಮೆಂಟ್',
-                            style: TextStyle(fontSize: 13, color: kMuted),
-                          ),
-                        ],
-                      ),
-                    ),
-
-                    // Appointments list
-                    Expanded(
-                      child: dayAppointments.isEmpty
-                          ? Center(
-                              child: Column(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Icon(Icons.event_available, size: 60, color: kMuted.withOpacity(0.3)),
-                                  const SizedBox(height: 12),
-                                  Text('ಯಾವುದೇ ಅಪಾಯಿಂಟ್\u200cಮೆಂಟ್ ಇಲ್ಲ', style: TextStyle(color: kMuted, fontSize: 15)),
-                                ],
-                              ),
-                            )
-                          : ListView.builder(
-                              padding: const EdgeInsets.symmetric(horizontal: 16),
-                              itemCount: dayAppointments.length,
-                              itemBuilder: (_, i) => _buildAppointmentCard(dayAppointments[i]),
+                                );
+                              },
                             ),
+                            headerStyle: HeaderStyle(
+                              titleCentered: true,
+                              formatButtonVisible: false,
+                              titleTextStyle: TextStyle(color: kPurple2, fontWeight: FontWeight.bold, fontSize: 16),
+                            ),
+                            calendarStyle: CalendarStyle(
+                              todayDecoration: BoxDecoration(
+                                color: kPurple2.withOpacity(0.3),
+                                shape: BoxShape.circle,
+                              ),
+                              selectedDecoration: BoxDecoration(
+                                color: kTeal,
+                                shape: BoxShape.circle,
+                              ),
+                              todayTextStyle: TextStyle(color: kText, fontWeight: FontWeight.bold),
+                              selectedTextStyle: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                              defaultTextStyle: TextStyle(color: kText),
+                              weekendTextStyle: TextStyle(color: Colors.redAccent),
+                            ),
+                            daysOfWeekStyle: DaysOfWeekStyle(
+                              weekdayStyle: TextStyle(color: kText, fontWeight: FontWeight.bold),
+                              weekendStyle: TextStyle(color: Colors.redAccent, fontWeight: FontWeight.bold),
+                            ),
+                          ),
+                        ),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                          child: Row(
+                            children: [
+                              Icon(Icons.event_note, color: kTeal, size: 20),
+                              const SizedBox(width: 8),
+                              Text(
+                                _formatDate(_selectedDate),
+                                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: kText),
+                              ),
+                              const Spacer(),
+                              Text(
+                                '${dayAppointments.length} ಅಪಾಯಿಂಟ್\u200cಮೆಂಟ್',
+                                style: TextStyle(fontSize: 13, color: kMuted),
+                              ),
+                            ],
+                          ),
+                        ),
+                        Expanded(
+                          child: dayAppointments.isEmpty
+                              ? Center(
+                                  child: Column(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Icon(Icons.event_available, size: 60, color: kMuted.withOpacity(0.3)),
+                                      const SizedBox(height: 12),
+                                      Text('ಯಾವುದೇ ಅಪಾಯಿಂಟ್\u200cಮೆಂಟ್ ಇಲ್ಲ', style: TextStyle(color: kMuted, fontSize: 15)),
+                                    ],
+                                  ),
+                                )
+                              : ListView.builder(
+                                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                                  itemCount: dayAppointments.length,
+                                  itemBuilder: (_, i) => _buildAppointmentCard(dayAppointments[i]),
+                                ),
+                        ),
+                      ],
                     ),
+                    // Tab 2: Clients
+                    _buildClientsTab(),
                   ],
                 ),
       floatingActionButton: GoogleAuthService.isSignedIn
@@ -194,12 +220,169 @@ class _AppointmentScreenState extends State<AppointmentScreen> {
     );
   }
 
+  // ─── Clients Tab ─────────────────────────────────────────
+
+  Widget _buildClientsTab() {
+    final allClients = ClientService.searchClients(_clientSearch);
+
+    return Column(
+      children: [
+        // Search
+        Padding(
+          padding: const EdgeInsets.all(14),
+          child: TextField(
+            onChanged: (v) => setState(() => _clientSearch = v),
+            decoration: InputDecoration(
+              hintText: 'ಹೆಸರು, ಫೋನ್ ಅಥವಾ ID ಹುಡುಕಿ...',
+              prefixIcon: Icon(Icons.search, color: kMuted),
+              isDense: true,
+              contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+              border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: kBorder)),
+              enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: kBorder)),
+              fillColor: kCard,
+              filled: true,
+            ),
+            style: TextStyle(color: kText),
+          ),
+        ),
+
+        // Stats
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          child: Row(
+            children: [
+              Icon(Icons.people, color: kTeal, size: 18),
+              const SizedBox(width: 6),
+              Text('${allClients.length} \u0c97\u0ccd\u0cb0\u0cbe\u0cb9\u0c95\u0cb0\u0cc1', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: kText)),
+            ],
+          ),
+        ),
+        const SizedBox(height: 8),
+
+        // Client list
+        Expanded(
+          child: allClients.isEmpty
+              ? Center(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.person_off, size: 60, color: kMuted.withOpacity(0.3)),
+                      const SizedBox(height: 12),
+                      Text(_clientSearch.isEmpty ? '\u0c97\u0ccd\u0cb0\u0cbe\u0cb9\u0c95\u0cb0\u0cc1 \u0c87\u0cb2\u0ccd\u0cb2' : '\u0caf\u0cbe\u0cb5\u0cc1\u0ca6\u0cc7 \u0cab\u0cb2\u0cbf\u0ca4\u0cbe\u0c82\u0cb6 \u0c87\u0cb2\u0ccd\u0cb2', style: TextStyle(color: kMuted)),
+                    ],
+                  ),
+                )
+              : ListView.builder(
+                  padding: const EdgeInsets.symmetric(horizontal: 14),
+                  itemCount: allClients.length,
+                  itemBuilder: (_, i) => _buildClientCard(allClients[i]),
+                ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildClientCard(Client client) {
+    final members = ClientService.getMembersForClient(client.clientId);
+    final phone = client.phone.replaceAll(RegExp(r'[^0-9]'), '');
+    final visits = AppointmentService.appointments.where((a) =>
+      a.clientId == client.clientId ||
+      a.clientPhone.replaceAll(RegExp(r'[^0-9]'), '') == phone
+    ).length;
+
+    return GestureDetector(
+      onTap: () => Navigator.push(
+        context,
+        MaterialPageRoute(builder: (_) => ClientDetailScreen(client: client)),
+      ).then((_) => _loadData()),
+      child: Card(
+        elevation: 0,
+        margin: const EdgeInsets.only(bottom: 10),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(14),
+          side: BorderSide(color: kBorder),
+        ),
+        color: kCard,
+        child: Padding(
+          padding: const EdgeInsets.all(14),
+          child: Row(
+            children: [
+              CircleAvatar(
+                radius: 22,
+                backgroundColor: kPurple2.withOpacity(0.15),
+                child: Text(
+                  client.name.isNotEmpty ? client.name[0].toUpperCase() : '?',
+                  style: TextStyle(fontWeight: FontWeight.w900, fontSize: 18, color: kPurple2),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Expanded(child: Text(client.name, style: TextStyle(fontWeight: FontWeight.w800, fontSize: 15, color: kText))),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: kTeal.withOpacity(0.12),
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          child: Text(client.clientId, style: TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: kTeal)),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 4),
+                    Row(
+                      children: [
+                        Icon(Icons.phone, size: 12, color: kMuted),
+                        const SizedBox(width: 4),
+                        Text(client.phone, style: TextStyle(fontSize: 12, color: kMuted)),
+                        const SizedBox(width: 12),
+                        Icon(Icons.event, size: 12, color: kMuted),
+                        const SizedBox(width: 4),
+                        Text('$visits \u0cad\u0cc7\u0c9f\u0cbf', style: TextStyle(fontSize: 12, color: kMuted)),
+                        const SizedBox(width: 12),
+                        Icon(Icons.people, size: 12, color: kMuted),
+                        const SizedBox(width: 4),
+                        Text('${members.length} \u0cb8\u0ca6\u0cb8\u0ccd\u0caf', style: TextStyle(fontSize: 12, color: kMuted)),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              Icon(Icons.chevron_right, color: kMuted),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+
   Widget _buildAppointmentCard(Appointment appt) {
     final isCompleted = appt.status == 'completed';
     final isCancelled = appt.status == 'cancelled';
     final statusColor = isCompleted ? Colors.green : (isCancelled ? Colors.red : kTeal);
     final statusIcon = isCompleted ? Icons.check_circle : (isCancelled ? Icons.cancel : Icons.schedule);
-    final statusText = isCompleted ? 'ಮುಗಿದಿದೆ' : (isCancelled ? 'ರದ್ದಾಗಿದೆ' : 'ಬುಕ್ ಆಗಿದೆ');
+    final statusText = isCompleted ? '\u0cae\u0cc1\u0c97\u0cbf\u0ca6\u0cbf\u0ca6\u0cc6' : (isCancelled ? '\u0cb0\u0ca6\u0ccd\u0ca6\u0cbe\u0c97\u0cbf\u0ca6\u0cc6' : '\u0cac\u0cc1\u0c95\u0ccd \u0c86\u0c97\u0cbf\u0ca6\u0cc6');
+
+    // Check if returning client
+    Client? client;
+    int visitCount = 0;
+    if (appt.clientId.isNotEmpty) {
+      client = ClientService.getClientById(appt.clientId);
+    } else if (appt.clientPhone.isNotEmpty) {
+      client = ClientService.getClientByPhone(appt.clientPhone);
+    }
+    if (client != null) {
+      final phone = client.phone.replaceAll(RegExp(r'[^0-9]'), '');
+      visitCount = AppointmentService.appointments.where((a) =>
+        a.clientId == client!.clientId ||
+        a.clientPhone.replaceAll(RegExp(r'[^0-9]'), '') == phone
+      ).length;
+    }
 
     return Card(
       elevation: 0,
@@ -214,28 +397,73 @@ class _AppointmentScreenState extends State<AppointmentScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Header: Client name + status
+            // Header: Client name + status + return visit badge
             Row(
               children: [
-                CircleAvatar(
-                  radius: 20,
-                  backgroundColor: statusColor.withOpacity(0.12),
-                  child: Text(
-                    appt.clientName.isNotEmpty ? appt.clientName[0].toUpperCase() : '?',
-                    style: TextStyle(color: statusColor, fontWeight: FontWeight.bold, fontSize: 18),
+                GestureDetector(
+                  onTap: client != null ? () => Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => ClientDetailScreen(client: client!)),
+                  ).then((_) => _loadData()) : null,
+                  child: CircleAvatar(
+                    radius: 20,
+                    backgroundColor: statusColor.withOpacity(0.12),
+                    child: Text(
+                      appt.clientName.isNotEmpty ? appt.clientName[0].toUpperCase() : '?',
+                      style: TextStyle(color: statusColor, fontWeight: FontWeight.bold, fontSize: 18),
+                    ),
                   ),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(appt.clientName, style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16, color: kText)),
-                      if (appt.clientPhone.isNotEmpty)
-                        Text(appt.clientPhone, style: TextStyle(color: kMuted, fontSize: 13)),
-                    ],
+                  child: GestureDetector(
+                    onTap: client != null ? () => Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => ClientDetailScreen(client: client!)),
+                    ).then((_) => _loadData()) : null,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(appt.clientName, style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16, color: kText,
+                          decoration: client != null ? TextDecoration.underline : null,
+                          decorationColor: kTeal,
+                        )),
+                        Row(
+                          children: [
+                            if (appt.clientPhone.isNotEmpty)
+                              Text(appt.clientPhone, style: TextStyle(color: kMuted, fontSize: 13)),
+                            if (appt.clientId.isNotEmpty) ...[
+                              const SizedBox(width: 6),
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+                                decoration: BoxDecoration(
+                                  color: kTeal.withOpacity(0.1),
+                                  borderRadius: BorderRadius.circular(4),
+                                ),
+                                child: Text(appt.clientId, style: TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: kTeal)),
+                              ),
+                            ],
+                          ],
+                        ),
+                      ],
+                    ),
                   ),
                 ),
+                // Return visit badge
+                if (visitCount > 1)
+                  Container(
+                    margin: const EdgeInsets.only(right: 6),
+                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+                    decoration: BoxDecoration(
+                      color: kOrange.withOpacity(0.12),
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: Row(mainAxisSize: MainAxisSize.min, children: [
+                      Icon(Icons.repeat, size: 12, color: kOrange),
+                      const SizedBox(width: 2),
+                      Text('${visitCount}\u0ca8\u0cc7 \u0cad\u0cc7\u0c9f\u0cbf', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w800, color: kOrange)),
+                    ]),
+                  ),
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                   decoration: BoxDecoration(

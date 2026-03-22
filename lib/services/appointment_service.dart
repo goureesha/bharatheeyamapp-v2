@@ -3,6 +3,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:googleapis/sheets/v4.dart' as sheets;
 import 'package:googleapis/calendar/v3.dart' as cal;
 import 'google_auth_service.dart';
+import 'client_service.dart';
 
 /// Appointment data model
 class Appointment {
@@ -15,6 +16,7 @@ class Appointment {
   final String status; // booked, cancelled, completed
   final String notes;
   final String createdAt;
+  final String clientId; // Links to Client.clientId (BH-2026-0001)
 
   Appointment({
     required this.id,
@@ -26,9 +28,10 @@ class Appointment {
     required this.status,
     required this.notes,
     required this.createdAt,
+    this.clientId = '',
   });
 
-  /// Parse from sheet row [date, startTime, endTime, clientName, phone, status, notes, createdAt]
+  /// Parse from sheet row [date, startTime, endTime, clientName, phone, status, notes, createdAt, clientId]
   factory Appointment.fromRow(int rowIndex, List<Object?> row) {
     final dateStr = row.isNotEmpty ? row[0].toString() : '';
     final parts = dateStr.split('-');
@@ -48,12 +51,13 @@ class Appointment {
       status: row.length > 5 ? row[5].toString() : 'booked',
       notes: row.length > 6 ? row[6].toString() : '',
       createdAt: row.length > 7 ? row[7].toString() : '',
+      clientId: row.length > 8 ? row[8].toString() : '',
     );
   }
 
   List<Object> toRow() => [
     '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}',
-    startTime, endTime, clientName, clientPhone, status, notes, createdAt,
+    startTime, endTime, clientName, clientPhone, status, notes, createdAt, clientId,
   ];
 
   /// Human-readable time for WhatsApp
@@ -124,8 +128,8 @@ class AppointmentService {
 
       // Write headers for Appointments tab
       await api.spreadsheets.values.update(
-        sheets.ValueRange(values: [['Date', 'Start', 'End', 'Client', 'Phone', 'Status', 'Notes', 'CreatedAt']]),
-        id, '$_apptTab!A1:H1',
+        sheets.ValueRange(values: [['Date', 'Start', 'End', 'Client', 'Phone', 'Status', 'Notes', 'CreatedAt', 'ClientId']]),
+        id, '$_apptTab!A1:I1',
         valueInputOption: 'RAW',
       );
 
@@ -166,7 +170,7 @@ class AppointmentService {
       if (sid == null) return;
 
       // Load appointments
-      final apptResp = await api.spreadsheets.values.get(sid, '$_apptTab!A:H');
+      final apptResp = await api.spreadsheets.values.get(sid, '$_apptTab!A:I');
       final apptRows = apptResp.values ?? [];
       _appointments = [];
       for (int i = 1; i < apptRows.length; i++) { // skip header row
@@ -212,6 +216,16 @@ class AppointmentService {
       final sid = await _getOrCreateSheet(api);
       if (sid == null) return false;
 
+      // Auto-create or link client
+      String linkedClientId = '';
+      if (clientPhone.isNotEmpty) {
+        final client = await ClientService.getOrCreateClient(
+          name: clientName,
+          phone: clientPhone,
+        );
+        if (client != null) linkedClientId = client.clientId;
+      }
+
       final now = DateTime.now();
       final appointment = Appointment(
         id: '0',
@@ -223,11 +237,12 @@ class AppointmentService {
         status: 'booked',
         notes: notes,
         createdAt: now.toIso8601String(),
+        clientId: linkedClientId,
       );
 
       await api.spreadsheets.values.append(
         sheets.ValueRange(values: [appointment.toRow()]),
-        sid, '$_apptTab!A:H',
+        sid, '$_apptTab!A:I',
         valueInputOption: 'RAW',
         insertDataOption: 'INSERT_ROWS',
       );
@@ -254,7 +269,7 @@ class AppointmentService {
       if (sid == null) return false;
 
       // Find the row in sheet
-      final apptResp = await api.spreadsheets.values.get(sid, '$_apptTab!A:H');
+      final apptResp = await api.spreadsheets.values.get(sid, '$_apptTab!A:I');
       final rows = apptResp.values ?? [];
       
       int? rowIdx;
