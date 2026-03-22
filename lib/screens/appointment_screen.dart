@@ -84,106 +84,107 @@ class _AppointmentScreenState extends State<AppointmentScreen> with SingleTicker
               : TabBarView(
                   controller: _tabCtrl,
                   children: [
-                    // Tab 1: Appointments (calendar + list)
-                    Column(
-                      children: [
-                        AppCard(
-                          child: TableCalendar(
-                            firstDay: DateTime.now().subtract(const Duration(days: 365)),
-                            lastDay: DateTime.now().add(const Duration(days: 365)),
-                            focusedDay: _focusedDay,
-                            selectedDayPredicate: (d) => isSameDay(d, _selectedDate),
-                            onDaySelected: (selected, focused) {
-                              setState(() {
-                                _selectedDate = selected;
+                    // Tab 1: Appointments (calendar + list) — all scrollable
+                    SingleChildScrollView(
+                      child: Column(
+                        children: [
+                          AppCard(
+                            child: TableCalendar(
+                              firstDay: DateTime.now().subtract(const Duration(days: 365)),
+                              lastDay: DateTime.now().add(const Duration(days: 365)),
+                              focusedDay: _focusedDay,
+                              selectedDayPredicate: (d) => isSameDay(d, _selectedDate),
+                              onDaySelected: (selected, focused) {
+                                setState(() {
+                                  _selectedDate = selected;
+                                  _focusedDay = focused;
+                                });
+                              },
+                              onPageChanged: (focused) {
                                 _focusedDay = focused;
-                              });
-                            },
-                            onPageChanged: (focused) {
-                              _focusedDay = focused;
-                            },
-                            eventLoader: (day) => _getEventsForDay(day),
-                            calendarBuilders: CalendarBuilders(
-                              markerBuilder: (_, date, events) {
-                                if (events.isEmpty) return null;
-                                return Positioned(
-                                  bottom: 4,
-                                  child: Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: List.generate(
-                                      events.length > 3 ? 3 : events.length,
-                                      (_) => Container(
-                                        width: 6, height: 6,
-                                        margin: const EdgeInsets.symmetric(horizontal: 1),
-                                        decoration: BoxDecoration(color: kTeal, shape: BoxShape.circle),
+                              },
+                              eventLoader: (day) => _getEventsForDay(day),
+                              calendarBuilders: CalendarBuilders(
+                                markerBuilder: (_, date, events) {
+                                  if (events.isEmpty) return null;
+                                  return Positioned(
+                                    bottom: 4,
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: List.generate(
+                                        events.length > 3 ? 3 : events.length,
+                                        (_) => Container(
+                                          width: 6, height: 6,
+                                          margin: const EdgeInsets.symmetric(horizontal: 1),
+                                          decoration: BoxDecoration(color: kTeal, shape: BoxShape.circle),
+                                        ),
                                       ),
                                     ),
-                                  ),
-                                );
-                              },
-                            ),
-                            headerStyle: HeaderStyle(
-                              titleCentered: true,
-                              formatButtonVisible: false,
-                              titleTextStyle: TextStyle(color: kPurple2, fontWeight: FontWeight.bold, fontSize: 16),
-                            ),
-                            calendarStyle: CalendarStyle(
-                              todayDecoration: BoxDecoration(
-                                color: kPurple2.withOpacity(0.3),
-                                shape: BoxShape.circle,
+                                  );
+                                },
                               ),
-                              selectedDecoration: BoxDecoration(
-                                color: kTeal,
-                                shape: BoxShape.circle,
+                              headerStyle: HeaderStyle(
+                                titleCentered: true,
+                                formatButtonVisible: false,
+                                titleTextStyle: TextStyle(color: kPurple2, fontWeight: FontWeight.bold, fontSize: 16),
                               ),
-                              todayTextStyle: TextStyle(color: kText, fontWeight: FontWeight.bold),
-                              selectedTextStyle: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-                              defaultTextStyle: TextStyle(color: kText),
-                              weekendTextStyle: TextStyle(color: Colors.redAccent),
-                            ),
-                            daysOfWeekStyle: DaysOfWeekStyle(
-                              weekdayStyle: TextStyle(color: kText, fontWeight: FontWeight.bold),
-                              weekendStyle: TextStyle(color: Colors.redAccent, fontWeight: FontWeight.bold),
-                            ),
-                          ),
-                        ),
-                        Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                          child: Row(
-                            children: [
-                              Icon(Icons.event_note, color: kTeal, size: 20),
-                              const SizedBox(width: 8),
-                              Text(
-                                _formatDate(_selectedDate),
-                                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: kText),
-                              ),
-                              const Spacer(),
-                              Text(
-                                '${dayAppointments.length} ಅಪಾಯಿಂಟ್\u200cಮೆಂಟ್',
-                                style: TextStyle(fontSize: 13, color: kMuted),
-                              ),
-                            ],
-                          ),
-                        ),
-                        Expanded(
-                          child: dayAppointments.isEmpty
-                              ? Center(
-                                  child: Column(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      Icon(Icons.event_available, size: 60, color: kMuted.withOpacity(0.3)),
-                                      const SizedBox(height: 12),
-                                      Text('ಯಾವುದೇ ಅಪಾಯಿಂಟ್\u200cಮೆಂಟ್ ಇಲ್ಲ', style: TextStyle(color: kMuted, fontSize: 15)),
-                                    ],
-                                  ),
-                                )
-                              : ListView.builder(
-                                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                                  itemCount: dayAppointments.length,
-                                  itemBuilder: (_, i) => _buildAppointmentCard(dayAppointments[i]),
+                              calendarStyle: CalendarStyle(
+                                todayDecoration: BoxDecoration(
+                                  color: kPurple2.withOpacity(0.3),
+                                  shape: BoxShape.circle,
                                 ),
-                        ),
-                      ],
+                                selectedDecoration: BoxDecoration(
+                                  color: kTeal,
+                                  shape: BoxShape.circle,
+                                ),
+                                todayTextStyle: TextStyle(color: kText, fontWeight: FontWeight.bold),
+                                selectedTextStyle: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                                defaultTextStyle: TextStyle(color: kText),
+                                weekendTextStyle: TextStyle(color: Colors.redAccent),
+                              ),
+                              daysOfWeekStyle: DaysOfWeekStyle(
+                                weekdayStyle: TextStyle(color: kText, fontWeight: FontWeight.bold),
+                                weekendStyle: TextStyle(color: Colors.redAccent, fontWeight: FontWeight.bold),
+                              ),
+                            ),
+                          ),
+                          Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                            child: Row(
+                              children: [
+                                Icon(Icons.event_note, color: kTeal, size: 20),
+                                const SizedBox(width: 8),
+                                Text(
+                                  _formatDate(_selectedDate),
+                                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: kText),
+                                ),
+                                const Spacer(),
+                                Text(
+                                  '${dayAppointments.length} ಅಪಾಯಿಂಟ್\u200cಮೆಂಟ್',
+                                  style: TextStyle(fontSize: 13, color: kMuted),
+                                ),
+                              ],
+                            ),
+                          ),
+                          if (dayAppointments.isEmpty)
+                            Padding(
+                              padding: const EdgeInsets.only(top: 40),
+                              child: Column(
+                                children: [
+                                  Icon(Icons.event_available, size: 60, color: kMuted.withOpacity(0.3)),
+                                  const SizedBox(height: 12),
+                                  Text('ಯಾವುದೇ ಅಪಾಯಿಂಟ್\u200cಮೆಂಟ್ ಇಲ್ಲ', style: TextStyle(color: kMuted, fontSize: 15)),
+                                ],
+                              ),
+                            )
+                          else
+                            ...dayAppointments.map((a) => Padding(
+                              padding: const EdgeInsets.symmetric(horizontal: 16),
+                              child: _buildAppointmentCard(a),
+                            )),
+                          const SizedBox(height: 80), // space for FAB
+                        ],
+                      ),
                     ),
                     // Tab 2: Clients
                     _buildClientsTab(),
