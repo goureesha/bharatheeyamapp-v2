@@ -19,12 +19,11 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:#0f172a;color:#e2e8f
 .slot{padding:10px 16px;border-radius:10px;border:2px solid #334155;background:#0f172a;color:#cbd5e1;font-weight:700;font-size:14px;cursor:pointer;transition:all .2s}
 .slot:hover{border-color:#5eead4;color:#5eead4}
 .slot.selected{background:#0d9488;border-color:#0d9488;color:#fff;transform:scale(1.05)}
-.slot.booked{background:#334155;border-color:#475569;color:#64748b;cursor:not-allowed;text-decoration:line-through}
 .field{margin-bottom:14px}
 .field label{display:block;font-size:13px;font-weight:600;color:#94a3b8;margin-bottom:6px}
 .field input{width:100%;padding:12px 14px;border-radius:10px;border:2px solid #334155;background:#0f172a;color:#e2e8f0;font-size:15px;font-weight:600;outline:none;transition:border .2s}
 .field input:focus{border-color:#5eead4}
-.book-btn{width:100%;padding:16px;border:none;border-radius:12px;background:linear-gradient(135deg,#0d9488,#059669);color:#fff;font-size:17px;font-weight:900;cursor:pointer;transition:all .2s;display:flex;align-items:center;justify-content:center;gap:8px}
+.book-btn{width:100%;padding:16px;border:none;border-radius:12px;background:linear-gradient(135deg,#0d9488,#059669);color:#fff;font-size:17px;font-weight:900;cursor:pointer;transition:all .2s;display:flex;align-items:center;justify-content:center;gap:8px;margin-top:8px}
 .book-btn:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(13,148,136,.3)}
 .book-btn:disabled{opacity:.4;cursor:not-allowed;transform:none;box-shadow:none}
 .summary{background:#064e3b;border:1px solid #065f46;border-radius:12px;padding:14px;margin-bottom:16px;display:none}
@@ -33,7 +32,13 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:#0f172a;color:#e2e8f
 .summary strong{color:#5eead4}
 .empty{text-align:center;padding:40px;color:#64748b;font-size:15px}
 .footer{text-align:center;padding:24px;color:#475569;font-size:12px}
-.badge{display:inline-block;background:#0d9488;color:#fff;font-size:11px;font-weight:700;padding:3px 8px;border-radius:6px;margin-left:6px}
+.info-box{background:#1e1b4b;border:1px solid #312e81;border-radius:12px;padding:14px;margin-bottom:16px}
+.info-box p{font-size:13px;color:#a5b4fc;line-height:1.6}
+.info-box .icon{font-size:20px;margin-right:6px}
+.success{display:none;text-align:center;padding:40px 20px}
+.success.show{display:block}
+.success h2{color:#5eead4;font-size:22px;margin-bottom:12px}
+.success p{color:#94a3b8;font-size:14px;line-height:1.6}
 </style>
 </head>
 <body>
@@ -95,30 +100,51 @@ function bookNow() {
   if (!name) { alert('ದಯವಿಟ್ಟು ನಿಮ್ಮ ಹೆಸರು ನಮೂದಿಸಿ'); return; }
   if (!phone) { alert('ದಯವಿಟ್ಟು ನಿಮ್ಮ ಫೋನ್ ಸಂಖ್ಯೆ ನಮೂದಿಸಿ'); return; }
 
-  const d = new Date(selectedSlot.date);
-  const dayName = dayNamesKn[d.getDay()];
-  const monthName = monthNamesKn[d.getMonth()];
-  const [h,m] = selectedSlot.time.split(':').map(Number);
-
   const data = parseData();
-  const astrologerPhone = data && data.phone ? data.phone : '';
+  const astrologerEmail = data && data.email ? data.email : '';
+  const slotMinutes = data && data.slotMin ? data.slotMin : 60;
 
-  const msg = `🙏 ನಮಸ್ಕಾರ,\n\n` +
-    `ನಾನು ಅಪಾಯಿಂಟ್‌ಮೆಂಟ್ ಬುಕ್ ಮಾಡಲು ಬಯಸುತ್ತೇನೆ.\n\n` +
-    `📅 ದಿನಾಂಕ: ${d.getDate()} ${monthName} (${dayName})\n` +
-    `⏰ ಸಮಯ: ${fmt12(h,m)}\n` +
-    `👤 ಹೆಸರು: ${name}\n` +
-    `📱 ಫೋನ್: ${phone}\n\n` +
-    `ದಯವಿಟ್ಟು ದೃಢಪಡಿಸಿ. 🙏`;
+  // Parse selected date and time
+  const d = new Date(selectedSlot.date);
+  const [sH, sM] = selectedSlot.time.split(':').map(Number);
 
-  let cleanPhone = astrologerPhone.replace(/[^0-9+]/g, '');
-  if (cleanPhone && !cleanPhone.startsWith('+')) cleanPhone = '+91' + cleanPhone;
+  // Calculate end time
+  const endTotal = sH * 60 + sM + slotMinutes;
+  const eH = Math.floor(endTotal / 60);
+  const eM = endTotal % 60;
 
-  const url = cleanPhone
-    ? `https://wa.me/${cleanPhone}?text=${encodeURIComponent(msg)}`
-    : `https://wa.me/?text=${encodeURIComponent(msg)}`;
+  // Format dates for Google Calendar URL: YYYYMMDDTHHmmSS
+  const pad2 = n => String(n).padStart(2, '0');
+  const year = d.getFullYear();
+  const month = pad2(d.getMonth() + 1);
+  const day = pad2(d.getDate());
 
-  window.open(url, '_blank');
+  const startStr = `${year}${month}${day}T${pad2(sH)}${pad2(sM)}00`;
+  const endStr = `${year}${month}${day}T${pad2(eH)}${pad2(eM)}00`;
+
+  // Build Google Calendar event URL
+  const title = encodeURIComponent(`ಜಾತಕ ಅಪಾಯಿಂಟ್‌ಮೆಂಟ್ - ${name}`);
+  const details = encodeURIComponent(
+    `👤 ಗ್ರಾಹಕರು: ${name}\n📱 ಫೋನ್: ${phone}\n\nBooked via ಭಾರತೀಯಮ್`
+  );
+
+  let calUrl = `https://calendar.google.com/calendar/render?action=TEMPLATE`
+    + `&text=${title}`
+    + `&dates=${startStr}/${endStr}`
+    + `&details=${details}`
+    + `&ctz=Asia/Kolkata`;
+
+  // Add astrologer as guest so they get the invitation
+  if (astrologerEmail) {
+    calUrl += `&add=${encodeURIComponent(astrologerEmail)}`;
+  }
+
+  // Show success state
+  document.getElementById('bookingForm').style.display = 'none';
+  document.getElementById('successMsg').classList.add('show');
+
+  // Open Google Calendar
+  window.open(calUrl, '_blank');
 }
 
 function render() {
@@ -130,7 +156,12 @@ function render() {
     return;
   }
 
-  let html = '';
+  let html = '<div id="bookingForm">';
+
+  // Info box
+  html += '<div class="info-box"><p><span class="icon">📅</span>';
+  html += 'ಕೆಳಗಿನ ಲಭ್ಯ ಸಮಯಗಳಿಂದ ಒಂದನ್ನು ಆಯ್ಕೆ ಮಾಡಿ. ';
+  html += 'ನಿಮ್ಮ ಬುಕಿಂಗ್ ನೇರವಾಗಿ Google Calendar ನಲ್ಲಿ ಕಾಣಿಸುತ್ತದೆ.</p></div>';
 
   // Available Slots
   html += '<div class="card"><h2>📅 ಲಭ್ಯ ಸಮಯಗಳು</h2>';
@@ -162,7 +193,17 @@ function render() {
   html += '</div>';
 
   // Book Button
-  html += '<button class="book-btn" onclick="bookNow()">✅ ಅಪಾಯಿಂಟ್‌ಮೆಂಟ್ ಬುಕ್ ಮಾಡಿ</button>';
+  html += '<button class="book-btn" onclick="bookNow()">📅 Google Calendar ನಲ್ಲಿ ಬುಕ್ ಮಾಡಿ</button>';
+
+  html += '</div>';
+
+  // Success message (hidden initially)
+  html += '<div class="success" id="successMsg">';
+  html += '<h2>✅ ಅಪಾಯಿಂಟ್‌ಮೆಂಟ್ ರಚಿಸಲಾಗಿದೆ!</h2>';
+  html += '<p>Google Calendar ತೆರೆಯುತ್ತಿದೆ...<br><br>';
+  html += 'ದಯವಿಟ್ಟು Calendar ನಲ್ಲಿ <strong>"Save"</strong> ಕ್ಲಿಕ್ ಮಾಡಿ.<br>';
+  html += 'ಇವೆಂಟ್ ನಿಮ್ಮ ಮತ್ತು ಜ್ಯೋತಿಷಿಯ Calendar ನಲ್ಲಿ ಕಾಣಿಸುತ್ತದೆ.</p>';
+  html += '</div>';
 
   app.innerHTML = html;
 }
@@ -171,5 +212,3 @@ render();
 </script>
 </body>
 </html>
-< ! - -   d e p l o y e d   - - >  
- 

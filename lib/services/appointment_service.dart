@@ -566,13 +566,13 @@ class AppointmentService {
     required int fromMinute,
     required int toHour,
     required int toMinute,
-    String astrologerPhone = '',
   }) {
     final customFromMin = fromHour * 60 + fromMinute;
     final customToMin = toHour * 60 + toMinute;
 
     // Build slots map: { "2026-03-24": ["09:00", "10:00", ...], ... }
     final slotsMap = <String, List<String>>{};
+    int slotDuration = 60; // default
     DateTime current = fromDate;
     while (!current.isAfter(toDate)) {
       final allSlots = getAvailableSlotsForDate(current);
@@ -585,12 +585,21 @@ class AppointmentService {
       if (filtered.isNotEmpty) {
         final dateKey = '${current.year}-${current.month.toString().padLeft(2, '0')}-${current.day.toString().padLeft(2, '0')}';
         slotsMap[dateKey] = filtered;
+        // Get slot duration from config
+        final daySlot = _availableSlots.firstWhere(
+          (s) => s.dayOfWeek == current.weekday,
+          orElse: () => AvailableSlot(dayOfWeek: 1, startTime: '09:00', endTime: '17:00', slotMinutes: 60),
+        );
+        slotDuration = daySlot.slotMinutes;
       }
       current = current.add(const Duration(days: 1));
     }
 
+    // Include astrologer's Google email so clients can send calendar invitation
+    final email = GoogleAuthService.userEmail ?? '';
+
     // Encode as JSON in URL hash
-    final jsonStr = '{"slots":${_slotsToJson(slotsMap)},"phone":"$astrologerPhone"}';
+    final jsonStr = '{"slots":${_slotsToJson(slotsMap)},"email":"$email","slotMin":$slotDuration}';
     final encoded = Uri.encodeComponent(jsonStr);
 
     return 'https://goureesha.github.io/bharatheeyamapp/booking.html#$encoded';
