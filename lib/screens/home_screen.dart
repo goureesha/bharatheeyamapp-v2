@@ -40,6 +40,9 @@ class HomeScreen extends StatelessWidget {
       _Section('ವೈದಿಕ ಘಡಿಯಾರ', 'Vedic Clock', Icons.watch_later_rounded, const Color(0xFF5B2C6F), () {
         Navigator.push(context, MaterialPageRoute(builder: (_) => const VedicClockScreen()));
       }),
+      _Section('ಅಪಾಯಿಂಟ್\u200cಮೆಂಟ್', 'Appointments', Icons.event_note, kTeal, () {
+        Navigator.push(context, MaterialPageRoute(builder: (_) => const AppointmentScreen()));
+      }),
       _Section('ಸೆಟ್ಟಿಂಗ್ಸ್', 'Settings', Icons.settings, kMuted, () {
         Navigator.push(context, MaterialPageRoute(builder: (_) => const SettingsScreen()));
       }),
@@ -77,30 +80,6 @@ class HomeScreen extends StatelessWidget {
                     ]),
                   ),
 
-                  // Appointment Button
-                  if (GoogleAuthService.isSignedIn)
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 16),
-                      child: GestureDetector(
-                        onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const AppointmentScreen())),
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                          decoration: BoxDecoration(
-                            color: kTeal.withOpacity(0.1),
-                            borderRadius: BorderRadius.circular(12),
-                            border: Border.all(color: kTeal.withOpacity(0.3)),
-                          ),
-                          child: Row(children: [
-                            Icon(Icons.event, color: kTeal, size: 22),
-                            const SizedBox(width: 10),
-                            Expanded(child: Text('ಅಪಾಯಿಂಟ್\u200cಮೆಂಟ್ ರಚಿಸಿ',
-                              style: TextStyle(color: kTeal, fontWeight: FontWeight.w700, fontSize: 14))),
-                            Icon(Icons.chevron_right, color: kTeal),
-                          ]),
-                        ),
-                      ),
-                    ),
-                  const SizedBox(height: 12),
 
                   // Sections Grid
                   Padding(
