@@ -11,6 +11,7 @@ import 'mantra_sangraha_screen.dart';
 import 'planets_screen.dart';
 import 'settings_screen.dart';
 import 'vedic_clock_screen.dart';
+import 'appointment_screen.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -81,7 +82,7 @@ class HomeScreen extends StatelessWidget {
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 16),
                       child: GestureDetector(
-                        onTap: () => _showAppointmentDialog(context),
+                        onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const AppointmentScreen())),
                         child: Container(
                           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                           decoration: BoxDecoration(

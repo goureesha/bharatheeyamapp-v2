@@ -1,0 +1,444 @@
+import 'package:flutter/foundation.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:googleapis/sheets/v4.dart' as sheets;
+import 'package:googleapis/calendar/v3.dart' as cal;
+import 'google_auth_service.dart';
+
+/// Appointment data model
+class Appointment {
+  final String id; // row index in sheet
+  final DateTime date;
+  final String startTime; // "HH:MM"
+  final String endTime;   // "HH:MM"
+  final String clientName;
+  final String clientPhone;
+  final String status; // booked, cancelled, completed
+  final String notes;
+  final String createdAt;
+
+  Appointment({
+    required this.id,
+    required this.date,
+    required this.startTime,
+    required this.endTime,
+    required this.clientName,
+    required this.clientPhone,
+    required this.status,
+    required this.notes,
+    required this.createdAt,
+  });
+
+  /// Parse from sheet row [date, startTime, endTime, clientName, phone, status, notes, createdAt]
+  factory Appointment.fromRow(int rowIndex, List<Object?> row) {
+    final dateStr = row.isNotEmpty ? row[0].toString() : '';
+    final parts = dateStr.split('-');
+    DateTime date;
+    try {
+      date = DateTime(int.parse(parts[0]), int.parse(parts[1]), int.parse(parts[2]));
+    } catch (_) {
+      date = DateTime.now();
+    }
+    return Appointment(
+      id: '${rowIndex + 1}', // 1-indexed row
+      date: date,
+      startTime: row.length > 1 ? row[1].toString() : '',
+      endTime: row.length > 2 ? row[2].toString() : '',
+      clientName: row.length > 3 ? row[3].toString() : '',
+      clientPhone: row.length > 4 ? row[4].toString() : '',
+      status: row.length > 5 ? row[5].toString() : 'booked',
+      notes: row.length > 6 ? row[6].toString() : '',
+      createdAt: row.length > 7 ? row[7].toString() : '',
+    );
+  }
+
+  List<Object> toRow() => [
+    '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}',
+    startTime, endTime, clientName, clientPhone, status, notes, createdAt,
+  ];
+
+  /// Human-readable time for WhatsApp
+  String get timeRange => '$startTime - $endTime';
+  String get dateStr => '${date.day}/${date.month}/${date.year}';
+}
+
+/// Available time slot configuration
+class AvailableSlot {
+  final int dayOfWeek; // 1=Monday, 7=Sunday
+  final String startTime; // "HH:MM"
+  final String endTime;
+  final int slotMinutes;
+
+  AvailableSlot({
+    required this.dayOfWeek,
+    required this.startTime,
+    required this.endTime,
+    required this.slotMinutes,
+  });
+}
+
+/// Manages appointments in a Google Sheet
+class AppointmentService {
+  static const _sheetKey = 'bharatheeyam_appt_sheet_id';
+  static const _apptTab = 'Appointments';
+  static const _slotsTab = 'AvailableSlots';
+
+  // In-memory cache
+  static List<Appointment> _appointments = [];
+  static List<AvailableSlot> _availableSlots = [];
+  static bool _isLoaded = false;
+
+  static List<Appointment> get appointments => _appointments;
+  static List<AvailableSlot> get availableSlots => _availableSlots;
+  static bool get isLoaded => _isLoaded;
+
+  // ─── Sheet Setup ─────────────────────────────────────────
+
+  static Future<sheets.SheetsApi?> _getApi() async {
+    final client = await GoogleAuthService.getAuthClient();
+    if (client == null) return null;
+    return sheets.SheetsApi(client);
+  }
+
+  static Future<String?> _getOrCreateSheet(sheets.SheetsApi api) async {
+    final prefs = await SharedPreferences.getInstance();
+    final existing = prefs.getString(_sheetKey);
+    if (existing != null) {
+      try {
+        await api.spreadsheets.get(existing);
+        return existing;
+      } catch (_) {
+        // Sheet may have been deleted
+      }
+    }
+
+    try {
+      final created = await api.spreadsheets.create(sheets.Spreadsheet(
+        properties: sheets.SpreadsheetProperties(title: 'ಭಾರತೀಯಮ್ - Appointments'),
+        sheets: [
+          sheets.Sheet(properties: sheets.SheetProperties(title: _apptTab)),
+          sheets.Sheet(properties: sheets.SheetProperties(title: _slotsTab, index: 1)),
+        ],
+      ));
+      final id = created.spreadsheetId!;
+      await prefs.setString(_sheetKey, id);
+
+      // Write headers for Appointments tab
+      await api.spreadsheets.values.update(
+        sheets.ValueRange(values: [['Date', 'Start', 'End', 'Client', 'Phone', 'Status', 'Notes', 'CreatedAt']]),
+        id, '$_apptTab!A1:H1',
+        valueInputOption: 'RAW',
+      );
+
+      // Write headers for AvailableSlots tab
+      await api.spreadsheets.values.update(
+        sheets.ValueRange(values: [['Day', 'Start', 'End', 'SlotMinutes']]),
+        id, '$_slotsTab!A1:D1',
+        valueInputOption: 'RAW',
+      );
+
+      // Default available slots: Mon-Sat, 9:00 - 17:00, 60 min slots
+      final defaultSlots = <List<Object>>[];
+      for (int d = 1; d <= 6; d++) {
+        defaultSlots.add([d.toString(), '09:00', '17:00', '60']);
+      }
+      await api.spreadsheets.values.append(
+        sheets.ValueRange(values: defaultSlots),
+        id, '$_slotsTab!A:D',
+        valueInputOption: 'RAW',
+        insertDataOption: 'INSERT_ROWS',
+      );
+
+      debugPrint('AppointmentService: Created sheet $id');
+      return id;
+    } catch (e) {
+      debugPrint('AppointmentService: Sheet creation error: $e');
+      return null;
+    }
+  }
+
+  // ─── Load All Data ─────────────────────────────────────────
+
+  static Future<void> loadAll() async {
+    try {
+      final api = await _getApi();
+      if (api == null) return;
+      final sid = await _getOrCreateSheet(api);
+      if (sid == null) return;
+
+      // Load appointments
+      final apptResp = await api.spreadsheets.values.get(sid, '$_apptTab!A:H');
+      final apptRows = apptResp.values ?? [];
+      _appointments = [];
+      for (int i = 1; i < apptRows.length; i++) { // skip header row
+        _appointments.add(Appointment.fromRow(i, apptRows[i]));
+      }
+
+      // Load available slots
+      final slotsResp = await api.spreadsheets.values.get(sid, '$_slotsTab!A:D');
+      final slotRows = slotsResp.values ?? [];
+      _availableSlots = [];
+      for (int i = 1; i < slotRows.length; i++) {
+        final row = slotRows[i];
+        if (row.isEmpty) continue;
+        _availableSlots.add(AvailableSlot(
+          dayOfWeek: int.tryParse(row[0].toString()) ?? 1,
+          startTime: row.length > 1 ? row[1].toString() : '09:00',
+          endTime: row.length > 2 ? row[2].toString() : '17:00',
+          slotMinutes: row.length > 3 ? (int.tryParse(row[3].toString()) ?? 60) : 60,
+        ));
+      }
+
+      _isLoaded = true;
+      debugPrint('AppointmentService: Loaded ${_appointments.length} appointments, ${_availableSlots.length} slots');
+    } catch (e) {
+      debugPrint('AppointmentService: Load error: $e');
+    }
+  }
+
+  // ─── CRUD Operations ─────────────────────────────────────
+
+  /// Add a new appointment
+  static Future<bool> addAppointment({
+    required DateTime date,
+    required String startTime,
+    required String endTime,
+    required String clientName,
+    required String clientPhone,
+    String notes = '',
+  }) async {
+    try {
+      final api = await _getApi();
+      if (api == null) return false;
+      final sid = await _getOrCreateSheet(api);
+      if (sid == null) return false;
+
+      final now = DateTime.now();
+      final appointment = Appointment(
+        id: '0',
+        date: date,
+        startTime: startTime,
+        endTime: endTime,
+        clientName: clientName,
+        clientPhone: clientPhone,
+        status: 'booked',
+        notes: notes,
+        createdAt: now.toIso8601String(),
+      );
+
+      await api.spreadsheets.values.append(
+        sheets.ValueRange(values: [appointment.toRow()]),
+        sid, '$_apptTab!A:H',
+        valueInputOption: 'RAW',
+        insertDataOption: 'INSERT_ROWS',
+      );
+
+      _appointments.add(appointment);
+
+      // Also create Google Calendar event
+      await _createCalendarEvent(appointment);
+
+      debugPrint('AppointmentService: Added appointment for ${appointment.clientName}');
+      return true;
+    } catch (e) {
+      debugPrint('AppointmentService: Add error: $e');
+      return false;
+    }
+  }
+
+  /// Update appointment status (cancel/complete)
+  static Future<bool> updateStatus(Appointment appt, String newStatus) async {
+    try {
+      final api = await _getApi();
+      if (api == null) return false;
+      final sid = await _getOrCreateSheet(api);
+      if (sid == null) return false;
+
+      // Find the row in sheet
+      final apptResp = await api.spreadsheets.values.get(sid, '$_apptTab!A:H');
+      final rows = apptResp.values ?? [];
+      
+      int? rowIdx;
+      for (int i = 1; i < rows.length; i++) {
+        final row = rows[i];
+        if (row.length > 3 &&
+            row[0].toString() == '${appt.date.year}-${appt.date.month.toString().padLeft(2, '0')}-${appt.date.day.toString().padLeft(2, '0')}' &&
+            row[1].toString() == appt.startTime &&
+            row[3].toString() == appt.clientName) {
+          rowIdx = i + 1; // 1-indexed
+          break;
+        }
+      }
+
+      if (rowIdx == null) return false;
+
+      await api.spreadsheets.values.update(
+        sheets.ValueRange(values: [[newStatus]]),
+        sid, '$_apptTab!F$rowIdx',
+        valueInputOption: 'RAW',
+      );
+
+      // Update local cache
+      final idx = _appointments.indexWhere((a) =>
+          a.date == appt.date && a.startTime == appt.startTime && a.clientName == appt.clientName);
+      if (idx >= 0) {
+        _appointments[idx] = Appointment(
+          id: appt.id, date: appt.date, startTime: appt.startTime,
+          endTime: appt.endTime, clientName: appt.clientName,
+          clientPhone: appt.clientPhone, status: newStatus,
+          notes: appt.notes, createdAt: appt.createdAt,
+        );
+      }
+
+      return true;
+    } catch (e) {
+      debugPrint('AppointmentService: Update error: $e');
+      return false;
+    }
+  }
+
+  /// Delete an appointment
+  static Future<bool> deleteAppointment(Appointment appt) async {
+    return updateStatus(appt, 'cancelled');
+  }
+
+  // ─── Queries ─────────────────────────────────────────────
+
+  /// Get appointments for a specific date
+  static List<Appointment> getAppointmentsForDate(DateTime date) {
+    return _appointments
+        .where((a) => a.date.year == date.year && a.date.month == date.month && a.date.day == date.day && a.status != 'cancelled')
+        .toList()
+      ..sort((a, b) => a.startTime.compareTo(b.startTime));
+  }
+
+  /// Get all dates that have appointments (for calendar dots)
+  static Map<DateTime, List<Appointment>> getAppointmentsByDate() {
+    final map = <DateTime, List<Appointment>>{};
+    for (final a in _appointments) {
+      if (a.status == 'cancelled') continue;
+      final key = DateTime(a.date.year, a.date.month, a.date.day);
+      map.putIfAbsent(key, () => []).add(a);
+    }
+    return map;
+  }
+
+  /// Get available time slots for a specific date
+  static List<String> getAvailableSlotsForDate(DateTime date) {
+    final dayOfWeek = date.weekday; // 1=Monday, 7=Sunday
+    final slot = _availableSlots.firstWhere(
+      (s) => s.dayOfWeek == dayOfWeek,
+      orElse: () => AvailableSlot(dayOfWeek: dayOfWeek, startTime: '', endTime: '', slotMinutes: 60),
+    );
+
+    if (slot.startTime.isEmpty) return []; // Not available this day
+
+    final slots = <String>[];
+    final startParts = slot.startTime.split(':');
+    final endParts = slot.endTime.split(':');
+    int startMin = int.parse(startParts[0]) * 60 + int.parse(startParts[1]);
+    final endMin = int.parse(endParts[0]) * 60 + int.parse(endParts[1]);
+
+    // Get already booked slots for this date
+    final booked = getAppointmentsForDate(date);
+    final bookedTimes = booked.map((a) => a.startTime).toSet();
+
+    while (startMin + slot.slotMinutes <= endMin) {
+      final h = (startMin ~/ 60).toString().padLeft(2, '0');
+      final m = (startMin % 60).toString().padLeft(2, '0');
+      final timeStr = '$h:$m';
+      if (!bookedTimes.contains(timeStr)) {
+        slots.add(timeStr);
+      }
+      startMin += slot.slotMinutes;
+    }
+
+    return slots;
+  }
+
+  // ─── Google Calendar Integration ──────────────────────────
+
+  static Future<void> _createCalendarEvent(Appointment appt) async {
+    try {
+      final client = await GoogleAuthService.getAuthClient();
+      if (client == null) return;
+
+      final calApi = cal.CalendarApi(client);
+      final startParts = appt.startTime.split(':');
+      final endParts = appt.endTime.split(':');
+
+      final start = DateTime(appt.date.year, appt.date.month, appt.date.day,
+          int.parse(startParts[0]), int.parse(startParts[1]));
+      final end = DateTime(appt.date.year, appt.date.month, appt.date.day,
+          int.parse(endParts[0]), int.parse(endParts[1]));
+
+      final event = cal.Event(
+        summary: 'ಜಾತಕ - ${appt.clientName}',
+        description: appt.notes.isNotEmpty ? appt.notes : 'ಭಾರತೀಯಮ್ ಅಪಾಯಿಂಟ್\u200cಮೆಂಟ್\nPhone: ${appt.clientPhone}',
+        start: cal.EventDateTime(dateTime: start, timeZone: 'Asia/Kolkata'),
+        end: cal.EventDateTime(dateTime: end, timeZone: 'Asia/Kolkata'),
+        reminders: cal.EventReminders(
+          useDefault: false,
+          overrides: [
+            cal.EventReminder(method: 'popup', minutes: 30),
+            cal.EventReminder(method: 'popup', minutes: 1440), // 24 hours before
+          ],
+        ),
+      );
+
+      await calApi.events.insert(event, 'primary');
+      debugPrint('AppointmentService: Calendar event created');
+    } catch (e) {
+      debugPrint('AppointmentService: Calendar event error: $e');
+    }
+  }
+
+  // ─── WhatsApp Message Templates ───────────────────────────
+
+  /// Generate WhatsApp confirmation message
+  static String confirmationMessage(Appointment appt) {
+    return 'ನಮಸ್ಕಾರ ${appt.clientName},\n\n'
+        'ನಿಮ್ಮ ಅಪಾಯಿಂಟ್\u200cಮೆಂಟ್ ದೃಢಪಡಿಸಲಾಗಿದೆ ✅\n\n'
+        '📅 ದಿನಾಂಕ: ${appt.dateStr}\n'
+        '⏰ ಸಮಯ: ${appt.timeRange}\n\n'
+        'ದಯವಿಟ್ಟು ಸಮಯಕ್ಕೆ ಸರಿಯಾಗಿ ಬನ್ನಿ.\n\n'
+        '- ಭಾರತೀಯಮ್ ✨';
+  }
+
+  /// Generate WhatsApp reminder message
+  static String reminderMessage(Appointment appt) {
+    return 'ನಮಸ್ಕಾರ ${appt.clientName},\n\n'
+        'ನಿಮ್ಮ ಅಪಾಯಿಂಟ್\u200cಮೆಂಟ್ ನಾಳೆಯ ಜ್ಞಾಪನೆ 🔔\n\n'
+        '📅 ದಿನಾಂಕ: ${appt.dateStr}\n'
+        '⏰ ಸಮಯ: ${appt.timeRange}\n\n'
+        'ದಯವಿಟ್ಟು ಸಮಯಕ್ಕೆ ಸರಿಯಾಗಿ ಬನ್ನಿ.\n\n'
+        '- ಭಾರತೀಯಮ್ ✨';
+  }
+
+  /// Generate available slots message to share with clients
+  static String availableSlotsMessage(DateTime date) {
+    final slots = getAvailableSlotsForDate(date);
+    if (slots.isEmpty) return 'ಈ ದಿನಾಂಕದಲ್ಲಿ ಯಾವುದೇ ಸ್ಲಾಟ್ ಲಭ್ಯವಿಲ್ಲ.';
+
+    final dateStr = '${date.day}/${date.month}/${date.year}';
+    final slotStr = slots.map((s) {
+      final parts = s.split(':');
+      final h = int.parse(parts[0]);
+      final amPm = h >= 12 ? 'PM' : 'AM';
+      final h12 = h > 12 ? h - 12 : (h == 0 ? 12 : h);
+      return '  ⏰ $h12:${parts[1]} $amPm';
+    }).join('\n');
+
+    return 'ನಮಸ್ಕಾರ,\n\n'
+        '📅 $dateStr ದಿನಾಂಕದಲ್ಲಿ ಲಭ್ಯವಿರುವ ಸ್ಲಾಟ್‌ಗಳು:\n\n'
+        '$slotStr\n\n'
+        'ಬುಕ್ ಮಾಡಲು ದಯವಿಟ್ಟು ಸಂಪರ್ಕಿಸಿ.\n\n'
+        '- ಭಾರತೀಯಮ್ ✨';
+  }
+
+  /// Clear all cached data
+  static void clearCache() {
+    _appointments.clear();
+    _availableSlots.clear();
+    _isLoaded = false;
+  }
+}
