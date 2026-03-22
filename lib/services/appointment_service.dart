@@ -160,7 +160,7 @@ class AppointmentService {
     }
   }
 
-  // ─── Load All Data ─────────────────────────────────────────
+   // ─── Load All Data ─────────────────────────────────────────
 
   static Future<void> loadAll() async {
     try {
@@ -169,7 +169,7 @@ class AppointmentService {
       final sid = await _getOrCreateSheet(api);
       if (sid == null) return;
 
-      // Load appointments
+      // Load appointments from Google Sheets
       final apptResp = await api.spreadsheets.values.get(sid, '$_apptTab!A:I');
       final apptRows = apptResp.values ?? [];
       _appointments = [];
@@ -192,12 +192,115 @@ class AppointmentService {
         ));
       }
 
+      // ─── Sync from Google Calendar ──────────────────────────
+      await _syncFromGoogleCalendar(api, sid);
+
       _isLoaded = true;
       debugPrint('AppointmentService: Loaded ${_appointments.length} appointments, ${_availableSlots.length} slots');
     } catch (e) {
       debugPrint('AppointmentService: Load error: $e');
     }
   }
+
+  /// Fetch events from Google Calendar and merge any that aren't in the sheet
+  static Future<void> _syncFromGoogleCalendar(sheets.SheetsApi sheetsApi, String sheetId) async {
+    try {
+      final client = await GoogleAuthService.getAuthClient();
+      if (client == null) return;
+
+      final calApi = cal.CalendarApi(client);
+      final now = DateTime.now();
+      final timeMin = now.subtract(const Duration(days: 90));
+      final timeMax = now.add(const Duration(days: 90));
+
+      final events = await calApi.events.list(
+        'primary',
+        timeMin: timeMin.toUtc(),
+        timeMax: timeMax.toUtc(),
+        singleEvents: true,
+        orderBy: 'startTime',
+        maxResults: 250,
+      );
+
+      if (events.items == null || events.items!.isEmpty) return;
+
+      // Build a set of existing appointment keys for deduplication
+      final existingKeys = <String>{};
+      for (final a in _appointments) {
+        final key = '${a.date.year}-${a.date.month.toString().padLeft(2, '0')}-${a.date.day.toString().padLeft(2, '0')}_${a.startTime}_${a.clientName}';
+        existingKeys.add(key);
+      }
+
+      int synced = 0;
+      for (final event in events.items!) {
+        if (event.start?.dateTime == null || event.end?.dateTime == null) continue;
+
+        final start = event.start!.dateTime!.toLocal();
+        final end = event.end!.dateTime!.toLocal();
+        final summary = event.summary ?? '';
+        final description = event.description ?? '';
+
+        // Extract client name (remove 'ಜಾತಕ - ' prefix if present)
+        String clientName = summary;
+        if (summary.startsWith('ಜಾತಕ - ')) {
+          clientName = summary.substring(7);
+        }
+
+        final dateStr = '${start.year}-${start.month.toString().padLeft(2, '0')}-${start.day.toString().padLeft(2, '0')}';
+        final startTime = '${start.hour.toString().padLeft(2, '0')}:${start.minute.toString().padLeft(2, '0')}';
+        final endTime = '${end.hour.toString().padLeft(2, '0')}:${end.minute.toString().padLeft(2, '0')}';
+
+        final key = '${dateStr}_${startTime}_$clientName';
+
+        // Skip if already exists
+        if (existingKeys.contains(key)) continue;
+
+        // Extract phone from description if present
+        String phone = '';
+        final phoneMatch = RegExp(r'Phone:\s*([+\d\s-]+)').firstMatch(description);
+        if (phoneMatch != null) phone = phoneMatch.group(1)?.trim() ?? '';
+
+        // Determine status from event
+        String status = 'booked';
+        if (event.status == 'cancelled') status = 'cancelled';
+
+        final appt = Appointment(
+          id: '0',
+          date: DateTime(start.year, start.month, start.day),
+          startTime: startTime,
+          endTime: endTime,
+          clientName: clientName,
+          clientPhone: phone,
+          status: status,
+          notes: description.replaceAll(RegExp(r'Phone:\s*[+\d\s-]+'), '').trim(),
+          createdAt: DateTime.now().toIso8601String(),
+        );
+
+        // Add to sheet so it persists
+        try {
+          await sheetsApi.spreadsheets.values.append(
+            sheets.ValueRange(values: [appt.toRow()]),
+            sheetId, '$_apptTab!A:I',
+            valueInputOption: 'RAW',
+            insertDataOption: 'INSERT_ROWS',
+          );
+        } catch (e) {
+          debugPrint('AppointmentService: Sync write error: $e');
+        }
+
+        _appointments.add(appt);
+        existingKeys.add(key);
+        synced++;
+      }
+
+      if (synced > 0) {
+        debugPrint('AppointmentService: Synced $synced events from Google Calendar');
+      }
+    } catch (e) {
+      debugPrint('AppointmentService: Calendar sync error: $e');
+    }
+  }
+
 
   // ─── CRUD Operations ─────────────────────────────────────
 
