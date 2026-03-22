@@ -60,6 +60,7 @@ class _DashboardScreenState extends State<DashboardScreen>
     with SingleTickerProviderStateMixin {
   late TabController _tabCtrl;
   String _notes = '';
+  final _newNoteController = TextEditingController();
   Map<String, int> _aroodhas = {};
   int? _janmaNakshatraIdx;
   int? _dinaNakshatraIdx;
@@ -602,6 +603,9 @@ class _DashboardScreenState extends State<DashboardScreen>
   // TAB 10: NOTES
   // ─────────────────────────────────────────────
   Widget _buildNotesTab() {
+    // Parse notes into timestamped entries (format: [YYYY-MM-DD HH:MM] text\n---\n)
+    final entries = _parseNoteEntries(_notes);
+
     return Padding(
       padding: const EdgeInsets.all(16),
       child: Column(
@@ -615,7 +619,6 @@ class _DashboardScreenState extends State<DashboardScreen>
                     onPressed: () async {
                       final ok = await DocsService.openDoc(widget.name);
                       if (!ok && mounted) {
-                        // Create doc first if doesn't exist
                         await DocsService.syncNotes(widget.name, _notes);
                         await DocsService.openDoc(widget.name);
                       }
@@ -660,33 +663,127 @@ class _DashboardScreenState extends State<DashboardScreen>
             ],
           ),
           const SizedBox(height: 12),
-          // Notes text field
-          Expanded(
-            child: TextField(
-              maxLines: null,
-              expands: true,
-              textAlignVertical: TextAlignVertical.top,
-              onChanged: (v) => _notes = v,
-              controller: TextEditingController(text: _notes),
-              decoration: InputDecoration(
-                hintText: 'ನಿಮ್ಮ ಟಿಪ್ಪಣಿಗಳನ್ನು ಇಲ್ಲಿ ಬರೆಯಿರಿ...',
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide(color: kBorder),
+
+          // Add new note input
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              Expanded(
+                child: TextField(
+                  controller: _newNoteController,
+                  maxLines: 3,
+                  minLines: 1,
+                  decoration: InputDecoration(
+                    hintText: 'ಹೊಸ ಟಿಪ್ಪಣಿ ಸೇರಿಸಿ...',
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide(color: kBorder),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide(color: kBorder),
+                    ),
+                    fillColor: kCard,
+                    filled: true,
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                  ),
+                  style: TextStyle(fontSize: 14, color: kText),
                 ),
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide(color: kBorder),
-                ),
-                fillColor: kCard,
-                filled: true,
               ),
-              style: TextStyle(fontSize: 15, height: 1.5, color: kText),
-            ),
+              const SizedBox(width: 8),
+              GestureDetector(
+                onTap: () {
+                  final text = _newNoteController.text.trim();
+                  if (text.isEmpty) return;
+                  final now = DateTime.now();
+                  final stamp = '${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')} ${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}';
+                  final entry = '[$stamp] $text';
+                  setState(() {
+                    _notes = _notes.isEmpty ? entry : '$entry\n---\n$_notes';
+                    _newNoteController.clear();
+                  });
+                },
+                child: Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: kTeal,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: const Icon(Icons.send, color: Colors.white, size: 22),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+
+          // Notes history
+          Expanded(
+            child: entries.isEmpty
+                ? Center(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.note_alt_outlined, size: 48, color: kMuted.withOpacity(0.3)),
+                        const SizedBox(height: 8),
+                        Text('ಇನ್ನೂ ಟಿಪ್ಪಣಿಗಳಿಲ್ಲ', style: TextStyle(color: kMuted)),
+                      ],
+                    ),
+                  )
+                : ListView.builder(
+                    itemCount: entries.length,
+                    itemBuilder: (_, i) {
+                      final e = entries[i];
+                      return Container(
+                        margin: const EdgeInsets.only(bottom: 8),
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: kCard,
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: kBorder),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                Icon(Icons.access_time, size: 14, color: kTeal),
+                                const SizedBox(width: 6),
+                                Text(e['date'] ?? '', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: kTeal)),
+                                const Spacer(),
+                                Text('#${entries.length - i}', style: TextStyle(fontSize: 11, color: kMuted)),
+                              ],
+                            ),
+                            const SizedBox(height: 6),
+                            Text(e['text'] ?? '', style: TextStyle(fontSize: 14, height: 1.4, color: kText)),
+                          ],
+                        ),
+                      );
+                    },
+                  ),
           ),
         ],
       ),
     );
+  }
+
+  /// Parse notes string into list of {date, text} entries
+  List<Map<String, String>> _parseNoteEntries(String notes) {
+    if (notes.trim().isEmpty) return [];
+    final parts = notes.split('\n---\n');
+    final entries = <Map<String, String>>[];
+    for (final part in parts) {
+      final trimmed = part.trim();
+      if (trimmed.isEmpty) continue;
+      // Try to extract [YYYY-MM-DD HH:MM] prefix
+      final match = RegExp(r'^\[(\d{4}-\d{2}-\d{2}\s+\d{2}:\d{2})\]\s*(.*)$', dotAll: true).firstMatch(trimmed);
+      if (match != null) {
+        entries.add({'date': match.group(1)!, 'text': match.group(2)!.trim()});
+      } else {
+        // Legacy note without timestamp
+        entries.add({'date': 'ಹಳೆಯ ಟಿಪ್ಪಣಿ', 'text': trimmed});
+      }
+    }
+    return entries;
   }
 
   void _showAppointmentDialog() {
