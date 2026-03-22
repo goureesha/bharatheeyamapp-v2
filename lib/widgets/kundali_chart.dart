@@ -266,43 +266,87 @@ class KundaliChart extends StatelessWidget {
     );
   }
 
+  /// Compute navamsha (D9) rashi index from sidereal longitude
+  int _navamshaRashi(double deg) {
+    final block = (deg / 30).floor() % 4;
+    final start = [0, 9, 6, 3][block];
+    final steps = ((deg % 30) / 3.33333).floor();
+    return (start + steps) % 12;
+  }
+
+  /// Short name map: first 1-2 Kannada characters
+  static const _shortNames = <String, String>{
+    'ರವಿ': 'ರ', 'ಸೂರ್ಯ': 'ಸೂ',
+    'ಚಂದ್ರ': 'ಚಂ',
+    'ಕುಜ': 'ಕು', 'ಮಂಗಳ': 'ಮಂ',
+    'ಬುಧ': 'ಬು',
+    'ಗುರು': 'ಗು',
+    'ಶುಕ್ರ': 'ಶು',
+    'ಶನಿ': 'ಶ',
+    'ರಾಹು': 'ರಾ',
+    'ಕೇತು': 'ಕೇ',
+    'ಲಗ್ನ': 'ಲ',
+    'ಮಾಂದಿ': 'ಮಾ',
+  };
+
   Widget _planetChip(String name, {PlanetInfo? info, required ChipType type}) {
     Color color;
     switch (type) {
       case ChipType.lagna:  color = const Color(0xFFE53E3E); break;
       case ChipType.sphuta: color = const Color(0xFF805AD5); break;
       default:
-        // Assign specific colors to planets, ensuring they remain dark enough to be visible on light backgrounds
         switch (name) {
-          case 'ರವಿ': color = const Color(0xFFC53030); break; // Sun: Deep Red
-          case 'ಚಂದ್ರ': color = const Color(0xFF2C5282); break; // Moon: Indigo/Deep Blue
+          case 'ರವಿ': color = const Color(0xFFC53030); break;
+          case 'ಚಂದ್ರ': color = const Color(0xFF2C5282); break;
           case 'ಕುಜ':
-          case 'ಮಂಗಳ': color = const Color(0xFFE53E3E); break; // Mars: Bright Red
-          case 'ಬುಧ': color = const Color(0xFF2F855A); break; // Mercury: Green
-          case 'ಗುರು': color = const Color(0xFFDD6B20); break; // Jupiter: Orange/Gold
-          case 'ಶುಕ್ರ': color = const Color(0xFFB83280); break; // Venus: Magenta/Pink
-          case 'ಶನಿ': color = const Color(0xFF1A202C); break; // Saturn: Near Black
-          case 'ರಾಹು': color = const Color(0xFF744210); break; // Rahu: Dark Brown
-          case 'ಕೇತು': color = const Color(0xFF4A5568); break; // Ketu: Dark Greyish Blue
-          default: color = const Color(0xFF2B6CB0); // Default Blue
+          case 'ಮಂಗಳ': color = const Color(0xFFE53E3E); break;
+          case 'ಬುಧ': color = const Color(0xFF2F855A); break;
+          case 'ಗುರು': color = const Color(0xFFDD6B20); break;
+          case 'ಶುಕ್ರ': color = const Color(0xFFB83280); break;
+          case 'ಶನಿ': color = const Color(0xFF1A202C); break;
+          case 'ರಾಹು': color = const Color(0xFF744210); break;
+          case 'ಕೇತು': color = const Color(0xFF4A5568); break;
+          default: color = const Color(0xFF2B6CB0);
         }
         break;
     }
 
-    String displayName = name;
+    // Build display text
+    final shortName = _shortNames[name] ?? name;
+    String displayText = shortName;
+    bool isCombust = false;
+    bool isVakri = false;
+
     if (info != null) {
-      // 1. Asta (Combust) -> Wrap in brackets
-      if (info.isCombust) {
-        displayName = '($displayName)';
+      isCombust = info.isCombust;
+      isVakri = info.speed < 0 && !['ರಾಹು', 'ಕೇತು'].contains(info.name);
+
+      // Degree within current rashi (0-30°)
+      final degInRashi = info.longitude % 30;
+      final degStr = '${degInRashi.toStringAsFixed(0)}°';
+      
+      // Navamsha rashi number (1-12) — only for D1 (varga == 1)
+      if (varga == 1 || varga == 0) {
+        final navIdx = _navamshaRashi(info.longitude);
+        final navNum = navIdx + 1; // 1-indexed display
+        displayText = '$shortName$degStr·$navNum';
+      } else {
+        displayText = '$shortName$degStr';
       }
-      // 2. Vakri (Retrograde) -> Reverse Arrow
-      if (info.speed < 0 && !['ರಾಹು', 'ಕೇತು'].contains(info.name)) {
-        displayName = '$displayName ↩';
-      } else if (info.speed < 0 && ['ರಾಹು', 'ಕೇತು'].contains(info.name)) {
-        // Technically Rahu/Ketu are always retrograde, usually we don't need to put arrows on them. 
-        // We'll skip the arrow for Rahu/Ketu to keep it clean.
+
+      // Vakri arrow
+      if (isVakri) {
+        displayText = '$displayText↩';
+      }
+
+      // Asta: wrap in brackets
+      if (isCombust) {
+        displayText = '($displayText)';
       }
     }
+
+    // Dim asta planets
+    final double opacity = isCombust ? 0.45 : 1.0;
 
     return GestureDetector(
       onTap: () {
@@ -310,10 +354,14 @@ class KundaliChart extends StatelessWidget {
       },
       behavior: HitTestBehavior.opaque,
       child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 2, horizontal: 4),
+        padding: const EdgeInsets.symmetric(vertical: 1, horizontal: 2),
         child: Text(
-          displayName,
-          style: TextStyle(fontSize: 15, fontWeight: FontWeight.w900, color: color),
+          displayText,
+          style: TextStyle(
+            fontSize: 11,
+            fontWeight: FontWeight.w900,
+            color: color.withValues(alpha: opacity),
+          ),
         ),
       ),
     );
