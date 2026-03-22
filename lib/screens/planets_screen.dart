@@ -80,10 +80,10 @@ class _PlanetsScreenState extends State<PlanetsScreen> with SingleTickerProvider
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: kBg,
       appBar: AppBar(
         title: const Text('ಗ್ರಹಗಳ ಮಾಹಿತಿ', style: TextStyle(fontWeight: FontWeight.bold)),
-        backgroundColor: Colors.white,
+        backgroundColor: kBg,
         foregroundColor: kPurple1,
         elevation: 0,
         centerTitle: true,
@@ -129,7 +129,7 @@ class _PlanetsScreenState extends State<PlanetsScreen> with SingleTickerProvider
                     )),
                     selected: _selectedPlanet == null,
                     selectedColor: kPurple1,
-                    backgroundColor: Colors.grey.shade100,
+                    backgroundColor: kCard,
                     onSelected: (_) => setState(() => _selectedPlanet = null),
                     visualDensity: VisualDensity.compact,
                   ),
@@ -147,7 +147,7 @@ class _PlanetsScreenState extends State<PlanetsScreen> with SingleTickerProvider
                     )),
                     selected: _selectedPlanet == p,
                     selectedColor: _getPlanetColor(p),
-                    backgroundColor: Colors.grey.shade100,
+                    backgroundColor: kCard,
                     onSelected: (_) => setState(() => _selectedPlanet = p),
                     visualDensity: VisualDensity.compact,
                   ),

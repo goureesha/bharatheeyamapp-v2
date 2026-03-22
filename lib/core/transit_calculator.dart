@@ -68,8 +68,9 @@ class TransitCalculator {
     final baseSunLng = basePos['Sun']![0];
     
     final planetsToCheck = {
-      'Sun': 'ರವಿ', 
-      'Mars': 'ಕುಜ', 
+      'Sun': 'ಸೂರ್ಯ', 
+      'Moon': 'ಚಂದ್ರ',
+      'Mars': 'ಮಂಗಳ', 
       'Mercury': 'ಬುಧ', 
       'Jupiter': 'ಗುರು', 
       'Venus': 'ಶುಕ್ರ', 
