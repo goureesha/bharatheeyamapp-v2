@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import '../services/export_service.dart';
 import '../core/calculator.dart';
@@ -603,14 +605,50 @@ class _DashboardScreenState extends State<DashboardScreen>
   // TAB 10: NOTES
   // ─────────────────────────────────────────────
   Widget _buildNotesTab() {
-    // Parse notes into timestamped entries (format: [YYYY-MM-DD HH:MM] text\n---\n)
     final entries = _parseNoteEntries(_notes);
 
-    return Padding(
+    // Build formatted text for share/print
+    String _buildShareText() {
+      final clientId = widget.extraInfo['clientId'] ?? '';
+      final dobStr = '${widget.dob.day.toString().padLeft(2, '0')}-${widget.dob.month.toString().padLeft(2, '0')}-${widget.dob.year}';
+      final timeStr = '${widget.hour.toString().padLeft(2, '0')}:${widget.minute.toString().padLeft(2, '0')} ${widget.ampm}';
+
+      final buf = StringBuffer();
+      buf.writeln('═══════════════════════════');
+      buf.writeln('   ✨ ಭಾರತೀಯಮ್ ✨');
+      buf.writeln('═══════════════════════════');
+      buf.writeln();
+      buf.writeln('👤 ಹೆಸರು: ${widget.name}');
+      if (clientId.isNotEmpty) buf.writeln('🆔 ಗ್ರಾಹಕ ID: $clientId');
+      buf.writeln('📅 ಜನ್ಮ ದಿನಾಂಕ: $dobStr');
+      buf.writeln('⏰ ಜನ್ಮ ಸಮಯ: $timeStr');
+      buf.writeln('📍 ಜನ್ಮ ಸ್ಥಳ: ${widget.place}');
+      buf.writeln('🌐 ಅಕ್ಷಾಂಶ/ರೇಖಾಂಶ: ${widget.lat.toStringAsFixed(4)}, ${widget.lon.toStringAsFixed(4)}');
+      buf.writeln();
+      buf.writeln('───────────────────────────');
+      buf.writeln('   📝 ಟಿಪ್ಪಣಿಗಳು');
+      buf.writeln('───────────────────────────');
+      buf.writeln();
+      if (entries.isEmpty) {
+        buf.writeln('ಯಾವುದೇ ಟಿಪ್ಪಣಿಗಳಿಲ್ಲ');
+      } else {
+        for (int i = 0; i < entries.length; i++) {
+          buf.writeln('🕐 ${entries[i]['date']}');
+          buf.writeln('   ${entries[i]['text']}');
+          if (i < entries.length - 1) buf.writeln();
+        }
+      }
+      buf.writeln();
+      buf.writeln('═══════════════════════════');
+      return buf.toString();
+    }
+
+    return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Action buttons
+          // Action buttons row 1: Google Docs + Appointment
           Row(
             children: [
               if (GoogleAuthService.isSignedIn) ...[
@@ -662,17 +700,98 @@ class _DashboardScreenState extends State<DashboardScreen>
                 ),
             ],
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 8),
 
-          // Add new note input
+          // Action buttons row 2: Share + Print
+          Row(
+            children: [
+              Expanded(
+                child: ElevatedButton.icon(
+                  onPressed: () {
+                    final text = _buildShareText();
+                    Clipboard.setData(ClipboardData(text: text));
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('ಕ್ಲಿಪ್‌ಬೋರ್ಡ್‌ಗೆ ನಕಲಿಸಲಾಗಿದೆ! ✅')),
+                    );
+                    // Also try to open WhatsApp share
+                    final encoded = Uri.encodeComponent(text);
+                    launchUrl(Uri.parse('https://wa.me/?text=$encoded'), mode: LaunchMode.externalApplication);
+                  },
+                  icon: Icon(Icons.share, size: 18),
+                  label: Text('ಹಂಚಿಕೊಳ್ಳಿ', style: TextStyle(fontSize: 13)),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.green,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 10),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: ElevatedButton.icon(
+                  onPressed: () {
+                    final text = _buildShareText();
+                    _showPrintPreview(text);
+                  },
+                  icon: Icon(Icons.print, size: 18),
+                  label: Text('ಪ್ರಿಂಟ್', style: TextStyle(fontSize: 13)),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: kOrange,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 10),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 14),
+
+          // Client info header card
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: kPurple2.withOpacity(0.08),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: kPurple2.withOpacity(0.2)),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Icon(Icons.person, size: 18, color: kPurple2),
+                    const SizedBox(width: 6),
+                    Expanded(child: Text(widget.name, style: TextStyle(fontSize: 16, fontWeight: FontWeight.w900, color: kPurple2))),
+                    if (widget.extraInfo['clientId'] != null && widget.extraInfo['clientId']!.isNotEmpty)
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                        decoration: BoxDecoration(
+                          color: kTeal.withOpacity(0.15),
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: Text(widget.extraInfo['clientId']!, style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: kTeal)),
+                      ),
+                  ],
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  '📅 ${widget.dob.day.toString().padLeft(2, '0')}-${widget.dob.month.toString().padLeft(2, '0')}-${widget.dob.year} | ⏰ ${widget.hour.toString().padLeft(2, '0')}:${widget.minute.toString().padLeft(2, '0')} ${widget.ampm} | 📍 ${widget.place}',
+                  style: TextStyle(fontSize: 12, color: kMuted),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 14),
+
+          // New note input — bigger
           Row(
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
               Expanded(
                 child: TextField(
                   controller: _newNoteController,
-                  maxLines: 3,
-                  minLines: 1,
+                  maxLines: 6,
+                  minLines: 3,
                   decoration: InputDecoration(
                     hintText: 'ಹೊಸ ಟಿಪ್ಪಣಿ ಸೇರಿಸಿ...',
                     border: OutlineInputBorder(
@@ -685,9 +804,9 @@ class _DashboardScreenState extends State<DashboardScreen>
                     ),
                     fillColor: kCard,
                     filled: true,
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                    contentPadding: const EdgeInsets.all(14),
                   ),
-                  style: TextStyle(fontSize: 14, color: kText),
+                  style: TextStyle(fontSize: 14, height: 1.5, color: kText),
                 ),
               ),
               const SizedBox(width: 8),
@@ -704,62 +823,115 @@ class _DashboardScreenState extends State<DashboardScreen>
                   });
                 },
                 child: Container(
-                  padding: const EdgeInsets.all(12),
+                  padding: const EdgeInsets.all(14),
                   decoration: BoxDecoration(
                     color: kTeal,
                     borderRadius: BorderRadius.circular(12),
                   ),
-                  child: const Icon(Icons.send, color: Colors.white, size: 22),
+                  child: const Icon(Icons.send, color: Colors.white, size: 24),
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 14),
 
-          // Notes history
-          Expanded(
-            child: entries.isEmpty
-                ? Center(
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
+          // Section title
+          Text('📋 ಟಿಪ್ಪಣಿ ಇತಿಹಾಸ (${entries.length})', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w900, color: kText)),
+          const SizedBox(height: 8),
+
+          // Notes history — inline (parent handles scroll)
+          if (entries.isEmpty)
+            Center(
+              child: Padding(
+                padding: const EdgeInsets.only(top: 30),
+                child: Column(
+                  children: [
+                    Icon(Icons.note_alt_outlined, size: 48, color: kMuted.withOpacity(0.3)),
+                    const SizedBox(height: 8),
+                    Text('ಇನ್ನೂ ಟಿಪ್ಪಣಿಗಳಿಲ್ಲ', style: TextStyle(color: kMuted)),
+                  ],
+                ),
+              ),
+            )
+          else
+            ...entries.asMap().entries.map((entry) {
+              final i = entry.key;
+              final e = entry.value;
+              return Container(
+                margin: const EdgeInsets.only(bottom: 8),
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: kCard,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: kBorder),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
                       children: [
-                        Icon(Icons.note_alt_outlined, size: 48, color: kMuted.withOpacity(0.3)),
-                        const SizedBox(height: 8),
-                        Text('ಇನ್ನೂ ಟಿಪ್ಪಣಿಗಳಿಲ್ಲ', style: TextStyle(color: kMuted)),
+                        Icon(Icons.access_time, size: 14, color: kTeal),
+                        const SizedBox(width: 6),
+                        Text(e['date'] ?? '', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: kTeal)),
+                        const Spacer(),
+                        Text('#${entries.length - i}', style: TextStyle(fontSize: 11, color: kMuted)),
                       ],
                     ),
-                  )
-                : ListView.builder(
-                    itemCount: entries.length,
-                    itemBuilder: (_, i) {
-                      final e = entries[i];
-                      return Container(
-                        margin: const EdgeInsets.only(bottom: 8),
-                        padding: const EdgeInsets.all(12),
-                        decoration: BoxDecoration(
-                          color: kCard,
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: kBorder),
-                        ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(
-                              children: [
-                                Icon(Icons.access_time, size: 14, color: kTeal),
-                                const SizedBox(width: 6),
-                                Text(e['date'] ?? '', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: kTeal)),
-                                const Spacer(),
-                                Text('#${entries.length - i}', style: TextStyle(fontSize: 11, color: kMuted)),
-                              ],
-                            ),
-                            const SizedBox(height: 6),
-                            Text(e['text'] ?? '', style: TextStyle(fontSize: 14, height: 1.4, color: kText)),
-                          ],
-                        ),
-                      );
-                    },
-                  ),
+                    const SizedBox(height: 6),
+                    Text(e['text'] ?? '', style: TextStyle(fontSize: 14, height: 1.4, color: kText)),
+                  ],
+                ),
+              );
+            }),
+          const SizedBox(height: 40),
+        ],
+      ),
+    );
+  }
+
+  void _showPrintPreview(String text) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: kBg,
+        title: Row(children: [
+          Icon(Icons.print, color: kPurple2),
+          const SizedBox(width: 8),
+          Text('ಪ್ರಿಂಟ್ ಪ್ರಿವ್ಯೂ', style: TextStyle(color: kText)),
+        ]),
+        content: SizedBox(
+          width: double.maxFinite,
+          height: 400,
+          child: SingleChildScrollView(
+            child: Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: SelectableText(
+                text,
+                style: const TextStyle(fontSize: 13, height: 1.5, color: Colors.black87, fontFamily: 'monospace'),
+              ),
+            ),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: Text('ಮುಚ್ಚಿ', style: TextStyle(color: kMuted)),
+          ),
+          ElevatedButton.icon(
+            onPressed: () {
+              Clipboard.setData(ClipboardData(text: text));
+              Navigator.pop(ctx);
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('ನಕಲಿಸಲಾಗಿದೆ — ಯಾವುದೇ ಟೆಕ್ಸ್ಟ್ ಎಡಿಟರ್‌ನಲ್ಲಿ ಪೇಸ್ಟ್ ಮಾಡಿ ಪ್ರಿಂಟ್ ಮಾಡಿ ✅')),
+              );
+            },
+            icon: const Icon(Icons.copy, size: 18),
+            label: const Text('ನಕಲಿಸಿ & ಪ್ರಿಂಟ್'),
+            style: ElevatedButton.styleFrom(backgroundColor: kTeal, foregroundColor: Colors.white),
           ),
         ],
       ),
@@ -774,12 +946,10 @@ class _DashboardScreenState extends State<DashboardScreen>
     for (final part in parts) {
       final trimmed = part.trim();
       if (trimmed.isEmpty) continue;
-      // Try to extract [YYYY-MM-DD HH:MM] prefix
       final match = RegExp(r'^\[(\d{4}-\d{2}-\d{2}\s+\d{2}:\d{2})\]\s*(.*)$', dotAll: true).firstMatch(trimmed);
       if (match != null) {
         entries.add({'date': match.group(1)!, 'text': match.group(2)!.trim()});
       } else {
-        // Legacy note without timestamp
         entries.add({'date': 'ಹಳೆಯ ಟಿಪ್ಪಣಿ', 'text': trimmed});
       }
     }
