@@ -542,6 +542,12 @@ class _AppointmentScreenState extends State<AppointmentScreen> {
     launchUrl(Uri.parse('https://wa.me/?text=$encoded'), mode: LaunchMode.externalApplication);
   }
 
+  void _shareCalendar({required int days}) {
+    final message = AppointmentService.weeklyCalendarMessage(days: days);
+    final encoded = Uri.encodeComponent(message);
+    launchUrl(Uri.parse('https://wa.me/?text=$encoded'), mode: LaunchMode.externalApplication);
+  }
+
   // ─── Helpers ───────────────────────────────────────────
 
   String _formatDate(DateTime d) {

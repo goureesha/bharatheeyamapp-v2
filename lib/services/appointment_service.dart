@@ -435,6 +435,55 @@ class AppointmentService {
         '- ಭಾರತೀಯಮ್ ✨';
   }
 
+  /// Generate a full weekly/monthly calendar of available slots for sharing
+  /// [days] = how many days ahead to include (7 for week, 30 for month)
+  static String weeklyCalendarMessage({int days = 7}) {
+    const dayNames = ['ಸೋಮವಾರ', 'ಮಂಗಳವಾರ', 'ಬುಧವಾರ', 'ಗುರುವಾರ', 'ಶುಕ್ರವಾರ', 'ಶನಿವಾರ', 'ರವಿವಾರ'];
+    const months = ['ಜನವರಿ', 'ಫೆಬ್ರವರಿ', 'ಮಾರ್ಚ್', 'ಏಪ್ರಿಲ್', 'ಮೇ', 'ಜೂನ್', 'ಜುಲೈ', 'ಆಗಸ್ಟ್', 'ಸೆಪ್ಟೆಂಬರ್', 'ಅಕ್ಟೋಬರ್', 'ನವೆಂಬರ್', 'ಡಿಸೆಂಬರ್'];
+
+    final today = DateTime.now();
+    final buf = StringBuffer();
+
+    buf.writeln('🙏 *ಭಾರತೀಯಮ್ - ಅಪಾಯಿಂಟ್\u200cಮೆಂಟ್ ಕ್ಯಾಲೆಂಡರ್*');
+    buf.writeln('━━━━━━━━━━━━━━━━━━━━━');
+    buf.writeln('');
+    buf.writeln('ಕೆಳಗಿನ ದಿನಾಂಕಗಳಲ್ಲಿ ಲಭ್ಯವಿರುವ ಸಮಯಗಳನ್ನು ನೋಡಿ.');
+    buf.writeln('ನಿಮಗೆ ಬೇಕಾದ ದಿನಾಂಕ ಮತ್ತು ಸಮಯವನ್ನು ಆಯ್ಕೆ ಮಾಡಿ ಉತ್ತರಿಸಿ.');
+    buf.writeln('');
+
+    bool anySlots = false;
+    for (int i = 1; i <= days; i++) {
+      final date = today.add(Duration(days: i));
+      final slots = getAvailableSlotsForDate(date);
+      if (slots.isEmpty) continue;
+
+      anySlots = true;
+      final dayName = dayNames[date.weekday - 1];
+      final monthName = months[date.month - 1];
+
+      buf.writeln('📅 *${date.day} $monthName ($dayName)*');
+      for (final s in slots) {
+        final parts = s.split(':');
+        final h = int.parse(parts[0]);
+        final amPm = h >= 12 ? 'PM' : 'AM';
+        final h12 = h > 12 ? h - 12 : (h == 0 ? 12 : h);
+        buf.writeln('   ⏰ $h12:${parts[1]} $amPm');
+      }
+      buf.writeln('');
+    }
+
+    if (!anySlots) {
+      buf.writeln('❌ ಮುಂದಿನ $days ದಿನಗಳಲ್ಲಿ ಯಾವುದೇ ಸ್ಲಾಟ್ ಲಭ್ಯವಿಲ್ಲ.');
+    }
+
+    buf.writeln('━━━━━━━━━━━━━━━━━━━━━');
+    buf.writeln('ಬುಕ್ ಮಾಡಲು: ನಿಮ್ಮ ಹೆಸರು, ಫೋನ್ ಸಂಖ್ಯೆ, ಮತ್ತು ಬೇಕಾದ ದಿನಾಂಕ+ಸಮಯವನ್ನು ಕಳುಹಿಸಿ.');
+    buf.writeln('');
+    buf.writeln('- *ಭಾರತೀಯಮ್* ✨');
+
+    return buf.toString();
+  }
+
   /// Clear all cached data
   static void clearCache() {
     _appointments.clear();
