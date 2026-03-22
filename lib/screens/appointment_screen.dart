@@ -664,31 +664,30 @@ class _AppointmentScreenState extends State<AppointmentScreen> {
 
                   const SizedBox(height: 10),
 
-                  // CREATE GOOGLE CALENDAR BOOKING
+                  // CREATE BOOKING LINK FOR CLIENTS
                   SizedBox(
                     width: double.infinity,
                     child: OutlinedButton.icon(
-                      icon: Icon(Icons.calendar_month, color: kTeal),
-                      label: Text('Google Calendar \u0cac\u0cc1\u0c95\u0cbf\u0c82\u0c97\u0ccd \u0cb2\u0cbf\u0c82\u0c95\u0ccd \u0cb0\u0c9a\u0cbf\u0cb8\u0cbf', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 15, color: kTeal)),
+                      icon: Icon(Icons.link, color: kTeal),
+                      label: Text('ಬುಕಿಂಗ್ ಲಿಂಕ್ ಹಂಚಿಕೊಳ್ಳಿ', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 15, color: kTeal)),
                       style: OutlinedButton.styleFrom(
                         side: BorderSide(color: kTeal),
                         padding: const EdgeInsets.symmetric(vertical: 14),
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                       ),
-                      onPressed: () async {
+                      onPressed: () {
                         Navigator.pop(ctx);
-                        setState(() => _isLoading = true);
-                        final link = await AppointmentService.createGoogleCalendarBookingLink(
+                        final bookingUrl = AppointmentService.generateBookingPageUrl(
                           fromDate: fromDate, toDate: toDate,
-                          fromTime: '${fromTime.hour.toString().padLeft(2, '0')}:${fromTime.minute.toString().padLeft(2, '0')}',
-                          toTime: '${toTime.hour.toString().padLeft(2, '0')}:${toTime.minute.toString().padLeft(2, '0')}',
+                          fromHour: fromTime.hour, fromMinute: fromTime.minute,
+                          toHour: toTime.hour, toMinute: toTime.minute,
                         );
-                        if (mounted) setState(() => _isLoading = false);
-                        if (link != null && mounted) {
-                          final msg = '\u0ca8\u0cae\u0cb8\u0ccd\u0c95\u0cbe\u0cb0,\n\n\u0c85\u0caa\u0cbe\u0caf\u0cbf\u0c82\u0c9f\u0ccd\u200c\u0cae\u0cc6\u0c82\u0c9f\u0ccd \u0cac\u0cc1\u0c95\u0ccd \u0cae\u0cbe\u0ca1\u0cb2\u0cc1 \u0c88 \u0cb2\u0cbf\u0c82\u0c95\u0ccd \u0cac\u0cb3\u0cb8\u0cbf:\n$link\n\n- \u0cad\u0cbe\u0cb0\u0ca4\u0cc0\u0caf\u0cae\u0ccd \u2728';
-                          final encoded = Uri.encodeComponent(msg);
-                          launchUrl(Uri.parse('https://wa.me/?text=$encoded'), mode: LaunchMode.externalApplication);
-                        }
+                        final msg = '\u0ca8\u0cae\u0cb8\u0ccd\u0c95\u0cbe\u0cb0,\n\n'
+                            '\u0c85\u0caa\u0cbe\u0caf\u0cbf\u0c82\u0c9f\u0ccd\u200c\u0cae\u0cc6\u0c82\u0c9f\u0ccd \u0cac\u0cc1\u0c95\u0ccd \u0cae\u0cbe\u0ca1\u0cb2\u0cc1 \u0c88 \u0cb2\u0cbf\u0c82\u0c95\u0ccd \u0ca4\u0cc6\u0cb0\u0cc6\u0caf\u0cbf\u0cb0\u0cbf:\n'
+                            '$bookingUrl\n\n'
+                            '- \u0cad\u0cbe\u0cb0\u0ca4\u0cc0\u0caf\u0cae\u0ccd \u2728';
+                        final encoded = Uri.encodeComponent(msg);
+                        launchUrl(Uri.parse('https://wa.me/?text=$encoded'), mode: LaunchMode.externalApplication);
                       },
                     ),
                   ),

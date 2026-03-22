@@ -557,100 +557,52 @@ class AppointmentService {
     return buf.toString();
   }
 
-  /// Create Google Calendar events as bookable time blocks and return the calendar share link
-  static Future<String?> createGoogleCalendarBookingLink({
+  /// Generate a booking page URL with available slots encoded in the hash
+  /// The URL points to the GitHub Pages booking page (docs/booking.html)
+  static String generateBookingPageUrl({
     required DateTime fromDate,
     required DateTime toDate,
-    required String fromTime,
-    required String toTime,
-  }) async {
-    try {
-      final client = await GoogleAuthService.getAuthClient();
-      if (client == null) return null;
+    required int fromHour,
+    required int fromMinute,
+    required int toHour,
+    required int toMinute,
+    String astrologerPhone = '',
+  }) {
+    final customFromMin = fromHour * 60 + fromMinute;
+    final customToMin = toHour * 60 + toMinute;
 
-      final calApi = cal.CalendarApi(client);
-      final fromParts = fromTime.split(':');
-      final toParts = toTime.split(':');
-      final fromHour = int.parse(fromParts[0]);
-      final fromMinute = int.parse(fromParts[1]);
-      final toHour = int.parse(toParts[0]);
-      final toMinute = int.parse(toParts[1]);
+    // Build slots map: { "2026-03-24": ["09:00", "10:00", ...], ... }
+    final slotsMap = <String, List<String>>{};
+    DateTime current = fromDate;
+    while (!current.isAfter(toDate)) {
+      final allSlots = getAvailableSlotsForDate(current);
+      final filtered = allSlots.where((s) {
+        final parts = s.split(':');
+        final slotMin = int.parse(parts[0]) * 60 + int.parse(parts[1]);
+        return slotMin >= customFromMin && slotMin < customToMin;
+      }).toList();
 
-      DateTime current = fromDate;
-      int slotCount = 0;
-
-      while (!current.isAfter(toDate)) {
-        final allSlots = getAvailableSlotsForDate(current);
-        final customFromMin = fromHour * 60 + fromMinute;
-        final customToMin = toHour * 60 + toMinute;
-
-        final filtered = allSlots.where((s) {
-          final parts = s.split(':');
-          final slotMin = int.parse(parts[0]) * 60 + int.parse(parts[1]);
-          return slotMin >= customFromMin && slotMin < customToMin;
-        }).toList();
-
-        for (final slot in filtered) {
-          final sParts = slot.split(':');
-          final sH = int.parse(sParts[0]);
-          final sM = int.parse(sParts[1]);
-
-          // Find slot duration
-          final daySlot = _availableSlots.firstWhere(
-            (s) => s.dayOfWeek == current.weekday,
-            orElse: () => AvailableSlot(dayOfWeek: 1, startTime: '09:00', endTime: '17:00', slotMinutes: 60),
-          );
-          final endTotal = sH * 60 + sM + daySlot.slotMinutes;
-          final eH = endTotal ~/ 60;
-          final eM = endTotal % 60;
-
-          final start = DateTime(current.year, current.month, current.day, sH, sM);
-          final end = DateTime(current.year, current.month, current.day, eH, eM);
-
-          final event = cal.Event(
-            summary: '🟢 ಲಭ್ಯ - ಜಾತಕ ಅಪಾಯಿಂಟ್\u200cಮೆಂಟ್',
-            description: 'ಈ ಸಮಯ ಲಭ್ಯವಿದೆ. ಬುಕ್ ಮಾಡಲು ಸಂಪರ್ಕಿಸಿ.\n\nThis slot is available for booking.',
-            start: cal.EventDateTime(dateTime: start, timeZone: 'Asia/Kolkata'),
-            end: cal.EventDateTime(dateTime: end, timeZone: 'Asia/Kolkata'),
-            transparency: 'transparent', // Shows as "free" in calendar
-            status: 'tentative',
-          );
-
-          await calApi.events.insert(event, 'primary');
-          slotCount++;
-        }
-        current = current.add(const Duration(days: 1));
+      if (filtered.isNotEmpty) {
+        final dateKey = '${current.year}-${current.month.toString().padLeft(2, '0')}-${current.day.toString().padLeft(2, '0')}';
+        slotsMap[dateKey] = filtered;
       }
-
-      if (slotCount == 0) return null;
-
-      // Get the calendar's share link
-      final calendarId = 'primary';
-      final calendar = await calApi.calendars.get(calendarId);
-
-      // Make calendar public for viewing
-      try {
-        await calApi.acl.insert(
-          cal.AclRule(
-            scope: cal.AclRuleScope(type: 'default'),
-            role: 'reader',
-          ),
-          calendarId,
-        );
-      } catch (_) {
-        // Already public or permission denied — that's ok
-      }
-
-      final email = GoogleAuthService.userEmail ?? '';
-      // Google Calendar embed URL for sharing
-      final shareLink = 'https://calendar.google.com/calendar/embed?src=${Uri.encodeComponent(email)}&mode=WEEK';
-
-      debugPrint('AppointmentService: Created $slotCount available slot events');
-      return shareLink;
-    } catch (e) {
-      debugPrint('AppointmentService: Google Calendar booking error: $e');
-      return null;
+      current = current.add(const Duration(days: 1));
     }
+
+    // Encode as JSON in URL hash
+    final jsonStr = '{"slots":${_slotsToJson(slotsMap)},"phone":"$astrologerPhone"}';
+    final encoded = Uri.encodeComponent(jsonStr);
+
+    return 'https://goureesha.github.io/bharatheeyamapp/booking.html#$encoded';
+  }
+
+  /// Simple JSON serialization for slots map
+  static String _slotsToJson(Map<String, List<String>> slots) {
+    final entries = slots.entries.map((e) {
+      final times = e.value.map((t) => '"$t"').join(',');
+      return '"${e.key}":[$times]';
+    }).join(',');
+    return '{$entries}';
   }
 
   /// Clear all cached data
