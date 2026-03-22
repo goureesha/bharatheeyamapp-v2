@@ -42,7 +42,9 @@ class _AppointmentScreenState extends State<AppointmentScreen> with SingleTicker
   }
 
   List<Appointment> _getEventsForDay(DateTime day) {
-    return AppointmentService.getAppointmentsForDate(day);
+    return AppointmentService.getAppointmentsForDate(day)
+        .where((a) => a.status == 'booked')
+        .toList();
   }
 
   @override
@@ -116,7 +118,7 @@ class _AppointmentScreenState extends State<AppointmentScreen> with SingleTicker
                                         (_) => Container(
                                           width: 6, height: 6,
                                           margin: const EdgeInsets.symmetric(horizontal: 1),
-                                          decoration: BoxDecoration(color: kTeal, shape: BoxShape.circle),
+                                          decoration: BoxDecoration(color: Colors.green, shape: BoxShape.circle),
                                         ),
                                       ),
                                     ),
