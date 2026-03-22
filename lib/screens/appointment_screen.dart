@@ -385,6 +385,27 @@ class _AppointmentScreenState extends State<AppointmentScreen> with SingleTicker
       ).length;
     }
 
+    // Navigate to ClientDetailScreen — auto-create client if needed
+    void openClient() async {
+      Client? c = client;
+      if (c == null && appt.clientName.isNotEmpty) {
+        // Auto-create client record
+        c = await ClientService.getOrCreateClient(
+          name: appt.clientName,
+          phone: appt.clientPhone,
+        );
+        if (c != null && mounted) {
+          setState(() {}); // refresh to show new clientId
+        }
+      }
+      if (c != null && mounted) {
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => ClientDetailScreen(client: c!)),
+        ).then((_) => _loadData());
+      }
+    }
+
     return Card(
       elevation: 0,
       margin: const EdgeInsets.only(bottom: 12),
@@ -402,10 +423,7 @@ class _AppointmentScreenState extends State<AppointmentScreen> with SingleTicker
             Row(
               children: [
                 GestureDetector(
-                  onTap: client != null ? () => Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (_) => ClientDetailScreen(client: client!)),
-                  ).then((_) => _loadData()) : null,
+                  onTap: openClient,
                   child: CircleAvatar(
                     radius: 20,
                     backgroundColor: statusColor.withOpacity(0.12),
@@ -418,15 +436,12 @@ class _AppointmentScreenState extends State<AppointmentScreen> with SingleTicker
                 const SizedBox(width: 12),
                 Expanded(
                   child: GestureDetector(
-                    onTap: client != null ? () => Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (_) => ClientDetailScreen(client: client!)),
-                    ).then((_) => _loadData()) : null,
+                    onTap: openClient,
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(appt.clientName, style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16, color: kText,
-                          decoration: client != null ? TextDecoration.underline : null,
+                        Text(appt.clientName, style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16, color: kTeal,
+                          decoration: TextDecoration.underline,
                           decorationColor: kTeal,
                         )),
                         Row(
