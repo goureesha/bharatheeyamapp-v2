@@ -29,6 +29,23 @@
         <meta-data
             android:name="com.google.android.gms.ads.APPLICATION_ID"
             android:value="ca-app-pub-3940256099942544~3347511713"/>
+
+        <!-- Ghati Clock Widget -->
+        <receiver
+            android:name=".GhatiWidgetProvider"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+                <action android:name="com.bharatheeyam.CLOCK_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/ghati_widget_info" />
+        </receiver>
+
+        <receiver
+            android:name=".GhatiWidgetUpdateService"
+            android:exported="false" />
     </application>
     <queries>
         <intent>

@@ -3,6 +3,7 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import '../widgets/common.dart';
 import '../constants/strings.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../core/calculator.dart';
 
 class VedicClockScreen extends StatefulWidget {
@@ -69,6 +70,10 @@ class _VedicClockScreenState extends State<VedicClockScreen> {
       _lagnaLong = result.planets['ಲಗ್ನ']?.longitude ?? 0;
       _initialized = true;
     });
+
+    // Save sunrise for native widget
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setDouble('sunrise_hour24', _sunriseHour24);
 
     // Recalculate lagna every 2 minutes
     _lagnaTimer = Timer.periodic(const Duration(minutes: 2), (_) async {
