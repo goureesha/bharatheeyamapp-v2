@@ -202,25 +202,23 @@ class NorthIndianChart extends StatelessWidget {
     final boxH = s * 0.18;  // widget height
 
     // Centroids of each triangular house (as fractions of size)
-    // Computed from triangle vertices formed by outer rect, diamond, and diagonals
-    //
-    // Top:     H0=top-center, H11=top-left-corner, H1=top-right-corner
-    // Right:   H2=right-upper, H3=right-center, H4=right-lower
-    // Bottom:  H5=bottom-right-corner, H6=bottom-center, H7=bottom-left-corner
-    // Left:    H8=left-lower, H9=left-center, H10=left-upper
+    // North Indian houses go COUNTER-CLOCKWISE from top:
+    //   H1(asc)=top, H2=upper-left, H3=left-upper, H4=left-center,
+    //   H5=left-lower, H6=bottom-left, H7=bottom, H8=bottom-right,
+    //   H9=right-lower, H10=right-center, H11=right-upper, H12=upper-right
     final centroids = <int, Offset>{
-      0:  Offset(0.50, 0.17),   // top center (ascendant)
-      1:  Offset(0.75, 0.08),   // top-right corner
-      2:  Offset(0.92, 0.25),   // right-upper
-      3:  Offset(0.83, 0.50),   // right center
-      4:  Offset(0.92, 0.75),   // right-lower
-      5:  Offset(0.75, 0.92),   // bottom-right corner
-      6:  Offset(0.50, 0.83),   // bottom center
-      7:  Offset(0.25, 0.92),   // bottom-left corner
-      8:  Offset(0.08, 0.75),   // left-lower
-      9:  Offset(0.17, 0.50),   // left center
-      10: Offset(0.08, 0.25),   // left-upper
-      11: Offset(0.25, 0.08),   // top-left corner
+      0:  Offset(0.50, 0.17),   // H1  - top center (ascendant)
+      1:  Offset(0.25, 0.08),   // H2  - upper-left corner
+      2:  Offset(0.08, 0.25),   // H3  - left-upper
+      3:  Offset(0.17, 0.50),   // H4  - left center
+      4:  Offset(0.08, 0.75),   // H5  - left-lower
+      5:  Offset(0.25, 0.92),   // H6  - bottom-left corner
+      6:  Offset(0.50, 0.83),   // H7  - bottom center
+      7:  Offset(0.75, 0.92),   // H8  - bottom-right corner
+      8:  Offset(0.92, 0.75),   // H9  - right-lower
+      9:  Offset(0.83, 0.50),   // H10 - right center
+      10: Offset(0.92, 0.25),   // H11 - right-upper
+      11: Offset(0.75, 0.08),   // H12 - upper-right corner
     };
 
     for (int h = 0; h < 12; h++) {
