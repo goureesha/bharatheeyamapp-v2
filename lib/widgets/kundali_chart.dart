@@ -358,14 +358,7 @@ class KundaliChart extends StatelessWidget {
       if (dg == 30) { dg = 29; mn = 59; sc = 59; }
       final degStr = '$dg°${mn.toString().padLeft(2, '0')}\'${sc.toString().padLeft(2, '0')}"';
       
-      // Navamsha rashi number (1-12) — only for D1 (varga == 1)
-      if (varga == 1 || varga == 0) {
-        final navIdx = _navamshaRashi(info.longitude);
-        final navNum = navIdx + 1; // 1-indexed display
-        displayText = '$shortName $degStr·$navNum';
-      } else {
-        displayText = '$shortName $degStr';
-      }
+      displayText = '$shortName $degStr';
 
       // Vakri arrow
       if (isVakri) {
