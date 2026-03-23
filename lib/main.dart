@@ -27,6 +27,7 @@ Future<void> main() async {
     SubscriptionService.initialize(),
     AppThemes.loadTheme(),
     ChartStyle.loadStyle(),
+    AppLocale.loadLang(),
   ]);
 
   // Show the app immediately — don't block on network calls

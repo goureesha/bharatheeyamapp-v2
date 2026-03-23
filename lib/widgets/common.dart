@@ -99,6 +99,103 @@ class ChartStyle {
   }
 }
 
+// ─────────────────────────────────────────────
+// App Language / Locale (kn / hi)
+// ─────────────────────────────────────────────
+class AppLocale {
+  static final ValueNotifier<String> langNotifier = ValueNotifier('kn');
+  static String get current => langNotifier.value;
+  static bool get isHindi => langNotifier.value == 'hi';
+
+  static void setLang(String lang) {
+    if (lang != 'kn' && lang != 'hi') return;
+    langNotifier.value = lang;
+    SharedPreferences.getInstance().then((prefs) => prefs.setString('app_lang', lang));
+  }
+
+  static Future<void> loadLang() async {
+    final prefs = await SharedPreferences.getInstance();
+    langNotifier.value = prefs.getString('app_lang') ?? 'kn';
+  }
+
+  /// Get localized string by key
+  static String l(String key) {
+    final map = _strings[langNotifier.value] ?? _strings['kn']!;
+    return map[key] ?? _strings['kn']![key] ?? key;
+  }
+
+  static const Map<String, Map<String, String>> _strings = {
+    'kn': {
+      'appName': 'ಭಾರತೀಯಮ್',
+      'home': 'ಮನೆ', 'kundali': 'ಕುಂಡಲಿ', 'panchanga': 'ಪಂಚಾಂಗ',
+      'planets': 'ಗ್ರಹಗಳು', 'appointment': 'ಅಪಾಯಿಂಟ್\u200cಮೆಂಟ್',
+      'vedicClock': 'ವೈದಿಕ ಗಡಿಯಾರ', 'settings': 'ಸೆಟ್ಟಿಂಗ್ಸ್',
+      'aboutUs': 'ನಮ್ಮ ಬಗ್ಗೆ / About Us',
+      'themeSettings': 'ಥೀಮ್ ಸೆಟ್ಟಿಂಗ್ಸ್',
+      'chartStyle': 'ಕುಂಡಲಿ ಶೈಲಿ / Chart Style',
+      'language': 'ಭಾಷೆ / Language',
+      'southIndian': 'ದಕ್ಷಿಣ ಭಾರತ', 'northIndian': 'ಉತ್ತರ ಭಾರತ',
+      'googleAccount': 'Google ಖಾತೆ', 'premium': 'ಪ್ರೀಮಿಯಂ ಚಂದಾದಾರಿಕೆ',
+      'privacyPolicy': 'ಗೌಪ್ಯತಾ ನೀತಿ / Privacy Policy',
+      'name': 'ಹೆಸರು', 'dob': 'ಜನ್ಮ ದಿನಾಂಕ', 'time': 'ಜನ್ಮ ಸಮಯ',
+      'place': 'ಜನ್ಮ ಸ್ಥಳ', 'calculate': 'ಲೆಕ್ಕ ಹಾಕಿ',
+      'selectDate': 'ದಿನಾಂಕ ಆಯ್ಕೆ', 'selectTime': 'ಸಮಯ ಆಯ್ಕೆ',
+      'chart': 'ಕುಂಡಲಿ', 'sphuta': 'ಸ್ಫುಟ', 'bhava': 'ಭಾವ',
+      'varga': 'ವರ್ಗ', 'dasha': 'ದಶಾ', 'aroodha': 'ಆರೂಢ',
+      'ashtakavarga': 'ಅಷ್ಟಕವರ್ಗ', 'taranukoola': 'ತಾರಾನುಕೂಲ',
+      'matchMaking': 'ಗುಣಮಿಲಾನ', 'notes': 'ಟಿಪ್ಪಣಿ',
+      'tithi': 'ತಿಥಿ', 'nakshatra': 'ನಕ್ಷತ್ರ', 'yoga': 'ಯೋಗ',
+      'karana': 'ಕರಣ', 'vara': 'ವಾರ',
+      'sunrise': 'ಸೂರ್ಯೋದಯ', 'sunset': 'ಸೂರ್ಯಾಸ್ತ',
+      'rahuKala': 'ರಾಹು ಕಾಲ', 'gulikaKala': 'ಗುಳಿಕ ಕಾಲ',
+      'yamaghantaKala': 'ಯಮಘಂಟ ಕಾಲ',
+      'transits': 'ಗ್ರಹ ಸಂಚಾರ', 'vakri': 'ವಕ್ರಿ', 'asta': 'ಅಸ್ತ',
+      'direct': 'ನೇರ', 'retrograde': 'ವಕ್ರಿ', 'combust': 'ಅಸ್ತ',
+      'yes': 'ಹೌದು', 'no': 'ಇಲ್ಲ', 'notApplicable': 'ಅನ್ವಯಿಸುವುದಿಲ್ಲ',
+      'booked': 'ಬುಕ್ ಆಗಿದೆ', 'cancelled': 'ರದ್ದು', 'completed': 'ಪೂರ್ಣ',
+      'addNote': 'ಹೊಸ ಟಿಪ್ಪಣಿ ಸೇರಿಸಿ...', 'noteHistory': 'ಟಿಪ್ಪಣಿ ಇತಿಹಾಸ',
+      'noNotes': 'ಇನ್ನೂ ಟಿಪ್ಪಣಿಗಳಿಲ್ಲ',
+      'share': 'ಹಂಚಿಕೊಳ್ಳಿ', 'delete': 'ಅಳಿಸಿ',
+      'save': 'ಉಳಿಸಿ', 'cancel': 'ರದ್ದು', 'confirm': 'ದೃಢಪಡಿಸಿ',
+      'clientId': 'ಗ್ರಾಹಕ ID', 'phone': 'ಫೋನ್',
+    },
+    'hi': {
+      'appName': 'भारतीयम्',
+      'home': 'होम', 'kundali': 'कुंडली', 'panchanga': 'पंचांग',
+      'planets': 'ग्रह', 'appointment': 'अपॉइंटमेंट',
+      'vedicClock': 'वैदिक घड़ी', 'settings': 'सेटिंग्स',
+      'aboutUs': 'हमारे बारे में / About Us',
+      'themeSettings': 'थीम सेटिंग्स',
+      'chartStyle': 'कुंडली शैली / Chart Style',
+      'language': 'भाषा / Language',
+      'southIndian': 'दक्षिण भारत', 'northIndian': 'उत्तर भारत',
+      'googleAccount': 'Google खाता', 'premium': 'प्रीमियम सदस्यता',
+      'privacyPolicy': 'गोपनीयता नीति / Privacy Policy',
+      'name': 'नाम', 'dob': 'जन्म तिथि', 'time': 'जन्म समय',
+      'place': 'जन्म स्थान', 'calculate': 'गणना करें',
+      'selectDate': 'तिथि चुनें', 'selectTime': 'समय चुनें',
+      'chart': 'कुंडली', 'sphuta': 'स्फुट', 'bhava': 'भाव',
+      'varga': 'वर्ग', 'dasha': 'दशा', 'aroodha': 'आरूढ',
+      'ashtakavarga': 'अष्टकवर्ग', 'taranukoola': 'तारानुकूल',
+      'matchMaking': 'गुणमिलान', 'notes': 'टिप्पणी',
+      'tithi': 'तिथि', 'nakshatra': 'नक्षत्र', 'yoga': 'योग',
+      'karana': 'करण', 'vara': 'वार',
+      'sunrise': 'सूर्योदय', 'sunset': 'सूर्यास्त',
+      'rahuKala': 'राहु काल', 'gulikaKala': 'गुलिक काल',
+      'yamaghantaKala': 'यमघंट काल',
+      'transits': 'ग्रह संचार', 'vakri': 'वक्री', 'asta': 'अस्त',
+      'direct': 'मार्गी', 'retrograde': 'वक्री', 'combust': 'अस्त',
+      'yes': 'हाँ', 'no': 'नहीं', 'notApplicable': 'लागू नहीं',
+      'booked': 'बुक हुआ', 'cancelled': 'रद्द', 'completed': 'पूर्ण',
+      'addNote': 'नई टिप्पणी जोड़ें...', 'noteHistory': 'टिप्पणी इतिहास',
+      'noNotes': 'अभी तक कोई टिप्पणी नहीं',
+      'share': 'साझा करें', 'delete': 'हटाएं',
+      'save': 'सहेजें', 'cancel': 'रद्द करें', 'confirm': 'पुष्टि करें',
+      'clientId': 'ग्राहक ID', 'phone': 'फ़ोन',
+    },
+  };
+}
+
 Color kPurple1 = AppThemes.palettes[0]['purple1']!;
 Color kPurple2 = AppThemes.palettes[0]['purple2']!;
 Color kOrange  = const Color(0xFFDD6B20);
