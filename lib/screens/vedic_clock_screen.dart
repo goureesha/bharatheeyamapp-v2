@@ -127,7 +127,7 @@ class _VedicClockScreenState extends State<VedicClockScreen> {
             children: [
               const SizedBox(height: 8),
 
-              // LIVE CLOCK
+              // LIVE CLOCK (all info inside)
               if (!_initialized)
                 Padding(padding: const EdgeInsets.all(48), child: CircularProgressIndicator(color: kPurple2))
               else
@@ -141,29 +141,18 @@ class _VedicClockScreenState extends State<VedicClockScreen> {
                   padding: const EdgeInsets.all(10),
                   child: SizedBox(
                     width: clockSize, height: clockSize,
-                    child: CustomPaint(painter: _GhatiClockPainter(udayadiGhati: udGhati, lagnaLong: _lagnaLong)),
+                    child: CustomPaint(painter: _GhatiClockPainter(
+                      udayadiGhati: udGhati,
+                      lagnaLong: _lagnaLong,
+                      ghati: gh,
+                      vighati: vi,
+                      anuVighati: av,
+                      sunriseStr: _sunriseStr,
+                      sunsetStr: _sunsetStr,
+                    )),
                   ),
                 ),
 
-              // Digital ghati display
-              if (_initialized)
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                  child: AppCard(child: Column(children: [
-                    Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-                      _ghatiDigit('$gh', 'ಘಟಿ', const Color(0xFFE53E3E)),
-                      Text(' : ', style: TextStyle(fontSize: 28, fontWeight: FontWeight.w900, color: kText)),
-                      _ghatiDigit('${vi.toString().padLeft(2, '0')}', 'ವಿಘಟಿ', const Color(0xFF2B6CB0)),
-                      Text(' : ', style: TextStyle(fontSize: 28, fontWeight: FontWeight.w900, color: kText)),
-                      _ghatiDigit('${av.toString().padLeft(2, '0')}', 'ಅನುವಿಘಟಿ', const Color(0xFF38A169)),
-                    ]),
-                    const SizedBox(height: 10),
-                    Row(mainAxisAlignment: MainAxisAlignment.spaceEvenly, children: [
-                      _infoChip(Icons.wb_sunny, 'ಉದಯ', _sunriseStr, Colors.orange),
-                      _infoChip(Icons.nights_stay, 'ಅಸ್ತ', _sunsetStr, Colors.indigo),
-                    ]),
-                  ])),
-                ),
               const SizedBox(height: 16),
             ],
           )),
@@ -171,41 +160,30 @@ class _VedicClockScreenState extends State<VedicClockScreen> {
       ),
     );
   }
-
-  Widget _ghatiDigit(String val, String label, Color color) {
-    return Column(children: [
-      Container(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-        decoration: BoxDecoration(
-          color: color.withOpacity(0.1),
-          borderRadius: BorderRadius.circular(10),
-          border: Border.all(color: color.withOpacity(0.3)),
-        ),
-        child: Text(val, style: TextStyle(fontSize: 28, fontWeight: FontWeight.w900, color: color)),
-      ),
-      const SizedBox(height: 4),
-      Text(label, style: TextStyle(fontSize: 10, color: Colors.grey[600], fontWeight: FontWeight.w600)),
-    ]);
-  }
-
-  Widget _infoChip(IconData icon, String label, String value, Color color) {
-    return Row(mainAxisSize: MainAxisSize.min, children: [
-      Icon(icon, size: 16, color: color),
-      const SizedBox(width: 4),
-      Text('$label: ', style: TextStyle(fontSize: 12, color: Colors.grey[600])),
-      Text(value, style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: kText)),
-    ]);
-  }
 }
 
 // ============================================================
-// GHATI CLOCK PAINTER - 3 hands: Ghati, Vighati, Anu-Vighati
+// GHATI CLOCK PAINTER - 3 hands + digital info inside clock
 // ============================================================
 
 class _GhatiClockPainter extends CustomPainter {
   final double udayadiGhati;
   final double lagnaLong;
-  _GhatiClockPainter({required this.udayadiGhati, required this.lagnaLong});
+  final int ghati;
+  final int vighati;
+  final int anuVighati;
+  final String sunriseStr;
+  final String sunsetStr;
+
+  _GhatiClockPainter({
+    required this.udayadiGhati,
+    required this.lagnaLong,
+    required this.ghati,
+    required this.vighati,
+    required this.anuVighati,
+    required this.sunriseStr,
+    required this.sunsetStr,
+  });
 
   static double _d2r(double d) => d * pi / 180;
 
@@ -222,15 +200,15 @@ class _GhatiClockPainter extends CustomPainter {
     final R = min(cx, cy) - 4;
 
     // Extract time components
-    final ghati = udayadiGhati;
-    final vighatiTotal = (ghati - ghati.floor()) * 60;
+    final ghatiF = udayadiGhati;
+    final vighatiTotal = (ghatiF - ghatiF.floor()) * 60;
     final vighatiWhole = vighatiTotal.floor();
-    final anuVighati = ((vighatiTotal - vighatiWhole) * 60);
+    final anuVighatiF = ((vighatiTotal - vighatiWhole) * 60);
 
     // Angles (360° / 60 = 6° per unit, top = 0)
-    final ghatiAngle = _d2r((ghati % 60) * 6.0 - 90);
+    final ghatiAngle = _d2r((ghatiF % 60) * 6.0 - 90);
     final vighatiAngle = _d2r(vighatiTotal * 6.0 - 90);
-    final anuAngle = _d2r(anuVighati * 6.0 - 90);
+    final anuAngle = _d2r(anuVighatiF * 6.0 - 90);
 
     // === BACKGROUND ===
     final bg = Paint()..shader = RadialGradient(
@@ -243,7 +221,7 @@ class _GhatiClockPainter extends CustomPainter {
     canvas.drawCircle(center, R, Paint()..color = const Color(0xFFD4AF37)..style = PaintingStyle.stroke..strokeWidth = 3);
 
     // === RASHI RING (rotates independently based on lagna) ===
-    final ghatiDeg = (ghati % 60) * 6.0;
+    final ghatiDeg = (ghatiF % 60) * 6.0;
     final rashiOffset = ghatiDeg - lagnaLong;
     final outerR = R;
     final innerRashi = R * 0.92;
@@ -293,6 +271,33 @@ class _GhatiClockPainter extends CustomPainter {
     // === INNER RING ===
     canvas.drawCircle(center, R * 0.62, Paint()..color = const Color(0xFFD4AF37).withOpacity(0.12)..style = PaintingStyle.stroke..strokeWidth = 0.5);
 
+    // === DIGITAL INFO INSIDE CLOCK (above center) ===
+    // Digital ghati display
+    final digitalY = cy - R * 0.28;
+    final digitFs = R * 0.065;
+    final labelFs = R * 0.028;
+
+    // Ghati value (red)
+    final ghStr = '$ghati';
+    final viStr = vighati.toString().padLeft(2, '0');
+    final avStr = anuVighati.toString().padLeft(2, '0');
+    final fullDigital = '$ghStr : $viStr : $avStr';
+    _txt(canvas, fullDigital, cx, digitalY, Colors.white.withOpacity(0.95), digitFs, true);
+
+    // Labels below digits
+    _txt(canvas, 'ಘಟಿ    ವಿಘಟಿ   ಅನುವಿಘಟಿ', cx, digitalY + digitFs * 0.9, Colors.white.withOpacity(0.4), labelFs, false);
+
+    // === SUNRISE/SUNSET INFO (below center) ===
+    final infoY = cy + R * 0.28;
+    final infoFs = R * 0.035;
+
+    // Sunrise
+    _txt(canvas, '☀ ಉದಯ $sunriseStr', cx - R * 0.18, infoY,
+      const Color(0xFFFFAB40), infoFs, true);
+    // Sunset
+    _txt(canvas, '🌙 ಅಸ್ತ $sunsetStr', cx + R * 0.18, infoY,
+      const Color(0xFF7986CB), infoFs, true);
+
     // === GHATI HAND (short, thick, red) ===
     _drawHand(canvas, cx, cy, ghatiAngle, R * 0.45, 4.5, const Color(0xFFE53E3E), R * 0.08);
 
@@ -310,7 +315,7 @@ class _GhatiClockPainter extends CustomPainter {
     canvas.drawCircle(center, 5, Paint()..color = const Color(0xFF1A1A2E));
 
     // === LEGEND ===
-    final legendY = cy + R * 0.35;
+    final legendY = cy + R * 0.42;
     _txt(canvas, '● ಘಟಿ', cx - R * 0.22, legendY, const Color(0xFFE53E3E), R * 0.032, true);
     _txt(canvas, '● ವಿಘಟಿ', cx, legendY, const Color(0xFF2B6CB0), R * 0.032, true);
     _txt(canvas, '● ಅನುವಿಘಟಿ', cx + R * 0.25, legendY, const Color(0xFF38A169), R * 0.032, true);
@@ -346,5 +351,6 @@ class _GhatiClockPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant _GhatiClockPainter o) =>
-    o.udayadiGhati != udayadiGhati || o.lagnaLong != lagnaLong;
+    o.udayadiGhati != udayadiGhati || o.lagnaLong != lagnaLong ||
+    o.ghati != ghati || o.vighati != vighati || o.anuVighati != anuVighati;
 }
