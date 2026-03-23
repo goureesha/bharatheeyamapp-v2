@@ -172,8 +172,10 @@ class KundaliChart extends StatelessWidget {
               }
             }
             // Renumber: selected planet's bhava = 1st house
+            // Planet's rashi becomes the 1st house position on grid
+            final planetRashiIdx = (refLongitude / 30).floor() % 12;
             final relativeHouse = (bhavaIdx - refBhavaIdx + 12) % 12;
-            ri = (lagnaIdx + relativeHouse) % 12;
+            ri = (planetRashiIdx + relativeHouse) % 12;
           } else {
             ri = (lagnaIdx + bhavaIdx) % 12;
           }
