@@ -120,39 +120,60 @@ class KundaliChart extends StatelessWidget {
 
         int ri;
         if (isBhava) {
-          // Bhava chart: place planet based on which unequal house it falls into.
-          // result.bhavas contains the 12 precise Sripathi Bhava Madhyas (midpoints).
-          // We must calculate the Bhava Sandhi (boundaries) midway between adjacent midpoints.
+          // Bhava chart: use Sripathi Bhava Madhyas (unequal houses)
+          // Calculate bhava sandhi (boundaries) from midpoints
           final d = info.longitude;
           List<double> boundaries = List.filled(12, 0.0);
           for (int i = 0; i < 12; i++) {
             final m1 = result.bhavas[i];
             final m2 = result.bhavas[(i + 1) % 12];
-            
-            // Calculate midpoint of the shortest arc bridging m1 and m2
             double diff = (m2 - m1 + 360.0) % 360.0;
             boundaries[i] = (m1 + (diff / 2.0)) % 360.0;
           }
 
+          // Find which bhava this planet falls in
           int bhavaIdx = 0;
           for (int i = 0; i < 12; i++) {
-            final startBoundary = boundaries[(i + 11) % 12]; // Boundary *before* this house's midpoint
-            final endBoundary = boundaries[i];              // Boundary *after* this house's midpoint
-            
+            final startBoundary = boundaries[(i + 11) % 12];
+            final endBoundary = boundaries[i];
             if (startBoundary < endBoundary) {
               if (d >= startBoundary && d < endBoundary) {
                 bhavaIdx = i;
                 break;
               }
             } else {
-              // Wrap-around case (e.g. start=350, end=20)
               if (d >= startBoundary || d < endBoundary) {
                 bhavaIdx = i;
                 break;
               }
             }
           }
-          ri = (lagnaIdx + bhavaIdx) % 12;
+
+          if (bhavaFromPlanet != null) {
+            // Find which bhava the selected planet falls in
+            int refBhavaIdx = 0;
+            final refDeg = refLongitude;
+            for (int i = 0; i < 12; i++) {
+              final startBoundary = boundaries[(i + 11) % 12];
+              final endBoundary = boundaries[i];
+              if (startBoundary < endBoundary) {
+                if (refDeg >= startBoundary && refDeg < endBoundary) {
+                  refBhavaIdx = i;
+                  break;
+                }
+              } else {
+                if (refDeg >= startBoundary || refDeg < endBoundary) {
+                  refBhavaIdx = i;
+                  break;
+                }
+              }
+            }
+            // Renumber: selected planet's bhava = 1st house
+            final relativeHouse = (bhavaIdx - refBhavaIdx + 12) % 12;
+            ri = (lagnaIdx + relativeHouse) % 12;
+          } else {
+            ri = (lagnaIdx + bhavaIdx) % 12;
+          }
         } else {
           ri = _rashinFor(info.longitude);
         }
