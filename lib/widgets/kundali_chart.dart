@@ -15,6 +15,9 @@ class KundaliChart extends StatelessWidget {
   final Map<String, int>? aroodhas; // for Aroodha tab
   final String? centerLabel;
   final void Function(String planetName)? onPlanetTap;
+  final void Function(String planetName)? onPlanetLongPress;
+  final String? selectedPlanet; // for bhava highlight
+  final String? bhavaFromPlanet; // planet to calculate bhava from (null = lagna)
 
   const KundaliChart({
     super.key,
@@ -25,6 +28,9 @@ class KundaliChart extends StatelessWidget {
     this.aroodhas,
     this.centerLabel,
     this.onPlanetTap,
+    this.onPlanetLongPress,
+    this.selectedPlanet,
+    this.bhavaFromPlanet,
   });
 
   // Grid layout: indices into rashi boxes, null = center
@@ -80,8 +86,14 @@ class KundaliChart extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final lagnaRashi = (result.planets['ಲಗ್ನ']?.longitude ?? 0) / 30;
-    final lagnaIdx   = lagnaRashi.floor() % 12;
+    // If bhavaFromPlanet is set, use that planet's rashi as reference; else use lagna
+    double refLongitude;
+    if (bhavaFromPlanet != null && result.planets.containsKey(bhavaFromPlanet)) {
+      refLongitude = result.planets[bhavaFromPlanet]!.longitude;
+    } else {
+      refLongitude = result.planets['ಲಗ್ನ']?.longitude ?? 0;
+    }
+    final lagnaIdx = (refLongitude / 30).floor() % 12;
 
     // Build box contents
     final Map<int, List<Widget>> boxes = {for (int i = 0; i < 12; i++) i: []};
@@ -329,9 +341,9 @@ class KundaliChart extends StatelessWidget {
       if (varga == 1 || varga == 0) {
         final navIdx = _navamshaRashi(info.longitude);
         final navNum = navIdx + 1; // 1-indexed display
-        displayText = '$shortName$degStr·$navNum';
+        displayText = '$shortName $degStr·$navNum';
       } else {
-        displayText = '$shortName$degStr';
+        displayText = '$shortName $degStr';
       }
 
       // Vakri arrow
@@ -347,10 +359,14 @@ class KundaliChart extends StatelessWidget {
 
     // Dim asta planets
     final double opacity = isCombust ? 0.45 : 1.0;
+    final bool isSelected = selectedPlanet != null && selectedPlanet == name;
 
     return GestureDetector(
       onTap: () {
         if (onPlanetTap != null) onPlanetTap!(name);
+      },
+      onLongPress: () {
+        if (onPlanetLongPress != null) onPlanetLongPress!(name);
       },
       behavior: HitTestBehavior.opaque,
       child: Padding(
@@ -358,9 +374,12 @@ class KundaliChart extends StatelessWidget {
         child: Text(
           displayText,
           style: TextStyle(
-            fontSize: 11,
+            fontSize: isSelected ? 14 : 11,
             fontWeight: FontWeight.w900,
             color: color.withValues(alpha: opacity),
+            decoration: isSelected ? TextDecoration.underline : null,
+            decorationColor: color,
+            decorationThickness: 2,
           ),
         ),
       ),

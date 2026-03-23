@@ -66,6 +66,7 @@ class _DashboardScreenState extends State<DashboardScreen>
   Map<String, int> _aroodhas = {};
   int? _janmaNakshatraIdx;
   int? _dinaNakshatraIdx;
+  String? _bhavaPlanet; // planet selected for bhava recalculation
 
 
   bool _syncing = false;
@@ -322,30 +323,47 @@ class _DashboardScreenState extends State<DashboardScreen>
       child: Column(
         children: [
           const SizedBox(height: 12),
-          ...charts.map((chart) => Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            child: Column(
-              children: [
-                Text(
-                  chart['label'] as String,
-                  style: TextStyle(
-                    fontSize: 17, fontWeight: FontWeight.w800,
-                    color: kPurple2),
-                ),
-                const SizedBox(height: 6),
-                KundaliChart(
-                  result: widget.result,
-                  varga: chart['varga'] as int,
-                  isBhava: chart['isBhava'] as bool,
-                  showSphutas: false,
-                  centerLabel: chart['label'] as String,
-                  onPlanetTap: _showPlanetDetail,
-                ),
-                const SizedBox(height: 8),
-                Divider(thickness: 1, color: kBorder),
-              ],
-            ),
-          )),
+          ...charts.map((chart) {
+            final isBhavaChart = chart['isBhava'] as bool;
+            final bhavaLabel = isBhavaChart && _bhavaPlanet != null
+                ? '${chart['label']} (${_bhavaPlanet} ಆಧಾರ)'
+                : chart['label'] as String;
+            return Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              child: Column(
+                children: [
+                  Text(
+                    bhavaLabel,
+                    style: TextStyle(
+                      fontSize: 17, fontWeight: FontWeight.w800,
+                      color: kPurple2),
+                  ),
+                  if (isBhavaChart && _bhavaPlanet != null)
+                    TextButton.icon(
+                      onPressed: () => setState(() => _bhavaPlanet = null),
+                      icon: Icon(Icons.refresh, size: 16, color: kMuted),
+                      label: Text('ಲಗ್ನಕ್ಕೆ ಮರಳಿ', style: TextStyle(fontSize: 12, color: kMuted)),
+                    ),
+                  const SizedBox(height: 6),
+                  KundaliChart(
+                    result: widget.result,
+                    varga: chart['varga'] as int,
+                    isBhava: isBhavaChart,
+                    showSphutas: false,
+                    centerLabel: bhavaLabel,
+                    onPlanetTap: _showPlanetDetail,
+                    selectedPlanet: isBhavaChart ? _bhavaPlanet : null,
+                    onPlanetLongPress: isBhavaChart ? (pName) {
+                      setState(() => _bhavaPlanet = _bhavaPlanet == pName ? null : pName);
+                    } : null,
+                    bhavaFromPlanet: isBhavaChart ? _bhavaPlanet : null,
+                  ),
+                  const SizedBox(height: 8),
+                  Divider(thickness: 1, color: kBorder),
+                ],
+              ),
+            );
+          }),
           const SizedBox(height: 24),
         ],
       ),
