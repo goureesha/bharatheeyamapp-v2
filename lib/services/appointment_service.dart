@@ -518,20 +518,24 @@ class AppointmentService {
 
   /// Generate WhatsApp confirmation message
   static String confirmationMessage(Appointment appt) {
+    final idLine = appt.clientId.isNotEmpty ? '🆔 ಗ್ರಾಹಕ ID: ${appt.clientId}\n' : '';
     return 'ನಮಸ್ಕಾರ ${appt.clientName},\n\n'
         'ನಿಮ್ಮ ಅಪಾಯಿಂಟ್\u200cಮೆಂಟ್ ದೃಢಪಡಿಸಲಾಗಿದೆ ✅\n\n'
         '📅 ದಿನಾಂಕ: ${appt.dateStr}\n'
-        '⏰ ಸಮಯ: ${appt.timeRange}\n\n'
+        '⏰ ಸಮಯ: ${appt.timeRange}\n'
+        '$idLine\n'
         'ದಯವಿಟ್ಟು ಸಮಯಕ್ಕೆ ಸರಿಯಾಗಿ ಬನ್ನಿ.\n\n'
         '- ಭಾರತೀಯಮ್ ✨';
   }
 
   /// Generate WhatsApp reminder message
   static String reminderMessage(Appointment appt) {
+    final idLine = appt.clientId.isNotEmpty ? '🆔 ಗ್ರಾಹಕ ID: ${appt.clientId}\n' : '';
     return 'ನಮಸ್ಕಾರ ${appt.clientName},\n\n'
         'ನಿಮ್ಮ ಅಪಾಯಿಂಟ್\u200cಮೆಂಟ್ ನಾಳೆಯ ಜ್ಞಾಪನೆ 🔔\n\n'
         '📅 ದಿನಾಂಕ: ${appt.dateStr}\n'
-        '⏰ ಸಮಯ: ${appt.timeRange}\n\n'
+        '⏰ ಸಮಯ: ${appt.timeRange}\n'
+        '$idLine\n'
         'ದಯವಿಟ್ಟು ಸಮಯಕ್ಕೆ ಸರಿಯಾಗಿ ಬನ್ನಿ.\n\n'
         '- ಭಾರತೀಯಮ್ ✨';
   }

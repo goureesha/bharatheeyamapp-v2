@@ -871,7 +871,8 @@ class _DashboardScreenState extends State<DashboardScreen>
                 ),
                 const SizedBox(height: 6),
                 Text(
-                  '📅 ${widget.dob.day.toString().padLeft(2, '0')}-${widget.dob.month.toString().padLeft(2, '0')}-${widget.dob.year} | ⏰ ${widget.hour.toString().padLeft(2, '0')}:${widget.minute.toString().padLeft(2, '0')} ${widget.ampm} | 📍 ${widget.place}',
+                  '📅 ${widget.dob.day.toString().padLeft(2, '0')}-${widget.dob.month.toString().padLeft(2, '0')}-${widget.dob.year} | ⏰ ${widget.hour.toString().padLeft(2, '0')}:${widget.minute.toString().padLeft(2, '0')} ${widget.ampm} | 📍 ${widget.place}'
+                  '${(widget.extraInfo['clientId'] ?? '').isNotEmpty ? ' | 🆔 ${widget.extraInfo['clientId']}' : ''}',
                   style: TextStyle(fontSize: 12, color: kMuted),
                 ),
               ],
