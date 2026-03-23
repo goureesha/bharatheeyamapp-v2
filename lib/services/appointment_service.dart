@@ -240,11 +240,15 @@ class AppointmentService {
         final summary = event.summary ?? '';
         final description = event.description ?? '';
 
-        // Only sync events created by this app (with 'ಜಾತಕ - ' prefix)
-        if (!summary.startsWith('ಜಾತಕ - ')) continue;
-
-        // Extract client name (remove 'ಜಾತಕ - ' prefix)
-        final clientName = summary.substring(7);
+        // Only sync events created by this app
+        String clientName;
+        if (summary.startsWith('ಜಾತಕ ಅಪಾಯಿಂಟ್\u200cಮೆಂಟ್ - ')) {
+          clientName = summary.substring('ಜಾತಕ ಅಪಾಯಿಂಟ್\u200cಮೆಂಟ್ - '.length);
+        } else if (summary.startsWith('ಜಾತಕ - ')) {
+          clientName = summary.substring(7);
+        } else {
+          continue; // Skip non-app events
+        }
 
         final dateStr = '${start.year}-${start.month.toString().padLeft(2, '0')}-${start.day.toString().padLeft(2, '0')}';
         final startTime = '${start.hour.toString().padLeft(2, '0')}:${start.minute.toString().padLeft(2, '0')}';
@@ -424,7 +428,7 @@ class AppointmentService {
   /// Get appointments for a specific date
   static List<Appointment> getAppointmentsForDate(DateTime date) {
     return _appointments
-        .where((a) => a.date.year == date.year && a.date.month == date.month && a.date.day == date.day && a.status != 'cancelled')
+        .where((a) => a.date.year == date.year && a.date.month == date.month && a.date.day == date.day && a.status != 'cancelled' && a.clientName.trim().isNotEmpty)
         .toList()
       ..sort((a, b) => a.startTime.compareTo(b.startTime));
   }
@@ -433,7 +437,7 @@ class AppointmentService {
   static Map<DateTime, List<Appointment>> getAppointmentsByDate() {
     final map = <DateTime, List<Appointment>>{};
     for (final a in _appointments) {
-      if (a.status == 'cancelled') continue;
+      if (a.status == 'cancelled' || a.clientName.trim().isEmpty) continue;
       final key = DateTime(a.date.year, a.date.month, a.date.day);
       map.putIfAbsent(key, () => []).add(a);
     }
