@@ -73,11 +73,9 @@ class _DashboardScreenState extends State<DashboardScreen>
 
 
 
-  static const _tabs = [
-    'ಕುಂಡಲಿ', 'ಸ್ಫುಟ', 'ಆರೂಢ',
-    'ದಶ', 'ಪಂಚಾಂಗ', 'ಭಾವ', 'ಷಡ್ಬಲ',
-    'ಟಿಪ್ಪಣಿ'
-  ];
+  static List<String> get _tabs => AppLocale.isHindi
+    ? ['कुंडली', 'स्फुट', 'आरूढ', 'दशा', 'पंचांग', 'भाव', 'षड्बल', 'टिप्पणी']
+    : ['ಕುಂಡಲಿ', 'ಸ್ಫುಟ', 'ಆರೂಢ', 'ದಶ', 'ಪಂಚಾಂಗ', 'ಭಾವ', 'ಷಡ್ಬಲ', 'ಟಿಪ್ಪಣಿ'];
 
   @override
   void initState() {

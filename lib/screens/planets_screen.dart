@@ -82,7 +82,7 @@ class _PlanetsScreenState extends State<PlanetsScreen> with SingleTickerProvider
     return Scaffold(
       backgroundColor: kBg,
       appBar: AppBar(
-        title: const Text('ಗ್ರಹಗಳ ಮಾಹಿತಿ', style: TextStyle(fontWeight: FontWeight.bold)),
+        title: Text(AppLocale.isHindi ? 'ग्रह जानकारी' : 'ಗ್ರಹಗಳ ಮಾಹಿತಿ', style: TextStyle(fontWeight: FontWeight.bold)),
         backgroundColor: kBg,
         foregroundColor: kPurple1,
         elevation: 0,
@@ -123,7 +123,7 @@ class _PlanetsScreenState extends State<PlanetsScreen> with SingleTickerProvider
                 Padding(
                   padding: const EdgeInsets.only(right: 6),
                   child: ChoiceChip(
-                    label: Text('ಎಲ್ಲಾ', style: TextStyle(
+                    label: Text(AppLocale.isHindi ? 'सभी' : 'ಎಲ್ಲಾ', style: TextStyle(
                       fontWeight: FontWeight.bold, fontSize: 12,
                       color: _selectedPlanet == null ? Colors.white : kText,
                     )),
@@ -164,10 +164,10 @@ class _PlanetsScreenState extends State<PlanetsScreen> with SingleTickerProvider
             unselectedLabelColor: kMuted,
             indicatorColor: kPurple1,
             labelStyle: const TextStyle(fontWeight: FontWeight.bold),
-            tabs: const [
-              Tab(text: 'ಸಂಚಾರ'), // Transits
-              Tab(text: 'ವಕ್ರಿ'), // Vakri
-              Tab(text: 'ಅಸ್ತ'), // Asta
+            tabs: [
+              Tab(text: AppLocale.l('transits')), // Transits
+              Tab(text: AppLocale.l('vakri')), // Vakri
+              Tab(text: AppLocale.l('asta')), // Asta
             ],
           ),
           
@@ -199,7 +199,7 @@ class _PlanetsScreenState extends State<PlanetsScreen> with SingleTickerProvider
     }
     if (transits.isEmpty) {
       return Center(child: Text(
-        _selectedPlanet != null ? '$_selectedPlanet - ಯಾವುದೇ ಸಂಚಾರಗಳಿಲ್ಲ' : 'ಯಾವುದೇ ಸಂಚಾರಗಳಿಲ್ಲ',
+        _selectedPlanet != null ? '$_selectedPlanet' : (AppLocale.isHindi ? 'कोई संचार नहीं' : 'ಯಾವುದೇ ಸಂಚಾರಗಳಿಲ್ಲ'),
         style: TextStyle(color: kMuted),
       ));
     }
@@ -240,7 +240,7 @@ class _PlanetsScreenState extends State<PlanetsScreen> with SingleTickerProvider
     }
     if (periods.isEmpty) {
       return Center(child: Text(
-        _selectedPlanet != null ? '$_selectedPlanet - ವಕ್ರಿಯಾಗಿಲ್ಲ' : 'ಯಾವುದೇ ಗ್ರಹ ವಕ್ರಿಯಾಗಿಲ್ಲ',
+        _selectedPlanet != null ? '$_selectedPlanet' : (AppLocale.isHindi ? 'कोई ग्रह वक्री नहीं' : 'ಯಾವುದೇ ಗ್ರಹ ವಕ್ರಿಯಾಗಿಲ್ಲ'),
         style: TextStyle(color: kMuted),
       ));
     }
@@ -305,7 +305,7 @@ class _PlanetsScreenState extends State<PlanetsScreen> with SingleTickerProvider
     }
     if (periods.isEmpty) {
       return Center(child: Text(
-        _selectedPlanet != null ? '$_selectedPlanet - ಅಸ್ತವಾಗಿಲ್ಲ' : 'ಯಾವುದೇ ಗ್ರಹ ಅಸ್ತವಾಗಿಲ್ಲ',
+        _selectedPlanet != null ? '$_selectedPlanet' : (AppLocale.isHindi ? 'कोई ग्रह अस्त नहीं' : 'ಯಾವುದೇ ಗ್ರಹ ಅಸ್ತವಾಗಿಲ್ಲ'),
         style: TextStyle(color: kMuted),
       ));
     }
