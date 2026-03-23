@@ -240,11 +240,11 @@ class AppointmentService {
         final summary = event.summary ?? '';
         final description = event.description ?? '';
 
-        // Extract client name (remove 'ಜಾತಕ - ' prefix if present)
-        String clientName = summary;
-        if (summary.startsWith('ಜಾತಕ - ')) {
-          clientName = summary.substring(7);
-        }
+        // Only sync events created by this app (with 'ಜಾತಕ - ' prefix)
+        if (!summary.startsWith('ಜಾತಕ - ')) continue;
+
+        // Extract client name (remove 'ಜಾತಕ - ' prefix)
+        final clientName = summary.substring(7);
 
         final dateStr = '${start.year}-${start.month.toString().padLeft(2, '0')}-${start.day.toString().padLeft(2, '0')}';
         final startTime = '${start.hour.toString().padLeft(2, '0')}:${start.minute.toString().padLeft(2, '0')}';
