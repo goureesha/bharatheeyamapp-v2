@@ -43,7 +43,7 @@ class _AppointmentScreenState extends State<AppointmentScreen> with SingleTicker
 
   List<Appointment> _getEventsForDay(DateTime day) {
     return AppointmentService.getAppointmentsForDate(day)
-        .where((a) => a.status == 'booked')
+        .where((a) => a.status == 'booked' && a.clientName.trim().isNotEmpty)
         .toList();
   }
 
