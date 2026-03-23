@@ -139,8 +139,9 @@ class _VedicClockScreenState extends State<VedicClockScreen> {
     return order.where((n) => _planetLongs.containsKey(n)).map((name) {
       final deg = _planetLongs[name]!;
       final ri = (deg / 30).floor() % 12;
-      final d = (deg % 30).floor();
-      final m = (((deg % 30) - d) * 60).floor();
+      final totalGhati = deg / 6.0;
+      final gh = totalGhati.floor();
+      final vi = ((totalGhati - gh) * 60).round();
       final c = _RashiClockPainter.planetColor(name);
       return Container(
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
@@ -149,7 +150,7 @@ class _VedicClockScreenState extends State<VedicClockScreen> {
           Container(width: 10, height: 10, decoration: BoxDecoration(color: c, shape: BoxShape.circle)),
           const SizedBox(width: 6),
           Text('$name ', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 12, color: kText)),
-          Text('${knRashi[ri]} $d°$m\'', style: TextStyle(fontSize: 11, color: Colors.grey[700])),
+          Text('${knRashi[ri]} $gh.${'$vi'.padLeft(2, '0')} ಘ', style: TextStyle(fontSize: 11, color: Colors.grey[700])),
         ]),
       );
     }).toList();
@@ -248,8 +249,12 @@ class _RashiClockPainter extends CustomPainter {
         Offset(cx + (tickR - len) * cos(a), cy + (tickR - len) * sin(a)),
         Offset(cx + tickR * cos(a), cy + tickR * sin(a)),
         Paint()..color = c..strokeWidth = w);
-      if (m30) _txt(canvas, '$d°', cx + (tickR - 16) * cos(a), cy + (tickR - 16) * sin(a),
-        Colors.white.withOpacity(0.4), outerR * 0.035, false);
+      if (m30) {
+        // Show degree as ghati·vighati
+        final ghati = d ~/ 6; // 360° / 60 ghati = 6° per ghati
+        _txt(canvas, '$ghati ಘ', cx + (tickR - 16) * cos(a), cy + (tickR - 16) * sin(a),
+          Colors.white.withOpacity(0.4), outerR * 0.035, false);
+      }
     }
 
     // === ARROW HANDS (Lagna only) ===
@@ -289,14 +294,14 @@ class _RashiClockPainter extends CustomPainter {
       canvas.drawPath(Path()..moveTo(tipX, tipY)..lineTo(b1x, b1y)..lineTo(b2x, b2y)..close(),
         Paint()..color = Colors.white.withOpacity(0.25)..style = PaintingStyle.stroke..strokeWidth = 0.8);
 
-      // Degree pill label at tip
-      final dInSign = deg % 30;
-      final dg = dInSign.floor();
-      final mn = (((dInSign) - dg) * 60).floor();
+      // Ghati-Vighati pill label at tip
+      final totalGhati = deg / 6.0; // 360° = 60 ghati, so 1° = 1/6 ghati
+      final gh = totalGhati.floor();
+      final vi = ((totalGhati - gh) * 60).round();
       final lr = hLen + (isL ? 16 : 14).toDouble();
       final lx = cx + lr * cos(ang);
       final ly = cy + lr * sin(ang);
-      final lt = '$dg°$mn\'';
+      final lt = '$gh.${'$vi'.padLeft(2, '0')} ಘ';
       final tp = TextPainter(
         text: TextSpan(text: lt, style: TextStyle(color: Colors.white, fontSize: outerR * 0.032, fontWeight: FontWeight.w800)),
         textDirection: TextDirection.ltr)..layout();
