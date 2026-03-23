@@ -240,7 +240,7 @@ class _GhatiClockPainter extends CustomPainter {
 
       final la = _d2r(i * 30.0 + 15 + rashiOffset - 90);
       _txt(canvas, knRashi[i], cx + midRashi * cos(la), cy + midRashi * sin(la),
-        Colors.white.withOpacity(0.9), outerR * 0.048, true);
+        Colors.white.withOpacity(0.9), outerR * 0.055, true);
     }
 
     canvas.drawCircle(center, innerRashi, Paint()..color = const Color(0xFFD4AF37).withOpacity(0.3)..style = PaintingStyle.stroke..strokeWidth = 1);
@@ -262,7 +262,7 @@ class _GhatiClockPainter extends CustomPainter {
       if (isMajor) {
         final numR = R * 0.72;
         final label = i == 0 ? 'ಉದಯ' : '$i';
-        final fontSize = i == 0 ? R * 0.042 : R * 0.038;
+        final fontSize = i == 0 ? R * 0.052 : R * 0.046;
         final color = i == 0 ? Colors.amber : Colors.white.withOpacity(0.7);
         _txt(canvas, label, cx + numR * cos(a), cy + numR * sin(a), color, fontSize, i == 0 || i % 15 == 0);
       }
@@ -274,8 +274,8 @@ class _GhatiClockPainter extends CustomPainter {
     // === DIGITAL INFO INSIDE CLOCK (above center) ===
     // Digital ghati display
     final digitalY = cy - R * 0.28;
-    final digitFs = R * 0.065;
-    final labelFs = R * 0.028;
+    final digitFs = R * 0.085;
+    final labelFs = R * 0.035;
 
     // Ghati value (red)
     final ghStr = '$ghati';
@@ -289,7 +289,7 @@ class _GhatiClockPainter extends CustomPainter {
 
     // === SUNRISE/SUNSET INFO (below center) ===
     final infoY = cy + R * 0.28;
-    final infoFs = R * 0.035;
+    final infoFs = R * 0.042;
 
     // Sunrise
     _txt(canvas, '☀ ಉದಯ $sunriseStr', cx - R * 0.18, infoY,
@@ -316,9 +316,9 @@ class _GhatiClockPainter extends CustomPainter {
 
     // === LEGEND ===
     final legendY = cy + R * 0.42;
-    _txt(canvas, '● ಘಟಿ', cx - R * 0.22, legendY, const Color(0xFFE53E3E), R * 0.032, true);
-    _txt(canvas, '● ವಿಘಟಿ', cx, legendY, const Color(0xFF2B6CB0), R * 0.032, true);
-    _txt(canvas, '● ಅನುವಿಘಟಿ', cx + R * 0.25, legendY, const Color(0xFF38A169), R * 0.032, true);
+    _txt(canvas, '● ಘಟಿ', cx - R * 0.22, legendY, const Color(0xFFE53E3E), R * 0.038, true);
+    _txt(canvas, '● ವಿಘಟಿ', cx, legendY, const Color(0xFF2B6CB0), R * 0.038, true);
+    _txt(canvas, '● ಅನುವಿಘಟಿ', cx + R * 0.25, legendY, const Color(0xFF38A169), R * 0.038, true);
   }
 
   void _drawHand(Canvas canvas, double cx, double cy, double angle, double length, double width, Color color, double tailLen) {
