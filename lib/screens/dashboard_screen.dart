@@ -587,39 +587,82 @@ class _DashboardScreenState extends State<DashboardScreen>
   // TAB 7: BHAVA
   // ─────────────────────────────────────────────
   Widget _buildBhavaTab() {
-    // Calculate Sripathi boundaries once
-    List<double> boundaries = List.filled(12, 0.0);
-    for (int i = 0; i < 12; i++) {
-      final m1 = widget.result.bhavas[i];
-      final m2 = widget.result.bhavas[(i + 1) % 12];
-      double diff = (m2 - m1 + 360.0) % 360.0;
-      boundaries[i] = (m1 + (diff / 2.0)) % 360.0;
-    }
+    final lagnaLong = widget.result.planets['ಲಗ್ನ']?.longitude ?? 0;
 
-    // Helper: find which Sripathi bhava a degree falls in
-    int findBhava(double deg) {
-      for (int i = 0; i < 12; i++) {
-        final start = boundaries[(i + 11) % 12];
-        final end = boundaries[i];
-        if (start < end) {
-          if (deg >= start && deg < end) return i;
-        } else {
-          if (deg >= start || deg < end) return i;
-        }
-      }
-      return 0;
-    }
-
-    // Planet selector for bhava from planet
+    // Planet selector list
     final selectablePlanets = planetOrder.where((p) => p != 'ಲಗ್ನ' && p != 'ಮಾಂದಿ').toList();
+
+    // Calculate shifted bhava madhyas
+    List<double> getMadhyas(String? planet) {
+      if (planet == null || !widget.result.planets.containsKey(planet)) {
+        return widget.result.bhavas;
+      }
+      final pDeg = widget.result.planets[planet]!.longitude;
+      final offset = (pDeg - lagnaLong + 360.0) % 360.0;
+      return List.generate(12, (i) => (widget.result.bhavas[i] + offset) % 360.0);
+    }
+
+    final currentMadhyas = getMadhyas(_bhavaPlanet);
+    final title = _bhavaPlanet != null
+        ? 'ಭಾವ ಮಧ್ಯ ಸ್ಫುಟ (${_bhavaPlanet} ಆಧಾರ)'
+        : 'ಭಾವ ಮಧ್ಯ ಸ್ಫುಟ (ಲಗ್ನ)';
 
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
       child: Column(
         children: [
-          // Default Bhava Madhya Sphuta table (from lagna)
-          Text('ಭಾವ ಮಧ್ಯ ಸ್ಫುಟ (ಲಗ್ನ)', style: TextStyle(
+          // Planet selector
+          Text('ಗ್ರಹ ಆಧಾರ ಭಾವ', style: TextStyle(
             fontWeight: FontWeight.w800, fontSize: 15, color: kPurple2)),
+          const SizedBox(height: 8),
+          Wrap(
+            spacing: 6,
+            runSpacing: 6,
+            children: [
+              // Lagna chip
+              GestureDetector(
+                onTap: () => setState(() => _bhavaPlanet = null),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: _bhavaPlanet == null ? kTeal : kCard,
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: _bhavaPlanet == null ? kTeal : kBorder),
+                  ),
+                  child: Text('ಲಗ್ನ', style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: _bhavaPlanet == null ? FontWeight.w900 : FontWeight.w600,
+                    color: _bhavaPlanet == null ? Colors.white : kText,
+                  )),
+                ),
+              ),
+              ...selectablePlanets.map((p) {
+                final isSelected = _bhavaPlanet == p;
+                return GestureDetector(
+                  onTap: () => setState(() => _bhavaPlanet = isSelected ? null : p),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: isSelected ? kTeal : kCard,
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: isSelected ? kTeal : kBorder),
+                    ),
+                    child: Text(p, style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: isSelected ? FontWeight.w900 : FontWeight.w600,
+                      color: isSelected ? Colors.white : kText,
+                    )),
+                  ),
+                );
+              }),
+            ],
+          ),
+          const SizedBox(height: 16),
+
+          // Bhava Madhya Sphuta table
+          Text(title, style: TextStyle(
+            fontWeight: FontWeight.w800, fontSize: 15,
+            color: _bhavaPlanet != null ? kTeal : kPurple2)),
           const SizedBox(height: 8),
           AppCard(
             padding: EdgeInsets.zero,
@@ -627,7 +670,7 @@ class _DashboardScreenState extends State<DashboardScreen>
               children: [
                 _tableHeader(['ಭಾವ', 'ಮಧ್ಯ ಸ್ಫುಟ', 'ರಾಶಿ']),
                 ...List.generate(12, (i) {
-                  final deg = widget.result.bhavas[i];
+                  final deg = currentMadhyas[i];
                   return _tableRow(
                     ['${i+1}', formatDeg(deg), knRashi[(deg/30).floor() % 12]],
                     bold0: true,
@@ -636,80 +679,6 @@ class _DashboardScreenState extends State<DashboardScreen>
               ],
             ),
           ),
-          const SizedBox(height: 20),
-
-          // Planet selector
-          Text('ಗ್ರಹ ಆಧಾರ ಭಾವ', style: TextStyle(
-            fontWeight: FontWeight.w800, fontSize: 15, color: kPurple2)),
-          const SizedBox(height: 8),
-          Wrap(
-            spacing: 6,
-            runSpacing: 6,
-            children: selectablePlanets.map((p) {
-              final isSelected = _bhavaPlanet == p;
-              return GestureDetector(
-                onTap: () => setState(() => _bhavaPlanet = isSelected ? null : p),
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                  decoration: BoxDecoration(
-                    color: isSelected ? kTeal : kCard,
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: isSelected ? kTeal : kBorder),
-                  ),
-                  child: Text(p, style: TextStyle(
-                    fontSize: 13,
-                    fontWeight: isSelected ? FontWeight.w900 : FontWeight.w600,
-                    color: isSelected ? Colors.white : kText,
-                  )),
-                ),
-              );
-            }).toList(),
-          ),
-          const SizedBox(height: 12),
-
-          // Planet-based bhava table
-          if (_bhavaPlanet != null) ...[
-            Text('ಭಾವ ಸ್ಫುಟ (${_bhavaPlanet} ಆಧಾರ)', style: TextStyle(
-              fontWeight: FontWeight.w800, fontSize: 15, color: kTeal)),
-            const SizedBox(height: 8),
-            AppCard(
-              padding: EdgeInsets.zero,
-              child: Column(
-                children: [
-                  _tableHeader(['ಗ್ರಹ', 'ಸ್ಫುಟ', 'ಭಾವ (ಲಗ್ನ)', 'ಭಾವ (${_bhavaPlanet})']),
-                  ...planetOrder.map((pName) {
-                    final info = widget.result.planets[pName];
-                    if (info == null) return const SizedBox.shrink();
-
-                    // Bhava from lagna
-                    final bhavaFromLagna = findBhava(info.longitude) + 1;
-
-                    // Bhava from selected planet
-                    final refInfo = widget.result.planets[_bhavaPlanet];
-                    int bhavaFromPlanet = bhavaFromLagna;
-                    if (refInfo != null) {
-                      final refBhavaIdx = findBhava(refInfo.longitude);
-                      final myBhavaIdx = findBhava(info.longitude);
-                      bhavaFromPlanet = ((myBhavaIdx - refBhavaIdx + 12) % 12) + 1;
-                    }
-
-                    return _tableRow([
-                      pName,
-                      formatDeg(info.longitude),
-                      '$bhavaFromLagna',
-                      '$bhavaFromPlanet',
-                    ], bold0: true);
-                  }),
-                ],
-              ),
-            ),
-            const SizedBox(height: 12),
-            TextButton.icon(
-              onPressed: () => setState(() => _bhavaPlanet = null),
-              icon: Icon(Icons.refresh, size: 16, color: kMuted),
-              label: Text('ಲಗ್ನಕ್ಕೆ ಮರಳಿ', style: TextStyle(fontSize: 12, color: kMuted)),
-            ),
-          ],
           const SizedBox(height: 24),
         ],
       ),

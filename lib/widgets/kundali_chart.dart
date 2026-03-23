@@ -123,13 +123,24 @@ class KundaliChart extends StatelessWidget {
 
         int ri;
         if (isBhava) {
-          // Bhava chart: use Sripathi Bhava Madhyas (unequal houses)
-          // Calculate bhava sandhi (boundaries) from midpoints
           final d = info.longitude;
+
+          // Determine which bhava madhyas to use
+          List<double> madhyas;
+          if (bhavaFromPlanet != null) {
+            // Shift all Sripathi bhava madhyas by (planet_deg - lagna_deg)
+            // This preserves unequal house sizes with planet as 1st house midpoint
+            final offset = (refLongitude - lagnaLong + 360.0) % 360.0;
+            madhyas = List.generate(12, (i) => (result.bhavas[i] + offset) % 360.0);
+          } else {
+            madhyas = result.bhavas;
+          }
+
+          // Calculate bhava sandhi (boundaries) from midpoints
           List<double> boundaries = List.filled(12, 0.0);
           for (int i = 0; i < 12; i++) {
-            final m1 = result.bhavas[i];
-            final m2 = result.bhavas[(i + 1) % 12];
+            final m1 = madhyas[i];
+            final m2 = madhyas[(i + 1) % 12];
             double diff = (m2 - m1 + 360.0) % 360.0;
             boundaries[i] = (m1 + (diff / 2.0)) % 360.0;
           }
@@ -153,29 +164,8 @@ class KundaliChart extends StatelessWidget {
           }
 
           if (bhavaFromPlanet != null) {
-            // Find which bhava the selected planet falls in
-            int refBhavaIdx = 0;
-            final refDeg = refLongitude;
-            for (int i = 0; i < 12; i++) {
-              final startBoundary = boundaries[(i + 11) % 12];
-              final endBoundary = boundaries[i];
-              if (startBoundary < endBoundary) {
-                if (refDeg >= startBoundary && refDeg < endBoundary) {
-                  refBhavaIdx = i;
-                  break;
-                }
-              } else {
-                if (refDeg >= startBoundary || refDeg < endBoundary) {
-                  refBhavaIdx = i;
-                  break;
-                }
-              }
-            }
-            // Renumber: selected planet's bhava = 1st house
-            // Planet's rashi becomes the 1st house position on grid
             final planetRashiIdx = (refLongitude / 30).floor() % 12;
-            final relativeHouse = (bhavaIdx - refBhavaIdx + 12) % 12;
-            ri = (planetRashiIdx + relativeHouse) % 12;
+            ri = (planetRashiIdx + bhavaIdx) % 12;
           } else {
             ri = (lagnaIdx + bhavaIdx) % 12;
           }
