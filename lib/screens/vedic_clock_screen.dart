@@ -250,10 +250,10 @@ class _RashiClockPainter extends CustomPainter {
         Offset(cx + tickR * cos(a), cy + tickR * sin(a)),
         Paint()..color = c..strokeWidth = w);
       if (m30) {
-        // Show degree as ghati·vighati
         final ghati = d ~/ 6; // 360° / 60 ghati = 6° per ghati
-        _txt(canvas, '$ghati ಘ', cx + (tickR - 16) * cos(a), cy + (tickR - 16) * sin(a),
-          Colors.white.withOpacity(0.4), outerR * 0.035, false);
+        final label = ghati == 0 ? 'ಉದಯ' : '$ghati ಘ';
+        _txt(canvas, label, cx + (tickR - 16) * cos(a), cy + (tickR - 16) * sin(a),
+          ghati == 0 ? Colors.amber.withOpacity(0.9) : Colors.white.withOpacity(0.4), outerR * 0.035, ghati == 0);
       }
     }
 
