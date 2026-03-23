@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 import '../widgets/common.dart';
 import '../constants/strings.dart';
 import '../core/calculator.dart';
-import '../core/ephemeris.dart';
 
 class VedicClockScreen extends StatefulWidget {
   const VedicClockScreen({super.key});
@@ -17,9 +16,10 @@ class _VedicClockScreenState extends State<VedicClockScreen> {
   double _lat = 14.98;
   double _lon = 74.73;
   Timer? _timer;
+  Timer? _lagnaTimer;
 
-  // Sunrise JD for today (cached, recalculated daily)
-  double _sunriseJd = 0;
+  // Sunrise hour24 for today (IST, e.g. 6.39 = 6:23 AM)
+  double _sunriseHour24 = 6.0;
   double _lagnaLong = 0;
   String _sunriseStr = '';
   String _sunsetStr = '';
@@ -29,7 +29,7 @@ class _VedicClockScreenState extends State<VedicClockScreen> {
   void initState() {
     super.initState();
     _initSunrise();
-    // Update every second for live clock
+    // Update every second for live anu-vighati hand
     _timer = Timer.periodic(const Duration(seconds: 1), (_) {
       if (mounted) setState(() {});
     });
@@ -38,38 +38,40 @@ class _VedicClockScreenState extends State<VedicClockScreen> {
   @override
   void dispose() {
     _timer?.cancel();
+    _lagnaTimer?.cancel();
     super.dispose();
   }
 
   Future<void> _initSunrise() async {
     final now = DateTime.now();
     final y = now.year, m = now.month, d = now.day;
-
-    // Get sunrise/sunset from ephemeris
-    final srSs = Ephemeris.findSunriseSetForDate(y, m, d, _lat, _lon);
-    final srJd = srSs[0];
-    final ssJd = srSs[1];
-
-    // Get lagna for current time
     final hour24 = now.hour + now.minute / 60.0 + now.second / 3600.0;
+
+    // Get panchanga which includes sunrise/sunset
     final result = await AstroCalculator.calculate(
       year: y, month: m, day: d,
       hourUtcOffset: 5.5, hour24: hour24, lat: _lat, lon: _lon,
       ayanamsaMode: 'lahiri', trueNode: true,
     );
 
-    if (mounted) {
-      setState(() {
-        _sunriseJd = srJd;
-        _sunriseStr = formatTimeFromJd(srJd);
-        _sunsetStr = formatTimeFromJd(ssJd);
-        _lagnaLong = result?.planets['ಲಗ್ನ']?.longitude ?? 0;
-        _initialized = true;
-      });
-    }
+    if (result == null || !mounted) return;
 
-    // Recalculate lagna every 2 minutes (lagna changes slowly)
-    Timer.periodic(const Duration(minutes: 2), (_) async {
+    // Parse sunrise time from panchanga string (format: "06:23" or "06:23:45")
+    final srParts = result.panchang.sunrise.split(':');
+    final srHour = double.tryParse(srParts[0]) ?? 6;
+    final srMin = double.tryParse(srParts.length > 1 ? srParts[1] : '0') ?? 0;
+    final srSec = double.tryParse(srParts.length > 2 ? srParts[2] : '0') ?? 0;
+
+    setState(() {
+      _sunriseHour24 = srHour + srMin / 60.0 + srSec / 3600.0;
+      _sunriseStr = result.panchang.sunrise;
+      _sunsetStr = result.panchang.sunset;
+      _lagnaLong = result.planets['ಲಗ್ನ']?.longitude ?? 0;
+      _initialized = true;
+    });
+
+    // Recalculate lagna every 2 minutes
+    _lagnaTimer = Timer.periodic(const Duration(minutes: 2), (_) async {
       if (!mounted) return;
       final n = DateTime.now();
       final h = n.hour + n.minute / 60.0 + n.second / 3600.0;
@@ -84,13 +86,13 @@ class _VedicClockScreenState extends State<VedicClockScreen> {
     });
   }
 
-  /// Live udayadi ghati from sunrise
+  /// Live udayadi ghati calculated from sunrise hour24
   double _currentGhati() {
-    if (_sunriseJd == 0) return 0;
     final now = DateTime.now();
-    final hour24 = now.hour + now.minute / 60.0 + now.second / 3600.0;
-    final jdNow = Ephemeris.dateToJd(now.year, now.month, now.day, hour24 - 5.5);
-    return (jdNow - _sunriseJd) * 60.0;
+    final nowHour24 = now.hour + now.minute / 60.0 + now.second / 3600.0;
+    // Elapsed hours since sunrise, converted to ghati (1 day = 60 ghati, 1 day = 24 hours)
+    final elapsedHours = nowHour24 - _sunriseHour24;
+    return elapsedHours * (60.0 / 24.0); // hours to ghati
   }
 
   @override
