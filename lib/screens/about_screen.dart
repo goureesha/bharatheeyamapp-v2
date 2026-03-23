@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../widgets/common.dart';
+import '../core/events.dart';
+import '../core/calculator.dart';
 
 class AboutScreen extends StatelessWidget {
   const AboutScreen({super.key});
@@ -130,6 +132,12 @@ class AboutScreen extends StatelessWidget {
                   '☀️ Sunrise & Sunset are calculated using the Swiss Ephemeris '
                   'rise/set algorithm for the exact birth coordinates.',
             ),
+
+            const SizedBox(height: 20),
+
+            // ─── Panchanga Events Reference ──────────────────────────────
+            _sectionHeader('ಪಂಚಾಂಗ ಹಬ್ಬಗಳ ಆಧಾರ / Panchanga Events Reference'),
+            ..._buildEventReference(),
 
             const SizedBox(height: 20),
 
@@ -501,5 +509,129 @@ class AboutScreen extends StatelessWidget {
   static Future<void> _launch(String url) async {
     final uri = Uri.parse(url);
     if (await canLaunchUrl(uri)) await launchUrl(uri);
+  }
+
+  static List<Widget> _buildEventReference() {
+    // Build all events by creating dummy PanchangData for each month/tithi
+    final months = [
+      {'name': 'ಚೈತ್ರ', 'tithis': [0, 2, 5, 8, 14, 27]},
+      {'name': 'ವೈಶಾಖ', 'tithis': [2, 6, 10, 13, 14]},
+      {'name': 'ಜ್ಯೇಷ್ಠ', 'tithis': [10, 14, 27]},
+      {'name': 'ಆಷಾಢ', 'tithis': [1, 10, 14, 29]},
+      {'name': 'ಶ್ರಾವಣ', 'tithis': [4, 9, 14, 17, 22]},
+      {'name': 'ಭಾದ್ರಪದ', 'tithis': [2, 3, 4, 13, 14, 29]},
+      {'name': 'ಆಶ್ವಿನ', 'tithis': [0, 4, 6, 7, 8, 9, 28, 29]},
+      {'name': 'ಕಾರ್ತಿಕ', 'tithis': [0, 1, 11, 14, 27]},
+      {'name': 'ಮಾರ್ಗಶಿರ', 'tithis': [5, 10, 14, 22, 25]},
+      {'name': 'ಪುಷ್ಯ', 'tithis': [10, 14, 18, 29]},
+      {'name': 'ಮಾಘ', 'tithis': [4, 6, 10, 28]},
+      {'name': 'ಫಾಲ್ಗುಣ', 'tithis': [3, 10, 14]},
+    ];
+
+    final widgets = <Widget>[];
+
+    for (final m in months) {
+      final monthName = m['name'] as String;
+      final tithis = m['tithis'] as List<int>;
+      final monthEvents = <AstroEvent>[];
+
+      for (final t in tithis) {
+        // Create minimal list to extract events
+        final events = _getEventsForMasaTithi(monthName, t);
+        monthEvents.addAll(events);
+      }
+
+      if (monthEvents.isEmpty) continue;
+
+      widgets.add(Padding(
+        padding: const EdgeInsets.only(top: 12, bottom: 6),
+        child: Text('📅 $monthName ಮಾಸ',
+          style: TextStyle(fontSize: 14, fontWeight: FontWeight.w900, color: kPurple2)),
+      ));
+
+      for (final e in monthEvents) {
+        widgets.add(Container(
+          margin: const EdgeInsets.only(bottom: 8),
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: kCard,
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(color: kBorder),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(e.name, style: TextStyle(fontWeight: FontWeight.w800, fontSize: 14, color: kText)),
+              const SizedBox(height: 4),
+              Text(e.description, style: TextStyle(fontSize: 12, color: kMuted)),
+              if (e.shloka.isNotEmpty) ...[
+                const SizedBox(height: 8),
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: kPurple2.withOpacity(0.05),
+                    borderRadius: BorderRadius.circular(6),
+                    border: Border.all(color: kPurple2.withOpacity(0.2)),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('ಆಧಾರ ಶ್ಲೋಕ:', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: kPurple2)),
+                      const SizedBox(height: 2),
+                      Text(e.shloka.replaceAll('\\n', '\n'),
+                        style: TextStyle(fontStyle: FontStyle.italic, color: kPurple2, fontSize: 12)),
+                    ],
+                  ),
+                ),
+              ],
+              if (e.meaning.isNotEmpty) ...[
+                const SizedBox(height: 6),
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: Colors.amber.withOpacity(0.06),
+                    borderRadius: BorderRadius.circular(6),
+                    border: Border.all(color: Colors.amber.withOpacity(0.2)),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('ನಿಯಮ:', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.amber[800])),
+                      const SizedBox(height: 2),
+                      Text(e.meaning, style: TextStyle(fontSize: 12, color: kText)),
+                    ],
+                  ),
+                ),
+              ],
+              const SizedBox(height: 4),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  Text('ಆಕರ: ', style: TextStyle(fontSize: 10, color: kMuted)),
+                  Flexible(child: Text(e.source, style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: kPurple2))),
+                ],
+              ),
+            ],
+          ),
+        ));
+      }
+    }
+
+    return widgets;
+  }
+
+  /// Extract events for a given masa and tithi index
+  static List<AstroEvent> _getEventsForMasaTithi(String masa, int tIdx) {
+    // Create a minimal PanchangData to pass to EventCalculator
+    final dummy = PanchangData(
+      vara: '', tithi: '', nakshatra: '', yoga: '', karana: '',
+      chandraRashi: '', udayadiGhati: '', gataGhati: '', paramaGhati: '',
+      shesha: '', dashaBalance: '', dashaLord: '',
+      nakshatraIndex: 0, nakPercent: 0, sunrise: '', sunset: '',
+      tithiIndex: tIdx, chandraMasaRaw: masa, chandraMasa: masa,
+    );
+    return EventCalculator.getEventsForPanchang(dummy);
   }
 }
