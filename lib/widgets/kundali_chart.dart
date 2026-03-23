@@ -349,13 +349,14 @@ class KundaliChart extends StatelessWidget {
       isCombust = info.isCombust;
       isVakri = info.speed < 0 && !['ರಾಹು', 'ಕೇತು'].contains(info.name);
 
-      // Degree within current rashi — show degrees and minutes (matching sphuta tab)
+      // Degree within current rashi — exact same format as sphuta tab
       final degInRashi = info.longitude % 30;
       final totalSec = (degInRashi * 3600).round();
       int dg = totalSec ~/ 3600;
       int mn = (totalSec % 3600) ~/ 60;
-      if (dg == 30) { dg = 29; mn = 59; }
-      final degStr = '$dg°${mn.toString().padLeft(2, '0')}\'';
+      int sc = totalSec % 60;
+      if (dg == 30) { dg = 29; mn = 59; sc = 59; }
+      final degStr = '$dg°${mn.toString().padLeft(2, '0')}\'${sc.toString().padLeft(2, '0')}"';
       
       // Navamsha rashi number (1-12) — only for D1 (varga == 1)
       if (varga == 1 || varga == 0) {
