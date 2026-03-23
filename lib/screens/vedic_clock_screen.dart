@@ -1,8 +1,10 @@
+import 'dart:async';
 import 'dart:math';
 import 'package:flutter/material.dart';
 import '../widgets/common.dart';
 import '../constants/strings.dart';
 import '../core/calculator.dart';
+import '../core/ephemeris.dart';
 
 class VedicClockScreen extends StatefulWidget {
   const VedicClockScreen({super.key});
@@ -11,71 +13,95 @@ class VedicClockScreen extends StatefulWidget {
 }
 
 class _VedicClockScreenState extends State<VedicClockScreen> {
-  DateTime _selectedDate = DateTime.now();
-  TimeOfDay _selectedTime = TimeOfDay.now();
-  bool _loading = false;
   String _place = 'Yellapur';
   double _lat = 14.98;
   double _lon = 74.73;
+  Timer? _timer;
 
-  // Calculated values
-  double _udayadiGhati = 0; // ghati elapsed since sunrise
+  // Sunrise JD for today (cached, recalculated daily)
+  double _sunriseJd = 0;
+  double _lagnaLong = 0;
   String _sunriseStr = '';
   String _sunsetStr = '';
-  Map<String, double> _planetLongs = {};
-  double _lagnaLong = 0;
+  bool _initialized = false;
 
   @override
-  void initState() { super.initState(); _calculate(); }
+  void initState() {
+    super.initState();
+    _initSunrise();
+    // Update every second for live clock
+    _timer = Timer.periodic(const Duration(seconds: 1), (_) {
+      if (mounted) setState(() {});
+    });
+  }
 
-  Future<void> _calculate() async {
-    setState(() => _loading = true);
-    try {
-      final y = _selectedDate.year;
-      final m = _selectedDate.month;
-      final d = _selectedDate.day;
-      final hour24 = _selectedTime.hour + _selectedTime.minute / 60.0;
+  @override
+  void dispose() {
+    _timer?.cancel();
+    super.dispose();
+  }
 
-      // Get full calculation including panchanga
-      final result = await AstroCalculator.calculate(
-        year: y, month: m, day: d,
-        hourUtcOffset: 5.5, hour24: hour24, lat: _lat, lon: _lon,
+  Future<void> _initSunrise() async {
+    final now = DateTime.now();
+    final y = now.year, m = now.month, d = now.day;
+
+    // Get sunrise/sunset from ephemeris
+    final srSs = Ephemeris.findSunriseSetForDate(y, m, d, _lat, _lon);
+    final srJd = srSs[0];
+    final ssJd = srSs[1];
+
+    // Get lagna for current time
+    final hour24 = now.hour + now.minute / 60.0 + now.second / 3600.0;
+    final result = await AstroCalculator.calculate(
+      year: y, month: m, day: d,
+      hourUtcOffset: 5.5, hour24: hour24, lat: _lat, lon: _lon,
+      ayanamsaMode: 'lahiri', trueNode: true,
+    );
+
+    if (mounted) {
+      setState(() {
+        _sunriseJd = srJd;
+        _sunriseStr = formatTimeFromJd(srJd);
+        _sunsetStr = formatTimeFromJd(ssJd);
+        _lagnaLong = result?.planets['ಲಗ್ನ']?.longitude ?? 0;
+        _initialized = true;
+      });
+    }
+
+    // Recalculate lagna every 2 minutes (lagna changes slowly)
+    Timer.periodic(const Duration(minutes: 2), (_) async {
+      if (!mounted) return;
+      final n = DateTime.now();
+      final h = n.hour + n.minute / 60.0 + n.second / 3600.0;
+      final r = await AstroCalculator.calculate(
+        year: n.year, month: n.month, day: n.day,
+        hourUtcOffset: 5.5, hour24: h, lat: _lat, lon: _lon,
         ayanamsaMode: 'lahiri', trueNode: true,
       );
+      if (r != null && mounted) {
+        setState(() => _lagnaLong = r.planets['ಲಗ್ನ']?.longitude ?? 0);
+      }
+    });
+  }
 
-      if (result != null && mounted) {
-        final longs = <String, double>{};
-        for (final e in result.planets.entries) longs[e.key] = e.value.longitude;
-
-        // Parse udayadi ghati from panchanga (format: "23.45")
-        final ghatiStr = result.panchang.udayadiGhati;
-        final parts = ghatiStr.split('.');
-        final ghWhole = double.tryParse(parts[0]) ?? 0;
-        final ghFrac = parts.length > 1 ? (double.tryParse('0.${parts[1]}') ?? 0) : 0.0;
-        final udGhati = ghWhole + ghFrac;
-
-        setState(() {
-          _udayadiGhati = udGhati;
-          _sunriseStr = result.panchang.sunrise;
-          _sunsetStr = result.panchang.sunset;
-          _planetLongs = longs;
-          _lagnaLong = longs['ಲಗ್ನ'] ?? 0;
-          _loading = false;
-        });
-      } else { if (mounted) setState(() => _loading = false); }
-    } catch (_) { if (mounted) setState(() => _loading = false); }
+  /// Live udayadi ghati from sunrise
+  double _currentGhati() {
+    if (_sunriseJd == 0) return 0;
+    final now = DateTime.now();
+    final hour24 = now.hour + now.minute / 60.0 + now.second / 3600.0;
+    final jdNow = Ephemeris.dateToJd(now.year, now.month, now.day, hour24 - 5.5);
+    return (jdNow - _sunriseJd) * 60.0;
   }
 
   @override
   Widget build(BuildContext context) {
-    final dateStr = '${_selectedDate.day.toString().padLeft(2,'0')}-${_selectedDate.month.toString().padLeft(2,'0')}-${_selectedDate.year}';
-    final timeStr = _selectedTime.format(context);
     final screenW = MediaQuery.of(context).size.width;
-    final clockSize = (screenW < 500 ? screenW - 40 : 460).toDouble();
+    final clockSize = (screenW < 500 ? screenW - 32 : 460).toDouble();
+    final udGhati = _currentGhati();
 
     // Display values
-    final gh = _udayadiGhati.floor();
-    final viTotal = ((_udayadiGhati - gh) * 60);
+    final gh = udGhati.floor() % 60;
+    final viTotal = ((udGhati - udGhati.floor()) * 60);
     final vi = viTotal.floor();
     final av = ((viTotal - vi) * 60).floor();
 
@@ -83,103 +109,58 @@ class _VedicClockScreenState extends State<VedicClockScreen> {
       backgroundColor: kBg,
       appBar: AppBar(
         backgroundColor: kCard,
-        title: Text('ವೈದಿಕ ಘಡಿಯಾರ / Vedic Clock',
+        title: Text('ವೈದಿಕ ಘಡಿಯಾರ',
           style: TextStyle(color: kText, fontSize: 16, fontWeight: FontWeight.w800)),
         iconTheme: IconThemeData(color: kText), elevation: 0,
       ),
-      body: SingleChildScrollView(
-        child: ResponsiveCenter(child: Column(children: [
-          // Date/Time Picker
-          AppCard(child: Row(children: [
-            Expanded(child: GestureDetector(
-              onTap: () async {
-                final d = await showDatePicker(context: context, initialDate: _selectedDate,
-                  firstDate: DateTime(1800), lastDate: DateTime(2100),
-                  builder: (ctx, child) => Theme(data: Theme.of(ctx).copyWith(colorScheme: ColorScheme.light(primary: kPurple2)), child: child!));
-                if (d != null) { setState(() => _selectedDate = d); _calculate(); }
-              },
-              child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                Text('ದಿನಾಂಕ', style: TextStyle(fontSize: 11, color: Colors.grey[600])),
-                const SizedBox(height: 4),
-                Row(children: [
-                  Icon(Icons.calendar_today, size: 16, color: kPurple2), const SizedBox(width: 6),
-                  Text(dateStr, style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: kText)),
-                ]),
-              ]),
-            )),
-            Container(width: 1, height: 36, color: kBorder), const SizedBox(width: 12),
-            Expanded(child: GestureDetector(
-              onTap: () async {
-                final t = await showTimePicker(context: context, initialTime: _selectedTime,
-                  builder: (ctx, child) => Theme(data: Theme.of(ctx).copyWith(colorScheme: ColorScheme.light(primary: kPurple2)), child: child!));
-                if (t != null) { setState(() => _selectedTime = t); _calculate(); }
-              },
-              child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                Text('ಸಮಯ', style: TextStyle(fontSize: 11, color: Colors.grey[600])),
-                const SizedBox(height: 4),
-                Row(children: [
-                  Icon(Icons.access_time, size: 16, color: kPurple2), const SizedBox(width: 6),
-                  Text(timeStr, style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: kText)),
-                ]),
-              ]),
-            )),
-          ])),
-          // Location
-          AppCard(child: Row(children: [
-            Icon(Icons.location_on, size: 18, color: kPurple2), const SizedBox(width: 8),
-            Text('ಸ್ಥಳ: ', style: TextStyle(fontWeight: FontWeight.w800, color: kPurple2, fontSize: 14)),
-            Text(_place, style: TextStyle(color: kText, fontSize: 14, fontWeight: FontWeight.w600)),
-            const Spacer(),
-            TextButton(onPressed: () { setState(() { _selectedDate = DateTime.now(); _selectedTime = TimeOfDay.now(); }); _calculate(); },
-              child: Text('ಈಗ', style: TextStyle(color: kPurple2, fontSize: 12, fontWeight: FontWeight.w700))),
-          ])),
-
-          // CLOCK
-          if (_loading)
-            Padding(padding: const EdgeInsets.all(48), child: CircularProgressIndicator(color: kPurple2))
-          else
-            Container(
-              margin: const EdgeInsets.symmetric(vertical: 12, horizontal: 4),
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(20),
-                color: const Color(0xFF0F0F1A),
-                boxShadow: [BoxShadow(color: const Color(0xFF5B2C6F).withOpacity(0.3), blurRadius: 24, spreadRadius: 2)],
-              ),
-              padding: const EdgeInsets.all(12),
-              child: SizedBox(
-                width: clockSize, height: clockSize,
-                child: CustomPaint(painter: _GhatiClockPainter(udayadiGhati: _udayadiGhati, lagnaLong: _lagnaLong)),
-              ),
-            ),
-
-          // Ghati display
-          if (!_loading)
-            AppCard(child: Column(children: [
-              Text('ಉದಯಾದಿ ಘಟಿ', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 15, color: kPurple2)),
+      body: Center(
+        child: SingleChildScrollView(
+          child: ResponsiveCenter(child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
               const SizedBox(height: 8),
-              Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-                _ghatiDigit('$gh', 'ಘಟಿ', const Color(0xFFE53E3E)),
-                Text(' : ', style: TextStyle(fontSize: 28, fontWeight: FontWeight.w900, color: kText)),
-                _ghatiDigit('${vi.toString().padLeft(2, '0')}', 'ವಿಘಟಿ', const Color(0xFF2B6CB0)),
-                Text(' : ', style: TextStyle(fontSize: 28, fontWeight: FontWeight.w900, color: kText)),
-                _ghatiDigit('${av.toString().padLeft(2, '0')}', 'ಅನುವಿಘಟಿ', const Color(0xFF38A169)),
-              ]),
-              const SizedBox(height: 12),
-              Row(mainAxisAlignment: MainAxisAlignment.spaceEvenly, children: [
-                _infoChip(Icons.wb_sunny, 'ಉದಯ', _sunriseStr, Colors.orange),
-                _infoChip(Icons.nights_stay, 'ಅಸ್ತ', _sunsetStr, Colors.indigo),
-              ]),
-            ])),
 
-          // Planet Legend
-          if (!_loading && _planetLongs.isNotEmpty)
-            AppCard(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Text('ಗ್ರಹ ಸ್ಥಾನಗಳು', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 15, color: kPurple2)),
-              const SizedBox(height: 10),
-              Wrap(spacing: 8, runSpacing: 6, children: _buildLegendChips()),
-            ])),
-          const SizedBox(height: 24),
-        ])),
+              // LIVE CLOCK
+              if (!_initialized)
+                Padding(padding: const EdgeInsets.all(48), child: CircularProgressIndicator(color: kPurple2))
+              else
+                Container(
+                  margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(20),
+                    color: const Color(0xFF0F0F1A),
+                    boxShadow: [BoxShadow(color: const Color(0xFF5B2C6F).withOpacity(0.3), blurRadius: 24, spreadRadius: 2)],
+                  ),
+                  padding: const EdgeInsets.all(10),
+                  child: SizedBox(
+                    width: clockSize, height: clockSize,
+                    child: CustomPaint(painter: _GhatiClockPainter(udayadiGhati: udGhati, lagnaLong: _lagnaLong)),
+                  ),
+                ),
+
+              // Digital ghati display
+              if (_initialized)
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  child: AppCard(child: Column(children: [
+                    Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+                      _ghatiDigit('$gh', 'ಘಟಿ', const Color(0xFFE53E3E)),
+                      Text(' : ', style: TextStyle(fontSize: 28, fontWeight: FontWeight.w900, color: kText)),
+                      _ghatiDigit('${vi.toString().padLeft(2, '0')}', 'ವಿಘಟಿ', const Color(0xFF2B6CB0)),
+                      Text(' : ', style: TextStyle(fontSize: 28, fontWeight: FontWeight.w900, color: kText)),
+                      _ghatiDigit('${av.toString().padLeft(2, '0')}', 'ಅನುವಿಘಟಿ', const Color(0xFF38A169)),
+                    ]),
+                    const SizedBox(height: 10),
+                    Row(mainAxisAlignment: MainAxisAlignment.spaceEvenly, children: [
+                      _infoChip(Icons.wb_sunny, 'ಉದಯ', _sunriseStr, Colors.orange),
+                      _infoChip(Icons.nights_stay, 'ಅಸ್ತ', _sunsetStr, Colors.indigo),
+                    ]),
+                  ])),
+                ),
+              const SizedBox(height: 16),
+            ],
+          )),
+        ),
       ),
     );
   }
@@ -208,29 +189,6 @@ class _VedicClockScreenState extends State<VedicClockScreen> {
       Text(value, style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: kText)),
     ]);
   }
-
-  List<Widget> _buildLegendChips() {
-    final order = ['ಲಗ್ನ','ರವಿ','ಚಂದ್ರ','ಕುಜ','ಬುಧ','ಗುರು','ಶುಕ್ರ','ಶನಿ','ರಾಹು','ಕೇತು'];
-    return order.where((n) => _planetLongs.containsKey(n)).map((name) {
-      final deg = _planetLongs[name]!;
-      final ri = (deg / 30).floor() % 12;
-      final dInR = deg % 30;
-      final d = dInR.floor();
-      final m = ((dInR - d) * 60).floor();
-      final s = (((dInR - d) * 60 - m) * 60).floor();
-      final c = _GhatiClockPainter.planetColor(name);
-      return Container(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-        decoration: BoxDecoration(color: c.withOpacity(0.1), borderRadius: BorderRadius.circular(8), border: Border.all(color: c.withOpacity(0.4))),
-        child: Row(mainAxisSize: MainAxisSize.min, children: [
-          Container(width: 10, height: 10, decoration: BoxDecoration(color: c, shape: BoxShape.circle)),
-          const SizedBox(width: 6),
-          Text('$name ', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 12, color: kText)),
-          Text('${knRashi[ri]} $d°${m.toString().padLeft(2,'0')}\'${s.toString().padLeft(2,'0')}"', style: TextStyle(fontSize: 11, color: Colors.grey[700])),
-        ]),
-      );
-    }).toList();
-  }
 }
 
 // ============================================================
@@ -241,22 +199,6 @@ class _GhatiClockPainter extends CustomPainter {
   final double udayadiGhati;
   final double lagnaLong;
   _GhatiClockPainter({required this.udayadiGhati, required this.lagnaLong});
-
-  static Color planetColor(String name) {
-    switch (name) {
-      case 'ಲಗ್ನ': return const Color(0xFFE53E3E);
-      case 'ರವಿ':  return const Color(0xFFFF8C00);
-      case 'ಚಂದ್ರ': return const Color(0xFFB0BEC5);
-      case 'ಕುಜ':  return const Color(0xFFC62828);
-      case 'ಬುಧ':  return const Color(0xFF43A047);
-      case 'ಗುರು': return const Color(0xFFFDD835);
-      case 'ಶುಕ್ರ': return const Color(0xFF26A69A);
-      case 'ಶನಿ':  return const Color(0xFF5C6BC0);
-      case 'ರಾಹು': return const Color(0xFF546E7A);
-      case 'ಕೇತು': return const Color(0xFF8D6E63);
-      default: return const Color(0xFF95A5A6);
-    }
-  }
 
   static double _d2r(double d) => d * pi / 180;
 
@@ -273,18 +215,14 @@ class _GhatiClockPainter extends CustomPainter {
     final R = min(cx, cy) - 4;
 
     // Extract time components
-    final ghati = udayadiGhati; // total ghati
-    final ghatiWhole = ghati.floor() % 60;
+    final ghati = udayadiGhati;
     final vighatiTotal = (ghati - ghati.floor()) * 60;
     final vighatiWhole = vighatiTotal.floor();
     final anuVighati = ((vighatiTotal - vighatiWhole) * 60);
 
     // Angles (360° / 60 = 6° per unit, top = 0)
-    // Ghati hand: one revolution = 60 ghati
     final ghatiAngle = _d2r((ghati % 60) * 6.0 - 90);
-    // Vighati hand: one revolution = 60 vighati (= 1 ghati)
     final vighatiAngle = _d2r(vighatiTotal * 6.0 - 90);
-    // Anu-Vighati hand: one revolution = 60 anu-vighati (= 1 vighati)
     final anuAngle = _d2r(anuVighati * 6.0 - 90);
 
     // === BACKGROUND ===
@@ -298,11 +236,8 @@ class _GhatiClockPainter extends CustomPainter {
     canvas.drawCircle(center, R, Paint()..color = const Color(0xFFD4AF37)..style = PaintingStyle.stroke..strokeWidth = 3);
 
     // === RASHI RING (rotates independently based on lagna) ===
-    // The ghati hand angle shows where the current time is on the clock.
-    // The lagna (rising sign) should align with the ghati hand position.
-    // So we rotate the rashi ring so that lagnaLong aligns with ghatiAngle.
-    final ghatiDeg = (ghati % 60) * 6.0; // ghati hand position in degrees (0=top)
-    final rashiOffset = ghatiDeg - lagnaLong; // rotation to align lagna with ghati hand
+    final ghatiDeg = (ghati % 60) * 6.0;
+    final rashiOffset = ghatiDeg - lagnaLong;
     final outerR = R;
     final innerRashi = R * 0.92;
     final midRashi = (outerR + innerRashi) / 2;
@@ -318,7 +253,6 @@ class _GhatiClockPainter extends CustomPainter {
       canvas.drawPath(p, Paint()..color = _rashiColors[i].withOpacity(0.25));
       canvas.drawPath(p, Paint()..color = _rashiColors[i].withOpacity(0.5)..style = PaintingStyle.stroke..strokeWidth = 0.8);
 
-      // Rashi name
       final la = _d2r(i * 30.0 + 15 + rashiOffset - 90);
       _txt(canvas, knRashi[i], cx + midRashi * cos(la), cy + midRashi * sin(la),
         Colors.white.withOpacity(0.9), outerR * 0.048, true);
@@ -329,10 +263,10 @@ class _GhatiClockPainter extends CustomPainter {
     // === GHATI MARKERS (0–59) ===
     for (int i = 0; i < 60; i++) {
       final a = _d2r(i * 6.0 - 90);
-      final isMajor = i % 5 == 0; // 0, 5, 10, 15...
+      final isMajor = i % 5 == 0;
       final len = isMajor ? R * 0.08 : R * 0.03;
       final w = isMajor ? 2.5 : 0.8;
-      final r1 = R * 0.92;
+      final r1 = innerRashi;
       final r2 = r1 - len;
       final c = isMajor ? Colors.white.withOpacity(0.8) : Colors.white.withOpacity(0.2);
       canvas.drawLine(
@@ -340,28 +274,26 @@ class _GhatiClockPainter extends CustomPainter {
         Offset(cx + r1 * cos(a), cy + r1 * sin(a)),
         Paint()..color = c..strokeWidth = w);
 
-      // Numbers at major positions
       if (isMajor) {
-        final numR = R * 0.78;
+        final numR = R * 0.72;
         final label = i == 0 ? 'ಉದಯ' : '$i';
-        final fontSize = i == 0 ? R * 0.045 : R * 0.042;
+        final fontSize = i == 0 ? R * 0.042 : R * 0.038;
         final color = i == 0 ? Colors.amber : Colors.white.withOpacity(0.7);
-        final bold = i == 0 || i % 15 == 0;
-        _txt(canvas, label, cx + numR * cos(a), cy + numR * sin(a), color, fontSize, bold);
+        _txt(canvas, label, cx + numR * cos(a), cy + numR * sin(a), color, fontSize, i == 0 || i % 15 == 0);
       }
     }
 
-    // === INNER DECORATIVE RING ===
-    canvas.drawCircle(center, R * 0.68, Paint()..color = const Color(0xFFD4AF37).withOpacity(0.15)..style = PaintingStyle.stroke..strokeWidth = 0.5);
+    // === INNER RING ===
+    canvas.drawCircle(center, R * 0.62, Paint()..color = const Color(0xFFD4AF37).withOpacity(0.12)..style = PaintingStyle.stroke..strokeWidth = 0.5);
 
     // === GHATI HAND (short, thick, red) ===
-    _drawHand(canvas, cx, cy, ghatiAngle, R * 0.50, 4.5, const Color(0xFFE53E3E), R * 0.08);
+    _drawHand(canvas, cx, cy, ghatiAngle, R * 0.45, 4.5, const Color(0xFFE53E3E), R * 0.08);
 
     // === VIGHATI HAND (medium, blue) ===
-    _drawHand(canvas, cx, cy, vighatiAngle, R * 0.68, 3.0, const Color(0xFF2B6CB0), R * 0.06);
+    _drawHand(canvas, cx, cy, vighatiAngle, R * 0.60, 3.0, const Color(0xFF2B6CB0), R * 0.06);
 
     // === ANU-VIGHATI HAND (long, thin, green) ===
-    _drawHand(canvas, cx, cy, anuAngle, R * 0.82, 1.5, const Color(0xFF38A169), R * 0.04);
+    _drawHand(canvas, cx, cy, anuAngle, R * 0.75, 1.5, const Color(0xFF38A169), R * 0.04);
 
     // === CENTER HUB ===
     canvas.drawCircle(center, 14, Paint()..shader = RadialGradient(
@@ -370,11 +302,11 @@ class _GhatiClockPainter extends CustomPainter {
     canvas.drawCircle(center, 14, Paint()..color = Colors.white.withOpacity(0.3)..style = PaintingStyle.stroke..strokeWidth = 1.5);
     canvas.drawCircle(center, 5, Paint()..color = const Color(0xFF1A1A2E));
 
-    // === LEGEND at bottom inside clock ===
+    // === LEGEND ===
     final legendY = cy + R * 0.35;
-    _txt(canvas, '● ಘಟಿ', cx - R * 0.22, legendY, const Color(0xFFE53E3E), R * 0.035, true);
-    _txt(canvas, '● ವಿಘಟಿ', cx, legendY, const Color(0xFF2B6CB0), R * 0.035, true);
-    _txt(canvas, '● ಅನುವಿಘಟಿ', cx + R * 0.25, legendY, const Color(0xFF38A169), R * 0.035, true);
+    _txt(canvas, '● ಘಟಿ', cx - R * 0.22, legendY, const Color(0xFFE53E3E), R * 0.032, true);
+    _txt(canvas, '● ವಿಘಟಿ', cx, legendY, const Color(0xFF2B6CB0), R * 0.032, true);
+    _txt(canvas, '● ಅನುವಿಘಟಿ', cx + R * 0.25, legendY, const Color(0xFF38A169), R * 0.032, true);
   }
 
   void _drawHand(Canvas canvas, double cx, double cy, double angle, double length, double width, Color color, double tailLen) {
@@ -383,14 +315,11 @@ class _GhatiClockPainter extends CustomPainter {
     final tailX = cx - tailLen * cos(angle);
     final tailY = cy - tailLen * sin(angle);
 
-    // Glow
     canvas.drawLine(Offset(tailX, tailY), Offset(tipX, tipY),
       Paint()..color = color.withOpacity(0.2)..strokeWidth = width + 4..strokeCap = StrokeCap.round);
-    // Shaft
     canvas.drawLine(Offset(tailX, tailY), Offset(tipX, tipY),
       Paint()..color = color..strokeWidth = width..strokeCap = StrokeCap.round);
 
-    // Arrowhead
     final aW = width * 2.5;
     final aL = width * 4;
     final b1x = tipX - aL * cos(angle) + aW / 2 * cos(angle + pi / 2);
