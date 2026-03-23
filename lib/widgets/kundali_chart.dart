@@ -86,14 +86,17 @@ class KundaliChart extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // If bhavaFromPlanet is set, use that planet's rashi as reference; else use lagna
+    // Grid is always oriented with lagna's rashi
+    final lagnaLong = result.planets['ಲಗ್ನ']?.longitude ?? 0;
+    final lagnaIdx = (lagnaLong / 30).floor() % 12;
+
+    // Reference longitude for bhava calculation (planet or lagna)
     double refLongitude;
     if (bhavaFromPlanet != null && result.planets.containsKey(bhavaFromPlanet)) {
       refLongitude = result.planets[bhavaFromPlanet]!.longitude;
     } else {
-      refLongitude = result.planets['ಲಗ್ನ']?.longitude ?? 0;
+      refLongitude = lagnaLong;
     }
-    final lagnaIdx = (refLongitude / 30).floor() % 12;
 
     // Build box contents
     final Map<int, List<Widget>> boxes = {for (int i = 0; i < 12; i++) i: []};
@@ -354,9 +357,13 @@ class KundaliChart extends StatelessWidget {
       isCombust = info.isCombust;
       isVakri = info.speed < 0 && !['ರಾಹು', 'ಕೇತು'].contains(info.name);
 
-      // Degree within current rashi (0-30°)
+      // Degree within current rashi — show degrees and minutes (matching sphuta tab)
       final degInRashi = info.longitude % 30;
-      final degStr = '${degInRashi.toStringAsFixed(0)}°';
+      final totalSec = (degInRashi * 3600).round();
+      int dg = totalSec ~/ 3600;
+      int mn = (totalSec % 3600) ~/ 60;
+      if (dg == 30) { dg = 29; mn = 59; }
+      final degStr = '$dg°${mn.toString().padLeft(2, '0')}\'';
       
       // Navamsha rashi number (1-12) — only for D1 (varga == 1)
       if (varga == 1 || varga == 0) {
