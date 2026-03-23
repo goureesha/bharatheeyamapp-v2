@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import '../widgets/common.dart';
 import '../constants/strings.dart';
 import '../core/calculator.dart';
-import '../core/ephemeris.dart';
 
 class VedicClockScreen extends StatefulWidget {
   const VedicClockScreen({super.key});
@@ -37,46 +36,33 @@ class _VedicClockScreenState extends State<VedicClockScreen> {
       final d = _selectedDate.day;
       final hour24 = _selectedTime.hour + _selectedTime.minute / 60.0;
 
-      // Calculate sunrise/sunset for this date
-      final srSs = Ephemeris.findSunriseSetForDate(y, m, d, _lat, _lon);
-      final srJd = srSs[0]; // sunrise JD
-      final ssJd = srSs[1]; // sunset JD
-
-      // Birth JD
-      final jdBirth = Ephemeris.dateToJd(y, m, d, hour24 - 5.5); // IST to UT
-
-      // Udayadi ghati: time from sunrise in ghati (1 day = 60 ghati)
-      double udGhati;
-      if (jdBirth >= srJd) {
-        udGhati = (jdBirth - srJd) * 60.0;
-      } else {
-        // Before today's sunrise — measure from previous day's sunrise
-        final prev = DateTime(y, m, d - 1);
-        final prevSrSs = Ephemeris.findSunriseSetForDate(prev.year, prev.month, prev.day, _lat, _lon);
-        udGhati = (jdBirth - prevSrSs[0]) * 60.0;
-      }
-
-      // Get planet positions
+      // Get full calculation including panchanga
       final result = await AstroCalculator.calculate(
         year: y, month: m, day: d,
         hourUtcOffset: 5.5, hour24: hour24, lat: _lat, lon: _lon,
         ayanamsaMode: 'lahiri', trueNode: true,
       );
 
-      if (mounted) {
+      if (result != null && mounted) {
         final longs = <String, double>{};
-        if (result != null) {
-          for (final e in result.planets.entries) longs[e.key] = e.value.longitude;
-        }
+        for (final e in result.planets.entries) longs[e.key] = e.value.longitude;
+
+        // Parse udayadi ghati from panchanga (format: "23.45")
+        final ghatiStr = result.panchang.udayadiGhati;
+        final parts = ghatiStr.split('.');
+        final ghWhole = double.tryParse(parts[0]) ?? 0;
+        final ghFrac = parts.length > 1 ? (double.tryParse('0.${parts[1]}') ?? 0) : 0.0;
+        final udGhati = ghWhole + ghFrac;
+
         setState(() {
           _udayadiGhati = udGhati;
-          _sunriseStr = formatTimeFromJd(srJd);
-          _sunsetStr = formatTimeFromJd(ssJd);
+          _sunriseStr = result.panchang.sunrise;
+          _sunsetStr = result.panchang.sunset;
           _planetLongs = longs;
           _lagnaLong = longs['ಲಗ್ನ'] ?? 0;
           _loading = false;
         });
-      }
+      } else { if (mounted) setState(() => _loading = false); }
     } catch (_) { if (mounted) setState(() => _loading = false); }
   }
 
