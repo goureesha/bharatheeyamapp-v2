@@ -98,7 +98,7 @@ class NorthIndianChart extends StatelessWidget {
     final Map<int, String> houseRashi = {};
     for (int i = 0; i < 12; i++) {
       final rashiIdx = (lagnaIdx + i) % 12;
-      houseRashi[i] = knRashi[rashiIdx];
+      houseRashi[i] = '${rashiIdx + 1}'; // Rashi number: Mesha=1 ... Meena=12
     }
 
     if (aroodhas != null) {
