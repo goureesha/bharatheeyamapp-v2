@@ -515,7 +515,7 @@ class AstroCalculator {
 
           double orb = 0.0;
           switch (kn) {
-            case 'ಮಂಗಳ': orb = 17.0; break;
+            case 'ಕುಜ': orb = 17.0; break;
             case 'ಬುಧ': orb = (speed < 0) ? 12.0 : 14.0; break;
             case 'ಗುರು': orb = 11.0; break;
             case 'ಶುಕ್ರ': orb = (speed < 0) ? 8.0 : 10.0; break;
