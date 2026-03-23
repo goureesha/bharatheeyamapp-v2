@@ -217,19 +217,6 @@ class _PanchangaScreenState extends State<PanchangaScreen> {
                                   Text(e.name, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: kPurple2)),
                                   const SizedBox(height: 4),
                                   Text(e.description, style: TextStyle(color: kText, fontSize: 14)),
-                                  const SizedBox(height: 12),
-                                  Container(
-                                    width: double.infinity,
-                                    padding: const EdgeInsets.all(8),
-                                    decoration: BoxDecoration(
-                                      color: Colors.white,
-                                      borderRadius: BorderRadius.circular(4),
-                                    ),
-                                    child: Text(e.shloka, 
-                                      style: TextStyle(fontStyle: FontStyle.italic, color: kPurple2, fontSize: 13),
-                                      textAlign: TextAlign.center,
-                                    ),
-                                  ),
                                   const SizedBox(height: 8),
                                   Row(
                                     mainAxisAlignment: MainAxisAlignment.end,
@@ -238,26 +225,6 @@ class _PanchangaScreenState extends State<PanchangaScreen> {
                                       Flexible(child: Text(e.source, style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: kPurple2))),
                                     ],
                                   ),
-                                  if (e.meaning.isNotEmpty) ...[
-                                    const SizedBox(height: 10),
-                                    Container(
-                                      width: double.infinity,
-                                      padding: const EdgeInsets.all(10),
-                                      decoration: BoxDecoration(
-                                        color: Colors.amber.withOpacity(0.08),
-                                        borderRadius: BorderRadius.circular(6),
-                                        border: Border.all(color: Colors.amber.withOpacity(0.3)),
-                                      ),
-                                      child: Column(
-                                        crossAxisAlignment: CrossAxisAlignment.start,
-                                        children: [
-                                          Text('ನಿಯಮ:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Colors.amber[800])),
-                                          const SizedBox(height: 4),
-                                          Text(e.meaning, style: TextStyle(color: kText, fontSize: 13)),
-                                        ],
-                                      ),
-                                    ),
-                                  ],
                                 ],
                               ),
                             ),
