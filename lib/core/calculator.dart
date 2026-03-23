@@ -515,11 +515,11 @@ class AstroCalculator {
 
           double orb = 0.0;
           switch (kn) {
-            case 'ಕುಜ': orb = 17.0; break;
-            case 'ಬುಧ': orb = (speed < 0) ? 12.0 : 14.0; break;
-            case 'ಗುರು': orb = 11.0; break;
-            case 'ಶುಕ್ರ': orb = (speed < 0) ? 8.0 : 10.0; break;
-            case 'ಶನಿ': orb = 15.0; break;
+            case 'ಕುಜ': orb = 15.0; break;
+            case 'ಬುಧ': orb = 11.0; break;
+            case 'ಗುರು': orb = 9.0; break;
+            case 'ಶುಕ್ರ': orb = 6.6; break;
+            case 'ಶನಿ': orb = 13.0; break;
           }
           if (distFromSun <= orb) {
             isCombust = true;
@@ -860,7 +860,7 @@ class AstroCalculator {
     if (!['ರವಿ', 'ರಾಹು', 'ಕೇತು', 'ಲಗ್ನ', 'ಮಾಂದಿ'].contains(pName)) {
       double diff = (deg - sunDeg).abs();
       if (diff > 180) diff = 360 - diff;
-      const limits = {'ಚಂದ್ರ': 12, 'ಕುಜ': 17, 'ಬುಧ': 14, 'ಗುರು': 11, 'ಶುಕ್ರ': 10, 'ಶನಿ': 15};
+      const limits = {'ಚಂದ್ರ': 12, 'ಕುಜ': 15, 'ಬುಧ': 11, 'ಗುರು': 9, 'ಶುಕ್ರ': 6.6, 'ಶನಿ': 13};
       if (diff <= (limits[pName] ?? 0)) isAsta = true;
       gati = (pName == 'ಚಂದ್ರ') ? 'ನೇರ' : (speed < 0 ? 'ವಕ್ರಿ' : 'ನೇರ');
     } else if (['ರಾಹು', 'ಕೇತು'].contains(pName)) {
