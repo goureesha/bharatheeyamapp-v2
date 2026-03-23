@@ -2,9 +2,11 @@ import 'package:flutter/material.dart';
 import '../core/calculator.dart';
 import '../constants/strings.dart';
 import 'common.dart';
+import 'north_indian_chart.dart';
 
 // ─────────────────────────────────────────────
 // 4×4 South-Indian style Kundali chart widget
+// (delegates to NorthIndianChart when setting is 'north')
 // ─────────────────────────────────────────────
 
 class KundaliChart extends StatelessWidget {
@@ -86,6 +88,22 @@ class KundaliChart extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Delegate to North Indian chart if selected
+    if (ChartStyle.isNorth) {
+      return NorthIndianChart(
+        result: result,
+        varga: varga,
+        isBhava: isBhava,
+        showSphutas: showSphutas,
+        aroodhas: aroodhas,
+        centerLabel: centerLabel,
+        onPlanetTap: onPlanetTap,
+        onPlanetLongPress: onPlanetLongPress,
+        selectedPlanet: selectedPlanet,
+        bhavaFromPlanet: bhavaFromPlanet,
+      );
+    }
+
     // Grid is always oriented with lagna's rashi
     final lagnaLong = result.planets['ಲಗ್ನ']?.longitude ?? 0;
     final lagnaIdx = (lagnaLong / 30).floor() % 12;

@@ -63,6 +63,49 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     Divider(color: kBorder),
                     const SizedBox(height: 24),
 
+                    // Chart Style selection
+                    SectionTitle('ಕುಂಡಲಿ ಶೈಲಿ / Chart Style'),
+                    const SizedBox(height: 10),
+                    ValueListenableBuilder<String>(
+                      valueListenable: ChartStyle.styleNotifier,
+                      builder: (context, currentStyle, _) {
+                        return Column(
+                          children: [
+                            RadioListTile<String>(
+                              value: 'south',
+                              groupValue: currentStyle,
+                              title: Row(children: [
+                                Text('ದಕ್ಷಿಣ ಭಾರತ ', style: TextStyle(fontWeight: FontWeight.w800, color: kText)),
+                                Text('(South Indian)', style: TextStyle(color: kMuted, fontSize: 12)),
+                              ]),
+                              subtitle: Text('4×4 ಗ್ರಿಡ್ - ರಾಶಿ ಸ್ಥಿರ, ಗ್ರಹಗಳು ಚಲಿಸುವವು', style: TextStyle(fontSize: 11, color: kMuted)),
+                              activeColor: kPurple2,
+                              onChanged: (val) {
+                                if (val != null) ChartStyle.setStyle(val);
+                              },
+                            ),
+                            RadioListTile<String>(
+                              value: 'north',
+                              groupValue: currentStyle,
+                              title: Row(children: [
+                                Text('ಉತ್ತರ ಭಾರತ ', style: TextStyle(fontWeight: FontWeight.w800, color: kText)),
+                                Text('(North Indian)', style: TextStyle(color: kMuted, fontSize: 12)),
+                              ]),
+                              subtitle: Text('ವಜ್ರ (Diamond) - ಭಾವ ಸ್ಥಿರ, ರಾಶಿಗಳು ಚಲಿಸುವವು', style: TextStyle(fontSize: 11, color: kMuted)),
+                              activeColor: kPurple2,
+                              onChanged: (val) {
+                                if (val != null) ChartStyle.setStyle(val);
+                              },
+                            ),
+                          ],
+                        );
+                      },
+                    ),
+
+                    const SizedBox(height: 24),
+                    Divider(color: kBorder),
+                    const SizedBox(height: 24),
+
                     // Google Account
                     SectionTitle('Google ಖಾತೆ'),
                     const SizedBox(height: 12),

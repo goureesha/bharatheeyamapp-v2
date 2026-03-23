@@ -26,6 +26,7 @@ Future<void> main() async {
     _initEphemeris(),
     SubscriptionService.initialize(),
     AppThemes.loadTheme(),
+    ChartStyle.loadStyle(),
   ]);
 
   // Show the app immediately — don't block on network calls

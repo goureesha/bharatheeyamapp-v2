@@ -77,6 +77,28 @@ class AppThemes {
   }
 }
 
+// ─────────────────────────────────────────────
+// Kundali chart style (South / North Indian)
+// ─────────────────────────────────────────────
+class ChartStyle {
+  static final ValueNotifier<String> styleNotifier = ValueNotifier('south');
+
+  static String get current => styleNotifier.value;
+  static bool get isNorth => styleNotifier.value == 'north';
+
+  static void setStyle(String style) {
+    if (style != 'south' && style != 'north') return;
+    styleNotifier.value = style;
+    SharedPreferences.getInstance().then((prefs) => prefs.setString('chart_style', style));
+  }
+
+  static Future<void> loadStyle() async {
+    final prefs = await SharedPreferences.getInstance();
+    final s = prefs.getString('chart_style') ?? 'south';
+    styleNotifier.value = s;
+  }
+}
+
 Color kPurple1 = AppThemes.palettes[0]['purple1']!;
 Color kPurple2 = AppThemes.palettes[0]['purple2']!;
 Color kOrange  = const Color(0xFFDD6B20);
