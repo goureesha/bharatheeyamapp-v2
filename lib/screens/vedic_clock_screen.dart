@@ -162,7 +162,7 @@ class _VedicClockScreenState extends State<VedicClockScreen> {
               padding: const EdgeInsets.all(12),
               child: SizedBox(
                 width: clockSize, height: clockSize,
-                child: CustomPaint(painter: _GhatiClockPainter(udayadiGhati: _udayadiGhati)),
+                child: CustomPaint(painter: _GhatiClockPainter(udayadiGhati: _udayadiGhati, lagnaLong: _lagnaLong)),
               ),
             ),
 
@@ -252,8 +252,9 @@ class _VedicClockScreenState extends State<VedicClockScreen> {
 // ============================================================
 
 class _GhatiClockPainter extends CustomPainter {
-  final double udayadiGhati; // total ghati elapsed since sunrise
-  _GhatiClockPainter({required this.udayadiGhati});
+  final double udayadiGhati;
+  final double lagnaLong;
+  _GhatiClockPainter({required this.udayadiGhati, required this.lagnaLong});
 
   static Color planetColor(String name) {
     switch (name) {
@@ -272,6 +273,12 @@ class _GhatiClockPainter extends CustomPainter {
   }
 
   static double _d2r(double d) => d * pi / 180;
+
+  static const _rashiColors = [
+    Color(0xFFE74C3C), Color(0xFF27AE60), Color(0xFF3498DB), Color(0xFF8E44AD),
+    Color(0xFFE67E22), Color(0xFF2ECC71), Color(0xFF2980B9), Color(0xFF9B59B6),
+    Color(0xFFD35400), Color(0xFF1ABC9C), Color(0xFF2471A3), Color(0xFF7D3C98),
+  ];
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -303,7 +310,35 @@ class _GhatiClockPainter extends CustomPainter {
 
     // === OUTER GOLD RING ===
     canvas.drawCircle(center, R, Paint()..color = const Color(0xFFD4AF37)..style = PaintingStyle.stroke..strokeWidth = 3);
-    canvas.drawCircle(center, R * 0.92, Paint()..color = const Color(0xFFD4AF37).withOpacity(0.3)..style = PaintingStyle.stroke..strokeWidth = 1);
+
+    // === RASHI RING (rotates independently based on lagna) ===
+    // The ghati hand angle shows where the current time is on the clock.
+    // The lagna (rising sign) should align with the ghati hand position.
+    // So we rotate the rashi ring so that lagnaLong aligns with ghatiAngle.
+    final ghatiDeg = (ghati % 60) * 6.0; // ghati hand position in degrees (0=top)
+    final rashiOffset = ghatiDeg - lagnaLong; // rotation to align lagna with ghati hand
+    final outerR = R;
+    final innerRashi = R * 0.92;
+    final midRashi = (outerR + innerRashi) / 2;
+
+    for (int i = 0; i < 12; i++) {
+      final sa = _d2r(i * 30.0 + rashiOffset - 90);
+      const sw = 30 * pi / 180;
+      final p = Path()
+        ..moveTo(cx + innerRashi * cos(sa), cy + innerRashi * sin(sa))
+        ..arcTo(Rect.fromCircle(center: center, radius: outerR), sa, sw, false)
+        ..arcTo(Rect.fromCircle(center: center, radius: innerRashi), sa + sw, -sw, false)
+        ..close();
+      canvas.drawPath(p, Paint()..color = _rashiColors[i].withOpacity(0.25));
+      canvas.drawPath(p, Paint()..color = _rashiColors[i].withOpacity(0.5)..style = PaintingStyle.stroke..strokeWidth = 0.8);
+
+      // Rashi name
+      final la = _d2r(i * 30.0 + 15 + rashiOffset - 90);
+      _txt(canvas, knRashi[i], cx + midRashi * cos(la), cy + midRashi * sin(la),
+        Colors.white.withOpacity(0.9), outerR * 0.048, true);
+    }
+
+    canvas.drawCircle(center, innerRashi, Paint()..color = const Color(0xFFD4AF37).withOpacity(0.3)..style = PaintingStyle.stroke..strokeWidth = 1);
 
     // === GHATI MARKERS (0–59) ===
     for (int i = 0; i < 60; i++) {
@@ -388,5 +423,6 @@ class _GhatiClockPainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(covariant _GhatiClockPainter o) => o.udayadiGhati != udayadiGhati;
+  bool shouldRepaint(covariant _GhatiClockPainter o) =>
+    o.udayadiGhati != udayadiGhati || o.lagnaLong != lagnaLong;
 }
