@@ -192,71 +192,77 @@ class NorthIndianChart extends StatelessWidget {
     );
   }
 
-  /// Build positioned widgets for each house in the diamond layout
+  /// Build positioned widgets for each house in the diamond layout.
+  /// The diamond + diagonals create 12 triangular regions.
+  /// Houses go clockwise: 0=top-center(asc), 1=top-right-corner, 2=right-upper, etc.
   List<Widget> _buildHouseWidgets(double size, Map<int, List<Widget>> houses, Map<int, String> houseRashi) {
     final widgets = <Widget>[];
-    final half = size / 2;
-    final quarter = size / 4;
+    final s = size;
+    final boxW = s * 0.22;  // widget width
+    final boxH = s * 0.18;  // widget height
 
-    // House positions: each house is a triangular region
-    // We place content at the approximate center of each triangle
-    // House indices: 0=top(asc), going counter-clockwise
-    final housePositions = <int, Rect>{
-      0:  Rect.fromLTWH(quarter, 0, half, quarter),           // top center (ascendant)
-      1:  Rect.fromLTWH(0, 0, quarter, quarter),               // top-left corner
-      2:  Rect.fromLTWH(0, quarter * 0.5, quarter, quarter),   // left-upper
-      3:  Rect.fromLTWH(0, quarter * 1.5, quarter, quarter),   // left-lower
-      4:  Rect.fromLTWH(0, quarter * 3, quarter, quarter),     // bottom-left corner
-      5:  Rect.fromLTWH(quarter * 0.5, quarter * 2.5, quarter, quarter * 1.5), // bottom-left
-      6:  Rect.fromLTWH(quarter, quarter * 3, half, quarter),  // bottom center
-      7:  Rect.fromLTWH(quarter * 2.5, quarter * 2.5, quarter, quarter * 1.5), // bottom-right
-      8:  Rect.fromLTWH(quarter * 3, quarter * 3, quarter, quarter), // bottom-right corner
-      9:  Rect.fromLTWH(quarter * 3, quarter * 1.5, quarter, quarter), // right-lower
-      10: Rect.fromLTWH(quarter * 3, quarter * 0.5, quarter, quarter), // right-upper
-      11: Rect.fromLTWH(quarter * 3, 0, quarter, quarter),     // top-right corner
+    // Centroids of each triangular house (as fractions of size)
+    // Computed from triangle vertices formed by outer rect, diamond, and diagonals
+    //
+    // Top:     H0=top-center, H11=top-left-corner, H1=top-right-corner
+    // Right:   H2=right-upper, H3=right-center, H4=right-lower
+    // Bottom:  H5=bottom-right-corner, H6=bottom-center, H7=bottom-left-corner
+    // Left:    H8=left-lower, H9=left-center, H10=left-upper
+    final centroids = <int, Offset>{
+      0:  Offset(0.50, 0.17),   // top center (ascendant)
+      1:  Offset(0.75, 0.08),   // top-right corner
+      2:  Offset(0.92, 0.25),   // right-upper
+      3:  Offset(0.83, 0.50),   // right center
+      4:  Offset(0.92, 0.75),   // right-lower
+      5:  Offset(0.75, 0.92),   // bottom-right corner
+      6:  Offset(0.50, 0.83),   // bottom center
+      7:  Offset(0.25, 0.92),   // bottom-left corner
+      8:  Offset(0.08, 0.75),   // left-lower
+      9:  Offset(0.17, 0.50),   // left center
+      10: Offset(0.08, 0.25),   // left-upper
+      11: Offset(0.25, 0.08),   // top-left corner
     };
 
     for (int h = 0; h < 12; h++) {
-      final rect = housePositions[h]!;
-      final rashiName = houseRashi[h] ?? '';
+      final center = centroids[h]!;
+      final rashiNum = houseRashi[h] ?? '';
       final planets = houses[h] ?? [];
 
+      // Smaller boxes for corner houses (odd indices), wider for edge-center houses
+      final isCorner = (h % 3 != 0); // corners are 1,2,4,5,7,8,10,11
+      final w = isCorner ? boxW * 0.85 : boxW;
+      final ht = isCorner ? boxH * 0.85 : boxH;
+
       widgets.add(Positioned(
-        left: rect.left,
-        top: rect.top,
-        width: rect.width,
-        height: rect.height,
-        child: GestureDetector(
-          behavior: HitTestBehavior.translucent,
-          child: Padding(
-            padding: const EdgeInsets.all(2),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                // Rashi name label
-                Text(rashiName,
-                  style: TextStyle(
-                    fontSize: size * 0.025,
-                    fontWeight: FontWeight.w700,
-                    color: const Color(0xFF4A5568),
-                  ),
-                ),
-                // Planets
-                ...planets.take(6),
-              ],
+        left: center.dx * s - w / 2,
+        top: center.dy * s - ht / 2,
+        width: w,
+        height: ht,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            // Rashi number label
+            Text(rashiNum,
+              style: TextStyle(
+                fontSize: s * 0.028,
+                fontWeight: FontWeight.w800,
+                color: const Color(0xFF718096),
+              ),
             ),
-          ),
+            // Planet chips
+            ...planets.take(5),
+          ],
         ),
       ));
     }
 
-    // Center label
+    // Center box (inner square from s/4 to 3s/4)
     widgets.add(Positioned(
-      left: quarter,
-      top: quarter,
-      width: half,
-      height: half,
+      left: s * 0.25,
+      top: s * 0.25,
+      width: s * 0.50,
+      height: s * 0.50,
       child: Center(
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -374,7 +380,6 @@ class _NorthIndianPainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     final w = size.width;
     final h = size.height;
-    final mid = Offset(w / 2, h / 2);
 
     final linePaint = Paint()
       ..color = const Color(0xFF718096)
@@ -398,10 +403,8 @@ class _NorthIndianPainter extends CustomPainter {
       ..close();
     canvas.drawPath(diamondPath, linePaint);
 
-    // Diagonal lines from corners to center to create 12 houses
-    // Top-left corner to bottom-right corner
+    // Diagonal lines from corners to create 12 houses
     canvas.drawLine(Offset(0, 0), Offset(w, h), linePaint);
-    // Top-right corner to bottom-left corner
     canvas.drawLine(Offset(w, 0), Offset(0, h), linePaint);
   }
 
