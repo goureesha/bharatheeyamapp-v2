@@ -940,8 +940,8 @@ class _DashboardScreenState extends State<DashboardScreen>
               Expanded(
                 child: TextField(
                   controller: _newNoteController,
-                  maxLines: 6,
-                  minLines: 3,
+                  maxLines: 20,
+                  minLines: 10,
                   decoration: InputDecoration(
                     hintText: 'ಹೊಸ ಟಿಪ್ಪಣಿ ಸೇರಿಸಿ...',
                     border: OutlineInputBorder(
@@ -1024,6 +1024,62 @@ class _DashboardScreenState extends State<DashboardScreen>
                         const SizedBox(width: 6),
                         Text(e['date'] ?? '', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: kTeal)),
                         const Spacer(),
+                        // Edit button
+                        GestureDetector(
+                          onTap: () {
+                            // Pre-fill the text input with this note's text for editing
+                            _newNoteController.text = e['text'] ?? '';
+                            // Remove this entry from notes
+                            final updatedEntries = List<Map<String, String>>.from(entries);
+                            updatedEntries.removeAt(i);
+                            setState(() {
+                              _notes = updatedEntries.map((en) => '[${en['date']}] ${en['text']}').join('\n---\n');
+                            });
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text('✏️ ಟಿಪ್ಪಣಿ ಸಂಪಾದನೆಗೆ ಲೋಡ್ ಆಗಿದೆ'), duration: Duration(seconds: 2)),
+                            );
+                          },
+                          child: Padding(
+                            padding: const EdgeInsets.all(4),
+                            child: Icon(Icons.edit, size: 18, color: kPurple2),
+                          ),
+                        ),
+                        const SizedBox(width: 4),
+                        // Delete button
+                        GestureDetector(
+                          onTap: () {
+                            showDialog(
+                              context: context,
+                              builder: (ctx) => AlertDialog(
+                                backgroundColor: kBg,
+                                title: Text('ಟಿಪ್ಪಣಿ ಅಳಿಸಿ?', style: TextStyle(color: kText, fontWeight: FontWeight.w900)),
+                                content: Text('ಈ ಟಿಪ್ಪಣಿಯನ್ನು ಶಾಶ್ವತವಾಗಿ ಅಳಿಸಲಾಗುವುದು.', style: TextStyle(color: kMuted)),
+                                actions: [
+                                  TextButton(onPressed: () => Navigator.pop(ctx), child: Text('ಬೇಡ', style: TextStyle(color: kMuted))),
+                                  TextButton(
+                                    onPressed: () {
+                                      Navigator.pop(ctx);
+                                      final updatedEntries = List<Map<String, String>>.from(entries);
+                                      updatedEntries.removeAt(i);
+                                      setState(() {
+                                        _notes = updatedEntries.map((en) => '[${en['date']}] ${en['text']}').join('\n---\n');
+                                      });
+                                      ScaffoldMessenger.of(context).showSnackBar(
+                                        const SnackBar(content: Text('🗑️ ಟಿಪ್ಪಣಿ ಅಳಿಸಲಾಗಿದೆ'), backgroundColor: Colors.red),
+                                      );
+                                    },
+                                    child: Text('ಅಳಿಸಿ', style: TextStyle(color: Colors.red, fontWeight: FontWeight.w900)),
+                                  ),
+                                ],
+                              ),
+                            );
+                          },
+                          child: Padding(
+                            padding: const EdgeInsets.all(4),
+                            child: Icon(Icons.delete_outline, size: 18, color: Colors.redAccent),
+                          ),
+                        ),
+                        const SizedBox(width: 4),
                         Text('#${entries.length - i}', style: TextStyle(fontSize: 11, color: kMuted)),
                       ],
                     ),
