@@ -14,6 +14,7 @@ class TaranukoolaScreen extends StatefulWidget {
 
 class _TaranukoolaScreenState extends State<TaranukoolaScreen> {
   bool _isTwoPersonMode = false;
+  bool _excludeNakshatras = false;
   int? _janmaNakshatraIdx1;
   int? _janmaNakshatraIdx2;
   
@@ -45,6 +46,7 @@ class _TaranukoolaScreenState extends State<TaranukoolaScreen> {
     if (mounted) {
       setState(() {
         _isTwoPersonMode = prefs.getBool('dashboard_tara_two_person') ?? false;
+        _excludeNakshatras = prefs.getBool('tara_exclude_nakshatras') ?? false;
         _janmaNakshatraIdx1 = prefs.getInt('dashboard_janma_nakshatra');
         _janmaNakshatraIdx2 = prefs.getInt('dashboard_janma_nakshatra2');
       });
@@ -54,6 +56,7 @@ class _TaranukoolaScreenState extends State<TaranukoolaScreen> {
   Future<void> _saveSettings() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool('dashboard_tara_two_person', _isTwoPersonMode);
+    await prefs.setBool('tara_exclude_nakshatras', _excludeNakshatras);
     if (_janmaNakshatraIdx1 != null) await prefs.setInt('dashboard_janma_nakshatra', _janmaNakshatraIdx1!);
     if (_janmaNakshatraIdx2 != null) await prefs.setInt('dashboard_janma_nakshatra2', _janmaNakshatraIdx2!);
   }
@@ -79,8 +82,22 @@ class _TaranukoolaScreenState extends State<TaranukoolaScreen> {
     return _dailyNakshatraCache[normalized]!;
   }
 
+  // Nakshatras to exclude when toggle is on
+  // Bharani(1), Kruttika(2), Ardra(5), Ashlesha(8), Makha(9),
+  // Poorva Phalguni(10), Vishakha(15), Jyeshta(17), Moola(18),
+  // Poorvashadha(19), Poorva Bhadra(24)
+  static const _excludedNakIndices = {1, 2, 5, 8, 9, 10, 15, 17, 18, 19, 24};
+
   bool _isGoodTara(int taraIdx) {
     return (taraIdx == 1 || taraIdx == 3 || taraIdx == 5 || taraIdx == 7 || taraIdx == 8);
+  }
+
+  /// Check if a day is good, considering nakshatra exclusion
+  bool _isDayGood(int dinaIdx, int janmaIdx) {
+    int tara = (dinaIdx - janmaIdx + 27) % 27 % 9;
+    if (!_isGoodTara(tara)) return false;
+    if (_excludeNakshatras && _excludedNakIndices.contains(dinaIdx)) return false;
+    return true;
   }
 
   Widget _buildMarker(DateTime date, List events) {
@@ -89,8 +106,7 @@ class _TaranukoolaScreenState extends State<TaranukoolaScreen> {
 
     int dinaIdx = _getNakshatraForDate(date);
     
-    int tara1 = (dinaIdx - _janmaNakshatraIdx1! + 27) % 27 % 9;
-    bool isGood1 = _isGoodTara(tara1);
+    bool isGood1 = _isDayGood(dinaIdx, _janmaNakshatraIdx1!);
 
     if (!_isTwoPersonMode) {
       Color dotColor = isGood1 ? Colors.green : Colors.red;
@@ -102,16 +118,15 @@ class _TaranukoolaScreenState extends State<TaranukoolaScreen> {
         ),
       );
     } else {
-      int tara2 = (dinaIdx - _janmaNakshatraIdx2! + 27) % 27 % 9;
-      bool isGood2 = _isGoodTara(tara2);
+      bool isGood2 = _isDayGood(dinaIdx, _janmaNakshatraIdx2!);
       
       Color dotColor;
       if (isGood1 && isGood2) {
-        dotColor = Colors.green; // Good for both
+        dotColor = Colors.green;
       } else if (!isGood1 && !isGood2) {
-        dotColor = Colors.red; // Bad for both
+        dotColor = Colors.red;
       } else {
-        dotColor = Colors.orange; // Half good
+        dotColor = Colors.orange;
       }
 
       return Positioned(
@@ -216,7 +231,63 @@ class _TaranukoolaScreenState extends State<TaranukoolaScreen> {
                         Padding(padding: EdgeInsets.symmetric(horizontal: 16), child: Text('೨ ವ್ಯಕ್ತಿಗಳು')),
                       ],
                     ),
-                    const SizedBox(height: 24),
+                    const SizedBox(height: 12),
+
+                    // Exclude nakshatras toggle
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                      decoration: BoxDecoration(
+                        color: _excludeNakshatras ? Colors.orange.withOpacity(0.1) : kBorder.withOpacity(0.2),
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: _excludeNakshatras ? Colors.orange : kBorder),
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(
+                            _excludeNakshatras ? Icons.filter_alt : Icons.filter_alt_outlined,
+                            size: 20,
+                            color: _excludeNakshatras ? Colors.orange.shade700 : kMuted,
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              'ಅಶುಭ ನಕ್ಷತ್ರ ಹೊರಗಿಡಿ',
+                              style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: _excludeNakshatras ? Colors.orange.shade700 : kMuted),
+                            ),
+                          ),
+                          Switch(
+                            value: _excludeNakshatras,
+                            activeColor: Colors.orange,
+                            onChanged: (val) {
+                              setState(() {
+                                _excludeNakshatras = val;
+                                _dailyNakshatraCache.clear();
+                                _saveSettings();
+                              });
+                            },
+                          ),
+                        ],
+                      ),
+                    ),
+
+                    if (_excludeNakshatras) ...[
+                      const SizedBox(height: 6),
+                      Wrap(
+                        spacing: 6,
+                        runSpacing: 4,
+                        children: _excludedNakIndices.map((idx) => Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                          decoration: BoxDecoration(
+                            color: Colors.red.withOpacity(0.08),
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: Colors.red.withOpacity(0.3)),
+                          ),
+                          child: Text(knNak[idx], style: TextStyle(fontSize: 11, color: Colors.red.shade700, fontWeight: FontWeight.w600)),
+                        )).toList(),
+                      ),
+                    ],
+
+                    const SizedBox(height: 16),
                     Text(_isTwoPersonMode ? 'ವ್ಯಕ್ತಿ 1ರ ಜನ್ಮ ನಕ್ಷತ್ರ:' : 'ನಿಮ್ಮ ಜನ್ಮ ನಕ್ಷತ್ರವನ್ನು ಆಯ್ಕೆಮಾಡಿ:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: kText)),
                     const SizedBox(height: 8),
                     Container(
@@ -374,7 +445,8 @@ class _TaranukoolaScreenState extends State<TaranukoolaScreen> {
                         builder: (context) {
                           int dinaIdx = _getNakshatraForDate(_selectedDay!);
                           int tara1 = (dinaIdx - _janmaNakshatraIdx1! + 27) % 27 % 9;
-                          bool isGood1 = _isGoodTara(tara1);
+                          bool isGood1 = _isDayGood(dinaIdx, _janmaNakshatraIdx1!);
+                          bool isExcluded = _excludeNakshatras && _excludedNakIndices.contains(dinaIdx);
                           
                           if (!_isTwoPersonMode) {
                               Color bgColor = isGood1 ? Colors.green.shade50 : Colors.red.shade50;
@@ -387,6 +459,10 @@ class _TaranukoolaScreenState extends State<TaranukoolaScreen> {
                                 child: Column(
                                   children: [
                                     Text('ಆಯ್ಕೆಮಾಡಿದ ದಿನದ ನಕ್ಷತ್ರ: ${knNak[dinaIdx]}', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: textColor)),
+                                    if (isExcluded) ...[  
+                                      const SizedBox(height: 4),
+                                      Text('⚠️ ಹೊರಗಿಡಲಾದ ನಕ್ಷತ್ರ', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: Colors.orange.shade700)),
+                                    ],
                                     const SizedBox(height: 8),
                                     Text(_taras[tara1], style: TextStyle(fontSize: 22, fontWeight: FontWeight.w900, color: textColor), textAlign: TextAlign.center),
                                   ],
@@ -394,7 +470,7 @@ class _TaranukoolaScreenState extends State<TaranukoolaScreen> {
                               );
                           } else {
                               int tara2 = (dinaIdx - _janmaNakshatraIdx2! + 27) % 27 % 9;
-                              bool isGood2 = _isGoodTara(tara2);
+                              bool isGood2 = _isDayGood(dinaIdx, _janmaNakshatraIdx2!);
                               
                               Color bgColor = (isGood1 && isGood2) ? Colors.green.shade50 : (!isGood1 && !isGood2) ? Colors.red.shade50 : Colors.orange.shade50;
                               Color borderColor = (isGood1 && isGood2) ? Colors.green.shade500 : (!isGood1 && !isGood2) ? Colors.red.shade500 : Colors.orange.shade500;
