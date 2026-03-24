@@ -102,49 +102,33 @@ function bookNow() {
 
   const data = parseData();
   const astrologerEmail = data && data.email ? data.email : '';
-  const slotMinutes = data && data.slotMin ? data.slotMin : 60;
 
   // Parse selected date and time
   const d = new Date(selectedSlot.date);
+  const dayName = dayNamesKn[d.getDay()];
+  const monthName = monthNamesKn[d.getMonth()];
   const [sH, sM] = selectedSlot.time.split(':').map(Number);
+  const timeStr = fmt12(sH, sM);
+  const dateStr = `${d.getDate()} ${monthName} ${d.getFullYear()} (${dayName})`;
 
-  // Calculate end time
-  const endTotal = sH * 60 + sM + slotMinutes;
-  const eH = Math.floor(endTotal / 60);
-  const eM = endTotal % 60;
-
-  // Format dates for Google Calendar URL: YYYYMMDDTHHmmSS
-  const pad2 = n => String(n).padStart(2, '0');
-  const year = d.getFullYear();
-  const month = pad2(d.getMonth() + 1);
-  const day = pad2(d.getDate());
-
-  const startStr = `${year}${month}${day}T${pad2(sH)}${pad2(sM)}00`;
-  const endStr = `${year}${month}${day}T${pad2(eH)}${pad2(eM)}00`;
-
-  // Build Google Calendar event URL
-  const title = encodeURIComponent(`ಜಾತಕ ಅಪಾಯಿಂಟ್‌ಮೆಂಟ್ - ${name}`);
-  const details = encodeURIComponent(
-    `👤 ಗ್ರಾಹಕರು: ${name}\n📱 ಫೋನ್: ${phone}\n\nBooked via ಭಾರತೀಯಮ್`
+  // Build email subject and body
+  const subject = encodeURIComponent(`ಅಪಾಯಿಂಟ್‌ಮೆಂಟ್ ವಿನಂತಿ - ${name}`);
+  const body = encodeURIComponent(
+    `🙏 ಅಪಾಯಿಂಟ್‌ಮೆಂಟ್ ವಿನಂತಿ\n\n`
+    + `👤 ಹೆಸರು: ${name}\n`
+    + `📱 ಫೋನ್: ${phone}\n`
+    + `📅 ದಿನಾಂಕ: ${dateStr}\n`
+    + `⏰ ಸಮಯ: ${timeStr}\n\n`
+    + `ದಯವಿಟ್ಟು ಈ ಅಪಾಯಿಂಟ್‌ಮೆಂಟ್ ಅನ್ನು ದೃಢೀಕರಿಸಿ.\n\n`
+    + `- ಭಾರತೀಯಮ್ ✨`
   );
 
-  let calUrl = `https://calendar.google.com/calendar/render?action=TEMPLATE`
-    + `&text=${title}`
-    + `&dates=${startStr}/${endStr}`
-    + `&details=${details}`
-    + `&ctz=Asia/Kolkata`;
-
-  // Add astrologer as guest — Google sends them an invitation to accept/decline
-  if (astrologerEmail) {
-    calUrl += `&add=${encodeURIComponent(astrologerEmail)}`;
-  }
+  // Open email to astrologer (no Google Calendar)
+  window.location.href = `mailto:${astrologerEmail}?subject=${subject}&body=${body}`;
 
   // Show success state
   document.getElementById('bookingForm').style.display = 'none';
   document.getElementById('successMsg').classList.add('show');
-
-  // Open Google Calendar to create the event
-  window.open(calUrl, '_blank');
 }
 
 function render() {
@@ -161,7 +145,7 @@ function render() {
   // Info box
   html += '<div class="info-box"><p><span class="icon">📅</span>';
   html += 'ಕೆಳಗಿನ ಲಭ್ಯ ಸಮಯಗಳಿಂದ ಒಂದನ್ನು ಆಯ್ಕೆ ಮಾಡಿ. ';
-  html += 'ಜ್ಯೋತಿಷಿಯವರಿಗೆ Google Calendar ಆಮಂತ್ರಣ ಕಳುಹಿಸಲಾಗುತ್ತದೆ. ಅವರು ಸ್ವೀಕರಿಸಿದ ನಂತರ ನಿಮಗೆ ದೃಢೀಕರಣ ಬರುತ್ತದೆ.</p></div>';
+  html += 'ನಿಮ್ಮ ವಿನಂತಿ ಜ್ಯೋತಿಷಿಯವರ ಇಮೇಲ್‌ಗೆ ಕಳುಹಿಸಲಾಗುತ್ತದೆ.</p></div>';
 
   // Available Slots
   html += '<div class="card"><h2>📅 ಲಭ್ಯ ಸಮಯಗಳು</h2>';
@@ -193,17 +177,17 @@ function render() {
   html += '</div>';
 
   // Book Button
-  html += '<button class="book-btn" onclick="bookNow()">📅 ಅಪಾಯಿಂಟ್‌ಮೆಂಟ್ ವಿನಂತಿ ಕಳುಹಿಸಿ</button>';
+  html += '<button class="book-btn" onclick="bookNow()">📧 ಅಪಾಯಿಂಟ್‌ಮೆಂಟ್ ವಿನಂತಿ ಕಳುಹಿಸಿ</button>';
 
   html += '</div>';
 
   // Success message
   html += '<div class="success" id="successMsg">';
   html += '<h2>✅ ವಿನಂತಿ ಕಳುಹಿಸಲಾಗುತ್ತಿದೆ!</h2>';
-  html += '<p>Google Calendar ತೆರೆಯುತ್ತಿದೆ...<br><br>';
-  html += 'ದಯವಿಟ್ಟು Calendar ನಲ್ಲಿ <strong>"Save"</strong> ಕ್ಲಿಕ್ ಮಾಡಿ.<br><br>';
-  html += 'ಜ್ಯೋತಿಷಿಯವರಿಗೆ ಆಮಂತ್ರಣ ಕಳುಹಿಸಲಾಗುತ್ತದೆ.<br>';
-  html += 'ಅವರು <strong>ಸ್ವೀಕರಿಸಿದ/ನಿರಾಕರಿಸಿದ</strong> ನಂತರ ನಿಮಗೆ ಇಮೇಲ್ ಬರುತ್ತದೆ.</p>';
+  html += '<p>ಇಮೇಲ್ ಆಪ್ ತೆರೆಯುತ್ತಿದೆ...<br><br>';
+  html += 'ದಯವಿಟ್ಟು <strong>"Send"</strong> ಕ್ಲಿಕ್ ಮಾಡಿ.<br><br>';
+  html += 'ಜ್ಯೋತಿಷಿಯವರು ನಿಮ್ಮ ವಿನಂತಿಯನ್ನು ಸ್ವೀಕರಿಸಿದ ನಂತರ<br>';
+  html += 'ನಿಮಗೆ ದೃಢೀಕರಣ ಬರುತ್ತದೆ.</p>';
   html += '</div>';
 
   app.innerHTML = html;
