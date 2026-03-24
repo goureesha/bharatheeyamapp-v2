@@ -88,8 +88,10 @@ jobs:
       - name: Build Web
         run: flutter build web --release --base-href "/bharatheeyamapp/"
 
-      - name: Copy booking page into web build
-        run: cp docs/booking.html build/web/booking.html
+      - name: Copy docs into web build
+        run: |
+          cp docs/*.html build/web/ || true
+          cp docs/*.md build/web/ || true
 
       - name: Upload Web Artifact
         uses: actions/upload-artifact@v4
