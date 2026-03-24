@@ -47,35 +47,51 @@ class GhatiWidgetProvider : AppWidgetProvider() {
         fun updateWidget(context: Context, appWidgetManager: AppWidgetManager, appWidgetId: Int) {
             val views = RemoteViews(context.packageName, R.layout.ghati_widget_layout)
 
-            // Get sunrise from SharedPreferences (saved by Flutter app)
-            val prefs = context.getSharedPreferences("FlutterSharedPreferences", Context.MODE_PRIVATE)
-            val sunriseHour = prefs.getFloat("flutter.sunrise_hour24", 6.0f).toDouble()
+            try {
+                // Get sunrise from SharedPreferences (saved by Flutter app)
+                // Flutter shared_preferences stores doubles as Long bits (Double.doubleToRawLongBits)
+                val prefs = context.getSharedPreferences("FlutterSharedPreferences", Context.MODE_PRIVATE)
+                val sunriseHour: Double = try {
+                    val longBits = prefs.getLong("flutter.sunrise_hour24", Double.doubleToRawLongBits(6.0))
+                    Double.fromBits(longBits)
+                } catch (e: ClassCastException) {
+                    // Fallback: try reading as float (older versions may have stored it differently)
+                    try {
+                        prefs.getFloat("flutter.sunrise_hour24", 6.0f).toDouble()
+                    } catch (e2: Exception) {
+                        6.0
+                    }
+                }
 
-            // Calculate current ghati
-            val cal = Calendar.getInstance()
-            val nowHour = cal.get(Calendar.HOUR_OF_DAY) + cal.get(Calendar.MINUTE) / 60.0 + cal.get(Calendar.SECOND) / 3600.0
-            val elapsedHours = nowHour - sunriseHour
-            val ghati = elapsedHours * (60.0 / 24.0)
+                // Calculate current ghati
+                val cal = Calendar.getInstance()
+                val nowHour = cal.get(Calendar.HOUR_OF_DAY) + cal.get(Calendar.MINUTE) / 60.0 + cal.get(Calendar.SECOND) / 3600.0
+                val elapsedHours = nowHour - sunriseHour
+                val ghati = elapsedHours * (60.0 / 24.0)
 
-            // Draw clock
-            val bitmap = drawClock(ghati, WIDGET_SIZE)
-            views.setImageViewBitmap(R.id.ghati_clock_image, bitmap)
+                // Draw clock
+                val bitmap = drawClock(ghati, WIDGET_SIZE)
+                views.setImageViewBitmap(R.id.ghati_clock_image, bitmap)
 
-            // Digital display
-            val gh = ghati.toInt() % 60
-            val viTotal = (ghati - ghati.toInt()) * 60
-            val vi = viTotal.toInt()
-            val av = ((viTotal - vi) * 60).toInt()
-            views.setTextViewText(R.id.ghati_text, "${gh} ಘ : ${vi.toString().padStart(2, '0')} ವಿ : ${av.toString().padStart(2, '0')} ಅ")
+                // Digital display
+                val gh = ghati.toInt() % 60
+                val viTotal = (ghati - ghati.toInt()) * 60
+                val vi = viTotal.toInt()
+                val av = ((viTotal - vi) * 60).toInt()
+                views.setTextViewText(R.id.ghati_text, "${gh} ಘ : ${vi.toString().padStart(2, '0')} ವಿ : ${av.toString().padStart(2, '0')} ಅ")
 
-            // Click to open app
-            val launchIntent = context.packageManager.getLaunchIntentForPackage(context.packageName)
-            if (launchIntent != null) {
-                val pendingIntent = android.app.PendingIntent.getActivity(
-                    context, 0, launchIntent,
-                    android.app.PendingIntent.FLAG_UPDATE_CURRENT or android.app.PendingIntent.FLAG_IMMUTABLE
-                )
-                views.setOnClickPendingIntent(R.id.ghati_widget_root, pendingIntent)
+                // Click to open app
+                val launchIntent = context.packageManager.getLaunchIntentForPackage(context.packageName)
+                if (launchIntent != null) {
+                    val pendingIntent = android.app.PendingIntent.getActivity(
+                        context, 0, launchIntent,
+                        android.app.PendingIntent.FLAG_UPDATE_CURRENT or android.app.PendingIntent.FLAG_IMMUTABLE
+                    )
+                    views.setOnClickPendingIntent(R.id.ghati_widget_root, pendingIntent)
+                }
+            } catch (e: Exception) {
+                // If anything fails, show a fallback message instead of blank
+                views.setTextViewText(R.id.ghati_text, "ಭಾರತೀಯಮ್ - ಅಪ್ ತೆರೆಯಿರಿ")
             }
 
             appWidgetManager.updateAppWidget(appWidgetId, views)
