@@ -49,19 +49,8 @@ class GhatiWidgetProvider : AppWidgetProvider() {
 
             try {
                 // Get sunrise from SharedPreferences (saved by Flutter app)
-                // Flutter shared_preferences stores doubles as Long bits (Double.doubleToRawLongBits)
                 val prefs = context.getSharedPreferences("FlutterSharedPreferences", Context.MODE_PRIVATE)
-                val sunriseHour: Double = try {
-                    val longBits = prefs.getLong("flutter.sunrise_hour24", Double.doubleToRawLongBits(6.0))
-                    Double.fromBits(longBits)
-                } catch (e: ClassCastException) {
-                    // Fallback: try reading as float (older versions may have stored it differently)
-                    try {
-                        prefs.getFloat("flutter.sunrise_hour24", 6.0f).toDouble()
-                    } catch (e2: Exception) {
-                        6.0
-                    }
-                }
+                val sunriseHour = prefs.getFloat("flutter.sunrise_hour24", 6.0f).toDouble()
 
                 // Calculate current ghati
                 val cal = Calendar.getInstance()

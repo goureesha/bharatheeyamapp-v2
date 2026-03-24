@@ -60,30 +60,13 @@ android {
     buildTypes {
         release {
             signingConfig = signingConfigs.release.storeFile ? signingConfigs.release : signingConfigs.debug
-            minifyEnabled = false
-            shrinkResources = false
+            minifyEnabled = true
+            shrinkResources = true
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
-    }
-
-    // Fix duplicate class conflicts (ListenableFuture etc.)
-    packagingOptions {
-        pickFirst 'META-INF/DEPENDENCIES'
-        pickFirst 'META-INF/LICENSE'
-        pickFirst 'META-INF/LICENSE.txt'
-        pickFirst 'META-INF/NOTICE'
-        pickFirst 'META-INF/NOTICE.txt'
-        exclude 'META-INF/INDEX.LIST'
-    }
-}
-
-// Resolve duplicate class conflicts between google_sign_in and googleapis
-configurations.all {
-    resolutionStrategy {
-        force 'com.google.guava:listenablefuture:9999.0-empty-to-avoid-conflict-with-guava'
     }
 }
 
 flutter {
     source = "../.."
 }
-
