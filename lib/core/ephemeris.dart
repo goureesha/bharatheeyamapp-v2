@@ -73,14 +73,17 @@ class Ephemeris {
     double current = localMidnightUt - (2.0 / 24.0);
     
     try {
+      // Use -0.8333° threshold for standard sunrise/sunset
+      // (accounts for atmospheric refraction ~34' + sun semi-diameter ~16')
+      const double horizonAlt = -0.8333;
       for (int i = 0; i < 30; i++) {
         double alt1 = getAltitudeManual(current, lat, lon);
         double alt2 = getAltitudeManual(current + step, lat, lon);
-        if (alt1 < 0.0 && alt2 >= 0.0) {
+        if (alt1 < horizonAlt && alt2 >= horizonAlt) {
           double l = current, h = current + step;
           for (int j = 0; j < 20; j++) {
             double m = (l + h) / 2;
-            if (getAltitudeManual(m, lat, lon) < 0.0) {
+            if (getAltitudeManual(m, lat, lon) < horizonAlt) {
               l = m;
             } else {
               h = m;
@@ -88,11 +91,11 @@ class Ephemeris {
           }
           riseTime = h;
         }
-        if (alt1 > 0.0 && alt2 <= 0.0) {
+        if (alt1 > horizonAlt && alt2 <= horizonAlt) {
           double l = current, h = current + step;
           for (int j = 0; j < 20; j++) {
             double m = (l + h) / 2;
-            if (getAltitudeManual(m, lat, lon) > 0.0) {
+            if (getAltitudeManual(m, lat, lon) > horizonAlt) {
               l = m;
             } else {
               h = m;
