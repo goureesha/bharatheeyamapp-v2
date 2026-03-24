@@ -5,10 +5,12 @@ import 'package:shared_preferences/shared_preferences.dart';
 class LocationService {
   static double _lat = 14.98;
   static double _lon = 74.73;
+  static double _tzOffset = 5.5;
   static String _place = 'ಯಲ್ಲಾಪುರ (Yellapur)';
 
   static double get lat => _lat;
   static double get lon => _lon;
+  static double get tzOffset => _tzOffset;
   static String get place => _place;
 
   /// Call once at app startup.
@@ -16,17 +18,21 @@ class LocationService {
     final prefs = await SharedPreferences.getInstance();
     _lat = prefs.getDouble('default_lat') ?? 14.98;
     _lon = prefs.getDouble('default_lon') ?? 74.73;
+    _tzOffset = prefs.getDouble('default_tz') ?? 5.5;
     _place = prefs.getString('default_place') ?? 'ಯಲ್ಲಾಪುರ (Yellapur)';
   }
 
   /// Save a new default location.
-  static Future<void> setLocation(String name, double lat, double lon) async {
+  static Future<void> setLocation(String name, double lat, double lon, double tzOffset) async {
     _place = name;
     _lat = lat;
     _lon = lon;
+    _tzOffset = tzOffset;
+    
     final prefs = await SharedPreferences.getInstance();
     await prefs.setDouble('default_lat', lat);
     await prefs.setDouble('default_lon', lon);
+    await prefs.setDouble('default_tz', tzOffset);
     await prefs.setString('default_place', name);
   }
 }

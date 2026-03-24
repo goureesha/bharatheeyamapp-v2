@@ -17,6 +17,20 @@ class SettingsScreen extends StatefulWidget {
 }
 
 class _SettingsScreenState extends State<SettingsScreen> {
+  final _tzCtrl = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+    _tzCtrl.text = LocationService.tzOffset.toString();
+  }
+
+  @override
+  void dispose() {
+    _tzCtrl.dispose();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
     final themes = ['ಸ್ಟ್ಯಾಂಡರ್ಡ್ ಲೈಟ್', 'ಡಾರ್ಕ್ ಮೋಡ್', 'ಸ್ವರ್ಣ', 'ಸಾಗರ', 'ಹಸಿರು'];
@@ -169,7 +183,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(LocationService.place, style: TextStyle(fontWeight: FontWeight.bold, color: kText, fontSize: 14)),
-                            Text('${LocationService.lat.toStringAsFixed(2)}°N, ${LocationService.lon.toStringAsFixed(2)}°E',
+                            Text('${LocationService.lat.toStringAsFixed(2)}°N, ${LocationService.lon.toStringAsFixed(2)}°E | TZ: ${LocationService.tzOffset >= 0 ? '+' : ''}${LocationService.tzOffset}',
                               style: TextStyle(fontSize: 12, color: kMuted)),
                           ],
                         )),
@@ -201,7 +215,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       onSelected: (String selection) async {
                         if (offlinePlaces.containsKey(selection)) {
                           final coords = offlinePlaces[selection]!;
-                          await LocationService.setLocation(selection, coords[0], coords[1]);
+                          await LocationService.setLocation(selection, coords[0], coords[1], double.tryParse(_tzCtrl.text) ?? 5.5);
                           if (mounted) {
                             setState(() {});
                             ScaffoldMessenger.of(context).showSnackBar(SnackBar(
@@ -239,6 +253,33 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         );
                       },
                     ),
+                    const SizedBox(height: 12),
+                    TextField(
+                      controller: _tzCtrl,
+                      keyboardType: const TextInputType.numberWithOptions(signed: true, decimal: true),
+                      style: TextStyle(color: kText),
+                      decoration: InputDecoration(
+                        labelText: 'Time Zone (UTC Offset, e.g. 5.5)',
+                        prefixIcon: Icon(Icons.language, color: kMuted),
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                      ),
+                      onSubmitted: (val) async {
+                        final tz = double.tryParse(val) ?? 5.5;
+                        await LocationService.setLocation(LocationService.place, LocationService.lat, LocationService.lon, tz);
+                        if (mounted) {
+                          setState(() {});
+                          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                            content: Text('Time Zone updated to: $tz'),
+                            backgroundColor: Colors.green,
+                          ));
+                        }
+                      },
+                    ),
+
+                    const SizedBox(height: 24),
+                    Divider(color: kBorder),
+                    const SizedBox(height: 24),
 
                     // Google Account
                     SectionTitle(AppLocale.l('googleAccount')),

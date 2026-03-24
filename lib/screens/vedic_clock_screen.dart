@@ -52,7 +52,7 @@ class _VedicClockScreenState extends State<VedicClockScreen> {
     // Get panchanga which includes sunrise/sunset
     final result = await AstroCalculator.calculate(
       year: y, month: m, day: d,
-      hourUtcOffset: 5.5, hour24: hour24, lat: _lat, lon: _lon,
+      hourUtcOffset: LocationService.tzOffset, hour24: hour24, lat: _lat, lon: _lon,
       ayanamsaMode: 'lahiri', trueNode: true,
     );
 

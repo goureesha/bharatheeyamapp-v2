@@ -20,7 +20,8 @@ class FestivalCacheService {
   // Default location from settings
   static double get _lat => LocationService.lat;
   static double get _lon => LocationService.lon;
-  
+  static double get _tzOffset => LocationService.tzOffset;
+
   static const String _cachePrefix = 'fc_'; // Short prefix to save space
   static const String _cacheVersionKey = 'fc_ver';
   static const int _cacheVersion = 2; // Bump when event rules change
@@ -93,7 +94,7 @@ class FestivalCacheService {
       try {
         final res = await AstroCalculator.calculate(
           year: year, month: month, day: day,
-          hourUtcOffset: 5.5,
+          hourUtcOffset: _tzOffset,
           hour24: 6.0,
           lat: _lat, lon: _lon,
           ayanamsaMode: 'lahiri',
@@ -132,7 +133,7 @@ class FestivalCacheService {
         try {
           final res = await AstroCalculator.calculate(
             year: year, month: month, day: day,
-            hourUtcOffset: 5.5,
+            hourUtcOffset: _tzOffset,
             hour24: 6.0,
             lat: _lat, lon: _lon,
             ayanamsaMode: 'lahiri',

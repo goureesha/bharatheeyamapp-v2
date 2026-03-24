@@ -383,7 +383,7 @@ class _ClientDetailScreenState extends State<ClientDetailScreen> {
       final localHour = m.hour + m.minute / 60.0;
       final result = await AstroCalculator.calculate(
         year: dob.year, month: dob.month, day: dob.day,
-        hourUtcOffset: 5.5,
+        hourUtcOffset: widget.profile.tzOffset,
         hour24: localHour,
         lat: m.lat, lon: m.lon,
         ayanamsaMode: 'lahiri',

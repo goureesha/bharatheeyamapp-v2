@@ -176,7 +176,7 @@ String formatDeg(double deg) {
   return '$dg° ${mn.toString().padLeft(2, '0')}\' ${sc.toString().padLeft(2, '0')}"';
 }
 
-String formatTimeFromJd(double jd, {double tzOffset = 5.5}) {
+String formatTimeFromJd(double jd, {required double tzOffset}) {
   // Add 0.5 because JD starts at noon UT, and add TZ offset
   final localJd = jd + 0.5 + (tzOffset / 24.0);
   final frac = localJd - localJd.floor();
@@ -406,7 +406,7 @@ class AstroCalculator {
     required int year,
     required int month,
     required int day,
-    required double hourUtcOffset, // hours offset from UTC (IST = 5.5)
+    required double hourUtcOffset, // hours offset from UTC for the calculation
     required double hour24,        // local time in hours
     required double lat,
     required double lon,
@@ -722,7 +722,7 @@ class AstroCalculator {
       final ratrimanaStr = formatDuration(ratrimanaHours, ratrimanaGhatis);
 
       bool isNextDay(double jdBase, double jdTarget) {
-        final offset = 0.5 + 5.5 / 24.0; // IST Offset
+        final offset = 0.5 + hourUtcOffset / 24.0; // Local Offset
         return (jdTarget + offset).floor() > (jdBase + offset).floor();
       }
 
@@ -746,8 +746,8 @@ class AstroCalculator {
         dashaLord: dashaLord,
         nakshatraIndex: nIdx,
         nakPercent: perc,
-        sunrise: formatTimeFromJd(srCivil),
-        sunset: formatTimeFromJd(ssCivil),
+        sunrise: formatTimeFromJd(srCivil, tzOffset: hourUtcOffset),
+        sunset: formatTimeFromJd(ssCivil, tzOffset: hourUtcOffset),
         tithiIndex: tIdx,
         chandraMasaRaw: chandraMasaRaw, // raw name assigned above
         suryaNakshatra: knNak[sunNakIdx],
@@ -758,13 +758,13 @@ class AstroCalculator {
         samvatsara: samvatsara,
         vishaPraghati: '$vishaG ಘಟಿ',
         amrutaPraghati: '$amrutaG ಘಟಿ',
-        tithiEndTime: formatTimeFromJd(jdTEnd),
+        tithiEndTime: formatTimeFromJd(jdTEnd, tzOffset: hourUtcOffset),
         tithiEndsNextDay: isNextDay(jdBirth, jdTEnd),
-        karanaEndTime: formatTimeFromJd(jdKEnd),
+        karanaEndTime: formatTimeFromJd(jdKEnd, tzOffset: hourUtcOffset),
         karanaEndsNextDay: isNextDay(jdBirth, jdKEnd),
-        yogaEndTime: formatTimeFromJd(jdYEnd),
+        yogaEndTime: formatTimeFromJd(jdYEnd, tzOffset: hourUtcOffset),
         yogaEndsNextDay: isNextDay(jdBirth, jdYEnd),
-        nakEndTime: formatTimeFromJd(je),
+        nakEndTime: formatTimeFromJd(je, tzOffset: hourUtcOffset),
         nakEndsNextDay: isNextDay(jdBirth, je),
         divamana: divamanaStr,
         ratrimana: ratrimanaStr,

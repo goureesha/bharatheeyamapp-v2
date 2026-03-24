@@ -68,7 +68,7 @@ class _PanchangaScreenState extends State<PanchangaScreen> {
       const hour24 = 6.0; // Fixed sunrise time for festival calculation
       final result = await AstroCalculator.calculate(
         year: _selectedDate.year, month: _selectedDate.month, day: _selectedDate.day,
-        hourUtcOffset: 5.5,
+        hourUtcOffset: LocationService.tzOffset,
         hour24: hour24,
         lat: _lat, lon: _lon,
         ayanamsaMode: 'lahiri',

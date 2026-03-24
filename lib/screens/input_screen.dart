@@ -10,6 +10,7 @@ import '../core/ephemeris.dart';
 import '../services/network_service.dart';
 import '../services/google_auth_service.dart';
 import '../services/calendar_service.dart';
+import '../services/location_service.dart';
 
 import 'dashboard_screen.dart';
 
@@ -21,9 +22,10 @@ class InputScreen extends StatefulWidget {
 
 class _InputScreenState extends State<InputScreen> {
   final _nameCtrl    = TextEditingController();
-  final _placeCtrl   = TextEditingController(text: 'Yellapur');
-  final _latCtrl     = TextEditingController(text: '14.9800');
-  final _lonCtrl     = TextEditingController(text: '74.7300');
+  late final TextEditingController _placeCtrl;
+  late final TextEditingController _latCtrl;
+  late final TextEditingController _lonCtrl;
+  late final TextEditingController _tzCtrl;
 
   DateTime _dob      = DateTime.now();
   int _hour          = DateTime.now().hour % 12 == 0 ? 12 : DateTime.now().hour % 12;
@@ -51,8 +53,21 @@ class _InputScreenState extends State<InputScreen> {
   @override
   void initState() {
     super.initState();
+    _placeCtrl = TextEditingController(text: LocationService.place);
+    _latCtrl = TextEditingController(text: LocationService.lat.toStringAsFixed(4));
+    _lonCtrl = TextEditingController(text: LocationService.lon.toStringAsFixed(4));
+    _tzCtrl = TextEditingController(text: LocationService.tzOffset.toString());
     _loadProfiles();
     _checkNetwork();
+  }
+
+  @override
+  void dispose() {
+    _placeCtrl.dispose();
+    _latCtrl.dispose();
+    _lonCtrl.dispose();
+    _tzCtrl.dispose();
+    super.dispose();
   }
 
   Future<void> _checkNetwork() async {
@@ -78,6 +93,7 @@ class _InputScreenState extends State<InputScreen> {
       _placeCtrl.text = p.place;
       _latCtrl.text   = p.lat.toStringAsFixed(4);
       _lonCtrl.text   = p.lon.toStringAsFixed(4);
+      _tzCtrl.text    = p.tzOffset.toString();
       _hour   = p.hour;
       _minute = p.minute;
       _ampm   = p.ampm;
@@ -203,9 +219,11 @@ class _InputScreenState extends State<InputScreen> {
           ? 'raman' : _ayanamsa == 'ಕೆ.ಪಿ' ? 'kp' : 'lahiri';
       final trueNode = _nodeMode == 'ನಿಜ ರಾಹು';
 
+      final tzOffset = double.tryParse(_tzCtrl.text) ?? LocationService.tzOffset;
+
       final result = await AstroCalculator.calculate(
         year: _dob.year, month: _dob.month, day: _dob.day,
-        hourUtcOffset: 5.5,
+        hourUtcOffset: tzOffset,
         hour24: localHour,
         lat: lat, lon: lon,
         ayanamsaMode: aynMode,
@@ -238,9 +256,10 @@ class _InputScreenState extends State<InputScreen> {
             setState(() {
               _loadedFromSaved = false;
               _nameCtrl.clear();
-              _placeCtrl.clear();
-              _latCtrl.clear();
-              _lonCtrl.clear();
+              _placeCtrl.text = LocationService.place;
+              _latCtrl.text = LocationService.lat.toStringAsFixed(4);
+              _lonCtrl.text = LocationService.lon.toStringAsFixed(4);
+              _tzCtrl.text = LocationService.tzOffset.toString();
 
               _dob = now;
               _hour = now.hour % 12 == 0 ? 12 : now.hour % 12;
@@ -267,8 +286,9 @@ class _InputScreenState extends State<InputScreen> {
       name: name,
       date: '${_dob.year}-${_dob.month.toString().padLeft(2,'0')}-${_dob.day.toString().padLeft(2,'0')}',
       hour: _hour, minute: _minute, ampm: _ampm,
-      lat: double.tryParse(_latCtrl.text) ?? 14.98,
-      lon: double.tryParse(_lonCtrl.text) ?? 74.73,
+      lat: double.tryParse(_latCtrl.text) ?? LocationService.lat,
+      lon: double.tryParse(_lonCtrl.text) ?? LocationService.lon,
+      tzOffset: double.tryParse(_tzCtrl.text) ?? LocationService.tzOffset,
       place: _placeCtrl.text,
       notes: notes,
       aroodhas: aroodhas,
@@ -574,21 +594,32 @@ class _InputScreenState extends State<InputScreen> {
           ],
           const SizedBox(height: 14),
 
-          // Lat/Lon
+          // Lat/Lon/TZ
           Row(children: [
             Expanded(
+              flex: 4,
               child: TextField(
                 controller: _latCtrl,
-                keyboardType: TextInputType.numberWithOptions(decimal: true, signed: true),
-                decoration: const InputDecoration(labelText: 'ಅಕ್ಷಾಂಶ'),
+                keyboardType: const TextInputType.numberWithOptions(decimal: true, signed: true),
+                decoration: const InputDecoration(labelText: 'ಅಕ್ಷಾಂಶ (Lat)', isDense: true),
               ),
             ),
-            const SizedBox(width: 10),
+            const SizedBox(width: 8),
             Expanded(
+              flex: 4,
               child: TextField(
                 controller: _lonCtrl,
-                keyboardType: TextInputType.numberWithOptions(decimal: true, signed: true),
-                decoration: const InputDecoration(labelText: 'ರೇಖಾಂಶ'),
+                keyboardType: const TextInputType.numberWithOptions(decimal: true, signed: true),
+                decoration: const InputDecoration(labelText: 'ರೇಖಾಂಶ (Lon)', isDense: true),
+              ),
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              flex: 3,
+              child: TextField(
+                controller: _tzCtrl,
+                keyboardType: const TextInputType.numberWithOptions(decimal: true, signed: true),
+                decoration: const InputDecoration(labelText: 'ಟೈಮ್ ಜೋನ್', isDense: true),
               ),
             ),
           ]),

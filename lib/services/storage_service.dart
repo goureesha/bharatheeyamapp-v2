@@ -20,6 +20,7 @@ class StorageService {
           ampm: 'PM',
           lat: 14.98,
           lon: 74.73,
+          tzOffset: 5.5,
           place: 'Yellapur',
         ),
       };
@@ -75,6 +76,7 @@ class Profile {
   final String ampm;
   final double lat;
   final double lon;
+  final double tzOffset;
   final String place;
   final String notes;
   final Map<String, int> aroodhas;
@@ -89,6 +91,7 @@ class Profile {
     required this.lat,
     required this.lon,
     required this.place,
+    this.tzOffset = 5.5,
     this.notes = '',
     this.aroodhas = const {},
     this.janmaNakshatraIdx,
@@ -96,7 +99,7 @@ class Profile {
 
   Map<String, dynamic> toJson() => {
     'name': name, 'd': date, 'h': hour, 'm': minute,
-    'ampm': ampm, 'lat': lat, 'lon': lon, 'p': place,
+    'ampm': ampm, 'lat': lat, 'lon': lon, 'tz': tzOffset, 'p': place,
     'notes': notes,
     'aroodhas': aroodhas.map((k, v) => MapEntry(k, v)),
     'janmaNakshatraIdx': janmaNakshatraIdx,
@@ -110,6 +113,7 @@ class Profile {
     ampm: j['ampm'] ?? 'AM',
     lat: (j['lat'] ?? 14.98).toDouble(),
     lon: (j['lon'] ?? 74.73).toDouble(),
+    tzOffset: (j['tz'] ?? 5.5).toDouble(),
     place: j['p'] ?? '',
     notes: j['notes'] ?? '',
     aroodhas: j['aroodhas'] != null 
