@@ -58,8 +58,11 @@ class GhatiWidgetProvider : AppWidgetProvider() {
                 val elapsedHours = nowHour - sunriseHour
                 val ghati = elapsedHours * (60.0 / 24.0)
 
-                // Draw clock
-                val bitmap = drawClock(ghati, WIDGET_SIZE)
+                // Draw clock with safe bitmap size
+                val displayMetrics = context.resources.displayMetrics
+                val widgetSize = minOf(WIDGET_SIZE, (displayMetrics.widthPixels * 0.8).toInt())
+                val safeSize = maxOf(widgetSize, 200) // At least 200px
+                val bitmap = drawClock(ghati, safeSize)
                 views.setImageViewBitmap(R.id.ghati_clock_image, bitmap)
 
                 // Digital display
@@ -79,7 +82,24 @@ class GhatiWidgetProvider : AppWidgetProvider() {
                     views.setOnClickPendingIntent(R.id.ghati_widget_root, pendingIntent)
                 }
             } catch (e: Exception) {
-                // If anything fails, show a fallback message instead of blank
+                // Show fallback with a simple colored bitmap so widget isn't blank
+                try {
+                    val fallbackBitmap = Bitmap.createBitmap(200, 200, Bitmap.Config.ARGB_8888)
+                    val canvas = Canvas(fallbackBitmap)
+                    canvas.drawColor(0xFF1A1A2E.toInt())
+                    val paint = Paint().apply {
+                        color = 0xFFD4AF37.toInt()
+                        textSize = 22f
+                        textAlign = Paint.Align.CENTER
+                        isAntiAlias = true
+                        typeface = Typeface.DEFAULT_BOLD
+                    }
+                    canvas.drawText("ಭಾರತೀಯಮ್", 100f, 90f, paint)
+                    paint.textSize = 16f
+                    paint.color = 0xCCFFFFFF.toInt()
+                    canvas.drawText("ಅಪ್ ತೆರೆಯಿರಿ", 100f, 120f, paint)
+                    views.setImageViewBitmap(R.id.ghati_clock_image, fallbackBitmap)
+                } catch (_: Exception) {}
                 views.setTextViewText(R.id.ghati_text, "ಭಾರತೀಯಮ್ - ಅಪ್ ತೆರೆಯಿರಿ")
             }
 
