@@ -8,6 +8,7 @@ import 'services/google_auth_service.dart';
 import 'services/install_checker.dart';
 import 'services/device_binding_service.dart';
 import 'services/festival_cache_service.dart';
+import 'services/location_service.dart';
 import 'package:flutter/foundation.dart';
 import 'package:sweph/sweph.dart';
 import 'core/ephemeris.dart';
@@ -28,6 +29,7 @@ Future<void> main() async {
     AppThemes.loadTheme(),
     ChartStyle.loadStyle(),
     AppLocale.loadLang(),
+    LocationService.init(),
   ]);
 
   // Show the app immediately — don't block on network calls

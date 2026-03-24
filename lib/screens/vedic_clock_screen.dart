@@ -5,6 +5,7 @@ import '../widgets/common.dart';
 import '../constants/strings.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../core/calculator.dart';
+import '../services/location_service.dart';
 
 class VedicClockScreen extends StatefulWidget {
   const VedicClockScreen({super.key});
@@ -13,9 +14,9 @@ class VedicClockScreen extends StatefulWidget {
 }
 
 class _VedicClockScreenState extends State<VedicClockScreen> {
-  String _place = 'Yellapur';
-  double _lat = 14.98;
-  double _lon = 74.73;
+  String get _place => LocationService.place;
+  double get _lat => LocationService.lat;
+  double get _lon => LocationService.lon;
   Timer? _timer;
   Timer? _lagnaTimer;
 

@@ -3,6 +3,7 @@ import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../core/calculator.dart';
 import '../core/events.dart';
+import 'location_service.dart';
 
 /// Pre-computes and caches festival events with PERSISTENT local storage.
 /// 
@@ -16,9 +17,9 @@ class FestivalCacheService {
   static bool _isLoaded = false;
   static int _loadedYear = 0;
 
-  // Default location: Yellapur
-  static const double _lat = 14.98;
-  static const double _lon = 74.73;
+  // Default location from settings
+  static double get _lat => LocationService.lat;
+  static double get _lon => LocationService.lon;
   
   static const String _cachePrefix = 'fc_'; // Short prefix to save space
   static const String _cacheVersionKey = 'fc_ver';

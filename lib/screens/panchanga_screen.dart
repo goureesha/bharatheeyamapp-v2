@@ -6,6 +6,7 @@ import '../core/calculator.dart';
 import '../core/ephemeris.dart';
 import '../core/events.dart';
 import '../services/festival_cache_service.dart';
+import '../services/location_service.dart';
 import 'package:table_calendar/table_calendar.dart';
 
 
@@ -22,10 +23,10 @@ class _PanchangaScreenState extends State<PanchangaScreen> {
   PanchangData? _panchang;
   bool _loading = false;
 
-  // Default location: Yellapur
-  final double _lat = 14.98;
-  final double _lon = 74.73;
-  final String _place = 'Yellapur';
+  // Default location from settings
+  double get _lat => LocationService.lat;
+  double get _lon => LocationService.lon;
+  String get _place => LocationService.place;
 
   DateTime _focusedDay = DateTime.now();
 

@@ -6,6 +6,8 @@ import '../services/google_auth_service.dart';
 import '../services/device_binding_service.dart';
 import 'about_screen.dart';
 import 'privacy_policy_screen.dart';
+import '../services/location_service.dart';
+import '../constants/places.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -146,6 +148,97 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     const SizedBox(height: 24),
                     Divider(color: kBorder),
                     const SizedBox(height: 24),
+
+                    // Default Location
+                    SectionTitle('ಡೀಫಾಲ್ಟ್ ಸ್ಥಳ / Default Location'),
+                    const SizedBox(height: 6),
+                    Text('ಪಂಚಾಂಗ ಮತ್ತು ವೈದಿಕ ಗಡಿಯಾರ ಲೆಕ್ಕಾಚಾರಕ್ಕೆ ಬಳಸಲಾಗುತ್ತದೆ',
+                      style: TextStyle(fontSize: 12, color: kMuted)),
+                    const SizedBox(height: 12),
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: kBorder.withOpacity(0.15),
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(color: kBorder.withOpacity(0.3)),
+                      ),
+                      child: Row(children: [
+                        Icon(Icons.location_on, color: kPurple2, size: 22),
+                        const SizedBox(width: 10),
+                        Expanded(child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(LocationService.place, style: TextStyle(fontWeight: FontWeight.bold, color: kText, fontSize: 14)),
+                            Text('${LocationService.lat.toStringAsFixed(2)}°N, ${LocationService.lon.toStringAsFixed(2)}°E',
+                              style: TextStyle(fontSize: 12, color: kMuted)),
+                          ],
+                        )),
+                      ]),
+                    ),
+                    const SizedBox(height: 12),
+                    Autocomplete<String>(
+                      optionsBuilder: (textEditingValue) {
+                        if (textEditingValue.text.isEmpty) {
+                          return offlinePlaces.keys.take(15);
+                        }
+                        final query = textEditingValue.text.toLowerCase();
+                        return offlinePlaces.keys.where(
+                            (name) => name.toLowerCase().contains(query));
+                      },
+                      fieldViewBuilder: (context, controller, focusNode, onSubmitted) {
+                        return TextField(
+                          controller: controller,
+                          focusNode: focusNode,
+                          decoration: InputDecoration(
+                            labelText: 'ಸ್ಥಳ ಹುಡುಕಿ / Search Location',
+                            prefixIcon: Icon(Icons.search, color: kMuted),
+                            border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                            contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                          ),
+                          style: TextStyle(color: kText),
+                        );
+                      },
+                      onSelected: (String selection) async {
+                        if (offlinePlaces.containsKey(selection)) {
+                          final coords = offlinePlaces[selection]!;
+                          await LocationService.setLocation(selection, coords[0], coords[1]);
+                          if (mounted) {
+                            setState(() {});
+                            ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                              content: Text('ಡೀಫಾಲ್ಟ್ ಸ್ಥಳ: $selection'),
+                              backgroundColor: Colors.green,
+                            ));
+                          }
+                        }
+                      },
+                      optionsViewBuilder: (context, onSelected, options) {
+                        return Align(
+                          alignment: Alignment.topLeft,
+                          child: Material(
+                            elevation: 4.0,
+                            color: kCard,
+                            borderRadius: BorderRadius.circular(8),
+                            child: ConstrainedBox(
+                              constraints: BoxConstraints(maxHeight: 250, maxWidth: MediaQuery.of(context).size.width - 64),
+                              child: ListView.builder(
+                                padding: EdgeInsets.zero,
+                                itemCount: options.length,
+                                shrinkWrap: true,
+                                itemBuilder: (context, index) {
+                                  final option = options.elementAt(index);
+                                  return ListTile(
+                                    dense: true,
+                                    leading: Icon(Icons.location_on, size: 18, color: kPurple2),
+                                    title: Text(option, style: TextStyle(fontSize: 13, color: kText)),
+                                    onTap: () => onSelected(option),
+                                  );
+                                },
+                              ),
+                            ),
+                          ),
+                        );
+                      },
+                    ),
 
                     // Google Account
                     SectionTitle(AppLocale.l('googleAccount')),
