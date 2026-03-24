@@ -162,6 +162,60 @@ class AppointmentService {
 
    // ─── Load All Data ─────────────────────────────────────────
 
+  /// Load from local cache instantly (no network)
+  static Future<void> loadFromCache() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final cachedAppts = prefs.getStringList('cached_appointments') ?? [];
+      final cachedSlots = prefs.getStringList('cached_slots') ?? [];
+
+      if (cachedAppts.isNotEmpty) {
+        _appointments = [];
+        for (int i = 0; i < cachedAppts.length; i++) {
+          final parts = cachedAppts[i].split('\t');
+          if (parts.length >= 9) {
+            _appointments.add(Appointment.fromRow(i + 1, parts));
+          }
+        }
+        _isLoaded = true;
+      }
+
+      if (cachedSlots.isNotEmpty) {
+        _availableSlots = [];
+        for (final s in cachedSlots) {
+          final parts = s.split('\t');
+          if (parts.isEmpty) continue;
+          _availableSlots.add(AvailableSlot(
+            dayOfWeek: int.tryParse(parts[0]) ?? 1,
+            startTime: parts.length > 1 ? parts[1] : '09:00',
+            endTime: parts.length > 2 ? parts[2] : '17:00',
+            slotMinutes: parts.length > 3 ? (int.tryParse(parts[3]) ?? 60) : 60,
+          ));
+        }
+      }
+      debugPrint('AppointmentService: Loaded ${_appointments.length} from cache');
+    } catch (e) {
+      debugPrint('AppointmentService: Cache load error: $e');
+    }
+  }
+
+  /// Save current data to local cache
+  static Future<void> _saveToCache() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final apptStrings = _appointments.map((a) => a.toRow().join('\t')).toList();
+      await prefs.setStringList('cached_appointments', apptStrings);
+
+      final slotStrings = _availableSlots.map((s) =>
+        '${s.dayOfWeek}\t${s.startTime}\t${s.endTime}\t${s.slotMinutes}'
+      ).toList();
+      await prefs.setStringList('cached_slots', slotStrings);
+    } catch (e) {
+      debugPrint('AppointmentService: Cache save error: $e');
+    }
+  }
+
+  /// Full sync from Google Sheets (call in background)
   static Future<void> loadAll() async {
     try {
       final api = await _getApi();
@@ -196,7 +250,11 @@ class AppointmentService {
       await _syncFromGoogleCalendar(api, sid);
 
       _isLoaded = true;
-      debugPrint('AppointmentService: Loaded ${_appointments.length} appointments, ${_availableSlots.length} slots');
+
+      // Save to local cache for fast next load
+      await _saveToCache();
+
+      debugPrint('AppointmentService: Synced ${_appointments.length} appointments, ${_availableSlots.length} slots');
     } catch (e) {
       debugPrint('AppointmentService: Load error: $e');
     }

@@ -18,6 +18,7 @@ class _AppointmentScreenState extends State<AppointmentScreen> with SingleTicker
   DateTime _selectedDate = DateTime.now();
   DateTime _focusedDay = DateTime.now();
   bool _isLoading = true;
+  bool _isSyncing = false;
   late TabController _tabCtrl;
   String _clientSearch = '';
 
@@ -35,10 +36,35 @@ class _AppointmentScreenState extends State<AppointmentScreen> with SingleTicker
   }
 
   Future<void> _loadData() async {
-    setState(() => _isLoading = true);
-    await AppointmentService.loadAll();
+    // 1. Load from local cache FIRST (instant)
+    await AppointmentService.loadFromCache();
     await ClientService.loadAll();
     if (mounted) setState(() => _isLoading = false);
+
+    // 2. Sync from Google Sheets in background
+    _syncInBackground();
+  }
+
+  Future<void> _syncInBackground() async {
+    if (_isSyncing) return;
+    if (mounted) setState(() => _isSyncing = true);
+    await AppointmentService.loadAll();
+    await ClientService.loadAll();
+    if (mounted) {
+      setState(() {
+        _isSyncing = false;
+        _isLoading = false;
+      });
+    }
+  }
+
+  Future<void> _syncData() async {
+    await _syncInBackground();
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('✅ ಸಿಂಕ್ ಪೂರ್ಣವಾಗಿದೆ!'), duration: Duration(seconds: 2)),
+      );
+    }
   }
 
   List<Appointment> _getEventsForDay(DateTime day) {
@@ -61,6 +87,14 @@ class _AppointmentScreenState extends State<AppointmentScreen> with SingleTicker
         elevation: 0,
         centerTitle: true,
         actions: [
+          // Sync button with spinning indicator
+          IconButton(
+            icon: _isSyncing
+                ? SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: kTeal))
+                : Icon(Icons.sync, color: kTeal),
+            tooltip: 'ಸಿಂಕ್ ಮಾಡಿ',
+            onPressed: _isSyncing ? null : () => _syncData(),
+          ),
           IconButton(
             icon: Icon(Icons.share, color: kTeal),
             tooltip: 'ಕ್ಯಾಲೆಂಡರ್ ಹಂಚಿಕೊಳ್ಳಿ',
