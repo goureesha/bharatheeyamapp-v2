@@ -484,12 +484,55 @@ class _AppointmentScreenState extends State<AppointmentScreen> with SingleTicker
                   ],
                 ),
               ),
-              Icon(Icons.chevron_right, color: kMuted),
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  IconButton(
+                    icon: Icon(Icons.delete_outline, color: Colors.red.withOpacity(0.7)),
+                    onPressed: () => _confirmDeleteClient(client),
+                  ),
+                  Icon(Icons.chevron_right, color: kMuted),
+                ],
+              ),
             ],
           ),
         ),
       ),
     );
+  }
+
+  Future<void> _confirmDeleteClient(Client client) async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: kCard,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: Text('\u0c97\u0ccd\u0cb0\u0cbe\u0cb9\u0c95\u0cb0\u0ca8\u0ccd\u0ca8\u0cc1 \u0c85\u0cb3\u0cbf\u0cb8\u0cbf', style: TextStyle(color: kText)),
+        content: Text('${client.name} \u0c85\u0cb5\u0cb0\u0ca8\u0ccd\u0ca8\u0cc1 \u0ca8\u0cbf\u0c9c\u0cb5\u0cbe\u0c97\u0cbf\u0caf\u0cc2 \u0c85\u0cb3\u0cbf\u0cb8\u0cb2\u0cc1 \u0cac\u0caf\u0cb8\u0cc1\u0ca4\u0ccd\u0ca4\u0cc0\u0cb0\u0cbe?', style: TextStyle(color: kText)),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text('\u0cb0\u0ca6\u0ccd\u0ca6\u0cc1', style: TextStyle(color: kMuted))), // Cancel
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('\u0c85\u0cb3\u0cbf\u0cb8\u0cbf', style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold)), // Delete
+          ),
+        ],
+      ),
+    );
+
+    if (confirm == true) {
+      if (!mounted) return;
+      setState(() => _isLoading = true);
+      final success = await ClientService.deleteClient(client.clientId);
+      if (success) {
+        await _loadData(); // reload clients list
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('\u0c97\u0ccd\u0cb0\u0cbe\u0cb9\u0c95\u0cb0\u0ca8\u0ccd\u0ca8\u0cc1 \u0c85\u0cb3\u0cbf\u0cb8\u0cb2\u0cbe\u0c97\u0cbf\u0ca6\u0cc6'))); // Client deleted
+      } else {
+        setState(() => _isLoading = false);
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('\u0cac\u0cc6\u0cb0\u0cb3\u0c9a\u0ccd\u0c9a\u0cc1 \u0ca6\u0ccb\u0cb7'))); // Error
+      }
+    }
   }
 
 

@@ -378,6 +378,43 @@ class ClientService {
     }
   }
 
+  /// Delete client
+  static Future<bool> deleteClient(String clientId) async {
+    try {
+      final api = await _getApi();
+      if (api == null) return false;
+      final sid = await _getSheetId();
+      if (sid == null) return false;
+
+      // Find the row
+      final scan = await api.spreadsheets.values.get(sid, '$_clientsTab!A:A');
+      int? foundRow;
+      if (scan.values != null) {
+        for (int i = 0; i < scan.values!.length; i++) {
+          if (scan.values![i].isNotEmpty && scan.values![i][0].toString() == clientId) {
+            foundRow = i + 1;
+            break;
+          }
+        }
+      }
+
+      if (foundRow != null) {
+        // Clear the row
+        await api.spreadsheets.values.clear(
+          sheets.ClearValuesRequest(),
+          sid, '$_clientsTab!A$foundRow:F$foundRow',
+        );
+        // Update cache
+        _clients.removeWhere((c) => c.clientId == clientId);
+        return true;
+      }
+      return false;
+    } catch (e) {
+      debugPrint('ClientService: delete client error: $e');
+      return false;
+    }
+  }
+
   // ─── Family Member CRUD ───────────────────────────────────
 
   /// Get all family members for a client
