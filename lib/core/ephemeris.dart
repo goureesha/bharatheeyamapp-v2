@@ -67,12 +67,12 @@ class Ephemeris {
     double riseTime = jdStart + 0.25;
     double setTime = jdStart + 0.75;
     double step = 1.0 / 24.0;
-    double current = jdStart - 0.3;
+    // Scan from 12 hours before midnight UT to 36 hours after (48h window)
+    // to reliably cover all timezones (UTC-12 to UTC+14)
+    double current = jdStart - 0.5;
     
     try {
-      // Using 0.0 for True Horizon Geocentric Sunrise (center of solar disk)
-      // Disabling atmospheric refraction & radius corr per Shuddha Drigganitha
-      for (int i = 0; i < 30; i++) {
+      for (int i = 0; i < 48; i++) {
         double alt1 = getAltitudeManual(current, lat, lon);
         double alt2 = getAltitudeManual(current + step, lat, lon);
         if (alt1 < 0.0 && alt2 >= 0.0) {
@@ -85,7 +85,10 @@ class Ephemeris {
               h = m;
             }
           }
-          riseTime = h;
+          // Only update if this sunrise is closer to the target date midnight UT
+          if ((h - jdStart).abs() < (riseTime - jdStart).abs()) {
+            riseTime = h;
+          }
         }
         if (alt1 > 0.0 && alt2 <= 0.0) {
           double l = current, h = current + step;
@@ -97,7 +100,10 @@ class Ephemeris {
               h = m;
             }
           }
-          setTime = h;
+          // Only update if this sunset is after the found sunrise
+          if (h > riseTime) {
+            setTime = h;
+          }
         }
         current += step;
       }

@@ -179,13 +179,16 @@ String formatDeg(double deg) {
 String formatTimeFromJd(double jd, {required double tzOffset}) {
   // Add 0.5 because JD starts at noon UT, and add TZ offset
   final localJd = jd + 0.5 + (tzOffset / 24.0);
-  final frac = localJd - localJd.floor();
+  double frac = localJd - localJd.floor();
+  // Normalize fraction to [0, 1) to handle negative TZ offsets
+  frac = ((frac % 1.0) + 1.0) % 1.0;
   
   int totalMinutes = (frac * 24 * 60).round();
+  if (totalMinutes >= 1440) totalMinutes -= 1440;
   int h = totalMinutes ~/ 60;
   int m = totalMinutes % 60;
   
-  if (h == 24) h = 0;
+  if (h >= 24) h -= 24;
   
   String amPm = h >= 12 ? 'PM' : 'AM';
   int hStr = h % 12;
