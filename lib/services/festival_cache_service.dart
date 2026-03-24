@@ -64,12 +64,30 @@ class FestivalCacheService {
 
   /// Load a specific month (for quick partial loading when swiping calendar)
   static Future<void> loadMonth(int year, int month) async {
+    // Skip if we're already computing to prevent overlapping work
+    if (_isLoading) return;
+
     final daysInMonth = DateTime(year, month + 1, 0).day;
+    
+    // Quick check: if all days already cached, return immediately
+    bool allCached = true;
+    for (int day = 1; day <= daysInMonth; day++) {
+      if (!_cache.containsKey(DateTime(year, month, day))) {
+        allCached = false;
+        break;
+      }
+    }
+    if (allCached) return;
+
+    _isLoading = true;
     bool anyNew = false;
     
     for (int day = 1; day <= daysInMonth; day++) {
       final dateKey = DateTime(year, month, day);
       if (_cache.containsKey(dateKey)) continue;
+
+      // Yield to UI thread EVERY day to keep animations smooth
+      await Future.delayed(Duration.zero);
 
       try {
         final res = await AstroCalculator.calculate(
@@ -85,11 +103,16 @@ class FestivalCacheService {
           if (events.isNotEmpty) {
             _cache[dateKey] = events;
             anyNew = true;
+          } else {
+            // Mark empty days as cached too (empty list) to avoid recomputation
+            _cache[dateKey] = [];
           }
         }
       } catch (_) {}
     }
     
+    _isLoading = false;
+
     // Save new data to disk cache
     if (anyNew) {
       _saveToDisk(year);

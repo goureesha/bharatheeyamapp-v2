@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import '../widgets/common.dart';
 import '../constants/strings.dart';
@@ -31,10 +32,19 @@ class _PanchangaScreenState extends State<PanchangaScreen> {
   // Events for current selected day
   List<AstroEvent> _currentEvents = [];
 
+  // Debounce timer for month-change swipe
+  Timer? _monthDebounce;
+
   @override
   void initState() {
     super.initState();
     _initLoad();
+  }
+
+  @override
+  void dispose() {
+    _monthDebounce?.cancel();
+    super.dispose();
   }
 
   Future<void> _initLoad() async {
@@ -147,9 +157,12 @@ class _PanchangaScreenState extends State<PanchangaScreen> {
                           },
                           onPageChanged: (focusedDay) {
                             _focusedDay = focusedDay;
-                            // Load this month's festivals from cache or compute
-                            FestivalCacheService.loadMonth(focusedDay.year, focusedDay.month).then((_) {
-                              if (mounted) setState(() {});
+                            // Debounce: wait 300ms after swipe stops before computing
+                            _monthDebounce?.cancel();
+                            _monthDebounce = Timer(const Duration(milliseconds: 300), () {
+                              FestivalCacheService.loadMonth(focusedDay.year, focusedDay.month).then((_) {
+                                if (mounted) setState(() {});
+                              });
                             });
                           },
                           calendarStyle: CalendarStyle(
