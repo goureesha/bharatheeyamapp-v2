@@ -85,6 +85,7 @@ class NorthIndianChart extends StatelessWidget {
     final lagnaLong = result.planets['ಲಗ್ನ']?.longitude ?? 0;
     final lagnaIdx = (lagnaLong / 30).floor() % 12;
 
+    // Reference longitude for bhava calculation
     double refLongitude;
     if (bhavaFromPlanet != null && result.planets.containsKey(bhavaFromPlanet)) {
       refLongitude = result.planets[bhavaFromPlanet]!.longitude;
@@ -92,12 +93,21 @@ class NorthIndianChart extends StatelessWidget {
       refLongitude = lagnaLong;
     }
 
-    // Build house contents (0 = House 1 = Ascendant)
+    // Determine which rashi goes in house 1
+    // If bhavaFromPlanet is set, that planet's rashi goes to house 1
+    final int firstHouseRashiIdx;
+    if (bhavaFromPlanet != null && result.planets.containsKey(bhavaFromPlanet)) {
+      firstHouseRashiIdx = (refLongitude / 30).floor() % 12;
+    } else {
+      firstHouseRashiIdx = lagnaIdx;
+    }
+
+    // Build house contents (0 = House 1 = top center)
     final Map<int, List<Widget>> houses = {for (int i = 0; i < 12; i++) i: []};
-    // Rashi names for each house
+    // Rashi numbers for each house
     final Map<int, String> houseRashi = {};
     for (int i = 0; i < 12; i++) {
-      final rashiIdx = (lagnaIdx + i) % 12;
+      final rashiIdx = (firstHouseRashiIdx + i) % 12;
       houseRashi[i] = '${rashiIdx + 1}'; // Rashi number: Mesha=1 ... Meena=12
     }
 
@@ -107,12 +117,12 @@ class NorthIndianChart extends StatelessWidget {
         if (info == null) continue;
         final ri = _rashinFor(info.longitude);
         if (ri >= 0 && ri < 12) {
-          final h = _rashiToHouse(ri, lagnaIdx);
+          final h = _rashiToHouse(ri, firstHouseRashiIdx);
           houses[h]!.add(_planetChip(pName, info: info));
         }
       }
       for (final entry in aroodhas!.entries) {
-        final h = _rashiToHouse(entry.value, lagnaIdx);
+        final h = _rashiToHouse(entry.value, firstHouseRashiIdx);
         houses[h]!.add(_aroodhaChip(entry.key));
       }
     } else {
@@ -157,7 +167,7 @@ class NorthIndianChart extends StatelessWidget {
           ri = _rashinFor(info.longitude);
         }
         if (ri < 0 || ri > 11) continue;
-        final h = _rashiToHouse(ri, lagnaIdx);
+        final h = _rashiToHouse(ri, firstHouseRashiIdx);
         houses[h]!.add(_planetChip(pName, info: info));
       }
 
@@ -165,7 +175,7 @@ class NorthIndianChart extends StatelessWidget {
         for (final entry in result.advSphutas.entries) {
           final ri = _rashinFor(entry.value);
           if (ri < 0 || ri > 11) continue;
-          final h = _rashiToHouse(ri, lagnaIdx);
+          final h = _rashiToHouse(ri, firstHouseRashiIdx);
           houses[h]!.add(_sphutaChip(entry.key));
         }
       }
