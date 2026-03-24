@@ -22,7 +22,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   @override
   void initState() {
     super.initState();
-    _tzCtrl.text = LocationService.tzOffset.toString();
+    _tzCtrl.text = '${LocationService.tzOffset >= 0 ? '+' : ''}${LocationService.tzOffset}';
   }
 
   @override
@@ -215,7 +215,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       onSelected: (String selection) async {
                         if (offlinePlaces.containsKey(selection)) {
                           final coords = offlinePlaces[selection]!;
-                          await LocationService.setLocation(selection, coords[0], coords[1], double.tryParse(_tzCtrl.text) ?? 5.5);
+                          final autoTz = getTimezoneForPlace(selection, coords[1]);
+                          _tzCtrl.text = '${autoTz >= 0 ? '+' : ''}$autoTz';
+                          await LocationService.setLocation(selection, coords[0], coords[1], autoTz);
                           if (mounted) {
                             setState(() {});
                             ScaffoldMessenger.of(context).showSnackBar(SnackBar(

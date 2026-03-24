@@ -289,3 +289,35 @@ final Map<String, List<double>> offlinePlaces = {
   ...karnatakaPlaces,
   ...otherPlaces,
 };
+
+/// Known timezone offsets for international cities (non-IST).
+/// All Karnataka + other Indian cities default to 5.5 (IST).
+const Map<String, double> _knownTimezones = {
+  'London (UK)': 0.0,
+  'New York (USA)': -5.0,
+  'Dubai (UAE)': 4.0,
+  'Singapore': 8.0,
+  'Sydney (Australia)': 10.0,
+  'Toronto (Canada)': -5.0,
+  'Tokyo (Japan)': 9.0,
+  'Colombo (Sri Lanka)': 5.5,
+  'Kathmandu (Nepal)': 5.75,
+};
+
+/// Returns the timezone offset for a known place, or estimates it from longitude.
+double getTimezoneForPlace(String placeName, double lon) {
+  // Check known international timezones first
+  if (_knownTimezones.containsKey(placeName)) {
+    return _knownTimezones[placeName]!;
+  }
+  // All Indian places (Karnataka + other Indian cities) are IST
+  if (karnatakaPlaces.containsKey(placeName) || otherPlaces.containsKey(placeName)) {
+    // Check if it's international by looking at known tz map
+    if (!_knownTimezones.containsKey(placeName)) {
+      // Indian city
+      return 5.5;
+    }
+  }
+  // Unknown place: estimate from longitude, rounded to nearest 0.5
+  return (lon / 15.0 * 2).round() / 2.0;
+}

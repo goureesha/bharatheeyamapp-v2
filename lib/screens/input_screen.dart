@@ -56,7 +56,7 @@ class _InputScreenState extends State<InputScreen> {
     _placeCtrl = TextEditingController(text: LocationService.place);
     _latCtrl = TextEditingController(text: LocationService.lat.toStringAsFixed(4));
     _lonCtrl = TextEditingController(text: LocationService.lon.toStringAsFixed(4));
-    _tzCtrl = TextEditingController(text: LocationService.tzOffset.toString());
+    _tzCtrl = TextEditingController(text: '${LocationService.tzOffset >= 0 ? '+' : ''}${LocationService.tzOffset}');
     _loadProfiles();
     _checkNetwork();
   }
@@ -93,7 +93,7 @@ class _InputScreenState extends State<InputScreen> {
       _placeCtrl.text = p.place;
       _latCtrl.text   = p.lat.toStringAsFixed(4);
       _lonCtrl.text   = p.lon.toStringAsFixed(4);
-      _tzCtrl.text    = p.tzOffset.toString();
+      _tzCtrl.text    = '${p.tzOffset >= 0 ? '+' : ''}${p.tzOffset}';
       _hour   = p.hour;
       _minute = p.minute;
       _ampm   = p.ampm;
@@ -136,7 +136,9 @@ class _InputScreenState extends State<InputScreen> {
             _placeCtrl.text = placeName.trim();
             _latCtrl.text = lat.toStringAsFixed(4);
             _lonCtrl.text = lon.toStringAsFixed(4);
-            _geoStatus = '📍 ${data[0]['display_name']}';
+            final autoTz = getTimezoneForPlace(placeName.trim(), lon);
+            _tzCtrl.text = '${autoTz >= 0 ? '+' : ''}$autoTz';
+            _geoStatus = '📍 ${data[0]['display_name']} (TZ: ${autoTz >= 0 ? '+' : ''}$autoTz)';
           });
         } else {
           // Multiple results — show disambiguation dialog
@@ -186,10 +188,12 @@ class _InputScreenState extends State<InputScreen> {
                       Navigator.pop(ctx);
                       final lat = double.parse(place['lat']);
                       final lon = double.parse(place['lon']);
+                      final autoTz = getTimezoneForPlace(displayName, lon);
                       setState(() {
                         _latCtrl.text = lat.toStringAsFixed(4);
                         _lonCtrl.text = lon.toStringAsFixed(4);
-                        _geoStatus = '📍 $displayName';
+                        _tzCtrl.text = '${autoTz >= 0 ? '+' : ''}$autoTz';
+                        _geoStatus = '📍 $displayName (TZ: ${autoTz >= 0 ? '+' : ''}$autoTz)';
                       });
                     },
                   );
@@ -259,7 +263,7 @@ class _InputScreenState extends State<InputScreen> {
               _placeCtrl.text = LocationService.place;
               _latCtrl.text = LocationService.lat.toStringAsFixed(4);
               _lonCtrl.text = LocationService.lon.toStringAsFixed(4);
-              _tzCtrl.text = LocationService.tzOffset.toString();
+              _tzCtrl.text = '${LocationService.tzOffset >= 0 ? '+' : ''}${LocationService.tzOffset}';
 
               _dob = now;
               _hour = now.hour % 12 == 0 ? 12 : now.hour % 12;
@@ -553,11 +557,13 @@ class _InputScreenState extends State<InputScreen> {
             onSelected: (String selection) {
               if (offlinePlaces.containsKey(selection)) {
                 final coords = offlinePlaces[selection]!;
+                final autoTz = getTimezoneForPlace(selection, coords[1]);
                 setState(() {
                   _placeCtrl.text = selection;
                   _latCtrl.text = coords[0].toStringAsFixed(4);
                   _lonCtrl.text = coords[1].toStringAsFixed(4);
-                  _geoStatus = '📍 $selection';
+                  _tzCtrl.text = '${autoTz >= 0 ? '+' : ''}$autoTz';
+                  _geoStatus = '📍 $selection (TZ: ${autoTz >= 0 ? '+' : ''}$autoTz)';
                 });
               }
             },
