@@ -234,20 +234,22 @@ class AppointmentService {
       int synced = 0;
       for (final event in events.items!) {
         if (event.start?.dateTime == null || event.end?.dateTime == null) continue;
+        if (event.status == 'cancelled') continue;
 
         final start = event.start!.dateTime!.toLocal();
         final end = event.end!.dateTime!.toLocal();
-        final summary = event.summary ?? '';
+        final summary = event.summary ?? 'Calendar Event';
         final description = event.description ?? '';
+        final eventId = event.id ?? '';
 
-        // Only sync events created by this app
+        // Use summary as client name — strip app prefix if present
         String clientName;
         if (summary.startsWith('ಜಾತಕ ಅಪಾಯಿಂಟ್\u200cಮೆಂಟ್ - ')) {
           clientName = summary.substring('ಜಾತಕ ಅಪಾಯಿಂಟ್\u200cಮೆಂಟ್ - '.length);
         } else if (summary.startsWith('ಜಾತಕ - ')) {
           clientName = summary.substring(7);
         } else {
-          continue; // Skip non-app events
+          clientName = summary; // Sync ALL events, use summary as name
         }
 
         final dateStr = '${start.year}-${start.month.toString().padLeft(2, '0')}-${start.day.toString().padLeft(2, '0')}';
@@ -264,9 +266,11 @@ class AppointmentService {
         final phoneMatch = RegExp(r'Phone:\s*([+\d\s-]+)').firstMatch(description);
         if (phoneMatch != null) phone = phoneMatch.group(1)?.trim() ?? '';
 
-        // Determine status from event
-        String status = 'booked';
-        if (event.status == 'cancelled') status = 'cancelled';
+        // Store eventId in notes so we can update/delete later
+        String notes = description.replaceAll(RegExp(r'Phone:\s*[+\d\s-]+'), '').trim();
+        if (eventId.isNotEmpty && !notes.contains('gcal:')) {
+          notes = notes.isNotEmpty ? '$notes\ngcal:$eventId' : 'gcal:$eventId';
+        }
 
         final appt = Appointment(
           id: '0',
@@ -275,8 +279,8 @@ class AppointmentService {
           endTime: endTime,
           clientName: clientName,
           clientPhone: phone,
-          status: status,
-          notes: description.replaceAll(RegExp(r'Phone:\s*[+\d\s-]+'), '').trim(),
+          status: 'booked',
+          notes: notes,
           createdAt: DateTime.now().toIso8601String(),
         );
 
@@ -411,6 +415,9 @@ class AppointmentService {
         );
       }
 
+      // Sync to Google Calendar (delete if cancelled)
+      _updateCalendarEvent(appt, newStatus: newStatus);
+
       return true;
     } catch (e) {
       debugPrint('AppointmentService: Update error: $e');
@@ -479,6 +486,12 @@ class AppointmentService {
 
   // ─── Google Calendar Integration ──────────────────────────
 
+  /// Extract Google Calendar event ID from appointment notes
+  static String? _extractCalEventId(String notes) {
+    final match = RegExp(r'gcal:(\S+)').firstMatch(notes);
+    return match?.group(1);
+  }
+
   static Future<void> _createCalendarEvent(Appointment appt) async {
     try {
       final client = await GoogleAuthService.getAuthClient();
@@ -507,10 +520,67 @@ class AppointmentService {
         ),
       );
 
-      await calApi.events.insert(event, 'primary');
-      debugPrint('AppointmentService: Calendar event created');
+      final created = await calApi.events.insert(event, 'primary');
+      debugPrint('AppointmentService: Calendar event created: ${created.id}');
+
+      // Store event ID back in the appointment notes for future sync
+      if (created.id != null) {
+        final idx = _appointments.indexWhere((a) =>
+            a.date == appt.date && a.startTime == appt.startTime && a.clientName == appt.clientName);
+        if (idx >= 0) {
+          final oldNotes = _appointments[idx].notes;
+          final newNotes = oldNotes.isNotEmpty
+              ? '$oldNotes\ngcal:${created.id}'
+              : 'gcal:${created.id}';
+          _appointments[idx] = Appointment(
+            id: appt.id, date: appt.date, startTime: appt.startTime,
+            endTime: appt.endTime, clientName: appt.clientName,
+            clientPhone: appt.clientPhone, status: appt.status,
+            notes: newNotes, createdAt: appt.createdAt, clientId: appt.clientId,
+          );
+        }
+      }
     } catch (e) {
       debugPrint('AppointmentService: Calendar event error: $e');
+    }
+  }
+
+  /// Update a Google Calendar event when appointment changes
+  static Future<void> _updateCalendarEvent(Appointment appt, {String? newStatus}) async {
+    try {
+      final eventId = _extractCalEventId(appt.notes);
+      if (eventId == null) return;
+
+      final client = await GoogleAuthService.getAuthClient();
+      if (client == null) return;
+
+      final calApi = cal.CalendarApi(client);
+
+      if (newStatus == 'cancelled') {
+        // Delete the event from Google Calendar
+        await calApi.events.delete('primary', eventId);
+        debugPrint('AppointmentService: Calendar event deleted: $eventId');
+      } else {
+        // Update the event
+        final startParts = appt.startTime.split(':');
+        final endParts = appt.endTime.split(':');
+        final start = DateTime(appt.date.year, appt.date.month, appt.date.day,
+            int.parse(startParts[0]), int.parse(startParts[1]));
+        final end = DateTime(appt.date.year, appt.date.month, appt.date.day,
+            int.parse(endParts[0]), int.parse(endParts[1]));
+
+        final event = cal.Event(
+          summary: 'ಜಾತಕ - ${appt.clientName}',
+          description: 'Phone: ${appt.clientPhone}\n${appt.notes}',
+          start: cal.EventDateTime(dateTime: start, timeZone: 'Asia/Kolkata'),
+          end: cal.EventDateTime(dateTime: end, timeZone: 'Asia/Kolkata'),
+        );
+
+        await calApi.events.update(event, 'primary', eventId);
+        debugPrint('AppointmentService: Calendar event updated: $eventId');
+      }
+    } catch (e) {
+      debugPrint('AppointmentService: Calendar update error: $e');
     }
   }
 
