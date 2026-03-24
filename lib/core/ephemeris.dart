@@ -62,17 +62,18 @@ class Ephemeris {
     }
   }
 
-  static List<double> findSunriseSetForDate(int year, int month, int day, double lat, double lon) {
+  static List<double> findSunriseSetForDate(int year, int month, int day, double lat, double lon, {double tzOffset = 5.5}) {
     final jdStart = Sweph.swe_julday(year, month, day, 0.0, CalendarType.SE_GREG_CAL);
-    double riseTime = jdStart + 0.25;
-    double setTime = jdStart + 0.75;
+    // Anchor scan to LOCAL midnight (convert local midnight to UT)
+    final localMidnightUt = jdStart - (tzOffset / 24.0);
+    double riseTime = localMidnightUt + 0.25; // fallback: 6 AM local
+    double setTime = localMidnightUt + 0.75;  // fallback: 6 PM local
     double step = 1.0 / 24.0;
-    // Scan from 12 hours before midnight UT to 36 hours after (48h window)
-    // to reliably cover all timezones (UTC-12 to UTC+14)
-    double current = jdStart - 0.5;
+    // Scan from 2h before local midnight to 28h after (30h total)
+    double current = localMidnightUt - (2.0 / 24.0);
     
     try {
-      for (int i = 0; i < 48; i++) {
+      for (int i = 0; i < 30; i++) {
         double alt1 = getAltitudeManual(current, lat, lon);
         double alt2 = getAltitudeManual(current + step, lat, lon);
         if (alt1 < 0.0 && alt2 >= 0.0) {
@@ -85,10 +86,7 @@ class Ephemeris {
               h = m;
             }
           }
-          // Only update if this sunrise is closer to the target date midnight UT
-          if ((h - jdStart).abs() < (riseTime - jdStart).abs()) {
-            riseTime = h;
-          }
+          riseTime = h;
         }
         if (alt1 > 0.0 && alt2 <= 0.0) {
           double l = current, h = current + step;
@@ -100,10 +98,7 @@ class Ephemeris {
               h = m;
             }
           }
-          // Only update if this sunset is after the found sunrise
-          if (h > riseTime) {
-            setTime = h;
-          }
+          setTime = h;
         }
         current += step;
       }

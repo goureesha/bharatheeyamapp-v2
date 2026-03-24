@@ -224,12 +224,13 @@ class AstroCalculator {
     required double lat,
     required double lon,
     required DateTime dobObj,
+    double tzOffset = 5.5,
   }) {
     int y = dobObj.year;
     int m = dobObj.month;
     int d = dobObj.day;
     
-    List<double> srSs = Ephemeris.findSunriseSetForDate(y, m, d, lat, lon);
+    List<double> srSs = Ephemeris.findSunriseSetForDate(y, m, d, lat, lon, tzOffset: tzOffset);
     double srCivil = srSs[0];
     double ssCivil = srSs[1];
     
@@ -260,14 +261,14 @@ class AstroCalculator {
         vedicWday = (civilWeekdayIdx - 1) % 7;
         if (vedicWday < 0) vedicWday += 7;
         DateTime prevD = dobObj.subtract(const Duration(days: 1));
-        List<double> pSrSs = Ephemeris.findSunriseSetForDate(prevD.year, prevD.month, prevD.day, lat, lon);
+        List<double> pSrSs = Ephemeris.findSunriseSetForDate(prevD.year, prevD.month, prevD.day, lat, lon, tzOffset: tzOffset);
         startBase = pSrSs[1];
         duration = srCivil - pSrSs[1];
         panchSr = pSrSs[0];
       } else {
         vedicWday = civilWeekdayIdx;
         DateTime nextD = dobObj.add(const Duration(days: 1));
-        List<double> nSrSs = Ephemeris.findSunriseSetForDate(nextD.year, nextD.month, nextD.day, lat, lon);
+        List<double> nSrSs = Ephemeris.findSunriseSetForDate(nextD.year, nextD.month, nextD.day, lat, lon, tzOffset: tzOffset);
         startBase = ssCivil;
         duration = nSrSs[0] - ssCivil;
         panchSr = srCivil;
@@ -484,7 +485,7 @@ class AstroCalculator {
       speeds['ಲಗ್ನ'] = 0;
 
       // Mandi
-      final mandiRes = calcMandi(jdBirth: jdBirth, lat: lat, lon: lon, dobObj: dob);
+      final mandiRes = calcMandi(jdBirth: jdBirth, lat: lat, lon: lon, dobObj: dob, tzOffset: hourUtcOffset);
       final mandiTimeJd = mandiRes[0] as double;
       final panchSr = mandiRes[2] as double;
       final wIdx = mandiRes[3] as int;
@@ -707,7 +708,7 @@ class AstroCalculator {
 
       // Divamana & Ratrimana
       final nextD = dob.add(const Duration(days: 1));
-      final nextSrSs = Ephemeris.findSunriseSetForDate(nextD.year, nextD.month, nextD.day, lat, lon);
+      final nextSrSs = Ephemeris.findSunriseSetForDate(nextD.year, nextD.month, nextD.day, lat, lon, tzOffset: hourUtcOffset);
       final nextSr = nextSrSs[0];
 
       final divamanaHours = (ssCivil - srCivil) * 24.0;
