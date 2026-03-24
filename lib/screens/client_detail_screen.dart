@@ -6,6 +6,7 @@ import '../services/storage_service.dart';
 import '../core/calculator.dart';
 import '../core/ephemeris.dart';
 import '../constants/places.dart';
+import '../services/location_service.dart';
 import 'dashboard_screen.dart';
 
 class ClientDetailScreen extends StatefulWidget {
@@ -383,7 +384,7 @@ class _ClientDetailScreenState extends State<ClientDetailScreen> {
       final localHour = m.hour + m.minute / 60.0;
       final result = await AstroCalculator.calculate(
         year: dob.year, month: dob.month, day: dob.day,
-        hourUtcOffset: widget.profile.tzOffset,
+        hourUtcOffset: LocationService.tzOffset,
         hour24: localHour,
         lat: m.lat, lon: m.lon,
         ayanamsaMode: 'lahiri',

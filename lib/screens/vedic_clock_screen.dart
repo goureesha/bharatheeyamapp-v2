@@ -83,7 +83,7 @@ class _VedicClockScreenState extends State<VedicClockScreen> {
       final h = n.hour + n.minute / 60.0 + n.second / 3600.0;
       final r = await AstroCalculator.calculate(
         year: n.year, month: n.month, day: n.day,
-        hourUtcOffset: 5.5, hour24: h, lat: _lat, lon: _lon,
+        hourUtcOffset: LocationService.tzOffset, hour24: h, lat: _lat, lon: _lon,
         ayanamsaMode: 'lahiri', trueNode: true,
       );
       if (r != null && mounted) {
