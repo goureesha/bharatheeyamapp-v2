@@ -58,11 +58,11 @@ class _VedicClockScreenState extends State<VedicClockScreen> {
 
     if (result == null || !mounted) return;
 
-    // Parse sunrise time from panchanga string (format: "06:23" or "06:23:45")
+    // Parse sunrise time from panchanga string (format: "06:23 AM" or "06:23:45 AM")
     final srParts = result.panchang.sunrise.split(':');
-    final srHour = double.tryParse(srParts[0]) ?? 6;
-    final srMin = double.tryParse(srParts.length > 1 ? srParts[1] : '0') ?? 0;
-    final srSec = double.tryParse(srParts.length > 2 ? srParts[2] : '0') ?? 0;
+    final srHour = double.tryParse(srParts[0].replaceAll(RegExp(r'[^0-9]'), '')) ?? 6;
+    final srMin = double.tryParse(srParts.length > 1 ? srParts[1].replaceAll(RegExp(r'[^0-9]'), '') : '0') ?? 0;
+    final srSec = double.tryParse(srParts.length > 2 ? srParts[2].replaceAll(RegExp(r'[^0-9]'), '') : '0') ?? 0;
 
     setState(() {
       _sunriseHour24 = srHour + srMin / 60.0 + srSec / 3600.0;
