@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:table_calendar/table_calendar.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../widgets/common.dart';
 import '../services/appointment_service.dart';
@@ -86,70 +85,11 @@ class _AppointmentScreenState extends State<AppointmentScreen> with SingleTicker
               : TabBarView(
                   controller: _tabCtrl,
                   children: [
-                    // Tab 1: Appointments (calendar + list) — all scrollable
                     SingleChildScrollView(
                       child: Column(
                         children: [
-                          AppCard(
-                            child: TableCalendar(
-                              firstDay: DateTime.now().subtract(const Duration(days: 365)),
-                              lastDay: DateTime.now().add(const Duration(days: 365)),
-                              focusedDay: _focusedDay,
-                              selectedDayPredicate: (d) => isSameDay(d, _selectedDate),
-                              onDaySelected: (selected, focused) {
-                                setState(() {
-                                  _selectedDate = selected;
-                                  _focusedDay = focused;
-                                });
-                              },
-                              onPageChanged: (focused) {
-                                _focusedDay = focused;
-                              },
-                              eventLoader: (day) => _getEventsForDay(day),
-                              calendarBuilders: CalendarBuilders(
-                                markerBuilder: (_, date, events) {
-                                  if (events.isEmpty) return null;
-                                  return Positioned(
-                                    bottom: 4,
-                                    child: Row(
-                                      mainAxisSize: MainAxisSize.min,
-                                      children: List.generate(
-                                        events.length > 3 ? 3 : events.length,
-                                        (_) => Container(
-                                          width: 6, height: 6,
-                                          margin: const EdgeInsets.symmetric(horizontal: 1),
-                                          decoration: BoxDecoration(color: Colors.green, shape: BoxShape.circle),
-                                        ),
-                                      ),
-                                    ),
-                                  );
-                                },
-                              ),
-                              headerStyle: HeaderStyle(
-                                titleCentered: true,
-                                formatButtonVisible: false,
-                                titleTextStyle: TextStyle(color: kPurple2, fontWeight: FontWeight.bold, fontSize: 16),
-                              ),
-                              calendarStyle: CalendarStyle(
-                                todayDecoration: BoxDecoration(
-                                  color: kPurple2.withOpacity(0.3),
-                                  shape: BoxShape.circle,
-                                ),
-                                selectedDecoration: BoxDecoration(
-                                  color: kTeal,
-                                  shape: BoxShape.circle,
-                                ),
-                                todayTextStyle: TextStyle(color: kText, fontWeight: FontWeight.bold),
-                                selectedTextStyle: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-                                defaultTextStyle: TextStyle(color: kText),
-                                weekendTextStyle: TextStyle(color: Colors.redAccent),
-                              ),
-                              daysOfWeekStyle: DaysOfWeekStyle(
-                                weekdayStyle: TextStyle(color: kText, fontWeight: FontWeight.bold),
-                                weekendStyle: TextStyle(color: Colors.redAccent, fontWeight: FontWeight.bold),
-                              ),
-                            ),
-                          ),
+                          // ── Custom Month-Grid Planner ──
+                          _buildMonthPlanner(),
                           Padding(
                             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                             child: Row(
@@ -201,6 +141,195 @@ class _AppointmentScreenState extends State<AppointmentScreen> with SingleTicker
               label: const Text('ಹೊಸ ಅಪಾಯಿಂಟ್\u200cಮೆಂಟ್', style: TextStyle(fontWeight: FontWeight.bold)),
             )
           : null,
+    );
+  }
+
+  // ──────────────────────────────────────────────
+  // Custom Month Planner Grid (client names in cells)
+  // ──────────────────────────────────────────────
+  Widget _buildMonthPlanner() {
+    final year = _focusedDay.year;
+    final month = _focusedDay.month;
+    final firstOfMonth = DateTime(year, month, 1);
+    final daysInMonth = DateTime(year, month + 1, 0).day;
+    final startWeekday = firstOfMonth.weekday % 7; // 0=Sun
+
+    // Build list of day cells (null = empty padding cell)
+    final List<DateTime?> cells = [];
+    for (int i = 0; i < startWeekday; i++) cells.add(null);
+    for (int d = 1; d <= daysInMonth; d++) cells.add(DateTime(year, month, d));
+    while (cells.length % 7 != 0) cells.add(null);
+
+    const months = [
+      'JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN',
+      'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'
+    ];
+    const dayHeaders = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
+      child: Column(
+        children: [
+          // Month header
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+            child: Row(
+              children: [
+                IconButton(
+                  icon: Icon(Icons.chevron_left, color: kText),
+                  onPressed: () => setState(() {
+                    _focusedDay = DateTime(year, month - 1, 1);
+                  }),
+                ),
+                Text(
+                  '${months[month - 1]}  $year',
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: kText, letterSpacing: 1),
+                ),
+                IconButton(
+                  icon: Icon(Icons.chevron_right, color: kText),
+                  onPressed: () => setState(() {
+                    _focusedDay = DateTime(year, month + 1, 1);
+                  }),
+                ),
+                const Spacer(),
+                IconButton(
+                  icon: Icon(Icons.add, color: kTeal, size: 22),
+                  tooltip: 'ಹೊಸ ಅಪಾಯಿಂಟ್\u200cಮೆಂಟ್',
+                  onPressed: () => _showAddAppointmentDialog(),
+                ),
+                GestureDetector(
+                  onTap: () => setState(() {
+                    _selectedDate = DateTime.now();
+                    _focusedDay = DateTime.now();
+                  }),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                    decoration: BoxDecoration(
+                      border: Border.all(color: kMuted),
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: Text(
+                      '${DateTime.now().day}',
+                      style: TextStyle(fontSize: 13, fontWeight: FontWeight.w800, color: kText),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          // Day-of-week headers
+          Row(
+            children: List.generate(7, (i) => Expanded(
+              child: Center(
+                child: Text(
+                  dayHeaders[i],
+                  style: TextStyle(
+                    fontWeight: FontWeight.w800,
+                    fontSize: 13,
+                    color: (i == 0 || i == 6) ? Colors.redAccent : kTeal,
+                  ),
+                ),
+              ),
+            )),
+          ),
+          const SizedBox(height: 4),
+
+          // Grid of day cells
+          ...List.generate(cells.length ~/ 7, (row) {
+            return IntrinsicHeight(
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: List.generate(7, (col) {
+                  final idx = row * 7 + col;
+                  final day = cells[idx];
+                  if (day == null) return Expanded(child: Container());
+                  return Expanded(child: _buildDayCell(day, col));
+                }),
+              ),
+            );
+          }),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDayCell(DateTime day, int weekdayCol) {
+    final now = DateTime.now();
+    final isToday = day.year == now.year && day.month == now.month && day.day == now.day;
+    final isSelected = day.year == _selectedDate.year && day.month == _selectedDate.month && day.day == _selectedDate.day;
+    final appts = _getEventsForDay(day);
+    final hasAppts = appts.isNotEmpty;
+    final isWeekend = weekdayCol == 0 || weekdayCol == 6;
+
+    return GestureDetector(
+      onTap: () => setState(() {
+        _selectedDate = day;
+        _focusedDay = day;
+      }),
+      child: Container(
+        constraints: const BoxConstraints(minHeight: 70),
+        margin: const EdgeInsets.all(1),
+        decoration: BoxDecoration(
+          color: isSelected ? kTeal.withOpacity(0.08) : kCard,
+          border: Border.all(
+            color: isToday ? kTeal : (isSelected ? kTeal.withOpacity(0.5) : kBorder),
+            width: isToday ? 2 : 1,
+          ),
+          borderRadius: BorderRadius.circular(4),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Day number
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+              decoration: isToday ? BoxDecoration(
+                color: kTeal,
+                borderRadius: const BorderRadius.only(
+                  topLeft: Radius.circular(3), topRight: Radius.circular(3),
+                ),
+              ) : null,
+              child: Text(
+                '${day.day}',
+                style: TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w800,
+                  color: isToday ? Colors.white : (isWeekend ? Colors.redAccent : kText),
+                ),
+              ),
+            ),
+            // Client names
+            ...appts.take(3).map((a) {
+              final label = a.clientName.isNotEmpty ? a.clientName : 'Appointment';
+              return Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(horizontal: 3, vertical: 1),
+                margin: const EdgeInsets.only(top: 1, left: 2, right: 2),
+                decoration: BoxDecoration(
+                  color: kTeal.withOpacity(0.15),
+                  borderRadius: BorderRadius.circular(2),
+                ),
+                child: Text(
+                  label,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(fontSize: 8, color: kText, fontWeight: FontWeight.w600),
+                ),
+              );
+            }),
+            if (appts.length > 3)
+              Padding(
+                padding: const EdgeInsets.only(left: 3, top: 1),
+                child: Text(
+                  '+${appts.length - 3}',
+                  style: TextStyle(fontSize: 7, color: kMuted, fontWeight: FontWeight.bold),
+                ),
+              ),
+          ],
+        ),
+      ),
     );
   }
 
