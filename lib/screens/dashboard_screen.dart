@@ -10,6 +10,7 @@ import '../widgets/kundali_chart.dart';
 import '../widgets/planet_detail_sheet.dart';
 import '../widgets/dasha_widget.dart';
 import '../widgets/shadbala_widget.dart';
+import '../widgets/ashtakavarga_widget.dart';
 
 import '../services/storage_service.dart';
 import '../services/subscription_service.dart';
@@ -74,8 +75,8 @@ class _DashboardScreenState extends State<DashboardScreen>
 
 
   static List<String> get _tabs => AppLocale.isHindi
-    ? ['कुंडली', 'स्फुट', 'आरूढ', 'दशा', 'पंचांग', 'भाव', 'षड्बल', 'टिप्पणी']
-    : ['ಕುಂಡಲಿ', 'ಸ್ಫುಟ', 'ಆರೂಢ', 'ದಶ', 'ಪಂಚಾಂಗ', 'ಭಾವ', 'ಷಡ್ಬಲ', 'ಟಿಪ್ಪಣಿ'];
+    ? ['कुंडली', 'स्फुट', 'आरूढ', 'दशा', 'पंचांग', 'भाव', 'षड्बल', 'अष्टक', 'टिप्पणी']
+    : ['ಕುಂಡಲಿ', 'ಸ್ಫುಟ', 'ಆರೂಢ', 'ದಶ', 'ಪಂಚಾಂಗ', 'ಭಾವ', 'ಷಡ್ಬಲ', 'ಅಷ್ಟಕ', 'ಟಿಪ್ಪಣಿ'];
 
   @override
   void initState() {
@@ -291,6 +292,7 @@ class _DashboardScreenState extends State<DashboardScreen>
                   _buildPanchangTab(),
                   _buildBhavaTab(),
                   _buildShadbalaTab(),
+                  AshtakaVargaWidget(result: widget.result),
                   _buildNotesTab(),
                 ],
               ),
