@@ -4,6 +4,7 @@ import '../widgets/common.dart';
 import '../services/appointment_service.dart';
 import '../services/google_auth_service.dart';
 import '../services/client_service.dart';
+import '../services/calendar_service.dart';
 import 'client_detail_screen.dart';
 
 class AppointmentScreen extends StatefulWidget {
@@ -902,6 +903,21 @@ class _AppointmentScreenState extends State<AppointmentScreen> with SingleTicker
                                   ScaffoldMessenger.of(context).showSnackBar(
                                     SnackBar(content: Text('✅ ಅಪಾಯಿಂಟ್\u200cಮೆಂಟ್ ಬುಕ್ ಆಗಿದೆ!'), backgroundColor: Colors.green),
                                   );
+
+                                  // Sync to Google Calendar
+                                  final startDt = DateTime(apptDate.year, apptDate.month, apptDate.day, startHour, startMin);
+                                  final calOk = await CalendarService.createAppointment(
+                                    clientName: nameCtrl.text,
+                                    startTime: startDt,
+                                    duration: Duration(minutes: daySlot.slotMinutes),
+                                    description: 'ಫೋನ್: ${phoneCtrl.text}\n${notesCtrl.text}'.trim(),
+                                  );
+                                  if (mounted && calOk) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(content: Text('📅 Google Calendar ಗೆ ಸೇರಿಸಲಾಗಿದೆ'), backgroundColor: Colors.blueGrey),
+                                    );
+                                  }
+
                                   // Ask to send WhatsApp confirmation
                                   _promptWhatsApp(phoneCtrl.text, AppointmentService.confirmationMessage(
                                     Appointment(
