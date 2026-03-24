@@ -39,9 +39,25 @@ jobs:
         run: flutter pub get
 
       - name: Build AAB (Play Store)
-        run: flutter build appbundle --release --verbose
+        run: |
+          flutter build appbundle --release --verbose 2>&1 | tee build_output.txt || true
+          # Check if AAB was produced
+          if [ ! -f build/app/outputs/bundle/release/app-release.aab ]; then
+            echo "::error::AAB build failed. See build_output artifact for details."
+            tail -100 build_output.txt
+            exit 1
+          fi
+
+      - name: Upload Build Log (on failure)
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-error-log
+          path: build_output.txt
+          retention-days: 7
 
       - name: Upload AAB
+        if: success()
         uses: actions/upload-artifact@v4
         with:
           name: bharatheeyam-aab
