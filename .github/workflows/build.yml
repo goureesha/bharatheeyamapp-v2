@@ -43,8 +43,9 @@ jobs:
           flutter build appbundle --release --verbose 2>&1 | tee build_output.txt || true
           # Check if AAB was produced
           if [ ! -f build/app/outputs/bundle/release/app-release.aab ]; then
-            echo "::error::AAB build failed. See build_output artifact for details."
-            tail -100 build_output.txt
+            ERROR_LINES=$(grep -i -E "error|failure|exception|duplicate" build_output.txt | tail -20 | tr '\n' ' ')
+            echo "::error::AAB FAILED: $ERROR_LINES"
+            tail -50 build_output.txt
             exit 1
           fi
 
