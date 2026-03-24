@@ -418,8 +418,8 @@ class _AppointmentScreenState extends State<AppointmentScreen> with SingleTicker
     final members = ClientService.getMembersForClient(client.clientId);
     final phone = client.phone.replaceAll(RegExp(r'[^0-9]'), '');
     final visits = AppointmentService.appointments.where((a) =>
-      a.clientId == client.clientId ||
-      a.clientPhone.replaceAll(RegExp(r'[^0-9]'), '') == phone
+      (a.clientId.isNotEmpty && a.clientId == client.clientId) ||
+      (phone.isNotEmpty && a.clientPhone.replaceAll(RegExp(r'[^0-9]'), '') == phone)
     ).length;
 
     return GestureDetector(
@@ -554,8 +554,8 @@ class _AppointmentScreenState extends State<AppointmentScreen> with SingleTicker
     if (client != null) {
       final phone = client.phone.replaceAll(RegExp(r'[^0-9]'), '');
       visitCount = AppointmentService.appointments.where((a) =>
-        a.clientId == client!.clientId ||
-        a.clientPhone.replaceAll(RegExp(r'[^0-9]'), '') == phone
+        (a.clientId.isNotEmpty && a.clientId == client!.clientId) ||
+        (phone.isNotEmpty && a.clientPhone.replaceAll(RegExp(r'[^0-9]'), '') == phone)
       ).length;
     }
 

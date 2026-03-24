@@ -494,11 +494,14 @@ class ClientService {
   /// Get appointment count for a client (needs appointments from AppointmentService)
   static int getVisitCount(String clientId, List<dynamic> appointments) {
     return appointments.where((a) {
-      // Check if appointment has matching clientId or phone
       final client = getClientById(clientId);
       if (client == null) return false;
-      return a.clientPhone.replaceAll(RegExp(r'[^0-9]'), '') ==
-             client.phone.replaceAll(RegExp(r'[^0-9]'), '');
+      // Match by clientId first
+      if (a.clientId.isNotEmpty && a.clientId == clientId) return true;
+      // Match by phone only if both have phone numbers
+      final clientPhone = client.phone.replaceAll(RegExp(r'[^0-9]'), '');
+      final apptPhone = a.clientPhone.replaceAll(RegExp(r'[^0-9]'), '');
+      return clientPhone.isNotEmpty && apptPhone.isNotEmpty && clientPhone == apptPhone;
     }).length;
   }
 
