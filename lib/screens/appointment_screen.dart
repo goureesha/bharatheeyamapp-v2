@@ -929,6 +929,7 @@ class _AppointmentScreenState extends State<AppointmentScreen> with SingleTicker
     DateTime toDate = DateTime.now().add(const Duration(days: 7));
     TimeOfDay fromTime = const TimeOfDay(hour: 9, minute: 0);
     TimeOfDay toTime = const TimeOfDay(hour: 17, minute: 0);
+    final phoneCtrl = TextEditingController();
 
     showModalBottomSheet(
       context: context,
@@ -1009,6 +1010,38 @@ class _AppointmentScreenState extends State<AppointmentScreen> with SingleTicker
                       if (t != null) setSheetState(() => toTime = t);
                     },
                   ),
+                  const SizedBox(height: 16),
+
+                  // PHONE NUMBER FOR WHATSAPP REQUESTS
+                  Text('ನಿಮ್ಮ WhatsApp ಸಂಖ್ಯೆ', style: TextStyle(color: kMuted, fontSize: 13, fontWeight: FontWeight.w600)),
+                  const SizedBox(height: 6),
+                  TextField(
+                    controller: phoneCtrl,
+                    keyboardType: TextInputType.phone,
+                    style: TextStyle(color: kText, fontWeight: FontWeight.w700),
+                    decoration: InputDecoration(
+                      hintText: '+91 XXXXXXXXXX',
+                      hintStyle: TextStyle(color: kMuted.withOpacity(0.5)),
+                      prefixIcon: Icon(Icons.phone, color: kTeal, size: 20),
+                      filled: true,
+                      fillColor: kBg,
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide(color: kTeal.withOpacity(0.2)),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide(color: kTeal.withOpacity(0.2)),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide(color: kTeal),
+                      ),
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  Text('ಗ್ರಾಹಕರ ಅಪಾಯಿಂಟ್\u200cಮೆಂಟ್ ವಿನಂತಿ WhatsApp ಮೂಲಕ ಬರುತ್ತದೆ', style: TextStyle(color: kMuted, fontSize: 11)),
 
                   const SizedBox(height: 24),
 
@@ -1056,6 +1089,7 @@ class _AppointmentScreenState extends State<AppointmentScreen> with SingleTicker
                           fromDate: fromDate, toDate: toDate,
                           fromHour: fromTime.hour, fromMinute: fromTime.minute,
                           toHour: toTime.hour, toMinute: toTime.minute,
+                          phone: phoneCtrl.text,
                         );
                         final msg = '\u0ca8\u0cae\u0cb8\u0ccd\u0c95\u0cbe\u0cb0,\n\n'
                             '\u0c85\u0caa\u0cbe\u0caf\u0cbf\u0c82\u0c9f\u0ccd\u200c\u0cae\u0cc6\u0c82\u0c9f\u0ccd \u0cac\u0cc1\u0c95\u0ccd \u0cae\u0cbe\u0ca1\u0cb2\u0cc1 \u0c88 \u0cb2\u0cbf\u0c82\u0c95\u0ccd \u0ca4\u0cc6\u0cb0\u0cc6\u0caf\u0cbf\u0cb0\u0cbf:\n'

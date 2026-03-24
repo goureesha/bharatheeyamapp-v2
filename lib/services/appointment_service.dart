@@ -692,6 +692,7 @@ class AppointmentService {
     required int fromMinute,
     required int toHour,
     required int toMinute,
+    String phone = '',
   }) {
     final customFromMin = fromHour * 60 + fromMinute;
     final customToMin = toHour * 60 + toMinute;
@@ -721,11 +722,12 @@ class AppointmentService {
       current = current.add(const Duration(days: 1));
     }
 
-    // Include astrologer's Google email so clients can send calendar invitation
+    // Include astrologer's Google email and phone for WhatsApp requests
     final email = GoogleAuthService.userEmail ?? '';
+    final cleanPhone = phone.replaceAll(RegExp(r'[^0-9+]'), '');
 
     // Encode as JSON in URL hash
-    final jsonStr = '{"slots":${_slotsToJson(slotsMap)},"email":"$email","slotMin":$slotDuration}';
+    final jsonStr = '{"slots":${_slotsToJson(slotsMap)},"email":"$email","phone":"$cleanPhone","slotMin":$slotDuration}';
     final encoded = Uri.encodeComponent(jsonStr);
 
     return 'https://goureesha.github.io/bharatheeyamapp/booking.html#$encoded';
