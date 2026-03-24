@@ -43,8 +43,8 @@ jobs:
           flutter build appbundle --release --verbose 2>&1 | tee build_output.txt || true
           # Check if AAB was produced
           if [ ! -f build/app/outputs/bundle/release/app-release.aab ]; then
-            ERROR_LINES=$(grep -i -E "error|failure|exception|duplicate" build_output.txt | tail -20 | tr '\n' ' ')
-            echo "::error::AAB FAILED: $ERROR_LINES"
+            echo "::error::$(grep -i -E 'Duplicate class|FAILURE:|Compilation error|Cannot fit' build_output.txt | head -5 | tr '\n' ' ')"
+            echo "::error::LAST LINES: $(tail -20 build_output.txt | tr '\n' ' ')"
             tail -50 build_output.txt
             exit 1
           fi
