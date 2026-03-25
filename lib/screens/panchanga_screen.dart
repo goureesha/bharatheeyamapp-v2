@@ -92,6 +92,130 @@ class _PanchangaScreenState extends State<PanchangaScreen> {
     }
   }
 
+  // ─── Parse sunrise/sunset string "HH:MM" to minutes from midnight ───
+  double _parseTimeToMinutes(String timeStr) {
+    try {
+      final parts = timeStr.split(':');
+      if (parts.length >= 2) {
+        return int.parse(parts[0]) * 60.0 + int.parse(parts[1]);
+      }
+    } catch (_) {}
+    return 0;
+  }
+
+  String _minutesToTimeStr(double mins) {
+    final totalMins = mins.round();
+    final h = (totalMins ~/ 60) % 24;
+    final m = totalMins % 60;
+    return '${h.toString().padLeft(2, '0')}:${m.toString().padLeft(2, '0')}';
+  }
+
+  // ─── Day of week: 0=Sun, 1=Mon, ..., 6=Sat ───
+  int get _weekday => _selectedDate.weekday % 7; // DateTime: Mon=1..Sun=7 -> Sun=0..Sat=6
+
+  // ─── Rahu Kala, Yamaganda, Gulika Kala ───
+  // Each day has 8 muhurtas in daytime. Rahu Kala falls on specific muhurta per weekday.
+  // Order: Sun=8,Mon=2,Tue=7,Wed=5,Thu=6,Fri=4,Sat=3 (muhurta # starting from 1)
+  static const _rahuKalaMuhurta   = [8, 2, 7, 5, 6, 4, 3]; // Sun..Sat
+  static const _yamagandaMuhurta  = [5, 4, 3, 6, 5, 1, 2]; // Sun..Sat (traditional)
+  static const _gulikaKalaMuhurta = [7, 6, 5, 4, 3, 2, 1]; // Sun..Sat (traditional)
+
+  Map<String, String> _calcKalaTime(List<int> muhurtaList) {
+    if (_panchang == null) return {'start': '--', 'end': '--'};
+    final sr = _parseTimeToMinutes(_panchang!.sunrise);
+    final ss = _parseTimeToMinutes(_panchang!.sunset);
+    final dayDuration = ss - sr;
+    final muhurtaDuration = dayDuration / 8.0;
+    final muhurtaIndex = muhurtaList[_weekday] - 1; // 0-based
+    final start = sr + muhurtaIndex * muhurtaDuration;
+    final end = start + muhurtaDuration;
+    return {'start': _minutesToTimeStr(start), 'end': _minutesToTimeStr(end)};
+  }
+
+  // ─── Chougadiya (Gauri Panchanga) ───
+  // 8 day periods + 8 night periods. Each named after: Udveg, Char, Laabh, Amrut, Kaala, Shubh, Rog
+  // Day sequence by weekday, Night sequence follows after
+  static const _chougNames = ['ಉದ್ವೇಗ', 'ಚಲ', 'ಲಾಭ', 'ಅಮೃತ', 'ಕಾಲ', 'ಶುಭ', 'ರೋಗ'];
+  static const _chougNature = ['⚠️', '⬆️', '✅', '🏆', '❌', '✅', '⚠️'];
+  // Starting Chougadiya for each weekday (day): Sun=Udveg(0), Mon=Amrut(3), Tue=Rog(6), Wed=Laabh(2), Thu=Shubh(5), Fri=Chal(1), Sat=Kaal(4)
+  static const _chougDayStart   = [0, 3, 6, 2, 5, 1, 4]; // Sun..Sat
+  static const _chougNightStart = [5, 1, 4, 0, 3, 6, 2]; // Sun..Sat
+
+  List<Map<String, String>> _calcChougadiya(bool isDay) {
+    if (_panchang == null) return [];
+    final sr = _parseTimeToMinutes(_panchang!.sunrise);
+    final ss = _parseTimeToMinutes(_panchang!.sunset);
+    final double periodStart;
+    final double periodEnd;
+    final int startIdx;
+
+    if (isDay) {
+      periodStart = sr;
+      periodEnd = ss;
+      startIdx = _chougDayStart[_weekday];
+    } else {
+      periodStart = ss;
+      periodEnd = sr + 24 * 60; // next sunrise
+      startIdx = _chougNightStart[_weekday];
+    }
+
+    final duration = (periodEnd - periodStart) / 8.0;
+    final List<Map<String, String>> result = [];
+    for (int i = 0; i < 8; i++) {
+      final idx = (startIdx + i) % 7;
+      final s = periodStart + i * duration;
+      final e = s + duration;
+      result.add({
+        'name': _chougNames[idx],
+        'nature': _chougNature[idx],
+        'start': _minutesToTimeStr(s % (24 * 60)),
+        'end': _minutesToTimeStr(e % (24 * 60)),
+      });
+    }
+    return result;
+  }
+
+  // ─── Hora (Planetary Hours) ───
+  // Planet order for Hora: Sun, Venus, Mercury, Moon, Saturn, Jupiter, Mars
+  // The first Hora of a day belongs to the weekday ruler
+  static const _horaOrder = ['ಸೂರ್ಯ', 'ಶುಕ್ರ', 'ಬುಧ', 'ಚಂದ್ರ', 'ಶನಿ', 'ಗುರು', 'ಮಂಗಳ'];
+  static const _horaIcons = ['☀️', '♀️', '☿️', '🌙', '🪐', '♃', '♂️'];
+  // Weekday ruler index in _horaOrder: Sun=0, Mon=3, Tue=6, Wed=2, Thu=5, Fri=1, Sat=4
+  static const _weekdayHoraStart = [0, 3, 6, 2, 5, 1, 4]; // Sun..Sat
+
+  List<Map<String, String>> _calcHora(bool isDay) {
+    if (_panchang == null) return [];
+    final sr = _parseTimeToMinutes(_panchang!.sunrise);
+    final ss = _parseTimeToMinutes(_panchang!.sunset);
+    final double periodStart;
+    final double periodEnd;
+
+    if (isDay) {
+      periodStart = sr;
+      periodEnd = ss;
+    } else {
+      periodStart = ss;
+      periodEnd = sr + 24 * 60;
+    }
+
+    final duration = (periodEnd - periodStart) / 12.0;
+    // Day starts at weekday ruler, night continues from where day left off
+    final startOffset = _weekdayHoraStart[_weekday] + (isDay ? 0 : 12);
+    final List<Map<String, String>> result = [];
+    for (int i = 0; i < 12; i++) {
+      final idx = (startOffset + i) % 7;
+      final s = periodStart + i * duration;
+      final e = s + duration;
+      result.add({
+        'planet': _horaOrder[idx],
+        'icon': _horaIcons[idx],
+        'start': _minutesToTimeStr(s % (24 * 60)),
+        'end': _minutesToTimeStr(e % (24 * 60)),
+      });
+    }
+    return result;
+  }
+
   @override
   Widget build(BuildContext context) {
     final dateStr = '${_selectedDate.day.toString().padLeft(2,'0')}-${_selectedDate.month.toString().padLeft(2,'0')}-${_selectedDate.year}';
@@ -253,7 +377,8 @@ class _PanchangaScreenState extends State<PanchangaScreen> {
                       padding: const EdgeInsets.all(32),
                       child: CircularProgressIndicator(color: kPurple2),
                     )
-                  else if (_panchang != null)
+                  else if (_panchang != null) ...[
+                    // ═══  Main Panchanga Table ═══
                     AppCard(
                       padding: EdgeInsets.zero,
                       child: Column(children: [
@@ -280,6 +405,22 @@ class _PanchangaScreenState extends State<PanchangaScreen> {
                         _tableRow(['ಅಮೃತ ಪ್ರಘಟಿ', _panchang!.amrutaPraghati]),
                       ]),
                     ),
+
+                    // ═══ Rahu Kala / Yamaganda / Gulika ═══
+                    _buildKalaCard(),
+
+                    // ═══ Chougadiya (Day) ═══
+                    _buildChougadiyaCard(true),
+
+                    // ═══ Chougadiya (Night) ═══
+                    _buildChougadiyaCard(false),
+
+                    // ═══ Hora (Day) ═══
+                    _buildHoraCard(true),
+
+                    // ═══ Hora (Night) ═══
+                    _buildHoraCard(false),
+                  ],
                   const SizedBox(height: 24),
                 ],
               )),
@@ -288,6 +429,121 @@ class _PanchangaScreenState extends State<PanchangaScreen> {
 
         ],
       ),
+    );
+  }
+
+  // ─── Rahu Kala / Yamaganda / Gulika Card ───
+  Widget _buildKalaCard() {
+    final rahu = _calcKalaTime(_rahuKalaMuhurta);
+    final yama = _calcKalaTime(_yamagandaMuhurta);
+    final gulika = _calcKalaTime(_gulikaKalaMuhurta);
+    return AppCard(
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Row(children: [
+          Icon(Icons.warning_amber_rounded, color: Colors.red, size: 22),
+          const SizedBox(width: 8),
+          Text('ಅಶುಭ ಕಾಲ / Inauspicious Periods', style: TextStyle(
+            fontWeight: FontWeight.w900, fontSize: 14, color: Colors.red)),
+        ]),
+        const SizedBox(height: 12),
+        _kalaRow('ರಾಹು ಕಾಲ', rahu['start']!, rahu['end']!, Colors.red),
+        _kalaRow('ಯಮಗಂಡ ಕಾಲ', yama['start']!, yama['end']!, Colors.orange),
+        _kalaRow('ಗುಳಿಕ ಕಾಲ', gulika['start']!, gulika['end']!, Colors.deepOrange),
+      ]),
+    );
+  }
+
+  Widget _kalaRow(String name, String start, String end, Color color) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 6),
+      child: Row(children: [
+        Container(width: 4, height: 28, decoration: BoxDecoration(color: color, borderRadius: BorderRadius.circular(2))),
+        const SizedBox(width: 10),
+        Expanded(child: Text(name, style: TextStyle(fontWeight: FontWeight.w700, color: kText, fontSize: 13))),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+          decoration: BoxDecoration(
+            color: color.withOpacity(0.1),
+            borderRadius: BorderRadius.circular(6),
+            border: Border.all(color: color.withOpacity(0.3)),
+          ),
+          child: Text('$start - $end', style: TextStyle(fontWeight: FontWeight.w700, color: color, fontSize: 13)),
+        ),
+      ]),
+    );
+  }
+
+  // ─── Chougadiya Card ───
+  Widget _buildChougadiyaCard(bool isDay) {
+    final items = _calcChougadiya(isDay);
+    return AppCard(
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Row(children: [
+          Icon(isDay ? Icons.wb_sunny : Icons.nightlight_round,
+            color: isDay ? kOrange : kPurple2, size: 22),
+          const SizedBox(width: 8),
+          Text(isDay ? 'ಹಗಲಿನ ಚೌಘಡಿಯಾ / Day Chougadiya' : 'ರಾತ್ರಿ ಚೌಘಡಿಯಾ / Night Chougadiya',
+            style: TextStyle(fontWeight: FontWeight.w900, fontSize: 14, color: isDay ? kOrange : kPurple2)),
+        ]),
+        const SizedBox(height: 10),
+        ...items.map((item) => Container(
+          margin: const EdgeInsets.symmetric(vertical: 3),
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+          decoration: BoxDecoration(
+            color: _chougColor(item['nature']!).withOpacity(0.06),
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(color: _chougColor(item['nature']!).withOpacity(0.2)),
+          ),
+          child: Row(children: [
+            Text(item['nature']!, style: TextStyle(fontSize: 16)),
+            const SizedBox(width: 8),
+            Expanded(child: Text(item['name']!, style: TextStyle(fontWeight: FontWeight.w700, color: kText, fontSize: 13))),
+            Text('${item['start']} - ${item['end']}', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: kMuted)),
+          ]),
+        )),
+      ]),
+    );
+  }
+
+  Color _chougColor(String nature) {
+    switch (nature) {
+      case '🏆': return Colors.green;
+      case '✅': return Colors.teal;
+      case '⬆️': return Colors.blue;
+      case '⚠️': return kOrange;
+      case '❌': return Colors.red;
+      default: return kMuted;
+    }
+  }
+
+  // ─── Hora Card ───
+  Widget _buildHoraCard(bool isDay) {
+    final items = _calcHora(isDay);
+    return AppCard(
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Row(children: [
+          Icon(isDay ? Icons.access_time : Icons.access_time_filled,
+            color: isDay ? kTeal : kPurple1, size: 22),
+          const SizedBox(width: 8),
+          Text(isDay ? 'ಹಗಲಿನ ಹೋರಾ / Day Hora' : 'ರಾತ್ರಿ ಹೋರಾ / Night Hora',
+            style: TextStyle(fontWeight: FontWeight.w900, fontSize: 14, color: isDay ? kTeal : kPurple1)),
+        ]),
+        const SizedBox(height: 10),
+        ...items.map((item) => Container(
+          margin: const EdgeInsets.symmetric(vertical: 2),
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+          decoration: BoxDecoration(
+            color: kBorder.withOpacity(0.12),
+            borderRadius: BorderRadius.circular(6),
+          ),
+          child: Row(children: [
+            Text(item['icon']!, style: TextStyle(fontSize: 16)),
+            const SizedBox(width: 8),
+            Expanded(child: Text(item['planet']!, style: TextStyle(fontWeight: FontWeight.w700, color: kText, fontSize: 13))),
+            Text('${item['start']} - ${item['end']}', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: kMuted)),
+          ]),
+        )),
+      ]),
     );
   }
 
