@@ -19,7 +19,6 @@ import '../services/google_auth_service.dart';
 import '../services/sheets_service.dart';
 import '../services/docs_service.dart';
 import '../services/calendar_service.dart';
-import '../services/pdf_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 
@@ -482,22 +481,6 @@ class _DashboardScreenState extends State<DashboardScreen>
                       icon: Icon(Icons.person_add, color: kPurple2),
                       tooltip: 'ವ್ಯಕ್ತಿ ಸೇರಿಸಿ',
                       onPressed: _showAddPersonDialog,
-                    ),
-                    IconButton(
-                      icon: Icon(Icons.picture_as_pdf, color: Colors.red),
-                      tooltip: 'PDF ರಚಿಸಿ',
-                      onPressed: () => PdfService.generateAndPrint(
-                        name: widget.name,
-                        place: widget.place,
-                        dob: widget.dob,
-                        hour: widget.hour,
-                        minute: widget.minute,
-                        ampm: widget.ampm,
-                        lat: widget.lat,
-                        lon: widget.lon,
-                        result: widget.result,
-                        notes: _notes,
-                      ),
                     ),
                     IconButton(
                       icon: Icon(Icons.share, color: kTeal),
