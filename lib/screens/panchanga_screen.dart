@@ -122,8 +122,31 @@ class _PanchangaScreenState extends State<PanchangaScreen> {
     return '${h.toString().padLeft(2, '0')}:${m.toString().padLeft(2, '0')}';
   }
 
-  // ─── Day of week: 0=Sun, 1=Mon, ..., 6=Sat ───
-  int get _weekday => _selectedDate.weekday % 7; // DateTime: Mon=1..Sun=7 -> Sun=0..Sat=6
+  // ─── Day of week from Panchanga Vara: 0=Sun, 1=Mon, ..., 6=Sat ───
+  // Vedic Vara changes at sunrise, not midnight — so use the computed Vara name
+  static const _varaMap = {
+    'ಭಾನುವಾರ': 0, 'ಸೋಮವಾರ': 1, 'ಮಂಗಳವಾರ': 2, 'ಬುಧವಾರ': 3,
+    'ಗುರುವಾರ': 4, 'ಶುಕ್ರವಾರ': 5, 'ಶನಿವಾರ': 6,
+    // Hindi
+    'रविवार': 0, 'सोमवार': 1, 'मंगलवार': 2, 'बुधवार': 3,
+    'गुरुवार': 4, 'शुक्रवार': 5, 'शनिवार': 6,
+    // English fallback
+    'Sunday': 0, 'Monday': 1, 'Tuesday': 2, 'Wednesday': 3,
+    'Thursday': 4, 'Friday': 5, 'Saturday': 6,
+  };
+  int get _weekday {
+    if (_panchang != null) {
+      final vara = _panchang!.vara.trim();
+      // Try exact match first
+      if (_varaMap.containsKey(vara)) return _varaMap[vara]!;
+      // Try partial match (vara name might have extra text)
+      for (final entry in _varaMap.entries) {
+        if (vara.contains(entry.key) || entry.key.contains(vara)) return entry.value;
+      }
+    }
+    // Fallback to calendar weekday
+    return _selectedDate.weekday % 7;
+  }
 
   // ─── Rahu Kala, Yamaganda, Gulika Kala ───
   // Each day has 8 muhurtas in daytime. Rahu Kala falls on specific muhurta per weekday.
