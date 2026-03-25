@@ -170,15 +170,28 @@ class _DashboardScreenState extends State<DashboardScreen>
                   try {
                     final dateParts = p.date.split('-');
                     final dob = DateTime(int.parse(dateParts[0]), int.parse(dateParts[1]), int.parse(dateParts[2]));
-                    final result = await Calculator.compute(
-                      dob: dob,
-                      hour: p.hour,
-                      minute: p.minute,
-                      ampm: p.ampm,
-                      lat: p.lat,
-                      lon: p.lon,
-                      tzOffset: p.tzOffset,
+                    // Convert hour/minute/ampm to hour24
+                    int h24 = p.hour;
+                    if (p.ampm == 'PM' && h24 != 12) h24 += 12;
+                    if (p.ampm == 'AM' && h24 == 12) h24 = 0;
+                    final localHour = h24 + p.minute / 60.0;
+                    
+                    final result = await AstroCalculator.calculate(
+                      year: dob.year, month: dob.month, day: dob.day,
+                      hourUtcOffset: p.tzOffset,
+                      hour24: localHour,
+                      lat: p.lat, lon: p.lon,
+                      ayanamsaMode: 'lahiri',
+                      trueNode: true,
                     );
+                    if (result == null) {
+                      if (mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text('❌ ${p.name} ಕುಂಡಲಿ ಲೆಕ್ಕ ವಿಫಲ'), backgroundColor: Colors.red),
+                        );
+                      }
+                      return;
+                    }
                     if (mounted) {
                       setState(() {
                         _extraPersons.add(_PersonEntry(
