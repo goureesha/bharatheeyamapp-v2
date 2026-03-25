@@ -273,7 +273,6 @@ class _PanchangaScreenState extends State<PanchangaScreen> {
                         _tableRow(['ಸೂರ್ಯಾಸ್ತ', _panchang!.sunset]),
                         _tableRow(['ಹಗಲಿನ ಪ್ರಮಾಣ', _panchang!.divamana]),
                         _tableRow(['ರಾತ್ರಿಯ ಪ್ರಮಾಣ', _panchang!.ratrimana]),
-                        _tableRow(['ಉದಯಾದಿ ಘಟಿ', _panchang!.udayadiGhati]),
                         _tableRow(['ಗತ ಘಟಿ', _panchang!.gataGhati]),
                         _tableRow(['ಪರಮ ಘಟಿ', _panchang!.paramaGhati]),
                         _tableRow(['ಶೇಷ ಘಟಿ', _panchang!.shesha]),

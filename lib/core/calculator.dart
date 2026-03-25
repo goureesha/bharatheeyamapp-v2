@@ -702,8 +702,24 @@ class AstroCalculator {
       final amrutaG = nIdx < amrutaGhatis.length ? amrutaGhatis[nIdx] : 0;
 
       // === End Times, Divamana, Ratrimana, Rutu ===
-      // Rutu
-      final knRutu = ['ವಸಂತ ಋತು', 'ವಸಂತ ಋತು', 'ಗ್ರೀಷ್ಮ ಋತು', 'ಗ್ರೀಷ್ಮ ಋತು', 'ವರ್ಷಾ ಋತು', 'ವರ್ಷಾ ಋತು', 'ಶರದೃತು', 'ಶರದೃತು', 'ಹೇಮಂತ ಋತು', 'ಹೇಮಂತ ಋತು', 'ಶಿಶಿರ ಋತು', 'ಶಿಶಿರ ಋತು'];
+      // Rutu — Vedic seasons based on Sun's rashi (solar month pairs)
+      // Mesha(0)=Vasanta, Vrishabha(1)=Grishma, Mithuna(2)=Grishma, Kataka(3)=Varsha,
+      // Simha(4)=Varsha, Kanya(5)=Sharad, Tula(6)=Sharad, Vrischika(7)=Hemanta,
+      // Dhanu(8)=Hemanta, Makara(9)=Shishira, Kumbha(10)=Shishira, Meena(11)=Vasanta
+      final knRutu = [
+        'ವಸಂತ ಋತು',   // 0  Mesha
+        'ಗ್ರೀಷ್ಮ ಋತು',  // 1  Vrishabha
+        'ಗ್ರೀಷ್ಮ ಋತು',  // 2  Mithuna
+        'ವರ್ಷಾ ಋತು',   // 3  Kataka
+        'ವರ್ಷಾ ಋತು',   // 4  Simha
+        'ಶರದೃತು',      // 5  Kanya
+        'ಶರದೃತು',      // 6  Tula
+        'ಹೇಮಂತ ಋತು',  // 7  Vrischika
+        'ಹೇಮಂತ ಋತು',  // 8  Dhanu
+        'ಶಿಶಿರ ಋತು',   // 9  Makara
+        'ಶಿಶಿರ ಋತು',   // 10 Kumbha
+        'ವಸಂತ ಋತು',   // 11 Meena
+      ];
       final rutuStr = knRutu[sunRashiIdx];
 
       // Divamana & Ratrimana
