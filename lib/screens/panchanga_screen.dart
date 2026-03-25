@@ -92,12 +92,24 @@ class _PanchangaScreenState extends State<PanchangaScreen> {
     }
   }
 
-  // ─── Parse sunrise/sunset string "HH:MM" to minutes from midnight ───
+  // ─── Parse sunrise/sunset string "HH:MM AM/PM" to minutes from midnight ───
   double _parseTimeToMinutes(String timeStr) {
     try {
-      final parts = timeStr.split(':');
+      final upper = timeStr.toUpperCase().trim();
+      final isPM = upper.contains('PM');
+      final isAM = upper.contains('AM');
+      // Remove AM/PM suffix
+      final cleaned = upper.replaceAll('AM', '').replaceAll('PM', '').trim();
+      final parts = cleaned.split(':');
       if (parts.length >= 2) {
-        return int.parse(parts[0]) * 60.0 + int.parse(parts[1]);
+        int h = int.parse(parts[0].trim());
+        final m = int.parse(parts[1].trim());
+        if (isPM || isAM) {
+          // 12-hour format
+          if (isPM && h != 12) h += 12;
+          if (isAM && h == 12) h = 0;
+        }
+        return h * 60.0 + m;
       }
     } catch (_) {}
     return 0;
