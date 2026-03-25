@@ -59,6 +59,32 @@ class DashboardScreen extends StatefulWidget {
   State<DashboardScreen> createState() => _DashboardScreenState();
 }
 
+class _PersonEntry {
+  final String name;
+  final KundaliResult result;
+  final DateTime dob;
+  final int hour;
+  final int minute;
+  final String ampm;
+  final double lat;
+  final double lon;
+  final String place;
+  String notes;
+
+  _PersonEntry({
+    required this.name,
+    required this.result,
+    required this.dob,
+    required this.hour,
+    required this.minute,
+    required this.ampm,
+    required this.lat,
+    required this.lon,
+    required this.place,
+    this.notes = '',
+  });
+}
+
 class _DashboardScreenState extends State<DashboardScreen>
     with SingleTickerProviderStateMixin {
   late TabController _tabCtrl;
@@ -69,6 +95,8 @@ class _DashboardScreenState extends State<DashboardScreen>
   int? _dinaNakshatraIdx;
   String? _bhavaPlanet; // planet selected for bhava recalculation
 
+  // Multi-person support
+  final List<_PersonEntry> _extraPersons = [];
 
   bool _syncing = false;
 
@@ -94,6 +122,96 @@ class _DashboardScreenState extends State<DashboardScreen>
     _loadJanmaNakshatra();
 
 
+  }
+
+  /// Show dialog to add a person from saved profiles
+  void _showAddPersonDialog() async {
+    final profiles = await StorageService.loadAll();
+    if (!mounted) return;
+
+    // Filter out the primary person
+    final otherProfiles = profiles.values
+        .where((p) => p.name != widget.name)
+        .where((p) => !_extraPersons.any((ep) => ep.name == p.name))
+        .toList();
+
+    if (otherProfiles.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('ಬೇರೆ ಪ್ರೊಫೈಲ್‌ಗಳಿಲ್ಲ — ಮೊದಲು ಹೊಸ ಜಾತಕ ಉಳಿಸಿ')),
+      );
+      return;
+    }
+
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: kBg,
+        title: Text('ವ್ಯಕ್ತಿ ಸೇರಿಸಿ', style: TextStyle(color: kText, fontWeight: FontWeight.w900)),
+        content: SizedBox(
+          width: double.maxFinite,
+          child: ListView.builder(
+            shrinkWrap: true,
+            itemCount: otherProfiles.length,
+            itemBuilder: (context, i) {
+              final p = otherProfiles[i];
+              return ListTile(
+                leading: CircleAvatar(
+                  backgroundColor: kPurple2.withOpacity(0.15),
+                  child: Text(p.name.isNotEmpty ? p.name[0] : '?', style: TextStyle(color: kPurple2, fontWeight: FontWeight.w900)),
+                ),
+                title: Text(p.name, style: TextStyle(color: kText, fontWeight: FontWeight.w700)),
+                subtitle: Text('${p.date} | ${p.place}', style: TextStyle(color: kMuted, fontSize: 12)),
+                onTap: () async {
+                  Navigator.pop(ctx);
+                  // Compute kundali for this person
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('⏳ ${p.name} ಕುಂಡಲಿ ಲೆಕ್ಕಿಸಲಾಗುತ್ತಿದೆ...')),
+                  );
+                  try {
+                    final dateParts = p.date.split('-');
+                    final dob = DateTime(int.parse(dateParts[0]), int.parse(dateParts[1]), int.parse(dateParts[2]));
+                    final result = await Calculator.compute(
+                      dob: dob,
+                      hour: p.hour,
+                      minute: p.minute,
+                      ampm: p.ampm,
+                      lat: p.lat,
+                      lon: p.lon,
+                      tzOffset: p.tzOffset,
+                    );
+                    if (mounted) {
+                      setState(() {
+                        _extraPersons.add(_PersonEntry(
+                          name: p.name,
+                          result: result,
+                          dob: dob,
+                          hour: p.hour,
+                          minute: p.minute,
+                          ampm: p.ampm,
+                          lat: p.lat,
+                          lon: p.lon,
+                          place: p.place,
+                          notes: p.notes,
+                        ));
+                      });
+                    }
+                  } catch (e) {
+                    if (mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text('❌ ಕುಂಡಲಿ ಲೆಕ್ಕ ವಿಫಲ: $e'), backgroundColor: Colors.red),
+                      );
+                    }
+                  }
+                },
+              );
+            },
+          ),
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx), child: Text('ಮುಚ್ಚಿ', style: TextStyle(color: kMuted))),
+        ],
+      ),
+    );
   }
 
   Future<void> _loadJanmaNakshatra() async {
@@ -223,6 +341,11 @@ class _DashboardScreenState extends State<DashboardScreen>
                   ),
                   Row(children: [
                     IconButton(
+                      icon: Icon(Icons.person_add, color: kPurple2),
+                      tooltip: 'ವ್ಯಕ್ತಿ ಸೇರಿಸಿ',
+                      onPressed: _showAddPersonDialog,
+                    ),
+                    IconButton(
                       icon: Icon(Icons.share, color: kTeal),
                       tooltip: 'Share CSV',
                       onPressed: _exportAndShareCSV,
@@ -292,7 +415,7 @@ class _DashboardScreenState extends State<DashboardScreen>
                   _buildPanchangTab(),
                   _buildBhavaTab(),
                   _buildShadbalaTab(),
-                  AshtakaVargaWidget(result: widget.result),
+                  _buildAshtakaTab(),
                   _buildNotesTab(),
                 ],
               ),
@@ -308,7 +431,6 @@ class _DashboardScreenState extends State<DashboardScreen>
   // TAB 1: KUNDALI (All vargas stacked vertically)
   // ─────────────────────────────────────────────
   Widget _buildKundaliTab() {
-    // Define all charts in the specific order requested
     final charts = [
       {'label': 'ರಾಶಿ ಕುಂಡಲಿ', 'varga': 1, 'isBhava': false},
       {'label': 'ನವಾಂಶ ಕುಂಡಲಿ', 'varga': 9, 'isBhava': false},
@@ -319,66 +441,102 @@ class _DashboardScreenState extends State<DashboardScreen>
       {'label': 'ತ್ರಿಂಶಾಂಶ ಕುಂಡಲಿ', 'varga': 30, 'isBhava': false},
     ];
 
-    final screenWidth = MediaQuery.of(context).size.width;
-    final isLandscape = MediaQuery.of(context).orientation == Orientation.landscape;
-    final useGrid = isLandscape && screenWidth > 600;
+    // All persons: primary + extras
+    final allPersons = <Map<String, dynamic>>[
+      {'name': widget.name, 'result': widget.result, 'isPrimary': true},
+      ..._extraPersons.map((p) => {'name': p.name, 'result': p.result, 'isPrimary': false}),
+    ];
+
+    final chartSize = MediaQuery.of(context).size.width * 0.85;
 
     return SingleChildScrollView(
       child: Column(
         children: [
-          const SizedBox(height: 12),
-          Wrap(
-            spacing: 16,
-            runSpacing: 16,
-            alignment: WrapAlignment.center,
-            children: charts.map((chart) {
-              final isBhavaChart = chart['isBhava'] as bool;
-              final bhavaLabel = isBhavaChart && _bhavaPlanet != null
-                  ? '${chart['label']} (${_bhavaPlanet} ಆಧಾರ)'
-                  : chart['label'] as String;
-              
-              // In grid mode, restrict width to roughly half screen. Otherwise full width.
-              final chartWidth = useGrid ? (screenWidth / 2) - 32 : screenWidth;
-
-              return SizedBox(
-                width: chartWidth,
-                child: Padding(
-                  padding: EdgeInsets.symmetric(horizontal: useGrid ? 0 : 16, vertical: 8),
-                  child: Column(
+          const SizedBox(height: 8),
+          // Each person's charts in a horizontal scrollable row
+          ...allPersons.map((person) {
+            final personResult = person['result'] as KundaliResult;
+            final personName = person['name'] as String;
+            final isPrimary = person['isPrimary'] as bool;
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Person header
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                  child: Row(
                     children: [
-                      Text(
-                        bhavaLabel,
-                        style: TextStyle(
-                          fontSize: 17, fontWeight: FontWeight.w800,
-                          color: kPurple2),
+                      Icon(Icons.person, size: 18, color: isPrimary ? kPurple2 : kTeal),
+                      const SizedBox(width: 6),
+                      Expanded(
+                        child: Text(personName, style: TextStyle(fontSize: 15, fontWeight: FontWeight.w900, color: isPrimary ? kPurple2 : kTeal)),
                       ),
-                      if (isBhavaChart && _bhavaPlanet != null)
-                        TextButton.icon(
-                          onPressed: () => setState(() => _bhavaPlanet = null),
-                          icon: Icon(Icons.refresh, size: 16, color: kMuted),
-                          label: Text('ಲಗ್ನಕ್ಕೆ ಮರಳಿ', style: TextStyle(fontSize: 12, color: kMuted)),
+                      if (!isPrimary)
+                        IconButton(
+                          icon: Icon(Icons.close, size: 18, color: Colors.redAccent),
+                          onPressed: () => setState(() => _extraPersons.removeWhere((p) => p.name == personName)),
                         ),
-                      const SizedBox(height: 6),
-                      KundaliChart(
-                        result: widget.result,
-                        varga: chart['varga'] as int,
-                        isBhava: isBhavaChart,
-                        showSphutas: false,
-                        centerLabel: bhavaLabel,
-                        onPlanetTap: _showPlanetDetail,
-                        selectedPlanet: isBhavaChart ? _bhavaPlanet : null,
-                        onPlanetLongPress: isBhavaChart ? (pName) {
-                          setState(() => _bhavaPlanet = _bhavaPlanet == pName ? null : pName);
-                        } : null,
-                        bhavaFromPlanet: isBhavaChart ? _bhavaPlanet : null,
-                      ),
-                      const SizedBox(height: 8),
-                      if (!useGrid) Divider(thickness: 1, color: kBorder),
                     ],
                   ),
                 ),
-              );
-            }).toList(),
+                // Horizontal scrollable charts
+                SizedBox(
+                  height: chartSize + 30,
+                  child: ListView.builder(
+                    scrollDirection: Axis.horizontal,
+                    padding: const EdgeInsets.symmetric(horizontal: 8),
+                    itemCount: charts.length,
+                    itemBuilder: (context, i) {
+                      final chart = charts[i];
+                      final isBhavaChart = chart['isBhava'] as bool;
+                      final label = chart['label'] as String;
+                      return SizedBox(
+                        width: chartSize,
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 4),
+                          child: Column(
+                            children: [
+                              Text(label, style: TextStyle(fontSize: 15, fontWeight: FontWeight.w800, color: kPurple2)),
+                              const SizedBox(height: 4),
+                              Expanded(
+                                child: KundaliChart(
+                                  result: personResult,
+                                  varga: chart['varga'] as int,
+                                  isBhava: isBhavaChart,
+                                  showSphutas: false,
+                                  centerLabel: label,
+                                  onPlanetTap: isPrimary ? _showPlanetDetail : null,
+                                  selectedPlanet: (isPrimary && isBhavaChart) ? _bhavaPlanet : null,
+                                  onPlanetLongPress: (isPrimary && isBhavaChart) ? (pName) {
+                                    setState(() => _bhavaPlanet = _bhavaPlanet == pName ? null : pName);
+                                  } : null,
+                                  bhavaFromPlanet: (isPrimary && isBhavaChart) ? _bhavaPlanet : null,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                ),
+                Divider(thickness: 1, color: kBorder),
+              ],
+            );
+          }),
+          // Add person button
+          Padding(
+            padding: const EdgeInsets.all(16),
+            child: OutlinedButton.icon(
+              onPressed: _showAddPersonDialog,
+              icon: Icon(Icons.person_add, color: kPurple2),
+              label: Text('ವ್ಯಕ್ತಿ ಸೇರಿಸಿ', style: TextStyle(color: kPurple2, fontWeight: FontWeight.w800)),
+              style: OutlinedButton.styleFrom(
+                side: BorderSide(color: kPurple2),
+                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              ),
+            ),
           ),
           const SizedBox(height: 24),
         ],
@@ -401,77 +559,50 @@ class _DashboardScreenState extends State<DashboardScreen>
   }
 
   // ─────────────────────────────────────────────
-  // TAB 2: COMBINED SPHUTA (Graha + Upagraha)
+  // TAB 2: UPAGRAHA SPHUTA (multi-person)
   // ─────────────────────────────────────────────
   Widget _buildSphutas() {
-    final screenWidth = MediaQuery.of(context).size.width;
-    final isLandscape = MediaQuery.of(context).orientation == Orientation.landscape;
-    final useGrid = isLandscape && screenWidth > 600;
-    final tableWidth = useGrid ? (screenWidth / 2) - 24 : screenWidth - 32;
+    final allPersons = <Map<String, dynamic>>[
+      {'name': widget.name, 'result': widget.result},
+      ..._extraPersons.map((p) => {'name': p.name, 'result': p.result}),
+    ];
 
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
-      child: Wrap(
-        spacing: 16,
-        runSpacing: 24,
-        alignment: WrapAlignment.center,
-        children: [
-          // Graha Sphuta Table
-          SizedBox(
-            width: tableWidth,
-            child: Column(
-              children: [
-                Text('ಗ್ರಹ ಸ್ಫುಟ', style: TextStyle(
-                  fontWeight: FontWeight.w800, fontSize: 15, color: kPurple2)),
-                const SizedBox(height: 8),
-                AppCard(
-                  padding: EdgeInsets.zero,
-                  child: Column(
-                    children: [
-                      _tableHeader(['ಗ್ರಹ', 'ರಾಶಿ', 'ಸ್ಫುಟ', 'ನಕ್ಷತ್ರ - ಪಾದ']),
-                      ...planetOrder.map((p) {
-                        final info = widget.result.planets[p];
-                        if (info == null) return const SizedBox.shrink();
-                        final ri = (info.longitude / 30).floor() % 12;
-                        return _tableRow([p, knRashi[ri], formatDeg(info.longitude), '${info.nakshatra} - ${info.pada}'],
-                          bold0: true);
-                      }),
-                    ],
-                  ),
+      child: Column(
+        children: allPersons.map((person) {
+          final personResult = person['result'] as KundaliResult;
+          final personName = person['name'] as String;
+          return Column(
+            children: [
+              if (allPersons.length > 1)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 8),
+                  child: Text(personName, style: TextStyle(fontSize: 15, fontWeight: FontWeight.w900, color: kTeal)),
                 ),
-              ],
-            ),
-          ),
-
-          // Upagraha Sphuta Table
-          SizedBox(
-            width: tableWidth,
-            child: Column(
-              children: [
-                Text('ಉಪಗ್ರಹ ಸ್ಫುಟ', style: TextStyle(
-                  fontWeight: FontWeight.w800, fontSize: 15, color: kPurple2)),
-                const SizedBox(height: 8),
-                AppCard(
-                  padding: EdgeInsets.zero,
-                  child: Column(
-                    children: [
-                      _tableHeader(['ಉಪಗ್ರಹ', 'ರಾಶಿ', 'ಅಂಶ', 'ನಕ್ಷತ್ರ']),
-                      ...sphutas16Order.map((sp) {
-                        final deg = widget.result.advSphutas[sp];
-                        if (deg == null) return const SizedBox.shrink();
-                        final ri = (deg / 30).floor() % 12;
-                        final nakIdx = (deg / 13.333333).floor() % 27;
-                        final pada = ((deg % 13.333333) / 3.333333).floor() + 1;
-                        return _tableRow([sp, knRashi[ri], formatDeg(deg), '${knNak[nakIdx]}-$pada'],
-                          bold0: true);
-                      }),
-                    ],
-                  ),
+              Text('ಉಪಗ್ರಹ ಸ್ಫುಟ', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 15, color: kPurple2)),
+              const SizedBox(height: 8),
+              AppCard(
+                padding: EdgeInsets.zero,
+                child: Column(
+                  children: [
+                    _tableHeader(['ಉಪಗ್ರಹ', 'ರಾಶಿ', 'ಅಂಶ', 'ನಕ್ಷತ್ರ']),
+                    ...sphutas16Order.map((sp) {
+                      final deg = personResult.advSphutas[sp];
+                      if (deg == null) return const SizedBox.shrink();
+                      final ri = (deg / 30).floor() % 12;
+                      final nakIdx = (deg / 13.333333).floor() % 27;
+                      final pada = ((deg % 13.333333) / 3.333333).floor() + 1;
+                      return _tableRow([sp, knRashi[ri], formatDeg(deg), '${knNak[nakIdx]}-$pada'],
+                        bold0: true);
+                    }),
+                  ],
                 ),
-              ],
-            ),
-          ),
-        ],
+              ),
+              const SizedBox(height: 24),
+            ],
+          );
+        }).toList(),
       ),
     );
   }
@@ -551,20 +682,34 @@ class _DashboardScreenState extends State<DashboardScreen>
   // TAB 5: DASHA
   // ─────────────────────────────────────────────
   Widget _buildDashaTab() {
-    final pan = widget.result.panchang;
+    final allPersons = <Map<String, dynamic>>[
+      {'name': widget.name, 'result': widget.result},
+      ..._extraPersons.map((p) => {'name': p.name, 'result': p.result}),
+    ];
     return SingleChildScrollView(
       child: Column(
-        children: [
-          AppCard(
-            child: Text(
-              'ಶಿಷ್ಟ ದಶೆ: ${pan.dashaLord}  ಉಳಿಕೆ: ${pan.dashaBalance}',
-              style: TextStyle(
-                color: kOrange, fontWeight: FontWeight.w900, fontSize: 14),
-            ),
-          ),
-          DashaWidget(dashas: widget.result.dashas),
-          const SizedBox(height: 24),
-        ],
+        children: allPersons.map((person) {
+          final r = person['result'] as KundaliResult;
+          final pName = person['name'] as String;
+          final pan = r.panchang;
+          return Column(
+            children: [
+              if (allPersons.length > 1)
+                Padding(
+                  padding: const EdgeInsets.only(top: 12, bottom: 4),
+                  child: Text(pName, style: TextStyle(fontSize: 15, fontWeight: FontWeight.w900, color: kTeal)),
+                ),
+              AppCard(
+                child: Text(
+                  'ಶಿಷ್ಟ ದಶೆ: ${pan.dashaLord}  ಉಳಿಕೆ: ${pan.dashaBalance}',
+                  style: TextStyle(color: kOrange, fontWeight: FontWeight.w900, fontSize: 14),
+                ),
+              ),
+              DashaWidget(dashas: r.dashas),
+              if (allPersons.length > 1) Divider(thickness: 1, color: kBorder),
+            ],
+          );
+        }).toList(),
       ),
     );
   }
@@ -573,65 +718,66 @@ class _DashboardScreenState extends State<DashboardScreen>
   // TAB 6: PANCHANG
   // ─────────────────────────────────────────────
   Widget _buildPanchangTab() {
-    final pan = widget.result.panchang;
-    final dateStr = '${widget.dob.day.toString().padLeft(2,'0')}-${widget.dob.month.toString().padLeft(2,'0')}-${widget.dob.year}';
-    final timeStr = '${widget.hour}:${widget.minute.toString().padLeft(2,'0')} ${widget.ampm}';
-
-    final screenWidth = MediaQuery.of(context).size.width;
-    final isLandscape = MediaQuery.of(context).orientation == Orientation.landscape;
-    final useGrid = isLandscape && screenWidth > 600;
-    final startWidth = useGrid ? (screenWidth * 0.4) - 24 : screenWidth - 32;
-    final dataWidth = useGrid ? (screenWidth * 0.6) - 24 : screenWidth - 32;
+    final allPersons = <Map<String, dynamic>>[
+      {'name': widget.name, 'result': widget.result, 'dob': widget.dob, 'hour': widget.hour, 'minute': widget.minute, 'ampm': widget.ampm, 'place': widget.place},
+      ..._extraPersons.map((p) => {'name': p.name, 'result': p.result, 'dob': p.dob, 'hour': p.hour, 'minute': p.minute, 'ampm': p.ampm, 'place': p.place}),
+    ];
 
     return SingleChildScrollView(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      child: Wrap(
-        spacing: 16,
-        runSpacing: 16,
-        alignment: WrapAlignment.start,
-        crossAxisAlignment: WrapCrossAlignment.start,
-        children: [
-          // Date & Time info
-          SizedBox(
-            width: startWidth,
-            child: AppCard(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              if (widget.name.isNotEmpty) _kv('ಹೆಸರು', widget.name),
-              _kv('ಸ್ಥಳ', widget.place),
-              _kv('ದಿನಾಂಕ', dateStr),
-              _kv('ಸಮಯ', timeStr),
-            ])),
-          ),
+      child: Column(
+        children: allPersons.map((person) {
+          final r = person['result'] as KundaliResult;
+          final pan = r.panchang;
+          final pName = person['name'] as String;
+          final dob = person['dob'] as DateTime;
+          final dateStr = '${dob.day.toString().padLeft(2,"0")}-${dob.month.toString().padLeft(2,"0")}-${dob.year}';
+          final timeStr = '${person["hour"]}:${(person["minute"] as int).toString().padLeft(2,"0")} ${person["ampm"]}';
 
-          // Panchanga data
-          SizedBox(
-            width: dataWidth,
-            child: AppCard(
-              padding: EdgeInsets.zero,
-              child: Column(children: [
-                _tableRow(['ಸಂವತ್ಸರ', pan.samvatsara]),
-                _tableRow(['ವಾರ', pan.vara]),
-                _tableRow(['ತಿಥಿ', pan.tithi]),
-                _tableRow(['ಚಂದ್ರ ನಕ್ಷತ್ರ', pan.nakshatra]),
-                _tableRow(['ಯೋಗ', pan.yoga]),
-                _tableRow(['ಕರಣ', pan.karana]),
-                _tableRow(['ಚಂದ್ರ ರಾಶಿ', pan.chandraRashi]),
-                _tableRow(['ಚಂದ್ರ ಮಾಸ', pan.chandraMasa]),
-                _tableRow(['ಸೂರ್ಯ ನಕ್ಷತ್ರ', '${pan.suryaNakshatra} - ಪಾದ ${pan.suryaPada}']),
-                _tableRow(['ಸೌರ ಮಾಸ', pan.souraMasa]),
-                _tableRow(['ಸೌರ ಮಾಸ ಗತ ದಿನ', pan.souraMasaGataDina]),
-                _tableRow(['ಸೂರ್ಯೋದಯ', pan.sunrise]),
-                _tableRow(['ಸೂರ್ಯಾಸ್ತ', pan.sunset]),
-                _tableRow(['ಉದಯಾದಿ ಘಟಿ', pan.udayadiGhati]),
-                _tableRow(['ಗತ ಘಟಿ', pan.gataGhati]),
-                _tableRow(['ಪರಮ ಘಟಿ', pan.paramaGhati]),
-                _tableRow(['ಶೇಷ ಘಟಿ', pan.shesha]),
-                _tableRow(['ವಿಷ ಪ್ರಘಟಿ', pan.vishaPraghati]),
-                _tableRow(['ಅಮೃತ ಪ್ರಘಟಿ', pan.amrutaPraghati]),
-              ]),
-            ),
-          ),
-          const SizedBox(height: 24),
-        ],
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              if (allPersons.length > 1)
+                Padding(
+                  padding: const EdgeInsets.only(top: 8, bottom: 4),
+                  child: Text(pName, style: TextStyle(fontSize: 15, fontWeight: FontWeight.w900, color: kTeal)),
+                ),
+              AppCard(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                if (pName.isNotEmpty) _kv('ಹೆಸರು', pName),
+                _kv('ಸ್ಥಳ', person['place'] as String),
+                _kv('ದಿನಾಂಕ', dateStr),
+                _kv('ಸಮಯ', timeStr),
+              ])),
+              const SizedBox(height: 8),
+              AppCard(
+                padding: EdgeInsets.zero,
+                child: Column(children: [
+                  _tableRow(['ಸಂವತ್ಸರ', pan.samvatsara]),
+                  _tableRow(['ವಾರ', pan.vara]),
+                  _tableRow(['ತಿಥಿ', pan.tithi]),
+                  _tableRow(['ಚಂದ್ರ ನಕ್ಷತ್ರ', pan.nakshatra]),
+                  _tableRow(['ಯೋಗ', pan.yoga]),
+                  _tableRow(['ಕರಣ', pan.karana]),
+                  _tableRow(['ಚಂದ್ರ ರಾಶಿ', pan.chandraRashi]),
+                  _tableRow(['ಚಂದ್ರ ಮಾಸ', pan.chandraMasa]),
+                  _tableRow(['ಸೂರ್ಯ ನಕ್ಷತ್ರ', '${pan.suryaNakshatra} - ಪಾದ ${pan.suryaPada}']),
+                  _tableRow(['ಸೌರ ಮಾಸ', pan.souraMasa]),
+                  _tableRow(['ಸೌರ ಮಾಸ ಗತ ದಿನ', pan.souraMasaGataDina]),
+                  _tableRow(['ಸೂರ್ಯೋದಯ', pan.sunrise]),
+                  _tableRow(['ಸೂರ್ಯಾಸ್ತ', pan.sunset]),
+                  _tableRow(['ಉದಯಾದಿ ಘಟಿ', pan.udayadiGhati]),
+                  _tableRow(['ಗತ ಘಟಿ', pan.gataGhati]),
+                  _tableRow(['ಪರಮ ಘಟಿ', pan.paramaGhati]),
+                  _tableRow(['ಶೇಷ ಘಟಿ', pan.shesha]),
+                  _tableRow(['ವಿಷ ಪ್ರಘಟಿ', pan.vishaPraghati]),
+                  _tableRow(['ಅಮೃತ ಪ್ರಘಟಿ', pan.amrutaPraghati]),
+                ]),
+              ),
+              if (allPersons.length > 1) Divider(thickness: 2, color: kBorder),
+              const SizedBox(height: 12),
+            ],
+          );
+        }).toList(),
       ),
     );
   }
@@ -741,6 +887,39 @@ class _DashboardScreenState extends State<DashboardScreen>
   // ─────────────────────────────────────────────
   // TAB 8: SHADBALA
   // ─────────────────────────────────────────────
+  // ─────────────────────────────────────────────
+  // TAB 8: ASHTAKA VARGA (multi-person)
+  // ─────────────────────────────────────────────
+  Widget _buildAshtakaTab() {
+    final allPersons = <Map<String, dynamic>>[
+      {'name': widget.name, 'result': widget.result},
+      ..._extraPersons.map((p) => {'name': p.name, 'result': p.result}),
+    ];
+
+    if (allPersons.length == 1) {
+      return AshtakaVargaWidget(result: widget.result);
+    }
+
+    return SingleChildScrollView(
+      child: Column(
+        children: allPersons.map((person) {
+          final r = person['result'] as KundaliResult;
+          final pName = person['name'] as String;
+          return Column(
+            children: [
+              Padding(
+                padding: const EdgeInsets.only(top: 12, bottom: 4),
+                child: Text(pName, style: TextStyle(fontSize: 15, fontWeight: FontWeight.w900, color: kTeal)),
+              ),
+              AshtakaVargaWidget(result: r),
+              Divider(thickness: 2, color: kBorder),
+            ],
+          );
+        }).toList(),
+      ),
+    );
+  }
+
   Widget _buildShadbalaTab() {
     return ShadbalaWidget(
       key: UniqueKey(),
@@ -754,6 +933,8 @@ class _DashboardScreenState extends State<DashboardScreen>
   // TAB 10: NOTES
   // ─────────────────────────────────────────────
   Widget _buildNotesTab() {
+    // For multi-person: show primary person's notes section
+    // Extra persons' notes are shown below
     final entries = _parseNoteEntries(_notes);
 
     // Build formatted text for share/print
