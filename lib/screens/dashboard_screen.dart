@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter/gestures.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import '../services/export_service.dart';
@@ -149,81 +150,204 @@ class _DashboardScreenState extends State<DashboardScreen>
         title: Text('ವ್ಯಕ್ತಿ ಸೇರಿಸಿ', style: TextStyle(color: kText, fontWeight: FontWeight.w900)),
         content: SizedBox(
           width: double.maxFinite,
-          child: ListView.builder(
-            shrinkWrap: true,
-            itemCount: otherProfiles.length,
-            itemBuilder: (context, i) {
-              final p = otherProfiles[i];
-              return ListTile(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // New person button
+              ListTile(
                 leading: CircleAvatar(
-                  backgroundColor: kPurple2.withOpacity(0.15),
-                  child: Text(p.name.isNotEmpty ? p.name[0] : '?', style: TextStyle(color: kPurple2, fontWeight: FontWeight.w900)),
+                  backgroundColor: kTeal.withOpacity(0.15),
+                  child: Icon(Icons.add, color: kTeal),
                 ),
-                title: Text(p.name, style: TextStyle(color: kText, fontWeight: FontWeight.w700)),
-                subtitle: Text('${p.date} | ${p.place}', style: TextStyle(color: kMuted, fontSize: 12)),
-                onTap: () async {
+                title: Text('ಹೊಸ ವ್ಯಕ್ತಿ ಸೇರಿಸಿ', style: TextStyle(color: kTeal, fontWeight: FontWeight.w800)),
+                subtitle: Text('ಹೊಸ ಜಾತಕ ವಿವರ ನಮೂದಿಸಿ', style: TextStyle(color: kMuted, fontSize: 12)),
+                onTap: () {
                   Navigator.pop(ctx);
-                  // Compute kundali for this person
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('⏳ ${p.name} ಕುಂಡಲಿ ಲೆಕ್ಕಿಸಲಾಗುತ್ತಿದೆ...')),
-                  );
-                  try {
-                    final dateParts = p.date.split('-');
-                    final dob = DateTime(int.parse(dateParts[0]), int.parse(dateParts[1]), int.parse(dateParts[2]));
-                    // Convert hour/minute/ampm to hour24
-                    int h24 = p.hour;
-                    if (p.ampm == 'PM' && h24 != 12) h24 += 12;
-                    if (p.ampm == 'AM' && h24 == 12) h24 = 0;
-                    final localHour = h24 + p.minute / 60.0;
-                    
-                    final result = await AstroCalculator.calculate(
-                      year: dob.year, month: dob.month, day: dob.day,
-                      hourUtcOffset: p.tzOffset,
-                      hour24: localHour,
-                      lat: p.lat, lon: p.lon,
-                      ayanamsaMode: 'lahiri',
-                      trueNode: true,
-                    );
-                    if (result == null) {
-                      if (mounted) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(content: Text('❌ ${p.name} ಕುಂಡಲಿ ಲೆಕ್ಕ ವಿಫಲ'), backgroundColor: Colors.red),
-                        );
-                      }
-                      return;
-                    }
-                    if (mounted) {
-                      setState(() {
-                        _extraPersons.add(_PersonEntry(
-                          name: p.name,
-                          result: result,
-                          dob: dob,
-                          hour: p.hour,
-                          minute: p.minute,
-                          ampm: p.ampm,
-                          lat: p.lat,
-                          lon: p.lon,
-                          place: p.place,
-                          notes: p.notes,
-                        ));
-                      });
-                    }
-                  } catch (e) {
-                    if (mounted) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text('❌ ಕುಂಡಲಿ ಲೆಕ್ಕ ವಿಫಲ: $e'), backgroundColor: Colors.red),
-                      );
-                    }
-                  }
+                  _showNewPersonForm();
                 },
-              );
-            },
+              ),
+              if (otherProfiles.isNotEmpty) Divider(color: kBorder),
+              // Saved profiles list
+              if (otherProfiles.isNotEmpty)
+                Flexible(
+                  child: ListView.builder(
+                    shrinkWrap: true,
+                    itemCount: otherProfiles.length,
+                    itemBuilder: (context, i) {
+                      final p = otherProfiles[i];
+                      return ListTile(
+                        leading: CircleAvatar(
+                          backgroundColor: kPurple2.withOpacity(0.15),
+                          child: Text(p.name.isNotEmpty ? p.name[0] : '?', style: TextStyle(color: kPurple2, fontWeight: FontWeight.w900)),
+                        ),
+                        title: Text(p.name, style: TextStyle(color: kText, fontWeight: FontWeight.w700)),
+                        subtitle: Text('${p.date} | ${p.place}', style: TextStyle(color: kMuted, fontSize: 12)),
+                        onTap: () => _addSavedProfile(ctx, p),
+                      );
+                    },
+                  ),
+                ),
+            ],
           ),
         ),
         actions: [
           TextButton(onPressed: () => Navigator.pop(ctx), child: Text('ಮುಚ್ಚಿ', style: TextStyle(color: kMuted))),
         ],
       ),
+    );
+  }
+
+  /// Add a saved profile as an extra person
+  void _addSavedProfile(BuildContext ctx, Profile p) async {
+    Navigator.pop(ctx);
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('⏳ ${p.name} ಕುಂಡಲಿ ಲೆಕ್ಕಿಸಲಾಗುತ್ತಿದೆ...')),
+    );
+    try {
+      final dateParts = p.date.split('-');
+      final dob = DateTime(int.parse(dateParts[0]), int.parse(dateParts[1]), int.parse(dateParts[2]));
+      int h24 = p.hour;
+      if (p.ampm == 'PM' && h24 != 12) h24 += 12;
+      if (p.ampm == 'AM' && h24 == 12) h24 = 0;
+      final localHour = h24 + p.minute / 60.0;
+      final result = await AstroCalculator.calculate(
+        year: dob.year, month: dob.month, day: dob.day,
+        hourUtcOffset: p.tzOffset, hour24: localHour,
+        lat: p.lat, lon: p.lon, ayanamsaMode: 'lahiri', trueNode: true,
+      );
+      if (result == null) {
+        if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('❌ ಕುಂಡಲಿ ಲೆಕ್ಕ ವಿಫಲ'), backgroundColor: Colors.red));
+        return;
+      }
+      if (mounted) {
+        setState(() {
+          _extraPersons.add(_PersonEntry(name: p.name, result: result, dob: dob, hour: p.hour, minute: p.minute, ampm: p.ampm, lat: p.lat, lon: p.lon, place: p.place, notes: p.notes));
+        });
+      }
+    } catch (e) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('❌ $e'), backgroundColor: Colors.red));
+    }
+  }
+
+  /// Show form to add a brand new person
+  void _showNewPersonForm() {
+    final nameCtrl = TextEditingController();
+    final placeCtrl = TextEditingController();
+    final latCtrl = TextEditingController(text: '14.98');
+    final lonCtrl = TextEditingController(text: '74.73');
+    final tzCtrl = TextEditingController(text: '5.5');
+    DateTime dob = DateTime(1990, 1, 1);
+    int hour = 12;
+    int minute = 0;
+    String ampm = 'PM';
+
+    showDialog(
+      context: context,
+      builder: (ctx) => StatefulBuilder(builder: (ctx2, setS) {
+        return AlertDialog(
+          backgroundColor: kBg,
+          title: Text('ಹೊಸ ವ್ಯಕ್ತಿ', style: TextStyle(color: kText, fontWeight: FontWeight.w900)),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextField(controller: nameCtrl, decoration: InputDecoration(labelText: 'ಹೆಸರು')),
+                const SizedBox(height: 8),
+                TextField(controller: placeCtrl, decoration: InputDecoration(labelText: 'ಸ್ಥಳ')),
+                const SizedBox(height: 8),
+                Row(children: [
+                  Expanded(
+                    child: InkWell(
+                      onTap: () async {
+                        final d = await showDatePicker(
+                          context: ctx2,
+                          initialDate: dob,
+                          firstDate: DateTime(1900),
+                          lastDate: DateTime.now(),
+                        );
+                        if (d != null) setS(() => dob = d);
+                      },
+                      child: InputDecorator(
+                        decoration: InputDecoration(labelText: 'ದಿನಾಂಕ'),
+                        child: Text('${dob.day}/${dob.month}/${dob.year}', style: TextStyle(color: kText)),
+                      ),
+                    ),
+                  ),
+                ]),
+                const SizedBox(height: 8),
+                Row(children: [
+                  Expanded(child: DropdownButtonFormField<int>(
+                    value: hour,
+                    items: List.generate(12, (i) => DropdownMenuItem(value: i + 1, child: Text('${i+1}'))),
+                    onChanged: (v) => setS(() => hour = v!),
+                    decoration: InputDecoration(labelText: 'ಗಂಟೆ'),
+                  )),
+                  const SizedBox(width: 8),
+                  Expanded(child: DropdownButtonFormField<int>(
+                    value: minute,
+                    items: List.generate(60, (i) => DropdownMenuItem(value: i, child: Text('$i'.padLeft(2, '0')))),
+                    onChanged: (v) => setS(() => minute = v!),
+                    decoration: InputDecoration(labelText: 'ನಿಮಿಷ'),
+                  )),
+                  const SizedBox(width: 8),
+                  Expanded(child: DropdownButtonFormField<String>(
+                    value: ampm,
+                    items: ['AM', 'PM'].map((a) => DropdownMenuItem(value: a, child: Text(a))).toList(),
+                    onChanged: (v) => setS(() => ampm = v!),
+                    decoration: InputDecoration(labelText: 'AM/PM'),
+                  )),
+                ]),
+                const SizedBox(height: 8),
+                Row(children: [
+                  Expanded(child: TextField(controller: latCtrl, decoration: InputDecoration(labelText: 'ಅಕ್ಷಾಂಶ'), keyboardType: TextInputType.number)),
+                  const SizedBox(width: 8),
+                  Expanded(child: TextField(controller: lonCtrl, decoration: InputDecoration(labelText: 'ರೇಖಾಂಶ'), keyboardType: TextInputType.number)),
+                  const SizedBox(width: 8),
+                  Expanded(child: TextField(controller: tzCtrl, decoration: InputDecoration(labelText: 'TZ'), keyboardType: TextInputType.number)),
+                ]),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(onPressed: () => Navigator.pop(ctx), child: Text('ಮುಚ್ಚಿ', style: TextStyle(color: kMuted))),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(backgroundColor: kPurple2),
+              onPressed: () async {
+                final name = nameCtrl.text.trim();
+                if (name.isEmpty) return;
+                Navigator.pop(ctx);
+                ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('⏳ $name ಕುಂಡಲಿ ಲೆಕ್ಕಿಸಲಾಗುತ್ತಿದೆ...')));
+                try {
+                  int h24 = hour;
+                  if (ampm == 'PM' && h24 != 12) h24 += 12;
+                  if (ampm == 'AM' && h24 == 12) h24 = 0;
+                  final localHour = h24 + minute / 60.0;
+                  final lat = double.tryParse(latCtrl.text) ?? 14.98;
+                  final lon = double.tryParse(lonCtrl.text) ?? 74.73;
+                  final tz = double.tryParse(tzCtrl.text) ?? 5.5;
+                  final result = await AstroCalculator.calculate(
+                    year: dob.year, month: dob.month, day: dob.day,
+                    hourUtcOffset: tz, hour24: localHour,
+                    lat: lat, lon: lon, ayanamsaMode: 'lahiri', trueNode: true,
+                  );
+                  if (result == null) {
+                    if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('❌ ಕುಂಡಲಿ ಲೆಕ್ಕ ವಿಫಲ'), backgroundColor: Colors.red));
+                    return;
+                  }
+                  if (mounted) {
+                    setState(() {
+                      _extraPersons.add(_PersonEntry(name: name, result: result, dob: dob, hour: hour, minute: minute, ampm: ampm, lat: lat, lon: lon, place: placeCtrl.text));
+                    });
+                  }
+                } catch (e) {
+                  if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('❌ $e'), backgroundColor: Colors.red));
+                }
+              },
+              child: Text('ಲೆಕ್ಕಿಸಿ', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w800)),
+            ),
+          ],
+        );
+      }),
     );
   }
 
@@ -495,7 +619,14 @@ class _DashboardScreenState extends State<DashboardScreen>
                 // Horizontal scrollable charts
                 SizedBox(
                   height: chartSize + 30,
-                  child: ListView.builder(
+                  child: ScrollConfiguration(
+                    behavior: ScrollConfiguration.of(context).copyWith(
+                      dragDevices: {
+                        PointerDeviceKind.touch,
+                        PointerDeviceKind.mouse,
+                      },
+                    ),
+                    child: ListView.builder(
                     scrollDirection: Axis.horizontal,
                     padding: const EdgeInsets.symmetric(horizontal: 8),
                     itemCount: charts.length,
@@ -532,6 +663,7 @@ class _DashboardScreenState extends State<DashboardScreen>
                       );
                     },
                   ),
+                ),
                 ),
                 Divider(thickness: 1, color: kBorder),
               ],
@@ -799,31 +931,19 @@ class _DashboardScreenState extends State<DashboardScreen>
   // TAB 7: BHAVA
   // ─────────────────────────────────────────────
   Widget _buildBhavaTab() {
-    final lagnaLong = widget.result.planets['ಲಗ್ನ']?.longitude ?? 0;
+    final allPersons = <Map<String, dynamic>>[
+      {'name': widget.name, 'result': widget.result},
+      ..._extraPersons.map((p) => {'name': p.name, 'result': p.result}),
+    ];
 
     // Planet selector list
     final selectablePlanets = planetOrder.where((p) => p != 'ಲಗ್ನ' && p != 'ಮಾಂದಿ').toList();
-
-    // Calculate shifted bhava madhyas
-    List<double> getMadhyas(String? planet) {
-      if (planet == null || !widget.result.planets.containsKey(planet)) {
-        return widget.result.bhavas;
-      }
-      final pDeg = widget.result.planets[planet]!.longitude;
-      final offset = (pDeg - lagnaLong + 360.0) % 360.0;
-      return List.generate(12, (i) => (widget.result.bhavas[i] + offset) % 360.0);
-    }
-
-    final currentMadhyas = getMadhyas(_bhavaPlanet);
-    final title = _bhavaPlanet != null
-        ? 'ಭಾವ ಮಧ್ಯ ಸ್ಫುಟ (${_bhavaPlanet} ಆಧಾರ)'
-        : 'ಭಾವ ಮಧ್ಯ ಸ್ಫುಟ (ಲಗ್ನ)';
 
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
       child: Column(
         children: [
-          // Planet selector
+          // Planet selector (for primary person)
           Text('ಗ್ರಹ ಆಧಾರ ಭಾವ', style: TextStyle(
             fontWeight: FontWeight.w800, fontSize: 15, color: kPurple2)),
           const SizedBox(height: 8),
@@ -831,7 +951,6 @@ class _DashboardScreenState extends State<DashboardScreen>
             spacing: 6,
             runSpacing: 6,
             children: [
-              // Lagna chip
               GestureDetector(
                 onTap: () => setState(() => _bhavaPlanet = null),
                 child: Container(
@@ -871,27 +990,55 @@ class _DashboardScreenState extends State<DashboardScreen>
           ),
           const SizedBox(height: 16),
 
-          // Bhava Madhya Sphuta table
-          Text(title, style: TextStyle(
-            fontWeight: FontWeight.w800, fontSize: 15,
-            color: _bhavaPlanet != null ? kTeal : kPurple2)),
-          const SizedBox(height: 8),
-          AppCard(
-            padding: EdgeInsets.zero,
-            child: Column(
+          // Multi-person bhava madhya tables
+          ...allPersons.map((person) {
+            final r = person['result'] as KundaliResult;
+            final pName = person['name'] as String;
+            final lagnaLong = r.planets['ಲಗ್ನ']?.longitude ?? 0;
+
+            List<double> getMadhyas(String? planet) {
+              if (planet == null || !r.planets.containsKey(planet)) return r.bhavas;
+              final pDeg = r.planets[planet]!.longitude;
+              final offset = (pDeg - lagnaLong + 360.0) % 360.0;
+              return List.generate(12, (i) => (r.bhavas[i] + offset) % 360.0);
+            }
+
+            final currentMadhyas = getMadhyas(_bhavaPlanet);
+            final title = _bhavaPlanet != null
+                ? 'ಭಾವ ಮಧ್ಯ ಸ್ಫುಟ (${_bhavaPlanet} ಆಧಾರ)'
+                : 'ಭಾವ ಮಧ್ಯ ಸ್ಫುಟ (ಲಗ್ನ)';
+
+            return Column(
               children: [
-                _tableHeader(['ಭಾವ', 'ಮಧ್ಯ ಸ್ಫುಟ', 'ರಾಶಿ']),
-                ...List.generate(12, (i) {
-                  final deg = currentMadhyas[i];
-                  return _tableRow(
-                    ['${i+1}', formatDeg(deg), knRashi[(deg/30).floor() % 12]],
-                    bold0: true,
-                  );
-                }),
+                if (allPersons.length > 1)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 8),
+                    child: Text(pName, style: TextStyle(fontSize: 15, fontWeight: FontWeight.w900, color: kTeal)),
+                  ),
+                Text(title, style: TextStyle(
+                  fontWeight: FontWeight.w800, fontSize: 15,
+                  color: _bhavaPlanet != null ? kTeal : kPurple2)),
+                const SizedBox(height: 8),
+                AppCard(
+                  padding: EdgeInsets.zero,
+                  child: Column(
+                    children: [
+                      _tableHeader(['ಭಾವ', 'ಮಧ್ಯ ಸ್ಫುಟ', 'ರಾಶಿ']),
+                      ...List.generate(12, (i) {
+                        final deg = currentMadhyas[i];
+                        return _tableRow(
+                          ['${i+1}', formatDeg(deg), knRashi[(deg/30).floor() % 12]],
+                          bold0: true,
+                        );
+                      }),
+                    ],
+                  ),
+                ),
+                if (allPersons.length > 1) Divider(thickness: 2, color: kBorder),
+                const SizedBox(height: 12),
               ],
-            ),
-          ),
-          const SizedBox(height: 24),
+            );
+          }),
         ],
       ),
     );
@@ -934,9 +1081,32 @@ class _DashboardScreenState extends State<DashboardScreen>
   }
 
   Widget _buildShadbalaTab() {
-    return ShadbalaWidget(
-      key: UniqueKey(),
-      shadbala: widget.result.shadbala,
+    final allPersons = <Map<String, dynamic>>[
+      {'name': widget.name, 'result': widget.result},
+      ..._extraPersons.map((p) => {'name': p.name, 'result': p.result}),
+    ];
+
+    if (allPersons.length == 1) {
+      return ShadbalaWidget(key: UniqueKey(), shadbala: widget.result.shadbala);
+    }
+
+    return SingleChildScrollView(
+      child: Column(
+        children: allPersons.map((person) {
+          final r = person['result'] as KundaliResult;
+          final pName = person['name'] as String;
+          return Column(
+            children: [
+              Padding(
+                padding: const EdgeInsets.only(top: 12, bottom: 4),
+                child: Text(pName, style: TextStyle(fontSize: 15, fontWeight: FontWeight.w900, color: kTeal)),
+              ),
+              ShadbalaWidget(key: UniqueKey(), shadbala: r.shadbala),
+              Divider(thickness: 2, color: kBorder),
+            ],
+          );
+        }).toList(),
+      ),
     );
   }
 
