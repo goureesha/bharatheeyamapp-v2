@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'dart:convert';
+import 'package:http/http.dart' as http;
 import '../widgets/common.dart';
 
 import '../services/subscription_service.dart';
@@ -34,6 +36,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   @override
   Widget build(BuildContext context) {
     final themes = ['ಸ್ಟ್ಯಾಂಡರ್ಡ್ ಲೈಟ್', 'ಡಾರ್ಕ್ ಮೋಡ್', 'ಸ್ವರ್ಣ', 'ಸಾಗರ', 'ಹಸಿರು'];
+
     return Scaffold(
       backgroundColor: kBg,
       appBar: AppBar(
@@ -254,6 +257,18 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           ),
                         );
                       },
+                    ),
+                    const SizedBox(height: 8),
+                    // Online search button
+                    OutlinedButton.icon(
+                      onPressed: () => _showOnlineSearchDialog(),
+                      icon: Icon(Icons.travel_explore, color: kTeal, size: 20),
+                      label: Text('ಆನ್‌ಲೈನ್ ಹುಡುಕಿ / Online Search', style: TextStyle(color: kTeal, fontWeight: FontWeight.w700, fontSize: 13)),
+                      style: OutlinedButton.styleFrom(
+                        side: BorderSide(color: kTeal),
+                        padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 16),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                      ),
                     ),
                     const SizedBox(height: 12),
                     TextField(
@@ -489,6 +504,128 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
         ],
       ),
+    );
+  }
+
+  /// Online location search using OpenStreetMap Nominatim
+  void _showOnlineSearchDialog() {
+    final searchCtrl = TextEditingController();
+    List<Map<String, dynamic>> results = [];
+    bool isLoading = false;
+
+    showDialog(
+      context: context,
+      builder: (ctx) => StatefulBuilder(builder: (ctx2, setS) {
+        Future<void> doSearch() async {
+          final query = searchCtrl.text.trim();
+          if (query.isEmpty) return;
+          setS(() { isLoading = true; results = []; });
+          try {
+            final uri = Uri.parse('https://nominatim.openstreetmap.org/search?q=${Uri.encodeComponent(query)}&format=json&limit=10&addressdetails=1');
+            final response = await http.get(uri, headers: {'User-Agent': 'BharatheeyamApp/1.0'});
+            if (response.statusCode == 200) {
+              final data = jsonDecode(response.body) as List;
+              setS(() {
+                results = data.map((item) => {
+                  'name': item['display_name'] as String,
+                  'lat': double.tryParse(item['lat'] ?? '') ?? 0.0,
+                  'lon': double.tryParse(item['lon'] ?? '') ?? 0.0,
+                }).toList();
+                isLoading = false;
+              });
+            } else {
+              setS(() => isLoading = false);
+            }
+          } catch (e) {
+            setS(() => isLoading = false);
+          }
+        }
+
+        return AlertDialog(
+          backgroundColor: kBg,
+          title: Text('ಆನ್‌ಲೈನ್ ಸ್ಥಳ ಹುಡುಕಿ', style: TextStyle(color: kText, fontWeight: FontWeight.w900)),
+          content: SizedBox(
+            width: double.maxFinite,
+            height: 400,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Row(children: [
+                  Expanded(
+                    child: TextField(
+                      controller: searchCtrl,
+                      decoration: InputDecoration(
+                        hintText: 'e.g. Tokyo, London, New York...',
+                        prefixIcon: Icon(Icons.search, color: kMuted),
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                      ),
+                      style: TextStyle(color: kText),
+                      onSubmitted: (_) => doSearch(),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  ElevatedButton(
+                    onPressed: doSearch,
+                    style: ElevatedButton.styleFrom(backgroundColor: kTeal, padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16)),
+                    child: Icon(Icons.search, color: Colors.white),
+                  ),
+                ]),
+                const SizedBox(height: 12),
+                if (isLoading)
+                  Padding(
+                    padding: const EdgeInsets.all(20),
+                    child: CircularProgressIndicator(color: kTeal),
+                  ),
+                if (!isLoading && results.isEmpty && searchCtrl.text.isNotEmpty)
+                  Padding(
+                    padding: const EdgeInsets.all(20),
+                    child: Text('ಫಲಿತಾಂಶಗಳಿಲ್ಲ / No results', style: TextStyle(color: kMuted)),
+                  ),
+                if (!isLoading && results.isNotEmpty)
+                  Expanded(
+                    child: ListView.builder(
+                      shrinkWrap: true,
+                      itemCount: results.length,
+                      itemBuilder: (context, i) {
+                        final r = results[i];
+                        final name = r['name'] as String;
+                        final lat = r['lat'] as double;
+                        final lon = r['lon'] as double;
+                        // Short display name (first 2 parts)
+                        final parts = name.split(',');
+                        final shortName = parts.length > 2 ? '${parts[0].trim()}, ${parts[1].trim()}' : name;
+                        return ListTile(
+                          dense: true,
+                          leading: Icon(Icons.location_on, color: kTeal, size: 20),
+                          title: Text(shortName, style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: kText)),
+                          subtitle: Text('${lat.toStringAsFixed(4)}°, ${lon.toStringAsFixed(4)}°', style: TextStyle(fontSize: 11, color: kMuted)),
+                          onTap: () async {
+                            Navigator.pop(ctx);
+                            // Auto-compute timezone from longitude (rough: lon/15)
+                            final autoTz = getTimezoneForPlace(shortName, lon);
+                            _tzCtrl.text = '${autoTz >= 0 ? '+' : ''}$autoTz';
+                            await LocationService.setLocation(shortName, lat, lon, autoTz);
+                            if (mounted) {
+                              setState(() {});
+                              ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                                content: Text('ಡೀಫಾಲ್ಟ್ ಸ್ಥಳ: $shortName'),
+                                backgroundColor: Colors.green,
+                              ));
+                            }
+                          },
+                        );
+                      },
+                    ),
+                  ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(onPressed: () => Navigator.pop(ctx), child: Text('ಮುಚ್ಚಿ', style: TextStyle(color: kMuted))),
+          ],
+        );
+      }),
     );
   }
 }
