@@ -23,8 +23,8 @@ class _AshtamangalaScreenState extends State<AshtamangalaScreen> with SingleTick
   int _selectedRashi = 0;
   int _selectedNakshatra = 0;
   int _sprushtanga = 0;   // Body part (0-11 → 12 rashis)
-  int _swarna = 0;         // Gold placement (0-7 → 8 dravyas)
-  int _tambula = 0;        // Betel placement (0-7 → 8 dravyas)
+  int _swarna = 0;         // Gold coin Rashi (0-11)
+  int _tambula = 0;        // Betel leaf Rashi (0-11)
   int _gender = 0;         // 0=Male, 1=Female
 
   // Computed results
@@ -188,9 +188,9 @@ class _AshtamangalaScreenState extends State<AshtamangalaScreen> with SingleTick
       _dropdown('ಸ್ಪೃಷ್ಟಾಂಗ / Body Part Touched', _sprushtanga, _bodyParts, (v) => setState(() => _sprushtanga = v)),
       const SizedBox(height: 8),
       Row(children: [
-        Expanded(child: _dropdown('ಸ್ವರ್ಣ / Gold Near', _swarna, List.generate(8, (i) => '${i+1}. ${_ashtaItems[i]['name']}'), (v) => setState(() => _swarna = v))),
+        Expanded(child: _dropdown('ಸ್ವರ್ಣ ರಾಶಿ / Gold Rashi', _swarna, List.generate(12, (i) => _rashiNames[i]), (v) => setState(() => _swarna = v))),
         const SizedBox(width: 8),
-        Expanded(child: _dropdown('ತಾಂಬೂಲ / Betel Near', _tambula, List.generate(8, (i) => '${i+1}. ${_ashtaItems[i]['name']}'), (v) => setState(() => _tambula = v))),
+        Expanded(child: _dropdown('ತಾಂಬೂಲ ರಾಶಿ / Betel Rashi', _tambula, List.generate(12, (i) => _rashiNames[i]), (v) => setState(() => _tambula = v))),
       ]),
       if (_errorMsg.isNotEmpty) Padding(padding: const EdgeInsets.only(top: 8), child: Text(_errorMsg, style: TextStyle(color: Colors.red, fontSize: 12))),
       const SizedBox(height: 12),
@@ -305,14 +305,14 @@ class _AshtamangalaScreenState extends State<AshtamangalaScreen> with SingleTick
           );
         }),
       ])),
-      // Tambula Graha & Rashi
+      // Tambula & Swarna Rashi
       AppCard(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Text('ತಾಂಬೂಲ ಗ್ರಹ & ರಾಶಿ', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 12, color: kOrange)),
+        Text('ತಾಂಬೂಲ & ಸ್ವರ್ಣ ರಾಶಿ', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 12, color: kOrange)),
         const SizedBox(height: 6),
-        _kvRow('ತಾಂಬೂಲ ಸ್ಥಾನ', _ashtaItems[_tambula]['name']!),
-        _kvRow('ತಾಂಬೂಲ ಗ್ರಹ', _ashtaItems[_tambula]['graha']!),
-        _kvRow('ಸ್ವರ್ಣ ಸ್ಥಾನ', _ashtaItems[_swarna]['name']!),
-        _kvRow('ಸ್ವರ್ಣ ಗ್ರಹ', _ashtaItems[_swarna]['graha']!),
+        _kvRow('ತಾಂಬೂಲ ರಾಶಿ', '${_rashiNames[_tambula]} (${_rashiEn[_tambula]})'),
+        _kvRow('ತಾಂಬೂಲ ಅಧಿಪ', _rashiLords[_tambula]),
+        _kvRow('ಸ್ವರ್ಣ ರಾಶಿ', '${_rashiNames[_swarna]} (${_rashiEn[_swarna]})'),
+        _kvRow('ಸ್ವರ್ಣ ಅಧಿಪ', _rashiLords[_swarna]),
       ])),
       // Sankhya Phala
       AppCard(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
