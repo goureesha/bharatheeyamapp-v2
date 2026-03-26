@@ -387,8 +387,8 @@ class _DashboardScreenState extends State<DashboardScreen>
                       },
                     );
                   },
-                  onSelected: (String selection) {
-                    if (offlinePlaces.containsKey(selection)) async {
+                  onSelected: (String selection) async {
+                    if (offlinePlaces.containsKey(selection)) {
                       final coords = offlinePlaces[selection]!;
                       final autoTz = await getTimezoneForPlace(selection, coords[0], coords[1]);
                       setS(() {
