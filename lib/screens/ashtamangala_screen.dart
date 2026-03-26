@@ -24,7 +24,8 @@ class _AshtamangalaScreenState extends State<AshtamangalaScreen> with SingleTick
   int _selectedNakshatra = 0;
   int _sprushtanga = 0;   // Body part (0-11 → 12 rashis)
   int _swarna = 0;         // Gold coin Rashi (0-11)
-  int _tambula = 0;        // Betel leaf Rashi (0-11)
+  int _tambula = 1;        // Betel number (1-1000)
+  final _tambulaCtrl = TextEditingController(text: '1');
   int _gender = 0;         // 0=Male, 1=Female
 
   // Computed results
@@ -93,7 +94,7 @@ class _AshtamangalaScreenState extends State<AshtamangalaScreen> with SingleTick
   }
 
   @override
-  void dispose() { _numberCtrl.dispose(); _nameCtrl.dispose(); _tabCtrl.dispose(); super.dispose(); }
+  void dispose() { _numberCtrl.dispose(); _nameCtrl.dispose(); _tambulaCtrl.dispose(); _tabCtrl.dispose(); super.dispose(); }
 
   Future<void> _loadPrashnaChart() async {
     final now = DateTime.now();
@@ -190,7 +191,12 @@ class _AshtamangalaScreenState extends State<AshtamangalaScreen> with SingleTick
       Row(children: [
         Expanded(child: _dropdown('ಸ್ವರ್ಣ ರಾಶಿ / Gold Rashi', _swarna, List.generate(12, (i) => _rashiNames[i]), (v) => setState(() => _swarna = v))),
         const SizedBox(width: 8),
-        Expanded(child: _dropdown('ತಾಂಬೂಲ ರಾಶಿ / Betel Rashi', _tambula, List.generate(12, (i) => _rashiNames[i]), (v) => setState(() => _tambula = v))),
+        Expanded(child: TextField(controller: _tambulaCtrl, keyboardType: TextInputType.number,
+          decoration: InputDecoration(labelText: 'ತಾಂಬೂಲ / Tambula (1-1000)',
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+            contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10), isDense: true),
+          style: TextStyle(color: kText, fontSize: 14),
+          onChanged: (v) => setState(() => _tambula = int.tryParse(v) ?? 1))),
       ]),
       if (_errorMsg.isNotEmpty) Padding(padding: const EdgeInsets.only(top: 8), child: Text(_errorMsg, style: TextStyle(color: Colors.red, fontSize: 12))),
       const SizedBox(height: 12),
@@ -305,12 +311,13 @@ class _AshtamangalaScreenState extends State<AshtamangalaScreen> with SingleTick
           );
         }),
       ])),
-      // Tambula & Swarna Rashi
+      // Tambula & Swarna Results
       AppCard(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Text('ತಾಂಬೂಲ & ಸ್ವರ್ಣ ರಾಶಿ', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 12, color: kOrange)),
+        Text('ತಾಂಬೂಲ & ಸ್ವರ್ಣ ಫಲ', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 12, color: kOrange)),
         const SizedBox(height: 6),
-        _kvRow('ತಾಂಬೂಲ ರಾಶಿ', '${_rashiNames[_tambula]} (${_rashiEn[_tambula]})'),
-        _kvRow('ತಾಂಬೂಲ ಅಧಿಪ', _rashiLords[_tambula]),
+        _kvRow('ತಾಂಬೂಲ ಸಂಖ್ಯೆ', '$_tambula'),
+        _kvRow('ತಾಂಬೂಲ ರಾಶಿ', '${_rashiNames[(_tambula - 1) % 12]} (${_rashiEn[(_tambula - 1) % 12]})'),
+        _kvRow('ತಾಂಬೂಲ ಅಧಿಪ', _rashiLords[(_tambula - 1) % 12]),
         _kvRow('ಸ್ವರ್ಣ ರಾಶಿ', '${_rashiNames[_swarna]} (${_rashiEn[_swarna]})'),
         _kvRow('ಸ್ವರ್ಣ ಅಧಿಪ', _rashiLords[_swarna]),
       ])),
