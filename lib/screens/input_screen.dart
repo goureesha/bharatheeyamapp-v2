@@ -132,12 +132,12 @@ class _InputScreenState extends State<InputScreen> {
           // Single result — auto-fill
           final lat = double.parse(data[0]['lat']);
           final lon = double.parse(data[0]['lon']);
+          final displayName = data[0]['display_name'] as String;
+          final autoTz = await getTimezoneForPlace(displayName, lat, lon);
           setState(() {
             _placeCtrl.text = placeName.trim();
             _latCtrl.text = lat.toStringAsFixed(4);
             _lonCtrl.text = lon.toStringAsFixed(4);
-            final displayName = data[0]['display_name'] as String;
-            final autoTz = await getTimezoneForPlace(displayName, lat, lon);
             _tzCtrl.text = '${autoTz >= 0 ? '+' : ''}$autoTz';
             _geoStatus = '📍 $displayName (TZ: ${autoTz >= 0 ? '+' : ''}$autoTz)';
           });
