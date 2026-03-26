@@ -459,9 +459,6 @@ class _PanchangaScreenState extends State<PanchangaScreen> {
                       ]),
                     ),
 
-                    // ═══ Rahu Kala / Yamaganda / Gulika ═══
-                    _buildKalaCard(),
-
                     // ═══ Hora (Day) ═══
                     _buildHoraCard(true),
 
