@@ -109,6 +109,73 @@ class Ephemeris {
     return [riseTime, setTime];
   }
 
+  // ─────────────────────────────────────────────
+  // Altitude of Moon (for moonrise/moonset)
+  // ─────────────────────────────────────────────
+  static double getMoonAltitude(double jd, double lat, double lng) {
+    try {
+      final calc = Sweph.swe_calc_ut(
+          jd, HeavenlyBody.SE_MOON, SwephFlag.SEFLG_EQUATORIAL | SwephFlag.SEFLG_SWIEPH);
+      final ra = calc.longitude;
+      final dec = calc.latitude;
+
+      final gmst = Sweph.swe_sidtime(jd);
+      final lst = gmst + (lng / 15.0);
+
+      double haDeg = ((lst * 15.0) - ra + 360) % 360;
+      if (haDeg > 180) haDeg -= 360;
+
+      final latRad = _rad(lat);
+      final decRad = _rad(dec);
+      final haRad = _rad(haDeg);
+
+      final sinAlt =
+          sin(latRad) * sin(decRad) + cos(latRad) * cos(decRad) * cos(haRad);
+
+      return _deg(asin(sinAlt.clamp(-1.0, 1.0)));
+    } catch (_) {
+      return 0.0;
+    }
+  }
+
+  /// Find moonrise and moonset times for a given date.
+  /// Returns [moonriseJd, moonsetJd]. Either may be -1 if moon doesn't rise/set on that day.
+  static List<double> findMoonriseSetForDate(int year, int month, int day, double lat, double lon, {double tzOffset = 5.5}) {
+    final jdStart = Sweph.swe_julday(year, month, day, 0.0, CalendarType.SE_GREG_CAL);
+    final localMidnightUt = jdStart - (tzOffset / 24.0);
+    double riseTime = -1;
+    double setTime = -1;
+    double step = 1.0 / 48.0; // 30-min steps (Moon moves faster than Sun)
+    double current = localMidnightUt - (2.0 / 24.0);
+
+    try {
+      // Moon horizontal parallax ~0.95°, use -0.125° for upper limb with refraction
+      const double horizonAlt = -0.125;
+      for (int i = 0; i < 60; i++) { // scan 30 hours
+        double alt1 = getMoonAltitude(current, lat, lon);
+        double alt2 = getMoonAltitude(current + step, lat, lon);
+        if (alt1 < horizonAlt && alt2 >= horizonAlt && riseTime < 0) {
+          double l = current, h = current + step;
+          for (int j = 0; j < 20; j++) {
+            double m = (l + h) / 2;
+            if (getMoonAltitude(m, lat, lon) < horizonAlt) { l = m; } else { h = m; }
+          }
+          riseTime = h;
+        }
+        if (alt1 > horizonAlt && alt2 <= horizonAlt && setTime < 0) {
+          double l = current, h = current + step;
+          for (int j = 0; j < 20; j++) {
+            double m = (l + h) / 2;
+            if (getMoonAltitude(m, lat, lon) > horizonAlt) { l = m; } else { h = m; }
+          }
+          setTime = h;
+        }
+        current += step;
+      }
+    } catch (_) {}
+    return [riseTime, setTime];
+  }
+
   static double ayanamsaLahiri(double jd) {
     Sweph.swe_set_sid_mode(SiderealMode.SE_SIDM_LAHIRI);
     return Sweph.swe_get_ayanamsa(jd);

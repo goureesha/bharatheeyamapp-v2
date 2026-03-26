@@ -33,6 +33,10 @@ class _PanchangaScreenState extends State<PanchangaScreen> {
   // Events for current selected day
   List<AstroEvent> _currentEvents = [];
 
+  // Moonrise/Moonset
+  String _moonrise = '';
+  String _moonset = '';
+
   // Debounce timer for month-change swipe
   Timer? _monthDebounce;
 
@@ -79,9 +83,23 @@ class _PanchangaScreenState extends State<PanchangaScreen> {
         final events = FestivalCacheService.getEventsForDate(_selectedDate);
         // If cache miss, compute from panchang
         final finalEvents = events.isNotEmpty ? events : EventCalculator.getEventsForPanchang(result.panchang);
+
+        // Compute moonrise/moonset
+        String mr = '', ms = '';
+        try {
+          final moonTimes = Ephemeris.findMoonriseSetForDate(
+            _selectedDate.year, _selectedDate.month, _selectedDate.day,
+            _lat, _lon, tzOffset: LocationService.tzOffset,
+          );
+          if (moonTimes[0] > 0) mr = formatTimeFromJd(moonTimes[0], tzOffset: LocationService.tzOffset);
+          if (moonTimes[1] > 0) ms = formatTimeFromJd(moonTimes[1], tzOffset: LocationService.tzOffset);
+        } catch (_) {}
+
         setState(() {
           _panchang = result.panchang;
           _currentEvents = finalEvents;
+          _moonrise = mr.isNotEmpty ? mr : 'N/A';
+          _moonset = ms.isNotEmpty ? ms : 'N/A';
           _loading = false;
         });
       } else {
@@ -431,6 +449,8 @@ class _PanchangaScreenState extends State<PanchangaScreen> {
                         _tableRow(['ಸೌರ ಮಾಸ ಗತ ದಿನ', _panchang!.souraMasaGataDina]),
                         _tableRow(['ಸೂರ್ಯೋದಯ', _panchang!.sunrise]),
                         _tableRow(['ಸೂರ್ಯಾಸ್ತ', _panchang!.sunset]),
+                        _tableRow(['ಚಂದ್ರೋದಯ', _moonrise]),
+                        _tableRow(['ಚಂದ್ರಾಸ್ತ', _moonset]),
                         _tableRow(['ಹಗಲಿನ ಪ್ರಮಾಣ', _panchang!.divamana]),
                         _tableRow(['ರಾತ್ರಿಯ ಪ್ರಮಾಣ', _panchang!.ratrimana]),
                         _tableRow(['ಪರಮ ಘಟಿ', _panchang!.paramaGhati]),
@@ -438,6 +458,9 @@ class _PanchangaScreenState extends State<PanchangaScreen> {
                         _tableRow(['ಅಮೃತ ಪ್ರಘಟಿ', _panchang!.amrutaPraghati]),
                       ]),
                     ),
+
+                    // ═══ Day Muhurtas ═══
+                    _buildMuhurtaCard(),
 
                     // ═══ Rahu Kala / Yamaganda / Gulika ═══
                     _buildKalaCard(),
@@ -462,6 +485,90 @@ class _PanchangaScreenState extends State<PanchangaScreen> {
 
         ],
       ),
+    );
+  }
+
+  // ─── Day Muhurtas (15 divisions of daytime) ───
+  // Traditional names and nature: S=Shubha, A=Ashubha, M=Madhyama
+  static const _muhurtaNames = [
+    {'name': 'ರುದ್ರ', 'nameEn': 'Rudra', 'nature': 'A'},
+    {'name': 'ಅಹಿ', 'nameEn': 'Ahi', 'nature': 'A'},
+    {'name': 'ಮಿತ್ರ', 'nameEn': 'Mitra', 'nature': 'S'},
+    {'name': 'ಪಿತ್ರು', 'nameEn': 'Pitru', 'nature': 'A'},
+    {'name': 'ವಸು', 'nameEn': 'Vasu', 'nature': 'S'},
+    {'name': 'ವಾರಾಹ', 'nameEn': 'Varaha', 'nature': 'S'},
+    {'name': 'ವಿಶ್ವೇದೇವ', 'nameEn': 'Vishwedeva', 'nature': 'S'},
+    {'name': 'ವಿಧಿ', 'nameEn': 'Vidhi', 'nature': 'M'},
+    {'name': 'ಸತ್ಮುಖಿ', 'nameEn': 'Satmukhi', 'nature': 'S'},
+    {'name': 'ಪುರುಹೂತ', 'nameEn': 'Puruhuta', 'nature': 'A'},
+    {'name': 'ವಾಹಿನಿ', 'nameEn': 'Vahini', 'nature': 'A'},
+    {'name': 'ನಕ್ತನಕರ', 'nameEn': 'Naktanakara', 'nature': 'M'},
+    {'name': 'ವರುಣ', 'nameEn': 'Varuna', 'nature': 'S'},
+    {'name': 'ಅರ್ಯಮ', 'nameEn': 'Aryama', 'nature': 'S'},
+    {'name': 'ಭಗ', 'nameEn': 'Bhaga', 'nature': 'A'},
+  ];
+
+  Widget _buildMuhurtaCard() {
+    if (_panchang == null) return const SizedBox();
+    final sr = _parseTimeToMinutes(_panchang!.sunrise);
+    final ss = _parseTimeToMinutes(_panchang!.sunset);
+    final duration = (ss - sr) / 15.0;
+
+    return AppCard(
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Row(children: [
+          Icon(Icons.schedule, color: const Color(0xFF5B2C6F), size: 22),
+          const SizedBox(width: 8),
+          Text('ಹಗಲಿನ ಮುಹೂರ್ತ / Day Muhurtas', style: TextStyle(
+            fontWeight: FontWeight.w900, fontSize: 14, color: const Color(0xFF5B2C6F))),
+        ]),
+        const SizedBox(height: 6),
+        Text('ದಿನವನ್ನು 15 ಸಮಭಾಗಗಳಾಗಿ ವಿಂಗಡಿಸಿದೆ', style: TextStyle(color: kMuted, fontSize: 11)),
+        const SizedBox(height: 10),
+        ...List.generate(15, (i) {
+          final item = _muhurtaNames[i];
+          final start = sr + i * duration;
+          final end = start + duration;
+          final nature = item['nature']!;
+          final color = nature == 'S' ? Colors.green : nature == 'A' ? Colors.red : kOrange;
+          final label = nature == 'S' ? 'ಶುಭ' : nature == 'A' ? 'ಅಶುಭ' : 'ಮಧ್ಯಮ';
+
+          // Check if current time falls in this muhurta
+          final now = DateTime.now();
+          final nowMins = now.hour * 60.0 + now.minute;
+          final isCurrent = _selectedDate.year == now.year && _selectedDate.month == now.month
+              && _selectedDate.day == now.day && nowMins >= start && nowMins < end;
+
+          return Container(
+            margin: const EdgeInsets.symmetric(vertical: 2),
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+            decoration: BoxDecoration(
+              color: isCurrent ? color.withOpacity(0.12) : color.withOpacity(0.03),
+              borderRadius: BorderRadius.circular(6),
+              border: Border.all(color: isCurrent ? color.withOpacity(0.5) : color.withOpacity(0.1)),
+            ),
+            child: Row(children: [
+              SizedBox(width: 20, child: Text('${i + 1}', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: kMuted))),
+              Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                Text(item['name']!, style: TextStyle(fontWeight: FontWeight.w700, fontSize: 12, color: kText)),
+                Text(item['nameEn']!, style: TextStyle(fontSize: 9, color: kMuted)),
+              ])),
+              Text('${_minutesToTimeStr(start)} - ${_minutesToTimeStr(end)}',
+                style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: kMuted)),
+              const SizedBox(width: 8),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                decoration: BoxDecoration(color: color.withOpacity(0.12), borderRadius: BorderRadius.circular(4)),
+                child: Text(label, style: TextStyle(fontSize: 9, fontWeight: FontWeight.w700, color: color)),
+              ),
+              if (isCurrent) ...[
+                const SizedBox(width: 4),
+                Icon(Icons.play_arrow, size: 14, color: color),
+              ],
+            ]),
+          );
+        }),
+      ]),
     );
   }
 
