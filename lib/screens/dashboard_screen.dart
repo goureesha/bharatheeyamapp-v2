@@ -12,15 +12,17 @@ import '../widgets/planet_detail_sheet.dart';
 import '../widgets/dasha_widget.dart';
 import '../widgets/shadbala_widget.dart';
 import '../widgets/ashtakavarga_widget.dart';
-
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 import '../services/storage_service.dart';
 import '../services/subscription_service.dart';
 import '../services/google_auth_service.dart';
 import '../services/sheets_service.dart';
 import '../services/docs_service.dart';
 import '../services/calendar_service.dart';
+import '../services/location_service.dart';
+import '../constants/places.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-
 
 class DashboardScreen extends StatefulWidget {
   final KundaliResult result;
@@ -232,14 +234,48 @@ class _DashboardScreenState extends State<DashboardScreen>
   /// Show form to add a brand new person
   void _showNewPersonForm() {
     final nameCtrl = TextEditingController();
-    final placeCtrl = TextEditingController();
-    final latCtrl = TextEditingController(text: '14.98');
-    final lonCtrl = TextEditingController(text: '74.73');
-    final tzCtrl = TextEditingController(text: '5.5');
-    DateTime dob = DateTime(1990, 1, 1);
-    int hour = 12;
-    int minute = 0;
-    String ampm = 'PM';
+    final placeCtrl = TextEditingController(text: LocationService.place);
+    final latCtrl = TextEditingController(text: LocationService.lat.toStringAsFixed(4));
+    final lonCtrl = TextEditingController(text: LocationService.lon.toStringAsFixed(4));
+    final tzCtrl = TextEditingController(text: '${LocationService.tzOffset >= 0 ? '+' : ''}${LocationService.tzOffset}');
+    
+    DateTime dob = DateTime.now();
+    int hour = dob.hour % 12 == 0 ? 12 : dob.hour % 12;
+    int minute = dob.minute;
+    String ampm = dob.hour >= 12 ? 'PM' : 'AM';
+    
+    bool geoLoading = false;
+    String geoStatus = '';
+
+    Future<void> performGeocode(String placeName, Function setS) async {
+      if (placeName.trim().isEmpty) return;
+      setS(() { geoLoading = true; geoStatus = ''; });
+      try {
+        final q = Uri.encodeComponent(placeName.trim());
+        final url = Uri.parse('https://nominatim.openstreetmap.org/search?q=$q&format=json&limit=1');
+        final resp = await http.get(url, headers: {'User-Agent': 'BharatheeyamApp/1.0'}).timeout(const Duration(seconds: 10));
+        if (resp.statusCode == 200) {
+          final data = jsonDecode(resp.body) as List;
+          if (data.isEmpty) {
+            setS(() => geoStatus = 'ಸ್ಥಳ ಕಂಡುಬಂದಿಲ್ಲ.');
+          } else {
+            final lat = double.parse(data[0]['lat']);
+            final lon = double.parse(data[0]['lon']);
+            final autoTz = getTimezoneForPlace(placeName.trim(), lon);
+            setS(() {
+              placeCtrl.text = placeName.trim();
+              latCtrl.text = lat.toStringAsFixed(4);
+              lonCtrl.text = lon.toStringAsFixed(4);
+              tzCtrl.text = '${autoTz >= 0 ? '+' : ''}$autoTz';
+              geoStatus = '📍 ${data[0]['display_name']} (TZ: ${autoTz >= 0 ? '+' : ''}$autoTz)';
+            });
+          }
+        }
+      } catch (_) {
+        setS(() => geoStatus = 'ಸ್ಥಳ ಸಂಪರ್ಕ ದೋಷ. ನೇರವಾಗಿ ಅಕ್ಷಾಂಶ/ರೇಖಾಂಶ ನಮೂದಿಸಿ.');
+      }
+      setS(() => geoLoading = false);
+    }
 
     showDialog(
       context: context,
@@ -250,60 +286,158 @@ class _DashboardScreenState extends State<DashboardScreen>
           content: SingleChildScrollView(
             child: Column(
               mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                TextField(controller: nameCtrl, decoration: InputDecoration(labelText: 'ಹೆಸರು')),
-                const SizedBox(height: 8),
-                TextField(controller: placeCtrl, decoration: InputDecoration(labelText: 'ಸ್ಥಳ')),
-                const SizedBox(height: 8),
-                Row(children: [
-                  Expanded(
-                    child: InkWell(
-                      onTap: () async {
-                        final d = await showDatePicker(
-                          context: ctx2,
-                          initialDate: dob,
-                          firstDate: DateTime(1900),
-                          lastDate: DateTime.now(),
-                        );
-                        if (d != null) setS(() => dob = d);
-                      },
-                      child: InputDecorator(
-                        decoration: InputDecoration(labelText: 'ದಿನಾಂಕ'),
-                        child: Text('${dob.day}/${dob.month}/${dob.year}', style: TextStyle(color: kText)),
-                      ),
-                    ),
+                TextField(controller: nameCtrl, decoration: InputDecoration(labelText: 'ಹೆಸರು', prefixIcon: Icon(Icons.person_outline))),
+                const SizedBox(height: 14),
+
+                // Date picker
+                GestureDetector(
+                  onTap: () async {
+                    final d = await showDatePicker(
+                      context: ctx2,
+                      initialDate: dob,
+                      firstDate: DateTime(1800),
+                      lastDate: DateTime(2100),
+                      builder: (c, child) => Theme(data: Theme.of(c).copyWith(colorScheme: ColorScheme.light(primary: kPurple2)), child: child!),
+                    );
+                    if (d != null) setS(() => dob = d);
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                    decoration: BoxDecoration(color: kCard, border: Border.all(color: kBorder), borderRadius: BorderRadius.circular(12)),
+                    child: Row(children: [
+                      Icon(Icons.calendar_today, color: kMuted),
+                      const SizedBox(width: 10),
+                      Text('ದಿನಾಂಕ: ${dob.day.toString().padLeft(2,'0')}-${dob.month.toString().padLeft(2,'0')}-${dob.year}', style: TextStyle(fontSize: 14, color: kText)),
+                    ]),
                   ),
-                ]),
-                const SizedBox(height: 8),
+                ),
+                const SizedBox(height: 14),
+
+                // Time picker
+                GestureDetector(
+                  onTap: () async {
+                    final picked = await showTimePicker(
+                      context: ctx2,
+                      initialTime: TimeOfDay(
+                        hour: ampm == 'PM' && hour != 12 ? hour + 12 : (ampm == 'AM' && hour == 12 ? 0 : hour),
+                        minute: minute,
+                      ),
+                      builder: (c, child) => Theme(data: Theme.of(c).copyWith(colorScheme: ColorScheme.light(primary: kPurple2)), child: child!),
+                    );
+                    if (picked != null) {
+                      setS(() {
+                        final h24 = picked.hour;
+                        ampm = h24 >= 12 ? 'PM' : 'AM';
+                        hour = h24 % 12 == 0 ? 12 : h24 % 12;
+                        minute = picked.minute;
+                      });
+                    }
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                    decoration: BoxDecoration(color: kCard, border: Border.all(color: kBorder), borderRadius: BorderRadius.circular(12)),
+                    child: Row(children: [
+                      Icon(Icons.access_time, color: kMuted),
+                      const SizedBox(width: 10),
+                      Text('ಸಮಯ: ${hour.toString().padLeft(2,'0')}:${minute.toString().padLeft(2,'0')} $ampm', style: TextStyle(fontSize: 14, color: kText)),
+                    ]),
+                  ),
+                ),
+                const SizedBox(height: 14),
+
+                // Searchable Place Selector
+                Autocomplete<String>(
+                  optionsBuilder: (TextEditingValue textEditingValue) {
+                    if (textEditingValue.text.isEmpty) {
+                      return offlinePlaces.keys.take(15);
+                    }
+                    final query = textEditingValue.text.toLowerCase();
+                    return offlinePlaces.keys.where((name) => name.toLowerCase().contains(query));
+                  },
+                  fieldViewBuilder: (context, textEditingController, focusNode, onFieldSubmitted) {
+                    // Start with the Place populated, unlike input_screen which manages it via state
+                    if (placeCtrl.text.isNotEmpty && textEditingController.text.isEmpty) {
+                      textEditingController.text = placeCtrl.text;
+                    }
+                    return TextField(
+                      controller: textEditingController,
+                      focusNode: focusNode,
+                      decoration: InputDecoration(
+                        labelText: 'ಊರು ಹುಡುಕಿ',
+                        prefixIcon: Icon(Icons.search),
+                        suffixIcon: geoLoading
+                          ? Padding(padding: const EdgeInsets.all(12), child: SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2)))
+                          : IconButton(
+                              icon: Icon(Icons.my_location, color: kTeal),
+                              onPressed: () {
+                                placeCtrl.text = textEditingController.text;
+                                performGeocode(textEditingController.text, setS);
+                              },
+                            ),
+                      ),
+                      onSubmitted: (_) {
+                        placeCtrl.text = textEditingController.text;
+                        performGeocode(textEditingController.text, setS);
+                      },
+                      onChanged: (val) {
+                        placeCtrl.text = val;
+                      },
+                    );
+                  },
+                  onSelected: (String selection) {
+                    if (offlinePlaces.containsKey(selection)) {
+                      final coords = offlinePlaces[selection]!;
+                      final autoTz = getTimezoneForPlace(selection, coords[1]);
+                      setS(() {
+                        placeCtrl.text = selection;
+                        latCtrl.text = coords[0].toStringAsFixed(4);
+                        lonCtrl.text = coords[1].toStringAsFixed(4);
+                        tzCtrl.text = '${autoTz >= 0 ? '+' : ''}$autoTz';
+                        geoStatus = '📍 $selection (TZ: ${autoTz >= 0 ? '+' : ''}$autoTz)';
+                      });
+                    }
+                  },
+                  optionsViewBuilder: (context, onSelected, options) {
+                    return Align(
+                      alignment: Alignment.topLeft,
+                      child: Material(
+                        elevation: 4.0,
+                        borderRadius: BorderRadius.circular(8),
+                        child: ConstrainedBox(
+                          constraints: BoxConstraints(maxHeight: 250, maxWidth: MediaQuery.of(context).size.width - 64),
+                          child: ListView.builder(
+                            padding: EdgeInsets.zero,
+                            itemCount: options.length,
+                            shrinkWrap: true,
+                            itemBuilder: (context, index) {
+                              final option = options.elementAt(index);
+                              return ListTile(
+                                dense: true,
+                                leading: Icon(Icons.location_on, size: 18, color: kPurple2),
+                                title: Text(option, style: TextStyle(fontSize: 13)),
+                                onTap: () => onSelected(option),
+                              );
+                            },
+                          ),
+                        ),
+                      ),
+                    );
+                  },
+                ),
+                if (geoStatus.isNotEmpty) ...[
+                  const SizedBox(height: 6),
+                  Text(geoStatus, style: TextStyle(fontSize: 12, color: kGreen)),
+                ],
+                const SizedBox(height: 14),
+
                 Row(children: [
-                  Expanded(child: DropdownButtonFormField<int>(
-                    value: hour,
-                    items: List.generate(12, (i) => DropdownMenuItem(value: i + 1, child: Text('${i+1}'))),
-                    onChanged: (v) => setS(() => hour = v!),
-                    decoration: InputDecoration(labelText: 'ಗಂಟೆ'),
-                  )),
+                  Expanded(child: TextField(controller: latCtrl, decoration: const InputDecoration(labelText: 'ಅಕ್ಷಾಂಶ', isDense: true), keyboardType: const TextInputType.numberWithOptions(decimal: true, signed: true))),
                   const SizedBox(width: 8),
-                  Expanded(child: DropdownButtonFormField<int>(
-                    value: minute,
-                    items: List.generate(60, (i) => DropdownMenuItem(value: i, child: Text('$i'.padLeft(2, '0')))),
-                    onChanged: (v) => setS(() => minute = v!),
-                    decoration: InputDecoration(labelText: 'ನಿಮಿಷ'),
-                  )),
+                  Expanded(child: TextField(controller: lonCtrl, decoration: const InputDecoration(labelText: 'ರೇಖಾಂಶ', isDense: true), keyboardType: const TextInputType.numberWithOptions(decimal: true, signed: true))),
                   const SizedBox(width: 8),
-                  Expanded(child: DropdownButtonFormField<String>(
-                    value: ampm,
-                    items: ['AM', 'PM'].map((a) => DropdownMenuItem(value: a, child: Text(a))).toList(),
-                    onChanged: (v) => setS(() => ampm = v!),
-                    decoration: InputDecoration(labelText: 'AM/PM'),
-                  )),
-                ]),
-                const SizedBox(height: 8),
-                Row(children: [
-                  Expanded(child: TextField(controller: latCtrl, decoration: InputDecoration(labelText: 'ಅಕ್ಷಾಂಶ'), keyboardType: TextInputType.number)),
-                  const SizedBox(width: 8),
-                  Expanded(child: TextField(controller: lonCtrl, decoration: InputDecoration(labelText: 'ರೇಖಾಂಶ'), keyboardType: TextInputType.number)),
-                  const SizedBox(width: 8),
-                  Expanded(child: TextField(controller: tzCtrl, decoration: InputDecoration(labelText: 'TZ'), keyboardType: TextInputType.number)),
+                  Expanded(child: TextField(controller: tzCtrl, decoration: const InputDecoration(labelText: 'TZ', isDense: true), keyboardType: const TextInputType.numberWithOptions(decimal: true, signed: true))),
                 ]),
               ],
             ),
