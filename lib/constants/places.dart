@@ -310,14 +310,18 @@ double getTimezoneForPlace(String placeName, double lon) {
   if (_knownTimezones.containsKey(placeName)) {
     return _knownTimezones[placeName]!;
   }
-  // All Indian places (Karnataka + other Indian cities) are IST
-  if (karnatakaPlaces.containsKey(placeName) || otherPlaces.containsKey(placeName)) {
-    // Check if it's international by looking at known tz map
-    if (!_knownTimezones.containsKey(placeName)) {
-      // Indian city
-      return 5.5;
-    }
+  
+  // All known internal offline places (Karnataka + Indian cities) are IST
+  if (offlinePlaces.containsKey(placeName) && !_knownTimezones.containsKey(placeName)) {
+    return 5.5;
   }
+  
+  // For online Nominatim searches, check if the place is in India
+  final lowerName = placeName.toLowerCase();
+  if (lowerName.contains('india') || lowerName.contains('ಭಾರತ')) {
+    return 5.5;
+  }
+  
   // Unknown place: estimate from longitude, rounded to nearest 0.5
   return (lon / 15.0 * 2).round() / 2.0;
 }
