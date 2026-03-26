@@ -459,6 +459,9 @@ class _PanchangaScreenState extends State<PanchangaScreen> {
                       ]),
                     ),
 
+                    // ═══ Special Muhurta Timings ═══
+                    _buildSpecialMuhurtaCard(),
+
                     // ═══ Day Muhurtas ═══
                     _buildMuhurtaCard(),
 
@@ -565,6 +568,120 @@ class _PanchangaScreenState extends State<PanchangaScreen> {
                 const SizedBox(width: 4),
                 Icon(Icons.play_arrow, size: 14, color: color),
               ],
+            ]),
+          );
+        }),
+      ]),
+    );
+  }
+
+  // ─── Special Muhurta Timings (Abhijit, Durmuhurta, Amrita, Varjyam) ───
+  Widget _buildSpecialMuhurtaCard() {
+    if (_panchang == null) return const SizedBox();
+    final sr = _parseTimeToMinutes(_panchang!.sunrise);
+    final ss = _parseTimeToMinutes(_panchang!.sunset);
+    final dayLen = ss - sr;
+    final muhurtaDur = dayLen / 15.0; // one muhurta
+
+    final timings = <Map<String, dynamic>>[];
+
+    // Abhijit Muhurta — midday muhurta (8th muhurta, around solar noon)
+    // Traditionally the 8th muhurta from sunrise (index 7)
+    final abhijitStart = sr + 7 * muhurtaDur;
+    final abhijitEnd = abhijitStart + muhurtaDur;
+    timings.add({
+      'name': 'ಅಭಿಜಿತ್ ಮುಹೂರ್ತ', 'nameEn': 'Abhijit Muhurta',
+      'start': _minutesToTimeStr(abhijitStart), 'end': _minutesToTimeStr(abhijitEnd),
+      'icon': Icons.star, 'color': Colors.green,
+      'desc': 'ಅತ್ಯಂತ ಶುಭ ಮುಹೂರ್ತ — Most auspicious',
+    });
+
+    // Durmuhurta 1 — varies by weekday
+    // Sun: 10th, Mon: 7th, Tue: 4th, Wed: 11th, Thu: 6th, Fri: 3rd, Sat: 1st
+    final durMuhurta1Idx = const [9, 6, 3, 10, 5, 2, 0][_weekday];
+    final dur1Start = sr + durMuhurta1Idx * muhurtaDur;
+    final dur1End = dur1Start + muhurtaDur;
+    timings.add({
+      'name': 'ದುರ್ಮುಹೂರ್ತ ೧', 'nameEn': 'Durmuhurta 1',
+      'start': _minutesToTimeStr(dur1Start), 'end': _minutesToTimeStr(dur1End),
+      'icon': Icons.dangerous, 'color': Colors.red,
+      'desc': 'ಅಶುಭ ಸಮಯ — Inauspicious',
+    });
+
+    // Durmuhurta 2 — second inauspicious window
+    // Sun: 14th, Mon: 12th, Tue: 8th, Wed: 5th, Thu: 13th, Fri: 9th, Sat: 15th(night 1st)
+    final durMuhurta2Idx = const [13, 11, 7, 4, 12, 8, 14][_weekday];
+    final dur2Start = sr + durMuhurta2Idx * muhurtaDur;
+    final dur2End = dur2Start + muhurtaDur;
+    timings.add({
+      'name': 'ದುರ್ಮುಹೂರ್ತ ೨', 'nameEn': 'Durmuhurta 2',
+      'start': _minutesToTimeStr(dur2Start % (24 * 60)), 'end': _minutesToTimeStr(dur2End % (24 * 60)),
+      'icon': Icons.dangerous, 'color': Colors.red,
+      'desc': 'ಅಶುಭ ಸಮಯ — Inauspicious',
+    });
+
+    // Amrita Kala — nakshatra-based auspicious time
+    // Each nakshatra has a specific ghati offset from sunrise for amrita
+    final nakIdx = _panchang!.nakshatraIndex;
+    final amritaGhatis = const [
+      1, 6, 11, 16, 21, 26, 4, 9, 14, 19, 24, 2, 7, 12, 17, 22, 27, 5, 10, 15, 20, 25, 3, 8, 13, 18, 23
+    ];
+    final amritaStartMins = sr + (amritaGhatis[nakIdx % 27] * dayLen / 30.0);
+    final amritaEndMins = amritaStartMins + (dayLen / 30.0); // 1 ghati duration
+    timings.add({
+      'name': 'ಅಮೃತ ಕಾಲ', 'nameEn': 'Amrita Kala',
+      'start': _minutesToTimeStr(amritaStartMins % (24 * 60)), 'end': _minutesToTimeStr(amritaEndMins % (24 * 60)),
+      'icon': Icons.water_drop, 'color': Colors.blue,
+      'desc': 'ಶುಭ ಕಾಲ — Auspicious period',
+    });
+
+    // Varjyam — nakshatra-based inauspicious time
+    final varjyaGhatis = const [
+      26, 22, 18, 14, 10, 6, 2, 25, 21, 17, 13, 9, 5, 1, 24, 20, 16, 12, 8, 4, 27, 23, 19, 15, 11, 7, 3
+    ];
+    final varjyaStartMins = sr + (varjyaGhatis[nakIdx % 27] * dayLen / 30.0);
+    final varjyaEndMins = varjyaStartMins + (dayLen / 30.0 * 1.6); // ~1.6 ghatis
+    timings.add({
+      'name': 'ವರ್ಜ್ಯ', 'nameEn': 'Varjyam',
+      'start': _minutesToTimeStr(varjyaStartMins % (24 * 60)), 'end': _minutesToTimeStr(varjyaEndMins % (24 * 60)),
+      'icon': Icons.block, 'color': Colors.orange,
+      'desc': 'ವರ್ಜ್ಯ ಕಾಲ — Avoid this period',
+    });
+
+    return AppCard(
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Row(children: [
+          Icon(Icons.access_alarm, color: kOrange, size: 22),
+          const SizedBox(width: 8),
+          Text('ಮುಹೂರ್ತ ಸಮಯ / Muhurta Timings', style: TextStyle(
+            fontWeight: FontWeight.w900, fontSize: 14, color: kOrange)),
+        ]),
+        const SizedBox(height: 6),
+        Text('ಅಭಿಜಿತ್, ದುರ್ಮುಹೂರ್ತ, ಅಮೃತ ಮತ್ತು ವರ್ಜ್ಯ ಕಾಲ', style: TextStyle(color: kMuted, fontSize: 11)),
+        const SizedBox(height: 10),
+        ...timings.map((t) {
+          final color = t['color'] as Color;
+          return Container(
+            margin: const EdgeInsets.symmetric(vertical: 3),
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+            decoration: BoxDecoration(
+              color: color.withOpacity(0.06),
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: color.withOpacity(0.2)),
+            ),
+            child: Row(children: [
+              Icon(t['icon'] as IconData, color: color, size: 20),
+              const SizedBox(width: 10),
+              Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                Text(t['name'], style: TextStyle(fontWeight: FontWeight.w800, fontSize: 13, color: kText)),
+                Text(t['desc'], style: TextStyle(fontSize: 10, color: kMuted)),
+              ])),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(color: color.withOpacity(0.1), borderRadius: BorderRadius.circular(6)),
+                child: Text('${t['start']} - ${t['end']}',
+                  style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: color)),
+              ),
             ]),
           );
         }),

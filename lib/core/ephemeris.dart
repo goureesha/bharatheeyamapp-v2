@@ -142,29 +142,39 @@ class Ephemeris {
   /// Returns [moonriseJd, moonsetJd]. Either may be -1 if moon doesn't rise/set on that day.
   static List<double> findMoonriseSetForDate(int year, int month, int day, double lat, double lon, {double tzOffset = 5.5}) {
     final jdStart = Sweph.swe_julday(year, month, day, 0.0, CalendarType.SE_GREG_CAL);
+    // Scan exactly from local midnight to next local midnight (24h)
     final localMidnightUt = jdStart - (tzOffset / 24.0);
+    final localNextMidnightUt = localMidnightUt + 1.0;
     double riseTime = -1;
     double setTime = -1;
-    double step = 1.0 / 48.0; // 30-min steps (Moon moves faster than Sun)
-    double current = localMidnightUt - (2.0 / 24.0);
+    // 10-minute steps (Moon moves ~0.5°/hr, needs finer resolution than Sun)
+    double step = 1.0 / 144.0;
+    double current = localMidnightUt;
 
     try {
-      // Moon horizontal parallax ~0.95°, use -0.125° for upper limb with refraction
-      const double horizonAlt = -0.125;
-      for (int i = 0; i < 60; i++) { // scan 30 hours
+      // Moon apparent rise/set altitude:
+      // Standard refraction correction:  +0.5667°
+      // Moon mean semi-diameter:          +0.2725° (we want upper limb)
+      // Moon mean horizontal parallax:    -0.9507° (lowers geometric alt needed)
+      // Net: 0.5667 + 0.2725 - 0.9507 ≈ -0.1115°
+      // Simplified: use ~-0.1° threshold
+      const double horizonAlt = -0.1;
+      while (current < localNextMidnightUt) {
         double alt1 = getMoonAltitude(current, lat, lon);
         double alt2 = getMoonAltitude(current + step, lat, lon);
+        // Moonrise: altitude crosses from below to above horizon
         if (alt1 < horizonAlt && alt2 >= horizonAlt && riseTime < 0) {
           double l = current, h = current + step;
-          for (int j = 0; j < 20; j++) {
+          for (int j = 0; j < 24; j++) {
             double m = (l + h) / 2;
             if (getMoonAltitude(m, lat, lon) < horizonAlt) { l = m; } else { h = m; }
           }
           riseTime = h;
         }
+        // Moonset: altitude crosses from above to below horizon
         if (alt1 > horizonAlt && alt2 <= horizonAlt && setTime < 0) {
           double l = current, h = current + step;
-          for (int j = 0; j < 20; j++) {
+          for (int j = 0; j < 24; j++) {
             double m = (l + h) / 2;
             if (getMoonAltitude(m, lat, lon) > horizonAlt) { l = m; } else { h = m; }
           }
