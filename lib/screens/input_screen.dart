@@ -136,9 +136,10 @@ class _InputScreenState extends State<InputScreen> {
             _placeCtrl.text = placeName.trim();
             _latCtrl.text = lat.toStringAsFixed(4);
             _lonCtrl.text = lon.toStringAsFixed(4);
-            final autoTz = getTimezoneForPlace(placeName.trim(), lon);
+            final displayName = data[0]['display_name'] as String;
+            final autoTz = getTimezoneForPlace(displayName, lon);
             _tzCtrl.text = '${autoTz >= 0 ? '+' : ''}$autoTz';
-            _geoStatus = '📍 ${data[0]['display_name']} (TZ: ${autoTz >= 0 ? '+' : ''}$autoTz)';
+            _geoStatus = '📍 $displayName (TZ: ${autoTz >= 0 ? '+' : ''}$autoTz)';
           });
         } else {
           // Multiple results — show disambiguation dialog

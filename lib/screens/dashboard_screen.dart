@@ -261,7 +261,8 @@ class _DashboardScreenState extends State<DashboardScreen>
           } else {
             final lat = double.parse(data[0]['lat']);
             final lon = double.parse(data[0]['lon']);
-            final autoTz = getTimezoneForPlace(placeName.trim(), lon);
+            final displayName = data[0]['display_name'] as String;
+            final autoTz = getTimezoneForPlace(displayName, lon);
             setS(() {
               placeCtrl.text = placeName.trim();
               latCtrl.text = lat.toStringAsFixed(4);

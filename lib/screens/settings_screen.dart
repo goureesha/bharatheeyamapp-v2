@@ -43,7 +43,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
         } else {
           final lat = double.parse(data[0]['lat']);
           final lon = double.parse(data[0]['lon']);
-          final autoTz = getTimezoneForPlace(placeName.trim(), lon);
+          final displayName = data[0]['display_name'] as String;
+          final autoTz = getTimezoneForPlace(displayName, lon);
           await LocationService.setLocation(placeName.trim(), lat, lon, autoTz);
           setState(() {
             _tzCtrl.text = '${autoTz >= 0 ? '+' : ''}$autoTz';
