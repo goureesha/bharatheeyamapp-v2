@@ -282,8 +282,13 @@ class AstroCalculator {
       factors = [10, 6, 2, 26, 22, 18, 14];
     }
     
+    // Mandi = END of Saturn's portion (Gulika = start)
+    // Each portion = duration / 8
+    // Gulika starts at: startBase + (duration * factor / 30.0)
+    // Mandi  rises at: Gulika + one portion = startBase + (duration * (factor + 30.0/8.0) / 30.0)
     int factor = factors[vedicWday];
-    double mandiJd = startBase + (duration * factor / 30.0);
+    double portionGhatis = 30.0 / 8.0; // = 3.75 ghatis per portion
+    double mandiJd = startBase + (duration * (factor + portionGhatis) / 30.0);
     
     return [mandiJd, isNight, panchSr, vedicWday, startBase, srCivil, ssCivil];
   }
