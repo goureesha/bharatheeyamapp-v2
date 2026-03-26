@@ -44,7 +44,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           final lat = double.parse(data[0]['lat']);
           final lon = double.parse(data[0]['lon']);
           final displayName = data[0]['display_name'] as String;
-          final autoTz = getTimezoneForPlace(displayName, lon);
+          final autoTz = await getTimezoneForPlace(displayName, lat, lon);
           await LocationService.setLocation(placeName.trim(), lat, lon, autoTz);
           setState(() {
             _tzCtrl.text = '${autoTz >= 0 ? '+' : ''}$autoTz';
@@ -267,7 +267,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       onSelected: (String selection) async {
                         if (offlinePlaces.containsKey(selection)) {
                           final coords = offlinePlaces[selection]!;
-                          final autoTz = getTimezoneForPlace(selection, coords[1]);
+                          final autoTz = await getTimezoneForPlace(selection, coords[0], coords[1]);
                           _tzCtrl.text = '${autoTz >= 0 ? '+' : ''}$autoTz';
                           await LocationService.setLocation(selection, coords[0], coords[1], autoTz);
                           if (mounted) {

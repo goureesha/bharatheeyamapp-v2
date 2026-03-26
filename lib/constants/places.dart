@@ -1,5 +1,7 @@
 /// Comprehensive offline place database
 /// Karnataka Taluks + Major Indian cities + World capitals
+import 'dart:convert';
+import 'package:http/http.dart' as http;
 
 const Map<String, List<double>> karnatakaPlaces = {
   // ─── Bagalkot District ───
@@ -304,8 +306,8 @@ const Map<String, double> _knownTimezones = {
   'Kathmandu (Nepal)': 5.75,
 };
 
-/// Returns the timezone offset for a known place, or estimates it from longitude.
-double getTimezoneForPlace(String placeName, double lon) {
+/// Returns the timezone offset for a known place, or calculates it dynamically from latency constraints using TimeAPI.io
+Future<double> getTimezoneForPlace(String placeName, double lat, double lon) async {
   // Check known international timezones first
   if (_knownTimezones.containsKey(placeName)) {
     return _knownTimezones[placeName]!;
@@ -322,6 +324,21 @@ double getTimezoneForPlace(String placeName, double lon) {
     return 5.5;
   }
   
-  // Unknown place: estimate from longitude, rounded to nearest 0.5
+  // Dynmaic fetch strategy for accurate international offsets (e.g. Istanbul = +3)
+  try {
+    final url = Uri.parse('https://timeapi.io/api/TimeZone/coordinate?latitude=$lat&longitude=$lon');
+    final resp = await http.get(url).timeout(const Duration(seconds: 4));
+    if (resp.statusCode == 200) {
+      final data = jsonDecode(resp.body);
+      final seconds = data['currentUtcOffset']['seconds'];
+      if (seconds != null) {
+        return (seconds as int) / 3600.0;
+      }
+    }
+  } catch (_) {
+    // API failed, gracefully fallback to physical longitude
+  }
+  
+  // Unknown place and API failed: estimate from longitude, rounded to nearest 0.5
   return (lon / 15.0 * 2).round() / 2.0;
 }

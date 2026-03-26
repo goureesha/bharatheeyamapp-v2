@@ -262,7 +262,7 @@ class _DashboardScreenState extends State<DashboardScreen>
             final lat = double.parse(data[0]['lat']);
             final lon = double.parse(data[0]['lon']);
             final displayName = data[0]['display_name'] as String;
-            final autoTz = getTimezoneForPlace(displayName, lon);
+            final autoTz = await getTimezoneForPlace(displayName, lat, lon);
             setS(() {
               placeCtrl.text = placeName.trim();
               latCtrl.text = lat.toStringAsFixed(4);
@@ -388,9 +388,9 @@ class _DashboardScreenState extends State<DashboardScreen>
                     );
                   },
                   onSelected: (String selection) {
-                    if (offlinePlaces.containsKey(selection)) {
+                    if (offlinePlaces.containsKey(selection)) async {
                       final coords = offlinePlaces[selection]!;
-                      final autoTz = getTimezoneForPlace(selection, coords[1]);
+                      final autoTz = await getTimezoneForPlace(selection, coords[0], coords[1]);
                       setS(() {
                         placeCtrl.text = selection;
                         latCtrl.text = coords[0].toStringAsFixed(4);

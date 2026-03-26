@@ -137,7 +137,7 @@ class _InputScreenState extends State<InputScreen> {
             _latCtrl.text = lat.toStringAsFixed(4);
             _lonCtrl.text = lon.toStringAsFixed(4);
             final displayName = data[0]['display_name'] as String;
-            final autoTz = getTimezoneForPlace(displayName, lon);
+            final autoTz = await getTimezoneForPlace(displayName, lat, lon);
             _tzCtrl.text = '${autoTz >= 0 ? '+' : ''}$autoTz';
             _geoStatus = '📍 $displayName (TZ: ${autoTz >= 0 ? '+' : ''}$autoTz)';
           });
@@ -185,11 +185,11 @@ class _InputScreenState extends State<InputScreen> {
                       child: Icon(Icons.location_on, color: kPurple1, size: 20),
                     ),
                     title: Text(displayName, style: TextStyle(fontSize: 13), maxLines: 2, overflow: TextOverflow.ellipsis),
-                    onTap: () {
+                    onTap: () async {
                       Navigator.pop(ctx);
                       final lat = double.parse(place['lat']);
                       final lon = double.parse(place['lon']);
-                      final autoTz = getTimezoneForPlace(displayName, lon);
+                      final autoTz = await getTimezoneForPlace(displayName, lat, lon);
                       setState(() {
                         _latCtrl.text = lat.toStringAsFixed(4);
                         _lonCtrl.text = lon.toStringAsFixed(4);
@@ -555,10 +555,10 @@ class _InputScreenState extends State<InputScreen> {
                 },
               );
             },
-            onSelected: (String selection) {
+            onSelected: (String selection) async {
               if (offlinePlaces.containsKey(selection)) {
                 final coords = offlinePlaces[selection]!;
-                final autoTz = getTimezoneForPlace(selection, coords[1]);
+                final autoTz = await getTimezoneForPlace(selection, coords[0], coords[1]);
                 setState(() {
                   _placeCtrl.text = selection;
                   _latCtrl.text = coords[0].toStringAsFixed(4);
