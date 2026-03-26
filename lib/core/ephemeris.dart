@@ -71,6 +71,7 @@ class Ephemeris {
     double riseTime;
     double setTime;
     int steps;
+    double horizonAlt;
     
     if (tzOffset != null) {
       // International-compatible: anchor to local midnight
@@ -79,20 +80,23 @@ class Ephemeris {
       riseTime = localMidnightUt + 0.25;
       setTime = localMidnightUt + 0.75;
       steps = 30;
+      // Refraction-corrected mid-limb sunrise for Panchanga
+      horizonAlt = -0.5667; 
     } else {
-      // Original proven scan window (from Python port)
+      // Original proven scan window matching APK 20d9df4 (from Python port)
       scanStart = jdStart - 0.3;
       riseTime = jdStart + 0.25;
       setTime = jdStart + 0.75;
-      steps = 24;
+      steps = 30;
+      // True Geocentric Horizon Sunrise (0.0°) — "Shuddha Drigganitha" exact match
+      // This is what the old APK used when Mandi was reported as "perfect"
+      horizonAlt = 0.0;
     }
     
     double step = 1.0 / 24.0;
     double current = scanStart;
     
     try {
-      // Use -0.583° mid-limb refraction threshold (original known-good value)
-      const double horizonAlt = -0.583;
       for (int i = 0; i < steps; i++) {
         double alt1 = getAltitudeManual(current, lat, lon);
         double alt2 = getAltitudeManual(current + step, lat, lon);
