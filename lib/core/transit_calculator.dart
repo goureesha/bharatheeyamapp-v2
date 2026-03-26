@@ -95,7 +95,7 @@ class TransitCalculator {
          
          double orb = 0.0;
          switch(p) {
-            case 'Mars': orb = 15.0; break;
+            case 'Mars': orb = 17.0; break;
             case 'Mercury': orb = 11.0; break;
             case 'Jupiter': orb = 9.0; break;
             case 'Venus': orb = 6.6; break;
@@ -170,7 +170,7 @@ class TransitCalculator {
              if (distSun > 180) distSun = 360 - distSun;
              double orb = 0.0;
              switch(p) {
-                case 'Mars': orb = 15.0; break;
+                case 'Mars': orb = 17.0; break;
                 case 'Mercury': orb = 11.0; break;
                 case 'Jupiter': orb = 9.0; break;
                 case 'Venus': orb = 6.6; break;
