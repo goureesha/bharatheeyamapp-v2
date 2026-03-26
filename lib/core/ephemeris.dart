@@ -62,20 +62,38 @@ class Ephemeris {
     }
   }
 
-  static List<double> findSunriseSetForDate(int year, int month, int day, double lat, double lon, {double tzOffset = 5.5}) {
+  static List<double> findSunriseSetForDate(int year, int month, int day, double lat, double lon, {double? tzOffset}) {
     final jdStart = Sweph.swe_julday(year, month, day, 0.0, CalendarType.SE_GREG_CAL);
-    // Anchor scan to LOCAL midnight (convert local midnight to UT)
-    final localMidnightUt = jdStart - (tzOffset / 24.0);
-    double riseTime = localMidnightUt + 0.25; // fallback: 6 AM local
-    double setTime = localMidnightUt + 0.75;  // fallback: 6 PM local
+    
+    // Original known-good scan window (no tzOffset) — used by Mandi
+    // vs localMidnight-anchored scan (with tzOffset) — used by Panchanga
+    double scanStart;
+    double riseTime;
+    double setTime;
+    int steps;
+    
+    if (tzOffset != null) {
+      // International-compatible: anchor to local midnight
+      final localMidnightUt = jdStart - (tzOffset / 24.0);
+      scanStart = localMidnightUt - (2.0 / 24.0);
+      riseTime = localMidnightUt + 0.25;
+      setTime = localMidnightUt + 0.75;
+      steps = 30;
+    } else {
+      // Original proven scan window (from Python port)
+      scanStart = jdStart - 0.3;
+      riseTime = jdStart + 0.25;
+      setTime = jdStart + 0.75;
+      steps = 24;
+    }
+    
     double step = 1.0 / 24.0;
-    // Scan from 2h before local midnight to 28h after (30h total)
-    double current = localMidnightUt - (2.0 / 24.0);
+    double current = scanStart;
     
     try {
       // Use -0.583° mid-limb refraction threshold (original known-good value)
       const double horizonAlt = -0.583;
-      for (int i = 0; i < 30; i++) {
+      for (int i = 0; i < steps; i++) {
         double alt1 = getAltitudeManual(current, lat, lon);
         double alt2 = getAltitudeManual(current + step, lat, lon);
         if (alt1 < horizonAlt && alt2 >= horizonAlt) {

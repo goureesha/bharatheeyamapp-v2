@@ -217,7 +217,8 @@ class AstroCalculator {
   }
 
   // ─────────────────────────────────────────────
-  // MANDI calculation — exact Python port
+  // MANDI calculation — exact Python port (original known-good version)
+  // Uses findSunriseSetForDate WITHOUT tzOffset to match the proven scan window
   // ─────────────────────────────────────────────
   static List<dynamic> calcMandi({
     required double jdBirth,
@@ -230,7 +231,8 @@ class AstroCalculator {
     int m = dobObj.month;
     int d = dobObj.day;
     
-    List<double> srSs = Ephemeris.findSunriseSetForDate(y, m, d, lat, lon, tzOffset: tzOffset);
+    // Use original scan (no tzOffset) — this was the known-good approach
+    List<double> srSs = Ephemeris.findSunriseSetForDate(y, m, d, lat, lon);
     double srCivil = srSs[0];
     double ssCivil = srSs[1];
     
@@ -261,14 +263,14 @@ class AstroCalculator {
         vedicWday = (civilWeekdayIdx - 1) % 7;
         if (vedicWday < 0) vedicWday += 7;
         DateTime prevD = dobObj.subtract(const Duration(days: 1));
-        List<double> pSrSs = Ephemeris.findSunriseSetForDate(prevD.year, prevD.month, prevD.day, lat, lon, tzOffset: tzOffset);
+        List<double> pSrSs = Ephemeris.findSunriseSetForDate(prevD.year, prevD.month, prevD.day, lat, lon);
         startBase = pSrSs[1];
         duration = srCivil - pSrSs[1];
         panchSr = pSrSs[0];
       } else {
         vedicWday = civilWeekdayIdx;
         DateTime nextD = dobObj.add(const Duration(days: 1));
-        List<double> nSrSs = Ephemeris.findSunriseSetForDate(nextD.year, nextD.month, nextD.day, lat, lon, tzOffset: tzOffset);
+        List<double> nSrSs = Ephemeris.findSunriseSetForDate(nextD.year, nextD.month, nextD.day, lat, lon);
         startBase = ssCivil;
         duration = nSrSs[0] - ssCivil;
         panchSr = srCivil;
