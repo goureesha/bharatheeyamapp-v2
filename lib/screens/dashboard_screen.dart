@@ -448,9 +448,12 @@ class _DashboardScreenState extends State<DashboardScreen>
               style: ElevatedButton.styleFrom(backgroundColor: kPurple2),
               onPressed: () async {
                 final name = nameCtrl.text.trim();
-                if (name.isEmpty) return;
+                if (name.isEmpty) {
+                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('ದಯವಿಟ್ಟು ಹೆಸರನ್ನು ನಮೂದಿಸಿ (Please enter a name)'), backgroundColor: Colors.red));
+                  return;
+                }
                 Navigator.pop(ctx);
-                ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('⏳ $name ಕುಂಡಲಿ ಲೆಕ್ಕಿಸಲಾಗುತ್ತಿದೆ...')));
+                ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('⏳ $name ಕುಂಡಲಿ ಲೆಕ್ಕಿಸಲಾಗುತ್ತಿದೆ... (Calculating...)')));
                 try {
                   int h24 = hour;
                   if (ampm == 'PM' && h24 != 12) h24 += 12;
@@ -459,22 +462,26 @@ class _DashboardScreenState extends State<DashboardScreen>
                   final lat = double.tryParse(latCtrl.text) ?? 14.98;
                   final lon = double.tryParse(lonCtrl.text) ?? 74.73;
                   final tz = double.tryParse(tzCtrl.text) ?? 5.5;
+                  
                   final result = await AstroCalculator.calculate(
                     year: dob.year, month: dob.month, day: dob.day,
                     hourUtcOffset: tz, hour24: localHour,
                     lat: lat, lon: lon, ayanamsaMode: 'lahiri', trueNode: true,
                   );
+                  
                   if (result == null) {
-                    if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('❌ ಕುಂಡಲಿ ಲೆಕ್ಕ ವಿಫಲ'), backgroundColor: Colors.red));
+                    if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('❌ ಕುಂಡಲಿ ಲೆಕ್ಕ ವಿಫಲ (Calculation failed)'), backgroundColor: Colors.red));
                     return;
                   }
+                  
                   if (mounted) {
                     setState(() {
                       _extraPersons.add(_PersonEntry(name: name, result: result, dob: dob, hour: hour, minute: minute, ampm: ampm, lat: lat, lon: lon, place: placeCtrl.text));
                     });
+                    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('✅ $name ಕುಂಡಲಿ ಯಶಸ್ವಿಯಾಗಿ ರಚಿಸಲಾಗಿದೆ (Added successfully)'), backgroundColor: Colors.green));
                   }
                 } catch (e) {
-                  if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('❌ $e'), backgroundColor: Colors.red));
+                  if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('❌ ದೋಷ: $e'), backgroundColor: Colors.red));
                 }
               },
               child: Text('ಲೆಕ್ಕಿಸಿ', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w800)),
@@ -718,7 +725,15 @@ class _DashboardScreenState extends State<DashboardScreen>
       ..._extraPersons.map((p) => {'name': p.name, 'result': p.result, 'isPrimary': false}),
     ];
 
-    final chartSize = MediaQuery.of(context).size.width * 0.85;
+    final screenWidth = MediaQuery.of(context).size.width;
+    final isLandscape = MediaQuery.of(context).orientation == Orientation.landscape;
+    final isLargeScreen = screenWidth > 600 || isLandscape;
+
+    // Use 45% of screen width for 2 charts side-by-side on large screens, or 85% for single chart on mobile
+    final chartSize = isLargeScreen ? (screenWidth * 0.45).clamp(350.0, 550.0) : screenWidth * 0.85;
+    
+    // Scale text up slightly on bigger charts for readability
+    final textScale = isLargeScreen ? (chartSize / 350.0).clamp(1.1, 1.4) : 1.0;
 
     return SingleChildScrollView(
       child: Column(
@@ -740,7 +755,7 @@ class _DashboardScreenState extends State<DashboardScreen>
                       Icon(Icons.person, size: 18, color: isPrimary ? kPurple2 : kTeal),
                       const SizedBox(width: 6),
                       Expanded(
-                        child: Text(personName, style: TextStyle(fontSize: 15, fontWeight: FontWeight.w900, color: isPrimary ? kPurple2 : kTeal)),
+                        child: Text(personName, style: TextStyle(fontSize: 15 * textScale, fontWeight: FontWeight.w900, color: isPrimary ? kPurple2 : kTeal)),
                       ),
                       if (!isPrimary)
                         IconButton(
@@ -752,7 +767,7 @@ class _DashboardScreenState extends State<DashboardScreen>
                 ),
                 // Horizontal scrollable charts
                 SizedBox(
-                  height: chartSize + 30,
+                  height: chartSize + (40 * textScale),
                   child: ScrollConfiguration(
                     behavior: ScrollConfiguration.of(context).copyWith(
                       dragDevices: {
@@ -774,13 +789,14 @@ class _DashboardScreenState extends State<DashboardScreen>
                           padding: const EdgeInsets.symmetric(horizontal: 4),
                           child: Column(
                             children: [
-                              Text(label, style: TextStyle(fontSize: 15, fontWeight: FontWeight.w800, color: kPurple2)),
-                              const SizedBox(height: 4),
+                              Text(label, style: TextStyle(fontSize: 15 * textScale, fontWeight: FontWeight.w800, color: kPurple2)),
+                              SizedBox(height: 4 * textScale),
                               Expanded(
                                 child: KundaliChart(
                                   result: personResult,
                                   varga: chart['varga'] as int,
                                   isBhava: isBhavaChart,
+                                  textScale: textScale,
                                   showSphutas: false,
                                   centerLabel: label,
                                   onPlanetTap: isPrimary ? _showPlanetDetail : null,

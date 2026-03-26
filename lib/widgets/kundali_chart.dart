@@ -20,6 +20,7 @@ class KundaliChart extends StatelessWidget {
   final void Function(String planetName)? onPlanetLongPress;
   final String? selectedPlanet; // for bhava highlight
   final String? bhavaFromPlanet; // planet to calculate bhava from (null = lagna)
+  final double textScale; // scale text on larger screens
 
   const KundaliChart({
     super.key,
@@ -33,6 +34,7 @@ class KundaliChart extends StatelessWidget {
     this.onPlanetLongPress,
     this.selectedPlanet,
     this.bhavaFromPlanet,
+    this.textScale = 1.0,
   });
 
   // Grid layout: indices into rashi boxes, null = center
@@ -101,6 +103,7 @@ class KundaliChart extends StatelessWidget {
         onPlanetLongPress: onPlanetLongPress,
         selectedPlanet: selectedPlanet,
         bhavaFromPlanet: bhavaFromPlanet,
+        textScale: textScale,
       );
     }
 
@@ -301,7 +304,7 @@ class KundaliChart extends StatelessWidget {
             Text(label,
               textAlign: TextAlign.center,
               style: TextStyle(
-                fontSize: 14,
+                fontSize: 14 * textScale,
                 fontWeight: FontWeight.w900,
                 color: Color(0xFFDD6B20),
                 letterSpacing: 1.0,
@@ -406,12 +409,12 @@ class KundaliChart extends StatelessWidget {
         child: Text(
           displayText,
           style: TextStyle(
-            fontSize: isSelected ? 14 : 11,
+            fontSize: (isSelected ? 14 : 11) * textScale,
             fontWeight: FontWeight.w900,
             color: color.withValues(alpha: opacity),
             decoration: isSelected ? TextDecoration.underline : null,
             decorationColor: color,
-            decorationThickness: 2,
+            decorationThickness: 2 * textScale,
           ),
         ),
       ),

@@ -20,6 +20,7 @@ class NorthIndianChart extends StatelessWidget {
   final void Function(String planetName)? onPlanetLongPress;
   final String? selectedPlanet;
   final String? bhavaFromPlanet;
+  final double textScale;
 
   const NorthIndianChart({
     super.key,
@@ -33,6 +34,7 @@ class NorthIndianChart extends StatelessWidget {
     this.onPlanetLongPress,
     this.selectedPlanet,
     this.bhavaFromPlanet,
+    this.textScale = 1.0,
   });
 
   /// Compute which rashi index a planet falls in for the chosen varga
@@ -253,7 +255,7 @@ class NorthIndianChart extends StatelessWidget {
             // Rashi number label
             Text(rashiNum,
               style: TextStyle(
-                fontSize: s * 0.028,
+                fontSize: s * 0.028 * textScale,
                 fontWeight: FontWeight.w800,
                 color: const Color(0xFF718096),
               ),
@@ -279,10 +281,10 @@ class NorthIndianChart extends StatelessWidget {
             const SizedBox(height: 2),
             Text(centerLabel ?? 'ಭಾರತೀಯಮ್',
               textAlign: TextAlign.center,
-              style: const TextStyle(
-                fontSize: 12,
+              style: TextStyle(
+                fontSize: 12 * textScale,
                 fontWeight: FontWeight.w900,
-                color: Color(0xFFDD6B20),
+                color: const Color(0xFFDD6B20),
                 letterSpacing: 1.0,
               ),
             ),
@@ -341,7 +343,7 @@ class NorthIndianChart extends StatelessWidget {
       child: Text(
         displayText,
         style: TextStyle(
-          fontSize: isSelected ? 12 : 9,
+          fontSize: (isSelected ? 12 : 9) * textScale,
           fontWeight: FontWeight.w900,
           color: color.withValues(alpha: opacity),
           decoration: isSelected ? TextDecoration.underline : null,
@@ -352,13 +354,13 @@ class NorthIndianChart extends StatelessWidget {
 
   Widget _aroodhaChip(String label) {
     return Text(label,
-      style: const TextStyle(fontSize: 9, fontWeight: FontWeight.w800, color: Color(0xFFDD6B20)),
+      style: TextStyle(fontSize: 9 * textScale, fontWeight: FontWeight.w800, color: const Color(0xFFDD6B20)),
     );
   }
 
   Widget _sphutaChip(String label) {
     return Text(label,
-      style: TextStyle(fontSize: 8, fontWeight: FontWeight.w600, color: Colors.purple.withOpacity(0.6)),
+      style: TextStyle(fontSize: 8 * textScale, fontWeight: FontWeight.w600, color: Colors.purple.withOpacity(0.6)),
     );
   }
 
