@@ -73,9 +73,8 @@ class Ephemeris {
     double current = localMidnightUt - (2.0 / 24.0);
     
     try {
-      // Use -0.5667° threshold for mid-limb sunrise (center of solar disk)
-      // = atmospheric refraction (~34') only
-      const double horizonAlt = -0.5667;
+      // Use -0.583° mid-limb refraction threshold (original known-good value)
+      const double horizonAlt = -0.583;
       for (int i = 0; i < 30; i++) {
         double alt1 = getAltitudeManual(current, lat, lon);
         double alt2 = getAltitudeManual(current + step, lat, lon);
