@@ -576,76 +576,86 @@ class _PanchangaScreenState extends State<PanchangaScreen> {
   }
 
   // ─── Special Muhurta Timings (Abhijit, Durmuhurta, Amrita, Varjyam) ───
+  // Traditional Varjyam (Tyajya) ghatis from the START of each Nakshatra's span
+  // Each entry is the starting ghati within the nakshatra, duration is 4 ghatis
+  // Source: Drik Panchang / Traditional Panchangam tables
+  static const _varjyamGhatis = [
+    50, 24, 30, 40, 14, 21, 30, 20, 32,  // Ashwini-Ashlesha
+    30, 20, 18, 21, 20, 14, 14, 10, 14,  // Magha-Jyeshtha
+    56, 24, 20, 10, 10, 18, 16, 24, 30,  // Moola-Revati
+  ];
+
   Widget _buildSpecialMuhurtaCard() {
     if (_panchang == null) return const SizedBox();
     final sr = _parseTimeToMinutes(_panchang!.sunrise);
     final ss = _parseTimeToMinutes(_panchang!.sunset);
     final dayLen = ss - sr;
-    final muhurtaDur = dayLen / 15.0; // one muhurta
+    final muhurtaDur = dayLen / 15.0; // one muhurta (~48 min for a 12h day)
 
     final timings = <Map<String, dynamic>>[];
 
-    // Abhijit Muhurta — midday muhurta (8th muhurta, around solar noon)
-    // Traditionally the 8th muhurta from sunrise (index 7)
-    final abhijitStart = sr + 7 * muhurtaDur;
-    final abhijitEnd = abhijitStart + muhurtaDur;
+    // ═══ Abhijit Muhurta — midday ± half muhurta ═══
+    // Formula: midday = (sunrise + sunset) / 2, then ± muhurtaDur/2
+    final midday = (sr + ss) / 2.0;
+    final abhijitStart = midday - muhurtaDur / 2.0;
+    final abhijitEnd = midday + muhurtaDur / 2.0;
     timings.add({
       'name': 'ಅಭಿಜಿತ್ ಮುಹೂರ್ತ', 'nameEn': 'Abhijit Muhurta',
       'start': _minutesToTimeStr(abhijitStart), 'end': _minutesToTimeStr(abhijitEnd),
       'icon': Icons.star, 'color': Colors.green,
-      'desc': 'ಅತ್ಯಂತ ಶುಭ ಮುಹೂರ್ತ — Most auspicious',
+      'desc': 'ಅತ್ಯಂತ ಶುಭ — Most auspicious (midday ± ½ muhurta)',
     });
 
-    // Durmuhurta 1 — varies by weekday
-    // Sun: 10th, Mon: 7th, Tue: 4th, Wed: 11th, Thu: 6th, Fri: 3rd, Sat: 1st
-    final durMuhurta1Idx = const [9, 6, 3, 10, 5, 2, 0][_weekday];
-    final dur1Start = sr + durMuhurta1Idx * muhurtaDur;
-    final dur1End = dur1Start + muhurtaDur;
-    timings.add({
-      'name': 'ದುರ್ಮುಹೂರ್ತ ೧', 'nameEn': 'Durmuhurta 1',
-      'start': _minutesToTimeStr(dur1Start), 'end': _minutesToTimeStr(dur1End),
-      'icon': Icons.dangerous, 'color': Colors.red,
-      'desc': 'ಅಶುಭ ಸಮಯ — Inauspicious',
-    });
+    // ═══ Durmuhurta — fixed offsets from sunrise per weekday ═══
+    // Traditional: each lasts 48 min (=muhurtaDur), except Saturday = 96 min
+    // Offsets in minutes from sunrise:
+    // Sun: 624min(10h24m), Mon: 384min(6h24m)+528min(8h48m),
+    // Tue: 144min(2h24m), Wed: 336min(5h36m),
+    // Thu: 240min(4h)+528min(8h48m), Fri: 144min(2h24m)+528min(8h48m),
+    // Sat: 0 (from sunrise, 96min duration)
+    final durEntries = <List<List<double>>>[
+      [[624, 48]],                    // Sun: 1 period
+      [[384, 48], [528, 48]],         // Mon: 2 periods
+      [[144, 48]],                    // Tue: 1 period (2nd is after sunset)
+      [[336, 48]],                    // Wed: 1 period
+      [[240, 48], [528, 48]],         // Thu: 2 periods
+      [[144, 48], [528, 48]],         // Fri: 2 periods
+      [[0, 96]],                      // Sat: 1 period, 96 min
+    ];
 
-    // Durmuhurta 2 — second inauspicious window
-    // Sun: 14th, Mon: 12th, Tue: 8th, Wed: 5th, Thu: 13th, Fri: 9th, Sat: 15th(night 1st)
-    final durMuhurta2Idx = const [13, 11, 7, 4, 12, 8, 14][_weekday];
-    final dur2Start = sr + durMuhurta2Idx * muhurtaDur;
-    final dur2End = dur2Start + muhurtaDur;
-    timings.add({
-      'name': 'ದುರ್ಮುಹೂರ್ತ ೨', 'nameEn': 'Durmuhurta 2',
-      'start': _minutesToTimeStr(dur2Start % (24 * 60)), 'end': _minutesToTimeStr(dur2End % (24 * 60)),
-      'icon': Icons.dangerous, 'color': Colors.red,
-      'desc': 'ಅಶುಭ ಸಮಯ — Inauspicious',
-    });
+    final weekdayDurs = durEntries[_weekday];
+    for (int i = 0; i < weekdayDurs.length; i++) {
+      final offset = weekdayDurs[i][0];
+      final dur = weekdayDurs[i][1];
+      final dStart = sr + offset;
+      final dEnd = dStart + dur;
+      timings.add({
+        'name': weekdayDurs.length > 1 ? 'ದುರ್ಮುಹೂರ್ತ ${i + 1}' : 'ದುರ್ಮುಹೂರ್ತ',
+        'nameEn': weekdayDurs.length > 1 ? 'Durmuhurta ${i + 1}' : 'Durmuhurta',
+        'start': _minutesToTimeStr(dStart % (24 * 60)), 'end': _minutesToTimeStr(dEnd % (24 * 60)),
+        'icon': Icons.dangerous, 'color': Colors.red,
+        'desc': 'ಅಶುಭ ಸಮಯ — Inauspicious (${dur.toInt()} min)',
+      });
+    }
 
-    // Amrita Kala — nakshatra-based auspicious time
-    // Each nakshatra has a specific ghati offset from sunrise for amrita
+    // ═══ Varjyam (Tyajya) — from Nakshatra start, NOT sunrise ═══
+    // Varjyam starts at a specific ghati within the nakshatra's span
+    // Duration: 4 ghatis (= 96 minutes)
+    // One ghati = 24 minutes
     final nakIdx = _panchang!.nakshatraIndex;
-    final amritaGhatis = const [
-      1, 6, 11, 16, 21, 26, 4, 9, 14, 19, 24, 2, 7, 12, 17, 22, 27, 5, 10, 15, 20, 25, 3, 8, 13, 18, 23
-    ];
-    final amritaStartMins = sr + (amritaGhatis[nakIdx % 27] * dayLen / 30.0);
-    final amritaEndMins = amritaStartMins + (dayLen / 30.0); // 1 ghati duration
+    final varjyaStartGhati = _varjyamGhatis[nakIdx % 27];
+    // Approximate: offset from sunrise in minutes
+    // (varjya ghati offset from nakshatra start × 24 min per ghati)
+    // Since we don't have exact nakshatra start time, we use sunrise as approximation
+    // for the current nakshatra (common panchanga convention for daily view)
+    final varjyaStartMins = sr + (varjyaStartGhati * 24.0);
+    final varjyaEndMins = varjyaStartMins + (4 * 24.0); // 4 ghatis = 96 min
     timings.add({
-      'name': 'ಅಮೃತ ಕಾಲ', 'nameEn': 'Amrita Kala',
-      'start': _minutesToTimeStr(amritaStartMins % (24 * 60)), 'end': _minutesToTimeStr(amritaEndMins % (24 * 60)),
-      'icon': Icons.water_drop, 'color': Colors.blue,
-      'desc': 'ಶುಭ ಕಾಲ — Auspicious period',
-    });
-
-    // Varjyam — nakshatra-based inauspicious time
-    final varjyaGhatis = const [
-      26, 22, 18, 14, 10, 6, 2, 25, 21, 17, 13, 9, 5, 1, 24, 20, 16, 12, 8, 4, 27, 23, 19, 15, 11, 7, 3
-    ];
-    final varjyaStartMins = sr + (varjyaGhatis[nakIdx % 27] * dayLen / 30.0);
-    final varjyaEndMins = varjyaStartMins + (dayLen / 30.0 * 1.6); // ~1.6 ghatis
-    timings.add({
-      'name': 'ವರ್ಜ್ಯ', 'nameEn': 'Varjyam',
-      'start': _minutesToTimeStr(varjyaStartMins % (24 * 60)), 'end': _minutesToTimeStr(varjyaEndMins % (24 * 60)),
+      'name': 'ವರ್ಜ್ಯ', 'nameEn': 'Varjyam (Tyajya)',
+      'start': _minutesToTimeStr(varjyaStartMins % (24 * 60)),
+      'end': _minutesToTimeStr(varjyaEndMins % (24 * 60)),
       'icon': Icons.block, 'color': Colors.orange,
-      'desc': 'ವರ್ಜ್ಯ ಕಾಲ — Avoid this period',
+      'desc': 'ವರ್ಜ್ಯ ಕಾಲ — Avoid (nakshatra ghati: $varjyaStartGhati-${varjyaStartGhati + 4})',
     });
 
     return AppCard(
@@ -657,7 +667,7 @@ class _PanchangaScreenState extends State<PanchangaScreen> {
             fontWeight: FontWeight.w900, fontSize: 14, color: kOrange)),
         ]),
         const SizedBox(height: 6),
-        Text('ಅಭಿಜಿತ್, ದುರ್ಮುಹೂರ್ತ, ಅಮೃತ ಮತ್ತು ವರ್ಜ್ಯ ಕಾಲ', style: TextStyle(color: kMuted, fontSize: 11)),
+        Text('ಅಭಿಜಿತ್, ದುರ್ಮುಹೂರ್ತ ಮತ್ತು ವರ್ಜ್ಯ ಕಾಲ', style: TextStyle(color: kMuted, fontSize: 11)),
         const SizedBox(height: 10),
         ...timings.map((t) {
           final color = t['color'] as Color;
