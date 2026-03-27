@@ -4,6 +4,7 @@ import 'package:http/http.dart' as http;
 import '../widgets/common.dart';
 
 import '../services/subscription_service.dart';
+import '../services/backup_service.dart';
 import '../services/google_auth_service.dart';
 import '../services/device_binding_service.dart';
 import 'about_screen.dart';
@@ -429,6 +430,78 @@ class _SettingsScreenState extends State<SettingsScreen> {
                               ),
                             ),
                           ],
+                        ],
+                      ),
+                    ),
+
+                    const SizedBox(height: 24),
+                    Divider(color: kBorder),
+                    const SizedBox(height: 24),
+
+                    // Backup & Restore
+                    SectionTitle('ಡೇಟಾ ಬ್ಯಾಕಪ್ ಮತ್ತು ಮರುಸ್ಥಾಪನೆ (Data Backup & Restore)'),
+                    const SizedBox(height: 12),
+                    Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: kBorder.withOpacity(0.15),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: kBorder.withOpacity(0.3)),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          Text('ನಿಮ್ಮ ಎಲ್ಲಾ ನಿಯತಕಾಲಿಕ ಡೇಟಾವನ್ನು (ಗ್ರಾಹಕರು, ಅಪಾಯಿಂಟ್\u200cಮೆಂಟ್\u200cಗಳು) ಬ್ಯಾಕಪ್ ಮಾಡಿ ಮತ್ತು ಹೊಸ ಸಾಧನಕ್ಕೆ ಮರುಸ್ಥಾಪಿಸಿ.',
+                              style: TextStyle(fontSize: 13, color: kMuted)),
+                          const SizedBox(height: 16),
+                          Row(
+                            children: [
+                              Expanded(
+                                child: ElevatedButton.icon(
+                                  onPressed: () async {
+                                    final ok = await BackupService.exportData();
+                                    if (mounted && ok) {
+                                      ScaffoldMessenger.of(context).showSnackBar(
+                                        const SnackBar(content: Text('ಬ್ಯಾಕಪ್ ಫೈಲ್ ಅನ್ನು ಉಳಿಸಲು ಅಪ್ಲಿಕೇಶನ್ ಆಯ್ಕೆಮಾಡಿ.'))
+                                      );
+                                    }
+                                  },
+                                  icon: const Icon(Icons.upload_file),
+                                  label: const Text('ಬ್ಯಾಕಪ್ ರಫ್ತು ಮಾಡಿ\n(Export)'),
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: kTeal,
+                                    foregroundColor: Colors.white,
+                                    padding: const EdgeInsets.symmetric(vertical: 12),
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: OutlinedButton.icon(
+                                  onPressed: () async {
+                                    final err = await BackupService.importData();
+                                    if (mounted) {
+                                      if (err == null) {
+                                        ScaffoldMessenger.of(context).showSnackBar(
+                                          const SnackBar(content: Text('ಡೇಟಾ ಯಶಸ್ವಿಯಾಗಿ ಮರುಸ್ಥಾಪನೆಯಾಗಿದೆ!'), backgroundColor: Colors.green)
+                                        );
+                                      } else {
+                                        ScaffoldMessenger.of(context).showSnackBar(
+                                          SnackBar(content: Text(err), backgroundColor: Colors.red)
+                                        );
+                                      }
+                                    }
+                                  },
+                                  icon: Icon(Icons.file_download, color: kPurple2),
+                                  label: Text('ಬ್ಯಾಕಪ್ ಆಮದು ಮಾಡಿ\n(Import)', style: TextStyle(color: kText)),
+                                  style: OutlinedButton.styleFrom(
+                                    padding: const EdgeInsets.symmetric(vertical: 12),
+                                    side: BorderSide(color: kBorder),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
                         ],
                       ),
                     ),
