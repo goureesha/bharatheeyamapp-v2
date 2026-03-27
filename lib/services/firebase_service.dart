@@ -12,6 +12,14 @@ class FirebaseService {
   static Future<void> init() async {
     if (_initialized) return;
 
+    // Skip Firebase initialization on Flutter Web because we haven't configured
+    // FirebaseOptions. The Web version of the app is just a demo and doesn't 
+    // need to receive live appointment synced notifications.
+    if (kIsWeb) {
+      debugPrint('FirebaseService: Skipping Firebase init on Web platform.');
+      return;
+    }
+
     try {
       await Firebase.initializeApp();
       _initialized = true;
