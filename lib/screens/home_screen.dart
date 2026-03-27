@@ -181,9 +181,9 @@ class HomeScreen extends StatelessWidget {
                   selectedTime.hour, selectedTime.minute,
                 );
                 final ok = await CalendarService.createAppointment(
-                  clientName: clientNameCtrl.text.isNotEmpty ? clientNameCtrl.text : 'ಅಪಾಯಿಂಟ್\u200cಮೆಂಟ್',
-                  startTime: startTime,
-                  duration: Duration(minutes: durationMinutes),
+                  title: clientNameCtrl.text.isNotEmpty ? clientNameCtrl.text : 'ಅಪಾಯಿಂಟ್\u200cಮೆಂಟ್',
+                  start: startTime,
+                  end: startTime.add(Duration(minutes: durationMinutes)),
                   description: 'ಜಾತಕ ವಿಶ್ಲೇಷಣೆ',
                 );
                 if (context.mounted) {

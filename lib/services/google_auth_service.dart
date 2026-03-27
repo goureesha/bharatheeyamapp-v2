@@ -1,26 +1,18 @@
 import 'package:google_sign_in/google_sign_in.dart';
-import 'package:extension_google_sign_in_as_googleapis_auth/extension_google_sign_in_as_googleapis_auth.dart';
-import 'package:googleapis_auth/googleapis_auth.dart' as gauth;
 import 'package:flutter/foundation.dart';
 
+/// Google Sign-In service — email-only (no sensitive scopes).
+/// Used purely for user identity (1-Gmail-1-device binding).
 class GoogleAuthService {
   static const _webClientId =
       '330797161511-h4mb1l0i76ea37s6if93bml6gia4puva.apps.googleusercontent.com';
-
-  static final _scopes = [
-    'https://www.googleapis.com/auth/spreadsheets',
-    'https://www.googleapis.com/auth/documents',
-    'https://www.googleapis.com/auth/drive.file',
-    'https://www.googleapis.com/auth/calendar',
-  ];
 
   static GoogleSignIn? _googleSignIn;
   static GoogleSignInAccount? _currentUser;
 
   static GoogleSignIn get _instance {
     _googleSignIn ??= GoogleSignIn(
-      scopes: _scopes,
-      // clientId is only needed for web; on Android, SHA-1 fingerprint is used
+      scopes: const ['email'],
       clientId: kIsWeb ? _webClientId : null,
       serverClientId: _webClientId,
     );
@@ -57,33 +49,6 @@ class GoogleAuthService {
     } catch (e) {
       debugPrint('Silent sign-in failed: $e');
       return false;
-    }
-  }
-
-  /// Request additional scopes if needed (call before API operations)
-  static Future<bool> ensureScopes() async {
-    if (_currentUser == null) return false;
-    try {
-      final granted = await _instance.requestScopes(_scopes);
-      debugPrint('Scopes granted: $granted');
-      return granted;
-    } catch (e) {
-      debugPrint('Scope request error: $e');
-      return false;
-    }
-  }
-
-  static Future<gauth.AuthClient?> getAuthClient() async {
-    if (_currentUser == null) return null;
-    try {
-      // On web, ensure scopes are granted before getting client
-      if (kIsWeb) {
-        await ensureScopes();
-      }
-      return await _instance.authenticatedClient();
-    } catch (e) {
-      debugPrint('Auth client error: $e');
-      return null;
     }
   }
 }

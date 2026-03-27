@@ -333,7 +333,6 @@ class AboutScreen extends StatelessWidget {
             _libRow('pdf + printing', 'PDF generation & download', 'Apache 2.0'),
             _libRow('google_mobile_ads', 'AdMob ads', 'Apache 2.0'),
             _libRow('google_sign_in', 'Google authentication', 'BSD'),
-            _libRow('googleapis', 'Sheets, Docs, Calendar', 'BSD'),
             _libRow('in_app_purchase', 'Subscription management', 'BSD'),
             _libRow('share_plus', 'CSV sharing', 'BSD'),
 

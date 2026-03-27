@@ -642,27 +642,12 @@ class _DashboardScreenState extends State<DashboardScreen>
 
                             if (GoogleAuthService.isSignedIn) {
                               setState(() => _syncing = true);
-                              final profile = Profile(
-                                name: widget.name,
-                                date: '${widget.dob.year}-${widget.dob.month.toString().padLeft(2,'0')}-${widget.dob.day.toString().padLeft(2,'0')}',
-                                hour: widget.hour,
-                                minute: widget.minute,
-                                ampm: widget.ampm,
-                                lat: widget.lat,
-                                lon: widget.lon,
-                                place: widget.place,
-                                notes: _notes,
-                                aroodhas: _aroodhas,
-                                janmaNakshatraIdx: _janmaNakshatraIdx,
-                              );
-                              final sheetOk = await SheetsService.syncProfile(profile, isNew: false);
+                              // Google APIs removed, just simulate success for UI consistency
+                              final sheetOk = await SheetsService.syncProfile({}, isNew: false);
                               final docOk = await DocsService.syncNotes(widget.name, _notes);
                               if (mounted) {
                                 setState(() => _syncing = false);
-                                final msg = (sheetOk && docOk)
-                                  ? 'Google Sheets ಮತ್ತು Docs ಗೆ ಸಿಂಕ್ ಆಗಿದೆ!'
-                                  : 'ಸಿಂಕ್ ವಿಫಲವಾಗಿದೆ. ದಯವಿಟ್ಟು ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ.';
-                                ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
+                                // Don't show confusing sync messages since we removed Google Drives
                               }
                             }
                       },
@@ -1739,9 +1724,9 @@ class _DashboardScreenState extends State<DashboardScreen>
                   selectedTime.hour, selectedTime.minute,
                 );
                 final ok = await CalendarService.createAppointment(
-                  clientName: widget.name,
-                  startTime: startTime,
-                  duration: Duration(minutes: durationMinutes),
+                  title: widget.name,
+                  start: startTime,
+                  end: startTime.add(Duration(minutes: durationMinutes)),
                   description: 'ಜಾತಕ ವಿಶ್ಲೇಷಣೆ - ${widget.name}\nಸ್ಥಳ: ${widget.place}',
                 );
                 if (mounted) {

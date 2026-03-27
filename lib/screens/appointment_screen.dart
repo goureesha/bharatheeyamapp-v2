@@ -941,9 +941,9 @@ class _AppointmentScreenState extends State<AppointmentScreen> with SingleTicker
                                   // Sync to Google Calendar
                                   final startDt = DateTime(apptDate.year, apptDate.month, apptDate.day, startHour, startMin);
                                   final calOk = await CalendarService.createAppointment(
-                                    clientName: nameCtrl.text,
-                                    startTime: startDt,
-                                    duration: Duration(minutes: daySlot.slotMinutes),
+                                    title: nameCtrl.text,
+                                    start: startDt,
+                                    end: startDt.add(Duration(minutes: daySlot.slotMinutes)),
                                     description: 'ಫೋನ್: ${phoneCtrl.text}\n${notesCtrl.text}'.trim(),
                                   );
                                   if (mounted && calOk) {

@@ -1,13 +1,11 @@
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:googleapis/sheets/v4.dart' as sheets;
-import 'package:googleapis/calendar/v3.dart' as cal;
 import 'google_auth_service.dart';
 import 'client_service.dart';
 
 /// Appointment data model
 class Appointment {
-  final String id; // row index in sheet
+  final String id; // row index
   final DateTime date;
   final String startTime; // "HH:MM"
   final String endTime;   // "HH:MM"
@@ -31,7 +29,7 @@ class Appointment {
     this.clientId = '',
   });
 
-  /// Parse from sheet row [date, startTime, endTime, clientName, phone, status, notes, createdAt, clientId]
+  /// Parse from tab-separated cached row
   factory Appointment.fromRow(int rowIndex, List<Object?> row) {
     final dateStr = row.isNotEmpty ? row[0].toString() : '';
     final parts = dateStr.split('-');
@@ -42,7 +40,7 @@ class Appointment {
       date = DateTime.now();
     }
     return Appointment(
-      id: '${rowIndex + 1}', // 1-indexed row
+      id: '${rowIndex + 1}',
       date: date,
       startTime: row.length > 1 ? row[1].toString() : '',
       endTime: row.length > 2 ? row[2].toString() : '',
@@ -80,12 +78,9 @@ class AvailableSlot {
   });
 }
 
-/// Manages appointments in a Google Sheet
+/// Manages appointments using LOCAL SharedPreferences cache.
+/// Google Sheets and Calendar sync have been removed (sensitive scopes).
 class AppointmentService {
-  static const _sheetKey = 'bharatheeyam_appt_sheet_id';
-  static const _apptTab = 'Appointments';
-  static const _slotsTab = 'AvailableSlots';
-
   // In-memory cache
   static List<Appointment> _appointments = [];
   static List<AvailableSlot> _availableSlots = [];
@@ -95,72 +90,7 @@ class AppointmentService {
   static List<AvailableSlot> get availableSlots => _availableSlots;
   static bool get isLoaded => _isLoaded;
 
-  // ─── Sheet Setup ─────────────────────────────────────────
-
-  static Future<sheets.SheetsApi?> _getApi() async {
-    final client = await GoogleAuthService.getAuthClient();
-    if (client == null) return null;
-    return sheets.SheetsApi(client);
-  }
-
-  static Future<String?> _getOrCreateSheet(sheets.SheetsApi api) async {
-    final prefs = await SharedPreferences.getInstance();
-    final existing = prefs.getString(_sheetKey);
-    if (existing != null) {
-      try {
-        await api.spreadsheets.get(existing);
-        return existing;
-      } catch (_) {
-        // Sheet may have been deleted
-      }
-    }
-
-    try {
-      final created = await api.spreadsheets.create(sheets.Spreadsheet(
-        properties: sheets.SpreadsheetProperties(title: 'ಭಾರತೀಯಮ್ - Appointments'),
-        sheets: [
-          sheets.Sheet(properties: sheets.SheetProperties(title: _apptTab)),
-          sheets.Sheet(properties: sheets.SheetProperties(title: _slotsTab, index: 1)),
-        ],
-      ));
-      final id = created.spreadsheetId!;
-      await prefs.setString(_sheetKey, id);
-
-      // Write headers for Appointments tab
-      await api.spreadsheets.values.update(
-        sheets.ValueRange(values: [['Date', 'Start', 'End', 'Client', 'Phone', 'Status', 'Notes', 'CreatedAt', 'ClientId']]),
-        id, '$_apptTab!A1:I1',
-        valueInputOption: 'RAW',
-      );
-
-      // Write headers for AvailableSlots tab
-      await api.spreadsheets.values.update(
-        sheets.ValueRange(values: [['Day', 'Start', 'End', 'SlotMinutes']]),
-        id, '$_slotsTab!A1:D1',
-        valueInputOption: 'RAW',
-      );
-
-      // Default available slots: Mon-Sat, 9:00 - 17:00, 60 min slots
-      final defaultSlots = <List<Object>>[];
-      for (int d = 1; d <= 6; d++) {
-        defaultSlots.add([d.toString(), '09:00', '17:00', '60']);
-      }
-      await api.spreadsheets.values.append(
-        sheets.ValueRange(values: defaultSlots),
-        id, '$_slotsTab!A:D',
-        valueInputOption: 'RAW',
-        insertDataOption: 'INSERT_ROWS',
-      );
-
-      debugPrint('AppointmentService: Created sheet $id');
-      return id;
-    } catch (e) {
-      debugPrint('AppointmentService: Sheet creation error: $e');
-      return null;
-    }
-  }
-
-   // ─── Load All Data ─────────────────────────────────────────
+  // ─── Load / Save (Local Cache) ───────────────────────────
 
   /// Load from local cache instantly (no network)
   static Future<void> loadFromCache() async {
@@ -193,6 +123,17 @@ class AppointmentService {
           ));
         }
       }
+
+      // Initialize default slots if none exist
+      if (_availableSlots.isEmpty) {
+        for (int d = 1; d <= 6; d++) {
+          _availableSlots.add(AvailableSlot(
+            dayOfWeek: d, startTime: '09:00', endTime: '17:00', slotMinutes: 60,
+          ));
+        }
+        await _saveToCache();
+      }
+
       debugPrint('AppointmentService: Loaded ${_appointments.length} from cache');
     } catch (e) {
       debugPrint('AppointmentService: Cache load error: $e');
@@ -215,158 +156,11 @@ class AppointmentService {
     }
   }
 
-  /// Full sync from Google Sheets (call in background)
+  /// Full load — now same as loadFromCache (no Google Sheets sync)
   static Future<void> loadAll() async {
-    try {
-      final api = await _getApi();
-      if (api == null) return;
-      final sid = await _getOrCreateSheet(api);
-      if (sid == null) return;
-
-      // Load appointments from Google Sheets
-      final apptResp = await api.spreadsheets.values.get(sid, '$_apptTab!A:I');
-      final apptRows = apptResp.values ?? [];
-      _appointments = [];
-      for (int i = 1; i < apptRows.length; i++) { // skip header row
-        _appointments.add(Appointment.fromRow(i, apptRows[i]));
-      }
-
-      // Load available slots
-      final slotsResp = await api.spreadsheets.values.get(sid, '$_slotsTab!A:D');
-      final slotRows = slotsResp.values ?? [];
-      _availableSlots = [];
-      for (int i = 1; i < slotRows.length; i++) {
-        final row = slotRows[i];
-        if (row.isEmpty) continue;
-        _availableSlots.add(AvailableSlot(
-          dayOfWeek: int.tryParse(row[0].toString()) ?? 1,
-          startTime: row.length > 1 ? row[1].toString() : '09:00',
-          endTime: row.length > 2 ? row[2].toString() : '17:00',
-          slotMinutes: row.length > 3 ? (int.tryParse(row[3].toString()) ?? 60) : 60,
-        ));
-      }
-
-      // ─── Sync from Google Calendar ──────────────────────────
-      await _syncFromGoogleCalendar(api, sid);
-
-      _isLoaded = true;
-
-      // Save to local cache for fast next load
-      await _saveToCache();
-
-      debugPrint('AppointmentService: Synced ${_appointments.length} appointments, ${_availableSlots.length} slots');
-    } catch (e) {
-      debugPrint('AppointmentService: Load error: $e');
-    }
+    await loadFromCache();
+    _isLoaded = true;
   }
-
-  /// Fetch events from Google Calendar and merge any that aren't in the sheet
-  static Future<void> _syncFromGoogleCalendar(sheets.SheetsApi sheetsApi, String sheetId) async {
-    try {
-      final client = await GoogleAuthService.getAuthClient();
-      if (client == null) return;
-
-      final calApi = cal.CalendarApi(client);
-      final now = DateTime.now();
-      final timeMin = now.subtract(const Duration(days: 90));
-      final timeMax = now.add(const Duration(days: 90));
-
-      final events = await calApi.events.list(
-        'primary',
-        timeMin: timeMin.toUtc(),
-        timeMax: timeMax.toUtc(),
-        singleEvents: true,
-        orderBy: 'startTime',
-        maxResults: 250,
-      );
-
-      if (events.items == null || events.items!.isEmpty) return;
-
-      // Build a set of existing appointment keys for deduplication
-      final existingKeys = <String>{};
-      for (final a in _appointments) {
-        final key = '${a.date.year}-${a.date.month.toString().padLeft(2, '0')}-${a.date.day.toString().padLeft(2, '0')}_${a.startTime}_${a.clientName}';
-        existingKeys.add(key);
-      }
-
-      int synced = 0;
-      for (final event in events.items!) {
-        if (event.start?.dateTime == null || event.end?.dateTime == null) continue;
-        if (event.status == 'cancelled') continue;
-
-        final start = event.start!.dateTime!.toLocal();
-        final end = event.end!.dateTime!.toLocal();
-        final summary = event.summary ?? 'Calendar Event';
-        final description = event.description ?? '';
-        final eventId = event.id ?? '';
-
-        // Use summary as client name — strip app prefix if present
-        String clientName;
-        if (summary.startsWith('ಜಾತಕ ಅಪಾಯಿಂಟ್\u200cಮೆಂಟ್ - ')) {
-          clientName = summary.substring('ಜಾತಕ ಅಪಾಯಿಂಟ್\u200cಮೆಂಟ್ - '.length);
-        } else if (summary.startsWith('ಜಾತಕ - ')) {
-          clientName = summary.substring(7);
-        } else {
-          clientName = summary; // Sync ALL events, use summary as name
-        }
-
-        final dateStr = '${start.year}-${start.month.toString().padLeft(2, '0')}-${start.day.toString().padLeft(2, '0')}';
-        final startTime = '${start.hour.toString().padLeft(2, '0')}:${start.minute.toString().padLeft(2, '0')}';
-        final endTime = '${end.hour.toString().padLeft(2, '0')}:${end.minute.toString().padLeft(2, '0')}';
-
-        final key = '${dateStr}_${startTime}_$clientName';
-
-        // Skip if already exists
-        if (existingKeys.contains(key)) continue;
-
-        // Extract phone from description if present
-        String phone = '';
-        final phoneMatch = RegExp(r'Phone:\s*([+\d\s-]+)').firstMatch(description);
-        if (phoneMatch != null) phone = phoneMatch.group(1)?.trim() ?? '';
-
-        // Store eventId in notes so we can update/delete later
-        String notes = description.replaceAll(RegExp(r'Phone:\s*[+\d\s-]+'), '').trim();
-        if (eventId.isNotEmpty && !notes.contains('gcal:')) {
-          notes = notes.isNotEmpty ? '$notes\ngcal:$eventId' : 'gcal:$eventId';
-        }
-
-        final appt = Appointment(
-          id: '0',
-          date: DateTime(start.year, start.month, start.day),
-          startTime: startTime,
-          endTime: endTime,
-          clientName: clientName,
-          clientPhone: phone,
-          status: 'booked',
-          notes: notes,
-          createdAt: DateTime.now().toIso8601String(),
-        );
-
-        // Add to sheet so it persists
-        try {
-          await sheetsApi.spreadsheets.values.append(
-            sheets.ValueRange(values: [appt.toRow()]),
-            sheetId, '$_apptTab!A:I',
-            valueInputOption: 'RAW',
-            insertDataOption: 'INSERT_ROWS',
-          );
-        } catch (e) {
-          debugPrint('AppointmentService: Sync write error: $e');
-        }
-
-        _appointments.add(appt);
-        existingKeys.add(key);
-        synced++;
-      }
-
-      if (synced > 0) {
-        debugPrint('AppointmentService: Synced $synced events from Google Calendar');
-      }
-    } catch (e) {
-      debugPrint('AppointmentService: Calendar sync error: $e');
-    }
-  }
-
 
   // ─── CRUD Operations ─────────────────────────────────────
 
@@ -380,11 +174,6 @@ class AppointmentService {
     String notes = '',
   }) async {
     try {
-      final api = await _getApi();
-      if (api == null) return false;
-      final sid = await _getOrCreateSheet(api);
-      if (sid == null) return false;
-
       // Auto-create or link client
       String linkedClientId = '';
       if (clientPhone.isNotEmpty) {
@@ -397,7 +186,7 @@ class AppointmentService {
 
       final now = DateTime.now();
       final appointment = Appointment(
-        id: '0',
+        id: '${_appointments.length + 1}',
         date: date,
         startTime: startTime,
         endTime: endTime,
@@ -409,17 +198,8 @@ class AppointmentService {
         clientId: linkedClientId,
       );
 
-      await api.spreadsheets.values.append(
-        sheets.ValueRange(values: [appointment.toRow()]),
-        sid, '$_apptTab!A:I',
-        valueInputOption: 'RAW',
-        insertDataOption: 'INSERT_ROWS',
-      );
-
       _appointments.add(appointment);
-
-      // Also create Google Calendar event
-      await _createCalendarEvent(appointment);
+      await _saveToCache();
 
       debugPrint('AppointmentService: Added appointment for ${appointment.clientName}');
       return true;
@@ -432,36 +212,6 @@ class AppointmentService {
   /// Update appointment status (cancel/complete)
   static Future<bool> updateStatus(Appointment appt, String newStatus) async {
     try {
-      final api = await _getApi();
-      if (api == null) return false;
-      final sid = await _getOrCreateSheet(api);
-      if (sid == null) return false;
-
-      // Find the row in sheet
-      final apptResp = await api.spreadsheets.values.get(sid, '$_apptTab!A:I');
-      final rows = apptResp.values ?? [];
-      
-      int? rowIdx;
-      for (int i = 1; i < rows.length; i++) {
-        final row = rows[i];
-        if (row.length > 3 &&
-            row[0].toString() == '${appt.date.year}-${appt.date.month.toString().padLeft(2, '0')}-${appt.date.day.toString().padLeft(2, '0')}' &&
-            row[1].toString() == appt.startTime &&
-            row[3].toString() == appt.clientName) {
-          rowIdx = i + 1; // 1-indexed
-          break;
-        }
-      }
-
-      if (rowIdx == null) return false;
-
-      await api.spreadsheets.values.update(
-        sheets.ValueRange(values: [[newStatus]]),
-        sid, '$_apptTab!F$rowIdx',
-        valueInputOption: 'RAW',
-      );
-
-      // Update local cache
       final idx = _appointments.indexWhere((a) =>
           a.date == appt.date && a.startTime == appt.startTime && a.clientName == appt.clientName);
       if (idx >= 0) {
@@ -469,14 +219,12 @@ class AppointmentService {
           id: appt.id, date: appt.date, startTime: appt.startTime,
           endTime: appt.endTime, clientName: appt.clientName,
           clientPhone: appt.clientPhone, status: newStatus,
-          notes: appt.notes, createdAt: appt.createdAt,
+          notes: appt.notes, createdAt: appt.createdAt, clientId: appt.clientId,
         );
+        await _saveToCache();
+        return true;
       }
-
-      // Sync to Google Calendar (delete if cancelled)
-      _updateCalendarEvent(appt, newStatus: newStatus);
-
-      return true;
+      return false;
     } catch (e) {
       debugPrint('AppointmentService: Update error: $e');
       return false;
@@ -542,106 +290,6 @@ class AppointmentService {
     return slots;
   }
 
-  // ─── Google Calendar Integration ──────────────────────────
-
-  /// Extract Google Calendar event ID from appointment notes
-  static String? _extractCalEventId(String notes) {
-    final match = RegExp(r'gcal:(\S+)').firstMatch(notes);
-    return match?.group(1);
-  }
-
-  static Future<void> _createCalendarEvent(Appointment appt) async {
-    try {
-      final client = await GoogleAuthService.getAuthClient();
-      if (client == null) return;
-
-      final calApi = cal.CalendarApi(client);
-      final startParts = appt.startTime.split(':');
-      final endParts = appt.endTime.split(':');
-
-      final start = DateTime(appt.date.year, appt.date.month, appt.date.day,
-          int.parse(startParts[0]), int.parse(startParts[1]));
-      final end = DateTime(appt.date.year, appt.date.month, appt.date.day,
-          int.parse(endParts[0]), int.parse(endParts[1]));
-
-      final event = cal.Event(
-        summary: 'ಜಾತಕ - ${appt.clientName}',
-        description: appt.notes.isNotEmpty ? appt.notes : 'ಭಾರತೀಯಮ್ ಅಪಾಯಿಂಟ್\u200cಮೆಂಟ್\nPhone: ${appt.clientPhone}',
-        start: cal.EventDateTime(dateTime: start, timeZone: 'Asia/Kolkata'),
-        end: cal.EventDateTime(dateTime: end, timeZone: 'Asia/Kolkata'),
-        reminders: cal.EventReminders(
-          useDefault: false,
-          overrides: [
-            cal.EventReminder(method: 'popup', minutes: 30),
-            cal.EventReminder(method: 'popup', minutes: 1440), // 24 hours before
-          ],
-        ),
-      );
-
-      final created = await calApi.events.insert(event, 'primary');
-      debugPrint('AppointmentService: Calendar event created: ${created.id}');
-
-      // Store event ID back in the appointment notes for future sync
-      if (created.id != null) {
-        final idx = _appointments.indexWhere((a) =>
-            a.date == appt.date && a.startTime == appt.startTime && a.clientName == appt.clientName);
-        if (idx >= 0) {
-          final oldNotes = _appointments[idx].notes;
-          final newNotes = oldNotes.isNotEmpty
-              ? '$oldNotes\ngcal:${created.id}'
-              : 'gcal:${created.id}';
-          _appointments[idx] = Appointment(
-            id: appt.id, date: appt.date, startTime: appt.startTime,
-            endTime: appt.endTime, clientName: appt.clientName,
-            clientPhone: appt.clientPhone, status: appt.status,
-            notes: newNotes, createdAt: appt.createdAt, clientId: appt.clientId,
-          );
-        }
-      }
-    } catch (e) {
-      debugPrint('AppointmentService: Calendar event error: $e');
-    }
-  }
-
-  /// Update a Google Calendar event when appointment changes
-  static Future<void> _updateCalendarEvent(Appointment appt, {String? newStatus}) async {
-    try {
-      final eventId = _extractCalEventId(appt.notes);
-      if (eventId == null) return;
-
-      final client = await GoogleAuthService.getAuthClient();
-      if (client == null) return;
-
-      final calApi = cal.CalendarApi(client);
-
-      if (newStatus == 'cancelled') {
-        // Delete the event from Google Calendar
-        await calApi.events.delete('primary', eventId);
-        debugPrint('AppointmentService: Calendar event deleted: $eventId');
-      } else {
-        // Update the event
-        final startParts = appt.startTime.split(':');
-        final endParts = appt.endTime.split(':');
-        final start = DateTime(appt.date.year, appt.date.month, appt.date.day,
-            int.parse(startParts[0]), int.parse(startParts[1]));
-        final end = DateTime(appt.date.year, appt.date.month, appt.date.day,
-            int.parse(endParts[0]), int.parse(endParts[1]));
-
-        final event = cal.Event(
-          summary: 'ಜಾತಕ - ${appt.clientName}',
-          description: 'Phone: ${appt.clientPhone}\n${appt.notes}',
-          start: cal.EventDateTime(dateTime: start, timeZone: 'Asia/Kolkata'),
-          end: cal.EventDateTime(dateTime: end, timeZone: 'Asia/Kolkata'),
-        );
-
-        await calApi.events.update(event, 'primary', eventId);
-        debugPrint('AppointmentService: Calendar event updated: $eventId');
-      }
-    } catch (e) {
-      debugPrint('AppointmentService: Calendar update error: $e');
-    }
-  }
-
   // ─── WhatsApp Message Templates ───────────────────────────
 
   /// Generate WhatsApp confirmation message
@@ -690,7 +338,6 @@ class AppointmentService {
   }
 
   /// Generate a full weekly/monthly calendar of available slots for sharing
-  /// [days] = how many days ahead to include (7 for week, 30 for month)
   static String weeklyCalendarMessage({int days = 7}) {
     const dayNames = ['ಸೋಮವಾರ', 'ಮಂಗಳವಾರ', 'ಬುಧವಾರ', 'ಗುರುವಾರ', 'ಶುಕ್ರವಾರ', 'ಶನಿವಾರ', 'ರವಿವಾರ'];
     const months = ['ಜನವರಿ', 'ಫೆಬ್ರವರಿ', 'ಮಾರ್ಚ್', 'ಏಪ್ರಿಲ್', 'ಮೇ', 'ಜೂನ್', 'ಜುಲೈ', 'ಆಗಸ್ಟ್', 'ಸೆಪ್ಟೆಂಬರ್', 'ಅಕ್ಟೋಬರ್', 'ನವೆಂಬರ್', 'ಡಿಸೆಂಬರ್'];
@@ -812,7 +459,6 @@ class AppointmentService {
   }
 
   /// Generate a booking page URL with available slots encoded in the hash
-  /// The URL points to the GitHub Pages booking page (docs/booking.html)
   static String generateBookingPageUrl({
     required DateTime fromDate,
     required DateTime toDate,
@@ -825,9 +471,8 @@ class AppointmentService {
     final customFromMin = fromHour * 60 + fromMinute;
     final customToMin = toHour * 60 + toMinute;
 
-    // Build slots map: { "2026-03-24": ["09:00", "10:00", ...], ... }
     final slotsMap = <String, List<String>>{};
-    int slotDuration = 60; // default
+    int slotDuration = 60;
     DateTime current = fromDate;
     while (!current.isAfter(toDate)) {
       final allSlots = getAvailableSlotsForDate(current);
@@ -840,7 +485,6 @@ class AppointmentService {
       if (filtered.isNotEmpty) {
         final dateKey = '${current.year}-${current.month.toString().padLeft(2, '0')}-${current.day.toString().padLeft(2, '0')}';
         slotsMap[dateKey] = filtered;
-        // Get slot duration from config
         final daySlot = _availableSlots.firstWhere(
           (s) => s.dayOfWeek == current.weekday,
           orElse: () => AvailableSlot(dayOfWeek: 1, startTime: '09:00', endTime: '17:00', slotMinutes: 60),
@@ -850,11 +494,9 @@ class AppointmentService {
       current = current.add(const Duration(days: 1));
     }
 
-    // Include astrologer's Google email and phone for WhatsApp requests
     final email = GoogleAuthService.userEmail ?? '';
     final cleanPhone = phone.replaceAll(RegExp(r'[^0-9+]'), '');
 
-    // Encode as JSON in URL hash
     final jsonStr = '{"slots":${_slotsToJson(slotsMap)},"email":"$email","phone":"$cleanPhone","slotMin":$slotDuration}';
     final encoded = Uri.encodeComponent(jsonStr);
 

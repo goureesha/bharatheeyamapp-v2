@@ -1,7 +1,6 @@
+import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:googleapis/sheets/v4.dart' as sheets;
-import 'google_auth_service.dart';
 
 // ─── Data Models ──────────────────────────────────────────
 
@@ -34,6 +33,17 @@ class Client {
   }
 
   List<Object> toRow() => [clientId, name, phone, email, address, createdAt];
+
+  Map<String, dynamic> toJson() => {
+    'clientId': clientId, 'name': name, 'phone': phone,
+    'email': email, 'address': address, 'createdAt': createdAt,
+  };
+
+  factory Client.fromJson(Map<String, dynamic> j) => Client(
+    clientId: j['clientId'] ?? '', name: j['name'] ?? '',
+    phone: j['phone'] ?? '', email: j['email'] ?? '',
+    address: j['address'] ?? '', createdAt: j['createdAt'] ?? '',
+  );
 }
 
 class FamilyMember {
@@ -78,6 +88,21 @@ class FamilyMember {
     birthPlace, lat.toStringAsFixed(4), lon.toStringAsFixed(4), notes,
   ];
 
+  Map<String, dynamic> toJson() => {
+    'clientId': clientId, 'memberName': memberName, 'relation': relation,
+    'dob': dob, 'birthTime': birthTime, 'birthPlace': birthPlace,
+    'lat': lat, 'lon': lon, 'notes': notes,
+  };
+
+  factory FamilyMember.fromJson(Map<String, dynamic> j) => FamilyMember(
+    clientId: j['clientId'] ?? '', memberName: j['memberName'] ?? '',
+    relation: j['relation'] ?? '', dob: j['dob'] ?? '',
+    birthTime: j['birthTime'] ?? '', birthPlace: j['birthPlace'] ?? '',
+    lat: (j['lat'] as num?)?.toDouble() ?? 0,
+    lon: (j['lon'] as num?)?.toDouble() ?? 0,
+    notes: j['notes'] ?? '',
+  );
+
   /// Parse DOB into DateTime
   DateTime? get dobDate {
     try {
@@ -121,13 +146,11 @@ class FamilyMember {
   }
 }
 
-// ─── Service ──────────────────────────────────────────────
+// ─── Service (Local JSON Storage) ─────────────────────────
 
 class ClientService {
-  // Reuse the same spreadsheet as AppointmentService
-  static const _sheetKey = 'bharatheeyam_appt_sheet_id';
-  static const _clientsTab = 'Clients';
-  static const _membersTab = 'Members';
+  static const _clientsCacheKey = 'bharatheeyam_clients_cache';
+  static const _membersCacheKey = 'bharatheeyam_members_cache';
   static const _nextIdKey = 'bharatheeyam_next_client_id';
 
   // In-memory cache
@@ -139,68 +162,17 @@ class ClientService {
   static List<FamilyMember> get members => _members;
   static bool get isLoaded => _isLoaded;
 
-  // ─── Sheet Setup ─────────────────────────────────────────
+  // ─── Persistence ────────────────────────────────────────
 
-  static Future<sheets.SheetsApi?> _getApi() async {
-    final client = await GoogleAuthService.getAuthClient();
-    if (client == null) return null;
-    return sheets.SheetsApi(client);
-  }
-
-  static Future<String?> _getSheetId() async {
-    final prefs = await SharedPreferences.getInstance();
-    return prefs.getString(_sheetKey);
-  }
-
-  /// Ensure Clients + Members tabs exist in the appointment spreadsheet
-  static Future<bool> _ensureTabs(sheets.SheetsApi api, String sheetId) async {
+  static Future<void> _saveToLocal() async {
     try {
-      final ss = await api.spreadsheets.get(sheetId);
-      final tabNames = ss.sheets?.map((s) => s.properties?.title ?? '').toList() ?? [];
-
-      final requests = <sheets.Request>[];
-
-      if (!tabNames.contains(_clientsTab)) {
-        requests.add(sheets.Request(
-          addSheet: sheets.AddSheetRequest(
-            properties: sheets.SheetProperties(title: _clientsTab),
-          ),
-        ));
-      }
-      if (!tabNames.contains(_membersTab)) {
-        requests.add(sheets.Request(
-          addSheet: sheets.AddSheetRequest(
-            properties: sheets.SheetProperties(title: _membersTab),
-          ),
-        ));
-      }
-
-      if (requests.isNotEmpty) {
-        await api.spreadsheets.batchUpdate(
-          sheets.BatchUpdateSpreadsheetRequest(requests: requests),
-          sheetId,
-        );
-
-        // Write headers
-        if (!tabNames.contains(_clientsTab)) {
-          await api.spreadsheets.values.update(
-            sheets.ValueRange(values: [['ClientId', 'Name', 'Phone', 'Email', 'Address', 'CreatedAt']]),
-            sheetId, '$_clientsTab!A1:F1',
-            valueInputOption: 'RAW',
-          );
-        }
-        if (!tabNames.contains(_membersTab)) {
-          await api.spreadsheets.values.update(
-            sheets.ValueRange(values: [['ClientId', 'MemberName', 'Relation', 'DOB', 'BirthTime', 'BirthPlace', 'Lat', 'Lon', 'Notes']]),
-            sheetId, '$_membersTab!A1:I1',
-            valueInputOption: 'RAW',
-          );
-        }
-      }
-      return true;
+      final prefs = await SharedPreferences.getInstance();
+      final clientsJson = jsonEncode(_clients.map((c) => c.toJson()).toList());
+      final membersJson = jsonEncode(_members.map((m) => m.toJson()).toList());
+      await prefs.setString(_clientsCacheKey, clientsJson);
+      await prefs.setString(_membersCacheKey, membersJson);
     } catch (e) {
-      debugPrint('ClientService: ensureTabs error: $e');
-      return false;
+      debugPrint('ClientService: save error: $e');
     }
   }
 
@@ -219,43 +191,24 @@ class ClientService {
 
   static Future<void> loadAll() async {
     try {
-      final api = await _getApi();
-      if (api == null) return;
-      final sid = await _getSheetId();
-      if (sid == null) return;
+      final prefs = await SharedPreferences.getInstance();
 
-      await _ensureTabs(api, sid);
-
-      // Load clients
-      try {
-        final cResp = await api.spreadsheets.values.get(sid, '$_clientsTab!A:F');
-        final cRows = cResp.values ?? [];
-        _clients = [];
-        for (int i = 1; i < cRows.length; i++) {
-          if (cRows[i].isNotEmpty && cRows[i][0].toString().isNotEmpty) {
-            _clients.add(Client.fromRow(cRows[i]));
-          }
-        }
-      } catch (e) {
-        debugPrint('ClientService: clients load error: $e');
+      // Load clients from local cache
+      final clientsStr = prefs.getString(_clientsCacheKey);
+      if (clientsStr != null && clientsStr.isNotEmpty) {
+        final list = jsonDecode(clientsStr) as List;
+        _clients = list.map((j) => Client.fromJson(j as Map<String, dynamic>)).toList();
       }
 
-      // Load members
-      try {
-        final mResp = await api.spreadsheets.values.get(sid, '$_membersTab!A:I');
-        final mRows = mResp.values ?? [];
-        _members = [];
-        for (int i = 1; i < mRows.length; i++) {
-          if (mRows[i].isNotEmpty && mRows[i][0].toString().isNotEmpty) {
-            _members.add(FamilyMember.fromRow(mRows[i]));
-          }
-        }
-      } catch (e) {
-        debugPrint('ClientService: members load error: $e');
+      // Load members from local cache
+      final membersStr = prefs.getString(_membersCacheKey);
+      if (membersStr != null && membersStr.isNotEmpty) {
+        final list = jsonDecode(membersStr) as List;
+        _members = list.map((j) => FamilyMember.fromJson(j as Map<String, dynamic>)).toList();
       }
 
       _isLoaded = true;
-      debugPrint('ClientService: loaded ${_clients.length} clients, ${_members.length} members');
+      debugPrint('ClientService: loaded ${_clients.length} clients, ${_members.length} members (local)');
     } catch (e) {
       debugPrint('ClientService: loadAll error: $e');
     }
@@ -306,15 +259,7 @@ class ClientService {
     final existing = getClientByPhone(phone);
     if (existing != null) return existing;
 
-    // Create new client
     try {
-      final api = await _getApi();
-      if (api == null) return null;
-      final sid = await _getSheetId();
-      if (sid == null) return null;
-
-      await _ensureTabs(api, sid);
-
       final clientId = await _generateClientId();
       final now = DateTime.now().toIso8601String().substring(0, 10);
       final client = Client(
@@ -325,14 +270,8 @@ class ClientService {
         createdAt: now,
       );
 
-      await api.spreadsheets.values.append(
-        sheets.ValueRange(values: [client.toRow()]),
-        sid, '$_clientsTab!A:F',
-        valueInputOption: 'RAW',
-        insertDataOption: 'INSERT_ROWS',
-      );
-
       _clients.add(client);
+      await _saveToLocal();
       debugPrint('ClientService: created client $clientId for $name');
       return client;
     } catch (e) {
@@ -344,34 +283,9 @@ class ClientService {
   /// Update client info
   static Future<bool> updateClient(Client client) async {
     try {
-      final api = await _getApi();
-      if (api == null) return false;
-      final sid = await _getSheetId();
-      if (sid == null) return false;
-
-      // Find the row
-      final scan = await api.spreadsheets.values.get(sid, '$_clientsTab!A:A');
-      int? foundRow;
-      if (scan.values != null) {
-        for (int i = 0; i < scan.values!.length; i++) {
-          if (scan.values![i].isNotEmpty && scan.values![i][0].toString() == client.clientId) {
-            foundRow = i + 1;
-            break;
-          }
-        }
-      }
-
-      if (foundRow != null) {
-        await api.spreadsheets.values.update(
-          sheets.ValueRange(values: [client.toRow()]),
-          sid, '$_clientsTab!A$foundRow:F$foundRow',
-          valueInputOption: 'RAW',
-        );
-        // Update cache
-        _clients = _clients.map((c) => c.clientId == client.clientId ? client : c).toList();
-        return true;
-      }
-      return false;
+      _clients = _clients.map((c) => c.clientId == client.clientId ? client : c).toList();
+      await _saveToLocal();
+      return true;
     } catch (e) {
       debugPrint('ClientService: update client error: $e');
       return false;
@@ -381,34 +295,10 @@ class ClientService {
   /// Delete client
   static Future<bool> deleteClient(String clientId) async {
     try {
-      final api = await _getApi();
-      if (api == null) return false;
-      final sid = await _getSheetId();
-      if (sid == null) return false;
-
-      // Find the row
-      final scan = await api.spreadsheets.values.get(sid, '$_clientsTab!A:A');
-      int? foundRow;
-      if (scan.values != null) {
-        for (int i = 0; i < scan.values!.length; i++) {
-          if (scan.values![i].isNotEmpty && scan.values![i][0].toString() == clientId) {
-            foundRow = i + 1;
-            break;
-          }
-        }
-      }
-
-      if (foundRow != null) {
-        // Clear the row
-        await api.spreadsheets.values.clear(
-          sheets.ClearValuesRequest(),
-          sid, '$_clientsTab!A$foundRow:F$foundRow',
-        );
-        // Update cache
-        _clients.removeWhere((c) => c.clientId == clientId);
-        return true;
-      }
-      return false;
+      _clients.removeWhere((c) => c.clientId == clientId);
+      _members.removeWhere((m) => m.clientId == clientId);
+      await _saveToLocal();
+      return true;
     } catch (e) {
       debugPrint('ClientService: delete client error: $e');
       return false;
@@ -425,21 +315,8 @@ class ClientService {
   /// Add a family member
   static Future<bool> addFamilyMember(FamilyMember member) async {
     try {
-      final api = await _getApi();
-      if (api == null) return false;
-      final sid = await _getSheetId();
-      if (sid == null) return false;
-
-      await _ensureTabs(api, sid);
-
-      await api.spreadsheets.values.append(
-        sheets.ValueRange(values: [member.toRow()]),
-        sid, '$_membersTab!A:I',
-        valueInputOption: 'RAW',
-        insertDataOption: 'INSERT_ROWS',
-      );
-
       _members.add(member);
+      await _saveToLocal();
       debugPrint('ClientService: added member ${member.memberName} for ${member.clientId}');
       return true;
     } catch (e) {
@@ -451,40 +328,15 @@ class ClientService {
   /// Update a family member (find by clientId + memberName)
   static Future<bool> updateFamilyMember(FamilyMember member) async {
     try {
-      final api = await _getApi();
-      if (api == null) return false;
-      final sid = await _getSheetId();
-      if (sid == null) return false;
-
-      // Find the row by scanning columns A+B (clientId + memberName)
-      final scan = await api.spreadsheets.values.get(sid, '$_membersTab!A:B');
-      int? foundRow;
-      if (scan.values != null) {
-        for (int i = 0; i < scan.values!.length; i++) {
-          if (scan.values![i].length >= 2 &&
-              scan.values![i][0].toString() == member.clientId &&
-              scan.values![i][1].toString() == member.memberName) {
-            foundRow = i + 1;
-            break;
-          }
-        }
-      }
-
-      if (foundRow != null) {
-        await api.spreadsheets.values.update(
-          sheets.ValueRange(values: [member.toRow()]),
-          sid, '$_membersTab!A$foundRow:I$foundRow',
-          valueInputOption: 'RAW',
-        );
-        // Update cache
-        _members = _members.map((m) =>
-          (m.clientId == member.clientId && m.memberName == member.memberName) ? member : m
-        ).toList();
-        return true;
+      final idx = _members.indexWhere((m) =>
+        m.clientId == member.clientId && m.memberName == member.memberName);
+      if (idx >= 0) {
+        _members[idx] = member;
       } else {
-        // Not found — append instead
-        return addFamilyMember(member);
+        _members.add(member);
       }
+      await _saveToLocal();
+      return true;
     } catch (e) {
       debugPrint('ClientService: update member error: $e');
       return false;
