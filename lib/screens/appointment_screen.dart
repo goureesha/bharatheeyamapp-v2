@@ -26,13 +26,19 @@ class _AppointmentScreenState extends State<AppointmentScreen> with SingleTicker
   void initState() {
     super.initState();
     _tabCtrl = TabController(length: 2, vsync: this);
+    AppointmentService.updateNotifier.addListener(_onRemoteUpdate);
     _loadData();
   }
 
   @override
   void dispose() {
+    AppointmentService.updateNotifier.removeListener(_onRemoteUpdate);
     _tabCtrl.dispose();
     super.dispose();
+  }
+
+  void _onRemoteUpdate() {
+    if (mounted) setState(() {});
   }
 
   Future<void> _loadData() async {

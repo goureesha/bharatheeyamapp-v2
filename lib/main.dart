@@ -72,6 +72,8 @@ Future<void> _deferredInit() async {
   FestivalCacheService.loadYear(DateTime.now().year);
 }
 
+final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
+
 class BharatheeyamApp extends StatefulWidget {
   const BharatheeyamApp({super.key});
 
@@ -92,6 +94,7 @@ class _BharatheeyamAppState extends State<BharatheeyamApp> {
       valueListenable: AppThemes.themeNotifier,
       builder: (context, themeIndex, child) {
         return MaterialApp(
+          navigatorKey: navigatorKey,
           key: ValueKey('theme_$themeIndex'), // Forces full rebuild on theme change
           title: 'ಭಾರತೀಯಮ್',
           debugShowCheckedModeBanner: false,

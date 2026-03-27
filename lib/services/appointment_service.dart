@@ -89,6 +89,9 @@ class AppointmentService {
   static List<Appointment> get appointments => _appointments;
   static List<AvailableSlot> get availableSlots => _availableSlots;
   static bool get isLoaded => _isLoaded;
+  
+  // Notifier to rebuild UI when background sync happens
+  static final ValueNotifier<int> updateNotifier = ValueNotifier(0);
 
   // ─── Load / Save (Local Cache) ───────────────────────────
 
@@ -200,6 +203,7 @@ class AppointmentService {
 
       _appointments.add(appointment);
       await _saveToCache();
+      updateNotifier.value++; // Notify listeners
 
       debugPrint('AppointmentService: Added appointment for ${appointment.clientName}');
       return true;

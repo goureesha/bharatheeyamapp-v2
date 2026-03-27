@@ -1,6 +1,8 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_core/firebase_core.dart';
-import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
+import '../main.dart';
+import 'google_auth_service.dart';
 import 'google_auth_service.dart';
 import 'appointment_service.dart';
 
@@ -70,6 +72,19 @@ class FirebaseService {
             await change.doc.reference.update({'status': 'processed'});
 
             debugPrint('FirebaseService: Appointment processed and saved locally.');
+
+            // Show an in-app push notification
+            if (navigatorKey.currentContext != null) {
+              ScaffoldMessenger.of(navigatorKey.currentContext!).showSnackBar(
+                SnackBar(
+                  content: Text('📅 ಹೊಸ ಅಪಾಯಿಂಟ್‌ಮೆಂಟ್: $clientName @ $startStr', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                  backgroundColor: Colors.teal,
+                  duration: const Duration(seconds: 5),
+                  behavior: SnackBarBehavior.floating,
+                  margin: const EdgeInsets.only(bottom: 20, left: 16, right: 16),
+                ),
+              );
+            }
           } catch (e) {
             debugPrint('FirebaseService: Error processing appointment: $e');
           }
