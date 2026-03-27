@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "212430902387",
+    "project_id": "bharatheeyam-app",
+    "storage_bucket": "bharatheeyam-app.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:212430902387:android:340c606ce8af7e1e014606",
+        "android_client_info": {
+          "package_name": "com.bharatheeyam.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyA3RzpXGv6yMXwqz7px7Fg2nZQ0Bn6Ep80"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

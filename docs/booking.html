@@ -54,7 +54,23 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:#0f172a;color:#e2e8f
 
 <div class="footer">ಭಾರತೀಯಮ್ ✨ Vedic Astrology</div>
 
-<script>
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.10.0/firebase-app.js";
+import { getFirestore, collection, addDoc } from "https://www.gstatic.com/firebasejs/10.10.0/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyAkG1hdauVlL9b8nHM5o2B25yPQ6IANci4",
+  authDomain: "bharatheeyam-app.firebaseapp.com",
+  projectId: "bharatheeyam-app",
+  storageBucket: "bharatheeyam-app.firebasestorage.app",
+  messagingSenderId: "212430902387",
+  appId: "1:212430902387:web:149c933fd3d29aa5014606",
+  measurementId: "G-BNTGY2WSLZ"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
 const dayNamesKn = ['ರವಿವಾರ','ಸೋಮವಾರ','ಮಂಗಳವಾರ','ಬುಧವಾರ','ಗುರುವಾರ','ಶುಕ್ರವಾರ','ಶನಿವಾರ'];
 const monthNamesKn = ['ಜನವರಿ','ಫೆಬ್ರವರಿ','ಮಾರ್ಚ್','ಏಪ್ರಿಲ್','ಮೇ','ಜೂನ್','ಜುಲೈ','ಆಗಸ್ಟ್','ಸೆಪ್ಟೆಂಬರ್','ಅಕ್ಟೋಬರ್','ನವೆಂಬರ್','ಡಿಸೆಂಬರ್'];
 
@@ -75,7 +91,7 @@ function parseData() {
   }
 }
 
-function selectSlot(dateKey, time, el) {
+window.selectSlot = function(dateKey, time, el) {
   document.querySelectorAll('.slot.selected').forEach(s => s.classList.remove('selected'));
   el.classList.add('selected');
   selectedSlot = { date: dateKey, time: time };
@@ -93,7 +109,7 @@ function updateSummary() {
   sum.classList.add('show');
 }
 
-function bookNow() {
+window.bookNow = async function() {
   if (!selectedSlot) return;
   const name = document.getElementById('clientName').value.trim();
   const phone = document.getElementById('clientPhone').value.trim();
@@ -102,33 +118,48 @@ function bookNow() {
 
   const data = parseData();
   const astrologerEmail = data && data.email ? data.email : '';
+  if (!astrologerEmail) {
+    alert('ದೋಷ: ಜ್ಯೋತಿಷಿಯವರ ಇಮೇಲ್ ಕಂಡುಬಂದಿಲ್ಲ.');
+    return;
+  }
 
-  // Parse selected date and time
-  const d = new Date(selectedSlot.date);
-  const dayName = dayNamesKn[d.getDay()];
-  const monthName = monthNamesKn[d.getMonth()];
+  const btn = document.querySelector('.book-btn');
+  btn.disabled = true;
+  btn.innerHTML = '⏳ ದಯವಿಟ್ಟು ಕಾಯಿರಿ...';
+
+  // Parse selected date and time for Firestore
   const [sH, sM] = selectedSlot.time.split(':').map(Number);
-  const timeStr = fmt12(sH, sM);
-  const dateStr = `${d.getDate()} ${monthName} ${d.getFullYear()} (${dayName})`;
+  const d = new Date(selectedSlot.date);
+  d.setHours(sH, sM, 0, 0);
+  
+  // Format to ISO 8601 (local timezone) to safely send across
+  const localIso = new Date(d.getTime() - (d.getTimezoneOffset() * 60000)).toISOString().slice(0, 19);
 
-  // Build email subject and body
-  const subject = encodeURIComponent(`ಅಪಾಯಿಂಟ್‌ಮೆಂಟ್ ವಿನಂತಿ - ${name}`);
-  const body = encodeURIComponent(
-    `🙏 ಅಪಾಯಿಂಟ್‌ಮೆಂಟ್ ವಿನಂತಿ\n\n`
-    + `👤 ಹೆಸರು: ${name}\n`
-    + `📱 ಫೋನ್: ${phone}\n`
-    + `📅 ದಿನಾಂಕ: ${dateStr}\n`
-    + `⏰ ಸಮಯ: ${timeStr}\n\n`
-    + `ದಯವಿಟ್ಟು ಈ ಅಪಾಯಿಂಟ್‌ಮೆಂಟ್ ಅನ್ನು ದೃಢೀಕರಿಸಿ.\n\n`
-    + `- ಭಾರತೀಯಮ್ ✨`
-  );
+  try {
+    const requestsRef = collection(db, 'appointments', astrologerEmail, 'requests');
+    await addDoc(requestsRef, {
+      clientName: name,
+      clientPhone: phone,
+      dateTime: localIso, // "2026-03-28T10:00:00"
+      status: 'pending',
+      createdAt: new Date().toISOString()
+    });
 
-  // Open email to astrologer (no Google Calendar)
-  window.location.href = `mailto:${astrologerEmail}?subject=${subject}&body=${body}`;
-
-  // Show success state
-  document.getElementById('bookingForm').style.display = 'none';
-  document.getElementById('successMsg').classList.add('show');
+    // Show success state
+    document.getElementById('bookingForm').style.display = 'none';
+    const successMsg = document.getElementById('successMsg');
+    successMsg.innerHTML = `
+      <h2>✅ ಅಪಾಯಿಂಟ್‌ಮೆಂಟ್ ಕಾಯ್ದಿರಿಸಲಾಗಿದೆ!</h2>
+      <p>ನಿಮ್ಮ ಅಪಾಯಿಂಟ್‌ಮೆಂಟ್ ಯಶಸ್ವಿಯಾಗಿ ಆ್ಯಪ್‌ಗೆ ಸಿಂಕ್ ಆಗಿದೆ.<br><br>
+        ಜ್ಯೋತಿಷಿಯವರು ನೇರವಾಗಿ ಆ್ಯಪ್‌ನಲ್ಲಿ ನೋಟಿಫಿಕೇಶನ್ ಪಡೆಯುತ್ತಾರೆ.</p>
+    `;
+    successMsg.classList.add('show');
+  } catch (error) {
+    console.error("Error adding document: ", error);
+    alert('ಕ್ಷಮಿಸಿ, ದೋಷ ಉಂಟಾಗಿದೆ. ದಯವಿಟ್ಟು ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ.');
+    btn.disabled = false;
+    btn.innerHTML = '📧 ಅಪಾಯಿಂಟ್‌ಮೆಂಟ್ ವಿನಂತಿ ಕಳುಹಿಸಿ';
+  }
 }
 
 function render() {
@@ -145,7 +176,7 @@ function render() {
   // Info box
   html += '<div class="info-box"><p><span class="icon">📅</span>';
   html += 'ಕೆಳಗಿನ ಲಭ್ಯ ಸಮಯಗಳಿಂದ ಒಂದನ್ನು ಆಯ್ಕೆ ಮಾಡಿ. ';
-  html += 'ನಿಮ್ಮ ವಿನಂತಿ ಜ್ಯೋತಿಷಿಯವರ ಇಮೇಲ್‌ಗೆ ಕಳುಹಿಸಲಾಗುತ್ತದೆ.</p></div>';
+  html += 'ನಿಮ್ಮ ಅಪಾಯಿಂಟ್‌ಮೆಂಟ್ ನೇರವಾಗಿ ಜ್ಯೋತಿಷಿಯವರ ಆ್ಯಪ್‌ಗೆ ತಲುಪುತ್ತದೆ.</p></div>';
 
   // Available Slots
   html += '<div class="card"><h2>📅 ಲಭ್ಯ ಸಮಯಗಳು</h2>';
@@ -177,18 +208,12 @@ function render() {
   html += '</div>';
 
   // Book Button
-  html += '<button class="book-btn" onclick="bookNow()">📧 ಅಪಾಯಿಂಟ್‌ಮೆಂಟ್ ವಿನಂತಿ ಕಳುಹಿಸಿ</button>';
+  html += '<button class="book-btn" onclick="bookNow()">✅ ಅಪಾಯಿಂಟ್‌ಮೆಂಟ್ ಕಾಯ್ದಿರಿಸಿ</button>';
 
   html += '</div>';
 
   // Success message
-  html += '<div class="success" id="successMsg">';
-  html += '<h2>✅ ವಿನಂತಿ ಕಳುಹಿಸಲಾಗುತ್ತಿದೆ!</h2>';
-  html += '<p>ಇಮೇಲ್ ಆಪ್ ತೆರೆಯುತ್ತಿದೆ...<br><br>';
-  html += 'ದಯವಿಟ್ಟು <strong>"Send"</strong> ಕ್ಲಿಕ್ ಮಾಡಿ.<br><br>';
-  html += 'ಜ್ಯೋತಿಷಿಯವರು ನಿಮ್ಮ ವಿನಂತಿಯನ್ನು ಸ್ವೀಕರಿಸಿದ ನಂತರ<br>';
-  html += 'ನಿಮಗೆ ದೃಢೀಕರಣ ಬರುತ್ತದೆ.</p>';
-  html += '</div>';
+  html += '<div class="success" id="successMsg"></div>';
 
   app.innerHTML = html;
 }

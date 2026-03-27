@@ -27,6 +27,8 @@ dependencies:
   package_info_plus: ^8.0.0
   uuid: ^4.5.1
   file_picker: ^10.3.10
+  firebase_core: ^4.6.0
+  cloud_firestore: ^6.2.0
 
 dev_dependencies:
   flutter_test:

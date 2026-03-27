@@ -7,6 +7,7 @@ import 'services/subscription_service.dart';
 import 'services/google_auth_service.dart';
 import 'services/install_checker.dart';
 import 'services/device_binding_service.dart';
+import 'services/firebase_service.dart';
 import 'services/festival_cache_service.dart';
 import 'services/location_service.dart';
 import 'package:flutter/foundation.dart';
@@ -64,6 +65,7 @@ Future<void> _deferredInit() async {
 
   if (GoogleAuthService.isSignedIn) {
     DeviceBindingService.checkBinding(); // fire-and-forget, don't await
+    FirebaseService.init(); // Start listening for web appointments
   }
 
   // Pre-load festival events lazily (non-blocking)
