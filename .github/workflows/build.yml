@@ -49,6 +49,13 @@ jobs:
             exit 1
           fi
 
+      - name: Upload AAB (For Google Play)
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: bharatheeyam-aab
+          path: build/app/outputs/bundle/release/app-release.aab
+          retention-days: 1
 
 
   build_web:
