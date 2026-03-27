@@ -137,13 +137,22 @@ window.bookNow = async function() {
 
   try {
     const requestsRef = collection(db, 'appointments', astrologerEmail, 'requests');
-    await addDoc(requestsRef, {
-      clientName: name,
-      clientPhone: phone,
-      dateTime: localIso, // "2026-03-28T10:00:00"
-      status: 'pending',
-      createdAt: new Date().toISOString()
-    });
+    
+    // Add a 10 second timeout because Firebase can hang if the DB doesn't exist
+    const timeoutPromise = new Promise((_, reject) => 
+      setTimeout(() => reject(new Error('Timeout: Firebase took too long. Check if Database is created.')), 10000)
+    );
+    
+    await Promise.race([
+      addDoc(requestsRef, {
+        clientName: name,
+        clientPhone: phone,
+        dateTime: localIso, // "2026-03-28T10:00:00"
+        status: 'pending',
+        createdAt: new Date().toISOString()
+      }),
+      timeoutPromise
+    ]);
 
     // Show success state
     document.getElementById('bookingForm').style.display = 'none';
@@ -156,9 +165,9 @@ window.bookNow = async function() {
     successMsg.classList.add('show');
   } catch (error) {
     console.error("Error adding document: ", error);
-    alert('ಕ್ಷಮಿಸಿ, ದೋಷ ಉಂಟಾಗಿದೆ. ದಯವಿಟ್ಟು ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ.');
+    alert('ದೋಷ ಉಂಟಾಗಿದೆ: ' + error.message + '\n\nದಯವಿಟ್ಟು Firebase Console ನಲ್ಲಿ Firestore Database ಅನ್ನು "Start in test mode" ಬಳಸಿ Create ಮಾಡಿದ್ದೀರಾ ಎಂದು ಪರೀಕ್ಷಿಸಿ.');
     btn.disabled = false;
-    btn.innerHTML = '📧 ಅಪಾಯಿಂಟ್‌ಮೆಂಟ್ ವಿನಂತಿ ಕಳುಹಿಸಿ';
+    btn.innerHTML = '✅ ಅಪಾಯಿಂಟ್‌ಮೆಂಟ್ ಕಾಯ್ದಿರಿಸಿ';
   }
 }
 
