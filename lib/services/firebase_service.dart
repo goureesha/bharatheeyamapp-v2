@@ -12,16 +12,23 @@ class FirebaseService {
   static Future<void> init() async {
     if (_initialized) return;
 
-    // Skip Firebase initialization on Flutter Web because we haven't configured
-    // FirebaseOptions. The Web version of the app is just a demo and doesn't 
-    // need to receive live appointment synced notifications.
-    if (kIsWeb) {
-      debugPrint('FirebaseService: Skipping Firebase init on Web platform.');
-      return;
-    }
-
     try {
-      await Firebase.initializeApp();
+      if (kIsWeb) {
+        await Firebase.initializeApp(
+          options: const FirebaseOptions(
+            apiKey: 'AIzaSyAkG1hdauVlL9b8nHM5o2B25yPQ6IANci4',
+            appId: '1:212430902387:web:149c933fd3d29aa5014606',
+            messagingSenderId: '212430902387',
+            projectId: 'bharatheeyam-app',
+            authDomain: 'bharatheeyam-app.firebaseapp.com',
+            storageBucket: 'bharatheeyam-app.firebasestorage.app',
+            measurementId: 'G-BNTGY2WSLZ',
+          ),
+        );
+      } else {
+        await Firebase.initializeApp();
+      }
+      
       _initialized = true;
       debugPrint('FirebaseService: Initialized successfully.');
       _listenForAppointments();
