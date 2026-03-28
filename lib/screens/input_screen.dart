@@ -305,12 +305,8 @@ class _InputScreenState extends State<InputScreen> {
         clientId: cId,
         name: name,
         phone: '', // No phone strictly from Kundali screen
-        place: _placeCtrl.text,
-        lat: double.tryParse(_latCtrl.text) ?? LocationService.lat,
-        lon: double.tryParse(_lonCtrl.text) ?? LocationService.lon,
-        dateStr: dateStr,
-        timeStr: timeStr,
-        notes: notes,
+        address: _placeCtrl.text, // Mapped place to address
+        createdAt: dateStr, // Mapped dateStr to createdAt
       ));
     }
 
