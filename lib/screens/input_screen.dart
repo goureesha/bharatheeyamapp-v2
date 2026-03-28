@@ -287,6 +287,15 @@ class _InputScreenState extends State<InputScreen> {
   void _saveProfile({String notes = '', Map<String, int> aroodhas = const {}, int? janmaNakshatraIdx, bool isNew = true}) async {
     String name = _nameCtrl.text.trim();
     if (name.isEmpty) name = 'Unknown_${_dob.toIso8601String().substring(0, 10)}';
+
+    final profiles = await StorageService.loadAll();
+    final existing = profiles[name];
+    String? cId = existing?.clientId;
+
+    if (cId == null) {
+      cId = await ClientService.generateNextClientId();
+    }
+
     final p = Profile(
       name: name,
       date: '${_dob.year}-${_dob.month.toString().padLeft(2,'0')}-${_dob.day.toString().padLeft(2,'0')}',
@@ -298,6 +307,7 @@ class _InputScreenState extends State<InputScreen> {
       notes: notes,
       aroodhas: aroodhas,
       janmaNakshatraIdx: janmaNakshatraIdx,
+      clientId: cId,
     );
     await StorageService.save(p);
     await _loadProfiles();

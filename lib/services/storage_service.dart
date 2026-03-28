@@ -81,6 +81,7 @@ class Profile {
   final String notes;
   final Map<String, int> aroodhas;
   final int? janmaNakshatraIdx;
+  final String? clientId;
 
   Profile({
     required this.name,
@@ -95,9 +96,42 @@ class Profile {
     this.notes = '',
     this.aroodhas = const {},
     this.janmaNakshatraIdx,
+    this.clientId,
   });
 
   Map<String, dynamic> toJson() => {
+    'date': date,
+    'hour': hour,
+    'minute': minute,
+    'ampm': ampm,
+    'lat': lat,
+    'lon': lon,
+    'tzOffset': tzOffset,
+    'place': place,
+    'notes': notes,
+    'aroodhas': aroodhas,
+    'janmaNakshatraIdx': janmaNakshatraIdx,
+    'clientId': clientId,
+  };
+
+  factory Profile.fromJson(String name, Map<String, dynamic> json) => Profile(
+    name: name,
+    date: json['date'] as String? ?? '2000-01-01',
+    hour: json['hour'] as int? ?? 12,
+    minute: json['minute'] as int? ?? 0,
+    ampm: json['ampm'] as String? ?? 'PM',
+    lat: (json['lat'] as num?)?.toDouble() ?? 0.0,
+    lon: (json['lon'] as num?)?.toDouble() ?? 0.0,
+    tzOffset: (json['tzOffset'] as num?)?.toDouble() ?? 5.5,
+    place: json['place'] as String? ?? '',
+    notes: json['notes'] as String? ?? '',
+    aroodhas: (json['aroodhas'] as Map<String, dynamic>?)?.map(
+      (k, e) => MapEntry(k, e as int),
+    ) ?? {},
+    janmaNakshatraIdx: json['janmaNakshatraIdx'] as int?,
+    clientId: json['clientId'] as String?,
+  );
+}
     'name': name, 'd': date, 'h': hour, 'm': minute,
     'ampm': ampm, 'lat': lat, 'lon': lon, 'tz': tzOffset, 'p': place,
     'notes': notes,

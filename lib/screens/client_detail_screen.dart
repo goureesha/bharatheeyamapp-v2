@@ -428,6 +428,7 @@ class _ClientDetailScreenState extends State<ClientDetailScreen> {
                 notes: notes,
                 aroodhas: aroodhas,
                 janmaNakshatraIdx: janmaIdx,
+                clientId: m.clientId,
               ));
             },
           ),

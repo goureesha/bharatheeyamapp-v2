@@ -63,6 +63,9 @@ class LocalExportService {
           hasNotes = true;
           notesTxt.writeln('--------------------------------------------------------');
           notesTxt.writeln('Profile: ${p.name}');
+          if (p.clientId != null && p.clientId!.trim().isNotEmpty) {
+            notesTxt.writeln('Client ID: ${p.clientId}');
+          }
           notesTxt.writeln('Date: ${p.date}  Time: ${p.hour}:${p.minute.toString().padLeft(2, '0')} ${p.ampm}');
           notesTxt.writeln('--------------------------------------------------------');
           notesTxt.writeln('${p.notes}\n\n');
