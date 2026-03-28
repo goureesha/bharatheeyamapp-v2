@@ -187,6 +187,24 @@ class ClientService {
     return id;
   }
 
+  /// Exposed explicitly for isolated Kundali Profile creation
+  static Future<String> generateNextClientId() async {
+    return await _generateClientId();
+  }
+
+  /// Manually add a completely formed Client record
+  static Future<bool> addClient(Client client) async {
+    try {
+      _clients.add(client);
+      await _saveToLocal();
+      debugPrint('ClientService: forcefully added client ${client.clientId} for ${client.name}');
+      return true;
+    } catch (e) {
+      debugPrint('ClientService: add client error: $e');
+      return false;
+    }
+  }
+
   // ─── Load All ─────────────────────────────────────────────
 
   static Future<void> loadAll() async {

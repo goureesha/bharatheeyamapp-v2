@@ -295,11 +295,23 @@ class _InputScreenState extends State<InputScreen> {
 
     if (cId == null) {
       cId = await ClientService.generateNextClientId();
+      final timeStr = '$_hour:${_minute.toString().padLeft(2,'0')} $_ampm';
+      final dateStr = '${_dob.year}-${_dob.month.toString().padLeft(2,'0')}-${_dob.day.toString().padLeft(2,'0')}';
       if (notes.isEmpty) {
-         final timeStr = '$_hour:${_minute.toString().padLeft(2,'0')} $_ampm';
-         final dateStr = '${_dob.year}-${_dob.month.toString().padLeft(2,'0')}-${_dob.day.toString().padLeft(2,'0')}';
          notes = '🆔 ಗ್ರಾಹಕ ID (Client ID): $cId\n📅 ಜನ್ಮ ದಿನಾಂಕ: $dateStr\n⏰ ಜನ್ಮ ಸಮಯ: $timeStr\n📍 ಜನ್ಮ ಸ್ಥಳ: ${_placeCtrl.text}\n---\nಹೊಸ ಟಿಪ್ಪಣಿ: ';
       }
+
+      await ClientService.addClient(Client(
+        clientId: cId,
+        name: name,
+        phone: '', // No phone strictly from Kundali screen
+        place: _placeCtrl.text,
+        lat: double.tryParse(_latCtrl.text) ?? LocationService.lat,
+        lon: double.tryParse(_lonCtrl.text) ?? LocationService.lon,
+        dateStr: dateStr,
+        timeStr: timeStr,
+        notes: notes,
+      ));
     }
 
     final p = Profile(
