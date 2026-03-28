@@ -4,6 +4,7 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 import '../widgets/common.dart';
 import '../services/storage_service.dart';
+import '../services/client_service.dart';
 import '../core/calculator.dart';
 import '../constants/places.dart';
 import '../core/ephemeris.dart';
