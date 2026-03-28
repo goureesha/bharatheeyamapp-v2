@@ -866,6 +866,30 @@ class _DashboardScreenState extends State<DashboardScreen>
                   padding: const EdgeInsets.only(bottom: 8),
                   child: Text(personName, style: TextStyle(fontSize: 15, fontWeight: FontWeight.w900, color: kTeal)),
                 ),
+              // Graha Sphuta added back per user request
+              Text('ಗ್ರಹ ಸ್ಫುಟ', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 15, color: kPurple2)),
+              const SizedBox(height: 8),
+              AppCard(
+                padding: EdgeInsets.zero,
+                child: Column(
+                  children: [
+                    _tableHeader(['ಗ್ರಹ', 'ರಾಶಿ', 'ಸ್ಫುಟ', 'ನಕ್ಷತ್ರ - ಪಾದ']),
+                    ...planetOrder.map((p) {
+                      final info = personResult.planets[p];
+                      if (info == null) return const SizedBox.shrink();
+                      final ri = (info.longitude / 30).floor() % 12;
+                      return _tableRow([
+                        p,
+                        knRashi[ri],
+                        formatDeg(info.longitude),
+                        '${info.nakshatra} - ${info.pada}'
+                      ], bold0: true);
+                    }),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 24),
+
               Text('ಉಪಗ್ರಹ ಸ್ಫುಟ', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 15, color: kPurple2)),
               const SizedBox(height: 8),
               AppCard(
