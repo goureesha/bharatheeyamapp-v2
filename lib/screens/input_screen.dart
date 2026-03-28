@@ -247,10 +247,6 @@ class _InputScreenState extends State<InputScreen> {
           final timeStr = '$_hour:${_minute.toString().padLeft(2, '0')} $_ampm';
           final dateStr = '${_dob.year}-${_dob.month.toString().padLeft(2, '0')}-${_dob.day.toString().padLeft(2, '0')}';
 
-          if (uiNotes.isEmpty) {
-            uiNotes = '🆔 ಗ್ರಾಹಕ ID (Client ID): $activeClientId\n📅 ಜನ್ಮ ದಿನಾಂಕ: $dateStr\n⏰ ಜನ್ಮ ಸಮಯ: $timeStr\n📍 ಜನ್ಮ ಸ್ಥಳ: ${_placeCtrl.text}\n---\nಹೊಸ ಟಿಪ್ಪಣಿ: ';
-          }
-
           // Forcefully register the client right now so it exists in memory immediately
           await ClientService.addClient(Client(
             clientId: activeClientId,
