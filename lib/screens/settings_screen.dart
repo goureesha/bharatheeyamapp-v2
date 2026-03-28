@@ -7,6 +7,7 @@ import '../services/subscription_service.dart';
 import '../services/backup_service.dart';
 import '../services/google_auth_service.dart';
 import '../services/device_binding_service.dart';
+import '../services/local_export_service.dart';
 import 'about_screen.dart';
 import 'privacy_policy_screen.dart';
 import '../services/location_service.dart';
@@ -501,6 +502,33 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                 ),
                               ),
                             ],
+                          ),
+                          const SizedBox(height: 16),
+                          Text('ಮಾನವ ಓದಬಲ್ಲ ಸ್ಪ್ರೆಡ್‌ಶೀಟ್‌ಗಳು (Human-readable Spreadsheets & Notes):',
+                              style: TextStyle(fontSize: 12, color: kMuted, fontWeight: FontWeight.bold)),
+                          const SizedBox(height: 8),
+                          ElevatedButton.icon(
+                            onPressed: () async {
+                              final ok = await LocalExportService.exportReadableData();
+                              if (mounted) {
+                                if (ok) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(content: Text('ಸ್ಪ್ರೆಡ್‌ಶೀಟ್ ಮತ್ತು ಟಿಪ್ಪಣಿಗಳನ್ನು ರಫ್ತು ಮಾಡಲಾಗಿದೆ!'), backgroundColor: Colors.green)
+                                  );
+                                } else {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(content: Text('ರಫ್ತು ವಿಫಲವಾಗಿದೆ (Export failed).'), backgroundColor: Colors.red)
+                                  );
+                                }
+                              }
+                            },
+                            icon: const Icon(Icons.table_view),
+                            label: const Text('ಸ್ಪ್ರೆಡ್‌ಶೀಟ್ ಮತ್ತು ಟಿಪ್ಪಣಿಗಳನ್ನು ರಫ್ತು ಮಾಡಿ\n(Export Spreadsheets & Notes)', textAlign: TextAlign.center),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: kPurple2,
+                              foregroundColor: Colors.white,
+                              padding: const EdgeInsets.symmetric(vertical: 12),
+                            ),
                           ),
                         ],
                       ),
