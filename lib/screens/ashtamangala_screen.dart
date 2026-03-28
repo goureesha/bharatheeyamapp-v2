@@ -43,6 +43,8 @@ class _AshtamangalaScreenState extends State<AshtamangalaScreen> with SingleTick
   int _swarna = 0;         // Gold coin Rashi (0-11)
   int _tambula = 1;        // Betel number (1-1000)
   final _tambulaCtrl = TextEditingController(text: '1');
+  int _pruchaka = 1;       // Pruchaka Number (1-108)
+  final _pruchakaCtrl = TextEditingController(text: '1');
   int _gender = 0;         // 0=Male, 1=Female
 
   // Computed results
@@ -119,6 +121,7 @@ class _AshtamangalaScreenState extends State<AshtamangalaScreen> with SingleTick
     _numberCtrl.dispose(); 
     _nameCtrl.dispose(); 
     _tambulaCtrl.dispose(); 
+    _pruchakaCtrl.dispose();
     _placeCtrl.dispose();
     _latCtrl.dispose();
     _lonCtrl.dispose();
@@ -393,6 +396,17 @@ class _AshtamangalaScreenState extends State<AshtamangalaScreen> with SingleTick
       ]),
       const SizedBox(height: 14),
       Divider(color: kBorder),
+      const SizedBox(height: 8),
+
+      // Pruchaka Number (1-108)
+      TextField(controller: _pruchakaCtrl, keyboardType: TextInputType.number,
+        decoration: InputDecoration(labelText: 'ಪ್ರುಚ್ಛಕ ಸಂಖ್ಯೆ / Pruchaka Number (1-108)', prefixIcon: Icon(Icons.person_pin, color: kMuted, size: 20),
+          border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)), contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10), isDense: true),
+        style: TextStyle(color: kText, fontSize: 16, fontWeight: FontWeight.w800),
+        onChanged: (v) {
+          final p = int.tryParse(v) ?? 1;
+          setState(() => _pruchaka = (p < 1) ? 1 : (p > 108 ? 108 : p));
+        }),
       const SizedBox(height: 8),
 
       // Number
