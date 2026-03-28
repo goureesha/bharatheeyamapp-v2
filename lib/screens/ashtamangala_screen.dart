@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 import '../widgets/common.dart';
+import '../constants/places.dart';
+import '../core/ephemeris.dart';
 import '../core/calculator.dart';
 import '../services/location_service.dart';
 
@@ -14,6 +18,20 @@ class AshtamangalaScreen extends StatefulWidget {
 class _AshtamangalaScreenState extends State<AshtamangalaScreen> with SingleTickerProviderStateMixin {
   final _numberCtrl = TextEditingController();
   final _nameCtrl = TextEditingController();
+
+  DateTime _dob      = DateTime.now();
+  int _hour          = DateTime.now().hour % 12 == 0 ? 12 : DateTime.now().hour % 12;
+  int _minute        = DateTime.now().minute;
+  String _ampm       = DateTime.now().hour < 12 ? 'AM' : 'PM';
+  
+  late final TextEditingController _placeCtrl;
+  late final TextEditingController _latCtrl;
+  late final TextEditingController _lonCtrl;
+  late final TextEditingController _tzCtrl;
+
+  bool _geoLoading   = false;
+  String _geoStatus  = '';
+
   bool _hasResult = false;
   String _errorMsg = '';
   late TabController _tabCtrl;
@@ -88,25 +106,146 @@ class _AshtamangalaScreenState extends State<AshtamangalaScreen> with SingleTick
   @override
   void initState() {
     super.initState();
+    _placeCtrl = TextEditingController(text: LocationService.place);
+    _latCtrl = TextEditingController(text: LocationService.lat.toStringAsFixed(4));
+    _lonCtrl = TextEditingController(text: LocationService.lon.toStringAsFixed(4));
+    _tzCtrl = TextEditingController(text: '${LocationService.tzOffset >= 0 ? '+' : ''}${LocationService.tzOffset}');
+    
     _tabCtrl = TabController(length: 5, vsync: this);
-    _loadPrashnaChart();
   }
 
   @override
-  void dispose() { _numberCtrl.dispose(); _nameCtrl.dispose(); _tambulaCtrl.dispose(); _tabCtrl.dispose(); super.dispose(); }
+  void dispose() { 
+    _numberCtrl.dispose(); 
+    _nameCtrl.dispose(); 
+    _tambulaCtrl.dispose(); 
+    _placeCtrl.dispose();
+    _latCtrl.dispose();
+    _lonCtrl.dispose();
+    _tzCtrl.dispose();
+    _tabCtrl.dispose(); 
+    super.dispose(); 
+  }
+
+  Future<void> _geocodeMultiple(String placeName) async {
+    if (placeName.trim().isEmpty) return;
+    setState(() { _geoLoading = true; _geoStatus = ''; });
+    try {
+      final q = Uri.encodeComponent(placeName.trim());
+      final url = Uri.parse('https://nominatim.openstreetmap.org/search?q=$q&format=json&limit=5');
+      final resp = await http.get(url, headers: {'User-Agent': 'BharatheeyamApp/1.0'}).timeout(const Duration(seconds: 10));
+      if (resp.statusCode == 200) {
+        final data = jsonDecode(resp.body) as List;
+        if (data.isEmpty) {
+          setState(() => _geoStatus = 'ಸ್ಥಳ ಕಂಡುಬಂದಿಲ್ಲ.');
+        } else if (data.length == 1) {
+          final lat = double.parse(data[0]['lat']);
+          final lon = double.parse(data[0]['lon']);
+          final displayName = data[0]['display_name'] as String;
+          final autoTz = await getTimezoneForPlace(displayName, lat, lon);
+          setState(() {
+            _placeCtrl.text = placeName.trim();
+            _latCtrl.text = lat.toStringAsFixed(4);
+            _lonCtrl.text = lon.toStringAsFixed(4);
+            _tzCtrl.text = '${autoTz >= 0 ? '+' : ''}$autoTz';
+            _geoStatus = '📍 $displayName (TZ: ${autoTz >= 0 ? '+' : ''}$autoTz)';
+          });
+        } else {
+          if (mounted) _showPlaceDisambiguation(data);
+        }
+      } else {
+        setState(() => _geoStatus = 'Server Error: ${resp.statusCode}');
+      }
+    } catch (e) {
+      if (mounted) setState(() => _geoStatus = 'Network error: $e');
+    }
+    if (mounted) setState(() => _geoLoading = false);
+  }
+
+  void _showPlaceDisambiguation(List results) {
+    showDialog(context: context, builder: (ctx) {
+      return AlertDialog(
+        backgroundColor: kBg,
+        title: Text('ಸ್ಥಳ ಆಯ್ಕೆಮಾಡಿ', style: TextStyle(color: kText, fontWeight: FontWeight.w900)),
+        content: SizedBox(width: double.maxFinite, height: 300, child: ListView.builder(
+          itemCount: results.length,
+          itemBuilder: (context, index) {
+            final r = results[index];
+            return ListTile(
+              leading: Icon(Icons.location_city, color: kPurple2),
+              title: Text(r['display_name'], style: TextStyle(color: kText, fontSize: 13)),
+              onTap: () async {
+                Navigator.pop(ctx);
+                final lat = double.parse(r['lat']);
+                final lon = double.parse(r['lon']);
+                final autoTz = await getTimezoneForPlace(r['display_name'], lat, lon);
+                setState(() {
+                  _placeCtrl.text = r['name'] ?? _placeCtrl.text;
+                  _latCtrl.text = lat.toStringAsFixed(4);
+                  _lonCtrl.text = lon.toStringAsFixed(4);
+                  _tzCtrl.text = '${autoTz >= 0 ? '+' : ''}$autoTz';
+                  _geoStatus = '📍 ${r['display_name']} (TZ: ${autoTz >= 0 ? '+' : ''}$autoTz)';
+                });
+              },
+            );
+          },
+        )),
+      );
+    });
+  }
+
+  Future<void> _pickDate() async {
+    final date = await showDatePicker(
+      context: context, initialDate: _dob,
+      firstDate: DateTime(100), lastDate: DateTime(2100),
+      builder: (context, child) => Theme(
+        data: ThemeData.dark().copyWith(
+          colorScheme: ColorScheme.dark(primary: kPurple2, onPrimary: Colors.white, surface: kCard, onSurface: kText),
+          dialogBackgroundColor: kBg,
+        ), child: child!,
+      ),
+    );
+    if (date != null) setState(() => _dob = date);
+  }
+
+  Future<void> _pickTime() async {
+    final t = TimeOfDay(hour: _ampm == 'PM' && _hour != 12 ? _hour + 12 : (_ampm == 'AM' && _hour == 12 ? 0 : _hour), minute: _minute);
+    final time = await showTimePicker(
+      context: context, initialTime: t,
+      builder: (context, child) => Theme(
+        data: ThemeData.dark().copyWith(
+          colorScheme: ColorScheme.dark(primary: kPurple2, onPrimary: Colors.white, surface: kCard, onSurface: kText),
+          timePickerTheme: TimePickerThemeData(backgroundColor: kBg, dialBackgroundColor: kCard, hourMinuteTextColor: kPurple2),
+        ), child: child!,
+      ),
+    );
+    if (time != null) {
+      setState(() {
+        _hour = time.hourOfPeriod == 0 ? 12 : time.hourOfPeriod;
+        _minute = time.minute;
+        _ampm = time.period == DayPeriod.am ? 'AM' : 'PM';
+      });
+    }
+  }
 
   Future<void> _loadPrashnaChart() async {
-    final now = DateTime.now();
+    final lat = double.tryParse(_latCtrl.text) ?? LocationService.lat;
+    final lon = double.tryParse(_lonCtrl.text) ?? LocationService.lon;
+    int h24 = _hour + (_ampm == 'PM' && _hour != 12 ? 12 : 0);
+    if (_ampm == 'AM' && _hour == 12) h24 = 0;
+    final localHour = h24 + _minute / 60.0;
+    final tzOffset = double.tryParse(_tzCtrl.text) ?? LocationService.tzOffset;
+
     final result = await AstroCalculator.calculate(
-      year: now.year, month: now.month, day: now.day,
-      hourUtcOffset: LocationService.tzOffset, hour24: now.hour + now.minute / 60.0,
-      lat: LocationService.lat, lon: LocationService.lon,
+      year: _dob.year, month: _dob.month, day: _dob.day,
+      hourUtcOffset: tzOffset, hour24: localHour,
+      lat: lat, lon: lon,
       ayanamsaMode: 'lahiri', trueNode: true,
     );
     if (result != null && mounted) setState(() { _panchang = result.panchang; _prashnaResult = result; });
   }
 
-  void _calculate() {
+  Future<void> _calculate() async {
     final num = int.tryParse(_numberCtrl.text.trim());
     if (num == null || num < 100 || num > 999) {
       setState(() { _errorMsg = '100-999 ನಡುವೆ ಮೂರಂಕಿ ಸಂಖ್ಯೆ ನಮೂದಿಸಿ'; _hasResult = false; }); return;
@@ -133,7 +272,11 @@ class _AshtamangalaScreenState extends State<AshtamangalaScreen> with SingleTick
     if (_numRashi < 0) _numRashi = 0;
     _numGraha = num % 9;
     _numBhuta = num % 5;
-    setState(() { _hasResult = true; _errorMsg = ''; });
+    
+    // Explicitly recalculate the Prashna chart payload before signaling a response
+    await _loadPrashnaChart();
+    
+    if (mounted) setState(() { _hasResult = true; _errorMsg = ''; });
   }
 
   @override
@@ -173,7 +316,85 @@ class _AshtamangalaScreenState extends State<AshtamangalaScreen> with SingleTick
       const SizedBox(height: 12),
       // Name
       _inputField(_nameCtrl, 'ಪ್ರುಚ್ಛಕ ಹೆಸರು / Querent Name', Icons.person),
+      const SizedBox(height: 14),
+
+      // Date picker
+      GestureDetector(
+        onTap: _pickDate,
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+          decoration: BoxDecoration(color: kCard, border: Border.all(color: kBorder), borderRadius: BorderRadius.circular(12)),
+          child: Row(children: [
+            Icon(Icons.calendar_today, color: kMuted), const SizedBox(width: 10),
+            Text('ದಿನಾಂಕ: ${_dob.day.toString().padLeft(2,'0')}-${_dob.month.toString().padLeft(2,'0')}-${_dob.year}', style: TextStyle(fontSize: 14, color: kText)),
+          ]),
+        ),
+      ),
+      const SizedBox(height: 14),
+
+      // Time picker
+      GestureDetector(
+        onTap: _pickTime,
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+          decoration: BoxDecoration(color: kCard, border: Border.all(color: kBorder), borderRadius: BorderRadius.circular(12)),
+          child: Row(children: [
+            Icon(Icons.access_time, color: kMuted), const SizedBox(width: 10),
+            Text('ಸಮಯ: ${_hour.toString().padLeft(2,'0')}:${_minute.toString().padLeft(2,'0')} $_ampm', style: TextStyle(fontSize: 14, color: kText)),
+          ]),
+        ),
+      ),
+      const SizedBox(height: 14),
+
+      // Place Selector
+      Autocomplete<String>(
+        optionsBuilder: (TextEditingValue textEditingValue) {
+          if (textEditingValue.text.isEmpty) return offlinePlaces.keys.take(15);
+          final query = textEditingValue.text.toLowerCase();
+          return offlinePlaces.keys.where((n) => n.toLowerCase().contains(query));
+        },
+        fieldViewBuilder: (context, textEditingController, focusNode, onFieldSubmitted) {
+          return TextField(
+            controller: textEditingController, focusNode: focusNode,
+            decoration: InputDecoration(
+              labelText: 'ಊರು ಹುಡುಕಿ / Search Location', prefixIcon: Icon(Icons.search),
+              suffixIcon: _geoLoading ? Padding(padding: const EdgeInsets.all(12), child: SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2))) : IconButton(icon: Icon(Icons.my_location, color: kTeal), onPressed: () { _placeCtrl.text = textEditingController.text; _geocodeMultiple(textEditingController.text); }),
+              border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)), contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10), isDense: true,
+            ),
+            onSubmitted: (_) { _placeCtrl.text = textEditingController.text; _geocodeMultiple(textEditingController.text); },
+          );
+        },
+        onSelected: (String selection) async {
+          if (offlinePlaces.containsKey(selection)) {
+            final coords = offlinePlaces[selection]!;
+            final autoTz = await getTimezoneForPlace(selection, coords[0], coords[1]);
+            setState(() {
+              _placeCtrl.text = selection; _latCtrl.text = coords[0].toStringAsFixed(4); _lonCtrl.text = coords[1].toStringAsFixed(4);
+              _tzCtrl.text = '${autoTz >= 0 ? '+' : ''}$autoTz';
+              _geoStatus = '📍 $selection (TZ: ${autoTz >= 0 ? '+' : ''}$autoTz)';
+            });
+          }
+        },
+        optionsViewBuilder: (context, onSelected, options) {
+          return Align(alignment: Alignment.topLeft, child: Material(elevation: 4, borderRadius: BorderRadius.circular(8), child: ConstrainedBox(constraints: BoxConstraints(maxHeight: 250, maxWidth: MediaQuery.of(context).size.width - 64), child: ListView.builder(padding: EdgeInsets.zero, itemCount: options.length, shrinkWrap: true, itemBuilder: (context, index) {
+            final option = options.elementAt(index);
+            return ListTile(dense: true, leading: Icon(Icons.location_on, size: 18, color: kPurple2), title: Text(option, style: TextStyle(fontSize: 13)), onTap: () => onSelected(option));
+          }))));
+        },
+      ),
+      if (_geoStatus.isNotEmpty) ...[const SizedBox(height: 6), Text(_geoStatus, style: TextStyle(fontSize: 12, color: kGreen))],
+      const SizedBox(height: 14),
+
+      // Lat/Lon/TZ Display
+      Row(children: [
+        Expanded(flex: 4, child: TextField(controller: _latCtrl, keyboardType: const TextInputType.numberWithOptions(decimal: true, signed: true), decoration: InputDecoration(labelText: 'ಅಕ್ಷಾಂಶ (Lat)', border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)), contentPadding: const EdgeInsets.all(8), isDense: true), style: TextStyle(fontSize: 12))), const SizedBox(width: 8),
+        Expanded(flex: 4, child: TextField(controller: _lonCtrl, keyboardType: const TextInputType.numberWithOptions(decimal: true, signed: true), decoration: InputDecoration(labelText: 'ರೇಖಾಂಶ (Lon)', border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)), contentPadding: const EdgeInsets.all(8), isDense: true), style: TextStyle(fontSize: 12))), const SizedBox(width: 8),
+        Expanded(flex: 3, child: TextField(controller: _tzCtrl, keyboardType: const TextInputType.numberWithOptions(decimal: true, signed: true), decoration: InputDecoration(labelText: 'TZ Offset', border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)), contentPadding: const EdgeInsets.all(8), isDense: true), style: TextStyle(fontSize: 12))),
+      ]),
+      const SizedBox(height: 14),
+      Divider(color: kBorder),
       const SizedBox(height: 8),
+
       // Number
       TextField(controller: _numberCtrl, keyboardType: TextInputType.number,
         decoration: InputDecoration(labelText: 'ಸಂಖ್ಯೆ (100-999)', prefixIcon: Icon(Icons.pin, color: kMuted, size: 20),
