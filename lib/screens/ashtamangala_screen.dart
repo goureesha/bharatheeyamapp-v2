@@ -21,7 +21,6 @@ class _AshtamangalaScreenState extends State<AshtamangalaScreen> with SingleTick
   int _asmNumber = 0;
   int _d1 = 0, _d2 = 0, _d3 = 0, _digitSum = 0;
   int _selectedRashi = 0;
-  int _selectedNakshatra = 0;
   int _sprushtanga = 0;   // Body part (0-11 → 12 rashis)
   int _swarna = 0;         // Gold coin Rashi (0-11)
   int _tambula = 1;        // Betel number (1-1000)
@@ -112,8 +111,16 @@ class _AshtamangalaScreenState extends State<AshtamangalaScreen> with SingleTick
     if (num == null || num < 100 || num > 999) {
       setState(() { _errorMsg = '100-999 ನಡುವೆ ಮೂರಂಕಿ ಸಂಖ್ಯೆ ನಮೂದಿಸಿ'; _hasResult = false; }); return;
     }
-    _d1 = num ~/ 100; _d2 = (num ~/ 10) % 10; _d3 = num % 10;
-    _digitSum = _d1 + _d2 + _d3; _asmNumber = num;
+    
+    final d1Local = num ~/ 100; final d2Local = (num ~/ 10) % 10; final d3Local = num % 10;
+    final sumLocal = d1Local + d2Local + d3Local;
+    
+    if (sumLocal != 4 && sumLocal != 12 && sumLocal != 20) {
+      setState(() { _errorMsg = 'ಅಷ್ಟಮಂಗಲ ಮೊತ್ತ 4, 12, ಅಥವಾ 20 ಆಗಿರಬೇಕು! (Sum must be 4, 12, or 20)'; _hasResult = false; }); return;
+    }
+
+    _d1 = d1Local; _d2 = d2Local; _d3 = d3Local;
+    _digitSum = sumLocal; _asmNumber = num;
     // Sankhya Ganita (Prasna Marga: divide by respective divisors)
     _numPaksha = (num % 2 == 0) ? 1 : 0;
     _numTithi = (num % 30 == 0) ? 29 : (num % 30) - 1;
@@ -180,10 +187,6 @@ class _AshtamangalaScreenState extends State<AshtamangalaScreen> with SingleTick
         const SizedBox(width: 8),
         Expanded(child: _dropdown('ಜನ್ಮ ರಾಶಿ', _selectedRashi, List.generate(12, (i) => _rashiNames[i]), (v) => setState(() => _selectedRashi = v))),
       ]),
-      const SizedBox(height: 8),
-      // Nakshatra
-      _dropdown('ಜನ್ಮ ನಕ್ಷತ್ರ / Pruchaka Nakshatra', _selectedNakshatra,
-        List.generate(27, (i) => '${i+1}. ${_nakshatraNames[i]}'), (v) => setState(() => _selectedNakshatra = v)),
       const SizedBox(height: 8),
       // Sprushtanga
       _dropdown('ಸ್ಪೃಷ್ಟಾಂಗ / Body Part Touched', _sprushtanga, _bodyParts, (v) => setState(() => _sprushtanga = v)),
