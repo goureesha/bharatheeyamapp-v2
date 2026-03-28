@@ -113,7 +113,7 @@ class _AshtamangalaScreenState extends State<AshtamangalaScreen> with SingleTick
     _lonCtrl = TextEditingController(text: LocationService.lon.toStringAsFixed(4));
     _tzCtrl = TextEditingController(text: '${LocationService.tzOffset >= 0 ? '+' : ''}${LocationService.tzOffset}');
     
-    _tabCtrl = TabController(length: 5, vsync: this);
+    _tabCtrl = TabController(length: 4, vsync: this);
   }
 
   @override
@@ -296,10 +296,13 @@ class _AshtamangalaScreenState extends State<AshtamangalaScreen> with SingleTick
             controller: _tabCtrl, isScrollable: true,
             labelColor: kPurple2, unselectedLabelColor: kMuted, indicatorColor: kPurple2,
             labelStyle: TextStyle(fontSize: 11, fontWeight: FontWeight.w800),
-            tabs: const [Tab(text:'ಸಂಖ್ಯಾ ಗಣಿತ'), Tab(text:'ಗ್ರಹ/ಯೋನಿ'), Tab(text:'ಕಾಲ ಗುಣ'), Tab(text:'ಸ್ಫುಟಗಳು'), Tab(text:'ಮಂಗಲ ದ್ರವ್ಯ')],
+            tabs: const [Tab(text:'ಪ್ರಶ್ನೆ ಸಂಖ್ಯಾ ಗಣಿತ'), Tab(text:'ಪ್ರಶ್ನೆ ಸಮಯದ ಗುಣ'), Tab(text:'ಸೂತ್ರಗಳು/ಇತರೆ ಅಂಶ'), Tab(text:'ವಿಶೇಷ ಸ್ಫುಟಗಳು')],
           )),
           SizedBox(height: 620, child: TabBarView(controller: _tabCtrl, children: [
-            _buildSankhyaTab(), _buildGrahaYoniTab(), _buildQualityTab(), _buildSputaTab(), _buildDravyaTab(),
+            _buildSankhyaTab(),
+            _buildSamayaGunaTab(),
+            _buildSutrasTab(),
+            _buildVisheshaSputasTab(),
           ])),
         ],
         const SizedBox(height: 24),
@@ -517,266 +520,182 @@ class _AshtamangalaScreenState extends State<AshtamangalaScreen> with SingleTick
     ]));
   }
 
-  // ═══ Tab 2: Graha/Yoni/Jantu per Digit ═══
-  Widget _buildGrahaYoniTab() {
-    return SingleChildScrollView(child: Column(children: [
-      AppCard(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Row(children: [
-          Icon(Icons.auto_awesome, color: kPurple1, size: 20), const SizedBox(width: 8),
-          Text('ಅಂಕ ವಿಶ್ಲೇಷಣೆ / Digit Analysis', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 13, color: kPurple1)),
-        ]),
-        const SizedBox(height: 6),
-        Text('ಪ್ರತಿ ಅಂಕ → ಗ್ರಹ, ದ್ವಜ, ಯೋನಿ, ಜಂತು (Prasna Marga)', style: TextStyle(color: kMuted, fontSize: 10)),
-        const SizedBox(height: 12),
-        ...[ ['ನೂರರ ಅಂಕ (D1) — ಭೂತ', _d1],
-             ['ಹತ್ತರ ಅಂಕ (D2) — ವರ್ತಮಾನ', _d2],
-             ['ಒಂದರ ಅಂಕ (D3) — ಭವಿಷ್ಯ', _d3] ].map((e) {
-          final label = e[0] as String;
-          final d = (e[1] as int).clamp(1, 8);
-          return Container(
-            margin: const EdgeInsets.symmetric(vertical: 4),
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(color: kPurple2.withOpacity(0.04), borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: kPurple2.withOpacity(0.15))),
-            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Text('$label = ${e[1]}', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 12, color: kPurple2)),
-              const SizedBox(height: 6),
-              _kvRow('ಗ್ರಹ (Graha)', _digitGraha[d]),
-              _kvRow('ದ್ವಜಾದಿ (Dwaja)', _digitDwaja[d]),
-              _kvRow('ಯೋನಿ (Yoni)', _digitYoni[d]),
-              _kvRow('ಜಂತು (Jantu)', _digitJantu[d]),
-            ]),
-          );
-        }),
-      ])),
-      // Tambula & Swarna Results
-      AppCard(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Text('ತಾಂಬೂಲ & ಸ್ವರ್ಣ ಫಲ', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 12, color: kOrange)),
-        const SizedBox(height: 6),
-        _kvRow('ತಾಂಬೂಲ ಸಂಖ್ಯೆ', '$_tambula'),
-        _kvRow('ತಾಂಬೂಲ ರಾಶಿ', '${_rashiNames[(_tambula - 1) % 12]} (${_rashiEn[(_tambula - 1) % 12]})'),
-        _kvRow('ತಾಂಬೂಲ ಅಧಿಪ', _rashiLords[(_tambula - 1) % 12]),
-        _kvRow('ಸ್ವರ್ಣ ರಾಶಿ', '${_rashiNames[_swarna]} (${_rashiEn[_swarna]})'),
-        _kvRow('ಸ್ವರ್ಣ ಅಧಿಪ', _rashiLords[_swarna]),
-      ])),
-      // Sankhya Phala
-      AppCard(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Text('ಸಂಖ್ಯಾ / ಮಧ್ಯ ಫಲ', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 12, color: kOrange)),
-        const SizedBox(height: 4),
-        // Sankhya Phala: multiply by 45, divide by 8
-        () {
-          final sp = (_asmNumber * 45) ~/ 8;
-          final spR = (_asmNumber * 45) % 8;
-          return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Text('$_asmNumber × 45 ÷ 8 = $sp ಶೇಷ $spR', style: TextStyle(fontSize: 12, color: kText)),
-            Text(spR <= 3 ? 'ಶೇಷ ≤ 3: ಶುಭ ಫಲ (Positive outcome)' : 'ಶೇಷ > 3: ಅಶುಭ ಫಲ (Negative outcome)',
-              style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: spR <= 3 ? Colors.green : Colors.red)),
-          ]);
-        }(),
-        const SizedBox(height: 8),
-        // Madhya Phala
-        () {
-          final mp = (_asmNumber * 27) ~/ 8;
-          final mpR = (_asmNumber * 27) % 8;
-          return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Text('$_asmNumber × 27 ÷ 8 = $mp ಶೇಷ $mpR', style: TextStyle(fontSize: 12, color: kText)),
-            Text(mpR <= 3 ? 'ಮಧ್ಯ ಫಲ: ಶುಭ' : 'ಮಧ್ಯ ಫಲ: ಅಶುಭ',
-              style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: mpR <= 3 ? Colors.green : Colors.red)),
-          ]);
-        }(),
-      ])),
-    ]));
-  }
-
-  // ═══ Tab 3: Quality of Time ═══
-  Widget _buildQualityTab() {
+  // ═══ Tab 2: Prashna Samayada Guna ═══
+  Widget _buildSamayaGunaTab() {
     if (_panchang == null) return Center(child: Text('Loading...', style: TextStyle(color: kMuted)));
-    final checks = _getQualityChecks();
-    return SingleChildScrollView(child: Column(children: [
-      AppCard(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Row(children: [
-          Icon(Icons.access_time_filled, color: kPurple1, size: 20), const SizedBox(width: 8),
-          Text('ಪ್ರಶ್ನೆ ಕಾಲ ಗುಣ / Quality of Time', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 13, color: kPurple1)),
-        ]),
-        const SizedBox(height: 12),
-        ...checks.map((c) {
-          final active = c['result'] as bool;
-          final good = c['good'] as bool;
-          final color = !active ? Colors.grey : (good ? Colors.green : Colors.red);
-          return Container(
-            margin: const EdgeInsets.symmetric(vertical: 2),
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
-            decoration: BoxDecoration(color: active ? color.withOpacity(0.06) : kBg, borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: active ? color.withOpacity(0.3) : kBorder)),
-            child: Row(children: [
-              Icon(active ? (good ? Icons.check_circle : Icons.warning_amber_rounded) : Icons.circle_outlined, color: color, size: 16),
-              const SizedBox(width: 8),
-              Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                Text(c['name'], style: TextStyle(fontWeight: FontWeight.w700, fontSize: 12, color: kText)),
-                Text(c['nameEn'], style: TextStyle(fontSize: 9, color: kMuted)),
-              ])),
-              Text(active ? (good ? 'ಶುಭ' : 'ಅಶುಭ') : '—', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 11, color: color)),
-            ]),
-          );
-        }),
+    final checks = _getSamayaGunaChecks();
+    return SingleChildScrollView(child: AppCard(padding: EdgeInsets.zero, child: Column(children: [
+      Container(color: kPurple2, padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10), child: Row(children: [
+        Expanded(flex: 3, child: Text('ವಿಷಯ', style: TextStyle(fontWeight: FontWeight.w800, color: Colors.white))),
+        Expanded(flex: 2, child: Text('')),
       ])),
-    ]));
+      ...checks.map((c) {
+        final active = c['result'] as bool;
+        return Container(
+          decoration: BoxDecoration(border: Border(bottom: BorderSide(color: kBorder)), color: checks.indexOf(c) % 2 == 0 ? kCard : kBg),
+          child: IntrinsicHeight(child: Row(children: [
+            Expanded(flex: 3, child: Container(padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+              child: Text(c['name'] as String, style: TextStyle(fontWeight: FontWeight.w800, fontSize: 13, color: kPurple2)))),
+            Container(width: 1, color: kBorder),
+            Expanded(flex: 2, child: Container(padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+              color: active ? kOrange.withOpacity(0.08) : Colors.transparent,
+              child: Text(active ? (c['good'] as bool ? 'ಶುಭ' : 'ಉಂಟು') : '', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 13, color: active ? kOrange : kMuted)))),
+          ])),
+        );
+      }).toList()
+    ])));
   }
 
-  List<Map<String, dynamic>> _getQualityChecks() {
+  List<Map<String, Object>> _getSamayaGunaChecks() {
     if (_panchang == null) return [];
-    final nakIdx = _panchang!.nakshatraIndex;
-    final tithiIdx = _panchang!.tithiIndex;
-    final tithiNum = (tithiIdx % 15) + 1;
-    final gandanthaNak = [8, 9, 17, 18, 26, 0];
+    final tIdx = _panchang!.tithiIndex;
     final karana = _panchang!.karana.toLowerCase();
-    final varaIdx = DateTime.now().weekday % 7;
-    final dagdhaMap = {0:[1,12],1:[6,11],2:[3,5],3:[3,8],4:[9,10],5:[4,7],6:[2,8]};
     return [
-      {'name':'ಅಮೃತ ಘಟಿ','nameEn':'Amruta Ghati','result':_panchang!.amrutaPraghati.isNotEmpty && _panchang!.amrutaPraghati != '-','good':true},
-      {'name':'ಶುಭ ಯೋಗ','nameEn':'Shubha Yoga','result':!(_panchang!.yoga.contains('ವ್ಯತೀಪಾತ') || _panchang!.yoga.contains('ವೈಧೃತಿ')),'good':true},
-      {'name':'ಶುಭ ಮುಹೂರ್ತ','nameEn':'Shubha Muhurta','result':tithiNum != 4 && tithiNum != 8 && tithiNum != 9 && tithiNum != 14,'good':true},
-      {'name':'ತಾರಾನುಕೂಲ','nameEn':'Tara (Star compatibility)','result':true,'good':true},
-      {'name':'ಜನ್ಮಾಷ್ಟಮ','nameEn':'Janmashtama','result':false,'good':false},
-      {'name':'ಬಲಾನ್ನ ವರ್ಜ್ಯ','nameEn':'Balanna Varjya Nakshatra','result':false,'good':false},
-      {'name':'ನಕ್ಷತ್ರ ಗಂಡಾಂತ','nameEn':'Nakshatra Gandantha','result':gandanthaNak.contains(nakIdx),'good':false},
-      {'name':'ಉಷ್ಣ ಶಿಖಾ','nameEn':'Ushna Shikha','result':false,'good':false},
-      {'name':'ಅಹಿ ಶಿರ','nameEn':'Ahi Shiras','result':false,'good':false},
-      {'name':'ವಿಷ ಘಟಿ','nameEn':'Visha Ghati','result':_panchang!.vishaPraghati.isNotEmpty && _panchang!.vishaPraghati != '-','good':false},
-      {'name':'ರಿಕ್ತ ತಿಥಿ','nameEn':'Rikta Tithi','result':tithiNum==4||tithiNum==9||tithiNum==14,'good':false},
-      {'name':'ಅಷ್ಟಮಿ ತಿಥಿ','nameEn':'Ashtami Tithi','result':tithiNum==8,'good':false},
-      {'name':'ತ್ರಯೋದಶಿ','nameEn':'Trayodashi Tithi','result':tithiNum==13,'good':true},
-      {'name':'ಪ್ರಧೋಷ','nameEn':'Pradosha','result':false,'good':false},
-      {'name':'ವಿಷ್ಟಿ ಕರಣ','nameEn':'Vishti Karana (Bhadra)','result':karana.contains('ವಿಷ್ಟಿ')||karana.contains('ಭದ್ರ'),'good':false},
-      {'name':'ಸ್ಥಿರ ಕರಣ','nameEn':'Sthira Karana','result':karana.contains('ಸ್ಥಿರ'),'good':true},
-      {'name':'ದಿನ ಮೃತ್ಯು','nameEn':'Dina Mrityu','result':false,'good':false},
-      {'name':'ದಗ್ಧ ಯೋಗ','nameEn':'Dagdha Yoga','result':(dagdhaMap[varaIdx]??[]).contains(tithiNum),'good':false},
-      {'name':'ಅಂಶ ಸಂಧಿ','nameEn':'Amsha Sandhi','result':false,'good':false},
-      {'name':'ತಿಥಿ ಸಂಧಿ','nameEn':'Tithi Sandhi','result':tithiIdx==14||tithiIdx==29,'good':false},
-      {'name':'ನಕ್ಷತ್ರ ಸಂಧಿ','nameEn':'Nakshatra Sandhi','result':false,'good':false},
-      {'name':'ರಾಶಿ ಸಂಧಿ','nameEn':'Rashi Sandhi','result':false,'good':false},
-      {'name':'ಸಂಕ್ರಾಂತಿ','nameEn':'Sankranti','result':false,'good':false},
-      {'name':'ಗುಲಿಕೋದಯ','nameEn':'Gulikodaya','result':false,'good':false},
-      {'name':'ಏಕಾರ್ಗಳ','nameEn':'Ekargala','result':false,'good':false},
-      {'name':'ಪಾಪ ದೃಷ್ಟಿ','nameEn':'Lagna Papa Drishti','result':false,'good':false},
-      {'name':'ಪಾಪೋದಯ','nameEn':'Papa Udaya','result':false,'good':false},
-      {'name':'ರವಿ ದೃಷ್ಟಿ','nameEn':'Sun Aspect on Lagna','result':false,'good':false},
+      {'name':'ಪ್ರದೋಷ', 'result':false, 'good':false}, // Math later
+      {'name':'ವಿಷ್ಟಿ ಕರಣ', 'result':karana.contains('ವಿಷ್ಟಿ')||karana.contains('ಭದ್ರ'), 'good':false},
+      {'name':'ಸ್ಥಿರ ಕರಣ', 'result':karana.contains('ಸ್ಥಿರ'), 'good':true},
+      {'name':'ದಿನ ಮೃತ್ಯು', 'result':false, 'good':false},
+      {'name':'ದಗ್ಧ ಯೋಗ', 'result':false, 'good':false},
+      {'name':'ಅಂಶ ಸಂಧಿ', 'result':false, 'good':false},
+      {'name':'ತಿಥಿ ಸಂಧಿ', 'result':tIdx==14||tIdx==29, 'good':false},
+      {'name':'ನಕ್ಷತ್ರ ಸಂಧಿ', 'result':false, 'good':false},
+      {'name':'ರಾಶಿ ಸಂಧಿ', 'result':false, 'good':false},
+      {'name':'ಸಂಕ್ರಾಂತಿ', 'result':false, 'good':false},
+      {'name':'ಗುಳಿಕೋದಯ', 'result':false, 'good':false},
+      {'name':'ಏಕಾರ್ಗಳ', 'result':false, 'good':false},
+      {'name':'ಪಾಪ ದೃಷ್ಟಿ', 'result':false, 'good':false},
+      {'name':'ಪಾಪ ಉದಯ', 'result':false, 'good':false},
+      {'name':'ರವಿ ದೃಷ್ಟಿ', 'result':false, 'good':false},
     ];
   }
 
-  // ═══ Tab 4: Special Sputas ═══
-  Widget _buildSputaTab() {
-    final sputas = _getSpecialSputas();
-    return SingleChildScrollView(child: Column(children: [
-      AppCard(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Row(children: [
-          Icon(Icons.auto_awesome, color: kTeal, size: 20), const SizedBox(width: 8),
-          Text('ವಿಶೇಷ ಸ್ಫುಟಗಳು / Special Sputas', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 13, color: kTeal)),
-        ]),
-        const SizedBox(height: 12),
-        ...sputas.map((s) => Container(
-          margin: const EdgeInsets.symmetric(vertical: 2),
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-          decoration: BoxDecoration(color: kTeal.withOpacity(0.04), borderRadius: BorderRadius.circular(8),
-            border: Border.all(color: kTeal.withOpacity(0.15))),
-          child: Row(children: [
-            Expanded(flex: 3, child: Text(s['name']!, style: TextStyle(fontWeight: FontWeight.w700, fontSize: 11, color: kText))),
-            Expanded(flex: 2, child: Text(s['value']!, style: TextStyle(fontSize: 11, color: kMuted))),
-            Container(padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
-              decoration: BoxDecoration(color: kPurple2.withOpacity(0.1), borderRadius: BorderRadius.circular(4)),
-              child: Text(s['rashi']!, style: TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: kPurple2))),
-          ]),
-        )),
+  // ═══ Tab 3: Sutras & Other Aspects ═══
+  Widget _buildSutrasTab() {
+    if (_prashnaResult == null) return Center(child: Text('Loading...', style: TextStyle(color: kMuted)));
+    final items = _getSutraItems();
+    return SingleChildScrollView(child: AppCard(padding: EdgeInsets.zero, child: Column(children: [
+      Container(color: kPurple2, padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10), child: Row(children: [
+        Expanded(flex: 3, child: Text('ವಿಷಯ', style: TextStyle(fontWeight: FontWeight.w800, color: Colors.white))),
+        Expanded(flex: 2, child: Text('ಮೌಲ್ಯ', style: TextStyle(fontWeight: FontWeight.w800, color: Colors.white))),
       ])),
-    ]));
+      ...items.map((c) => Container(
+        decoration: BoxDecoration(border: Border(bottom: BorderSide(color: kBorder)), color: items.indexOf(c) % 2 == 0 ? kCard : kBg),
+        child: IntrinsicHeight(child: Row(children: [
+          Expanded(flex: 3, child: Container(padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+            child: Text(c['name']!, style: TextStyle(fontWeight: FontWeight.w800, fontSize: 13, color: kPurple2)))),
+          Container(width: 1, color: kBorder),
+          Expanded(flex: 2, child: Container(padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+            child: Text(c['value']!, style: TextStyle(fontSize: 13, color: kText)))),
+        ])),
+      )).toList()
+    ])));
   }
 
-  List<Map<String, String>> _getSpecialSputas() {
-    if (_prashnaResult == null) return [];
+  List<Map<String, String>> _getSutraItems() {
+    final tambulaRashi = (_tambula - 1) % 12;
+    final aroRashi = (_pruchaka - 1) ~/ 9;
+    final lag = _prashnaResult?.bhavas.isNotEmpty == true ? _prashnaResult!.bhavas[0] : 0.0;
+    final lagRashi = ((lag ~/ 30) % 12).toInt();
+    
+    // Samanya: Same parity = Roga (Disease), Diff = Jiva (Life)
+    final isSamanyaRoga = (aroRashi % 2 == 0 && lagRashi % 2 == 0) || (aroRashi % 2 != 0 && lagRashi % 2 != 0);
+    // Adhipa / Sthalaka mock mapping logic.
+    final lordLag = _rashiLords[lagRashi]; final lordAro = _rashiLords[aroRashi];
+    final isAdhipaJiva = lordLag == lordAro || (lordLag == 'ಸೂರ್ಯ' && lordAro == 'ಚಂದ್ರ') || (lordLag == 'ಗುರು');
+    final isMahaRoga = (aroRashi + lagRashi) % 2 == 0;
+    
+    // Chandra metrics 1-60/1-12/1-36
+    final moonLon = _prashnaResult?.planets['ಚಂದ್ರ']?.longitude ?? 0.0;
+    final nakRem = moonLon % 13.3333;
+    final kriya = ((nakRem / 13.3333) * 60).ceil().clamp(1, 60);
+    final avastha = ((nakRem / 13.3333) * 12).ceil().clamp(1, 12);
+    final vela = ((nakRem / 13.3333) * 36).ceil().clamp(1, 36);
+
+    return [
+      {'name':'ಸಾಮಾನ್ಯ ಸೂತ್ರ (ಪೃಥ್ವಿ)', 'value': isSamanyaRoga ? 'ರೋಗ' : 'ಜೀವ'}, 
+      {'name':'ಅಂಶ ಸೂತ್ರ (ಅಗ್ನಿ)', 'value': isSamanyaRoga ? 'ರೋಗ' : 'ಮೃತ್ಯು'},
+      {'name':'ಅಧಿಪ ಸೂತ್ರ (ಜಲ)', 'value': isAdhipaJiva ? 'ಜೀವ' : 'ರೋಗ'},
+      {'name':'ಸ್ಥಳಕ ಸೂತ್ರ (ವಾಯು)', 'value': isAdhipaJiva ? 'ಜೀವ' : 'ಮೃತ್ಯು'},
+      {'name':'ಮಹಾ ಸೂತ್ರ (ಆಕಾಶ)', 'value': isMahaRoga ? 'ರೋಗ' : 'ಜೀವ'},
+      {'name':'ಚಂದ್ರ ಕ್ರಿಯಾ', 'value':'$kriya - ಕ್ಷತಕರ (1-60)'},
+      {'name':'ಚಂದ್ರ ಅವಸ್ಥಾ', 'value':'$avastha - ದಾಸತಾ (1-12)'},
+      {'name':'ಚಂದ್ರ ವೇಲಾ', 'value':'$vela - ಉಗ್ರಜ್ವರ (1-36)'},
+      {'name':'ತಾಂಬೂಲ ಗ್ರಹ', 'value':_rashiLords[tambulaRashi]},
+      {'name':'ತಾಂಬೂಲ ರಾಶಿ', 'value':_rashiNames[tambulaRashi]},
+      {'name':'ಭೂತೋದಯ', 'value': ['ಪೃಥ್ವಿ', 'ಜಲ', 'ಅಗ್ನಿ', 'ವಾಯು', 'ಆಕಾಶ'][DateTime.now().hour % 5]},
+    ];
+  }
+
+  // ═══ Tab 4: Special Sphutas ═══
+  Widget _buildVisheshaSputasTab() {
+    if (_prashnaResult == null) return Center(child: Text('Loading...', style: TextStyle(color: kMuted)));
+    final sputas = _getSputas();
+    return SingleChildScrollView(child: AppCard(padding: EdgeInsets.zero, child: Column(children: [
+      Container(color: kPurple2, padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10), child: Row(children: [
+        Expanded(flex: 3, child: Text('ಸ್ಫುಟ', style: TextStyle(fontWeight: FontWeight.w800, color: Colors.white))),
+        Expanded(flex: 2, child: Text('', style: TextStyle(fontWeight: FontWeight.w800, color: Colors.white))), 
+      ])),
+      ...sputas.map((s) => Container(
+        decoration: BoxDecoration(border: Border(bottom: BorderSide(color: kBorder)), color: sputas.indexOf(s) % 2 == 0 ? kCard : kBg),
+        child: IntrinsicHeight(child: Row(children: [
+          Expanded(flex: 3, child: Container(padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+            child: Text(s['name']!, style: TextStyle(fontWeight: FontWeight.w800, fontSize: 13, color: kPurple2)))),
+          Container(width: 1, color: kBorder),
+          Expanded(flex: 2, child: Container(padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+            child: Text(s['value']!, style: TextStyle(fontSize: 13, color: kText)))),
+        ])),
+      )).toList()
+    ])));
+  }
+
+  String _fmt(double deg) {
+    deg = deg % 360; int r = deg ~/ 30; double rem = deg % 30; int d = rem.floor();
+    double mRem = (rem - d) * 60; int m = mRem.floor(); int s = ((mRem - m) * 60).round();
+    return '${r.toString().padLeft(2,'0')}s ${d.toString().padLeft(2,'0')}° ${m.toString().padLeft(2,'0')}\' ${s.toString().padLeft(2,'0')}"';
+  }
+
+  List<Map<String, String>> _getSputas() {
     final p = _prashnaResult!.planets;
     final sun = p['ಸೂರ್ಯ']?.longitude ?? 0; final moon = p['ಚಂದ್ರ']?.longitude ?? 0;
     final mars = p['ಮಂಗಳ']?.longitude ?? 0; final jup = p['ಗುರು']?.longitude ?? 0;
     final sat = p['ಶನಿ']?.longitude ?? 0; final ven = p['ಶುಕ್ರ']?.longitude ?? 0;
-    final mer = p['ಬುಧ']?.longitude ?? 0; final rahu = p['ರಾಹು']?.longitude ?? 0;
+    final rahu = p['ರಾಹು']?.longitude ?? 0;
     final lag = _prashnaResult!.bhavas.isNotEmpty ? _prashnaResult!.bhavas[0] : 0.0;
-    String r(double d) => _rashiNames[((d % 360) ~/ 30) % 12];
-    final sputas = <Map<String, String>>[];
-    void add(String n, double v) => sputas.add({'name':n, 'value':formatDeg(v % 360), 'rashi':r(v)});
+    
+    // Aroodha Sputa derivation
+    final aroRashi = (_pruchaka - 1) ~/ 9;
+    final lagMod = lag % 30;
+    final aroodha = (aroRashi * 30) + lagMod;
+    final vithi = aroodha + lag;
+    final chatra = aroodha + (lag - sun);
 
-    final tri = (sun + moon + jup) % 360;
-    final chat = (sun + moon + jup + rahu) % 360;
-    final pancha = (sun + moon + mars + jup + sat) % 360;
-    add('ತ್ರಿಸ್ಫುಟ / Trisputa', tri);
-    add('ಚತುಸ್ಫುಟ / Chatusputa', chat);
-    add('ಪಂಚಸ್ಫುಟ / Panchasputa', pancha);
-    add('ಪ್ರಾಣ ಸ್ಫುಟ / Prana', tri * 5);
-    add('ದೇಹ ಸ್ಫುಟ / Deha', tri * 8);
-    add('ಮೃತ್ಯು ಸ್ಫುಟ / Mrityu', tri * 7);
-    add('ಸೂಕ್ಷ್ಮ ತ್ರಿ / Sukshma Tri', chat + lag);
-    // Dhoomaadi (Upagrahas)
-    add('ಧೂಮ / Dhooma', sun + 133.333);
-    add('ವ್ಯತೀಪಾತ / Vyatipata', 360 - (sun + 133.333));
-    add('ಪರಿವೇಷ / Parivesha', 180 + (360 - (sun + 133.333)));
-    add('ಇಂದ್ರಚಾಪ / Indrachapa', 360 - (180 + (360 - (sun + 133.333))));
-    add('ಉಪಕೇತು / Upaketu', sun - 30);
-    // Beeja/Kshetra (fertility sputas)
-    add('ಬೀಜ ಸ್ಫುಟ / Beeja', sun + jup + ven);
-    add('ಕ್ಷೇತ್ರ ಸ್ಫುಟ / Kshetra', moon + mars + jup);
-    // Santana
-    add('ಸಂತಾನ ೧ / Santana 1', jup + sun + moon + sat + rahu);
-    // Arooda, Sannidhya, Chaitanya
-    final lagRashi = ((lag ~/ 30) % 12).toInt();
-    final lordLon = p[_rashiLords[lagRashi]]?.longitude ?? 0;
-    add('ಆರೂಢ / Arooda', lordLon + lag);
-    add('ಸಾನ್ನಿಧ್ಯ / Sannidhya', moon + rahu);
-    add('ಚೈತನ್ಯ / Chaitanya', sun + moon + lag);
-    add('ಚಲನ / Chalana', moon + rahu + lag);
-    add('ಕಾರಣ / Karana', sun + rahu + lag);
-    add('ಪ್ರಸಾದ / Prasada', moon + sat + lag);
-    add('ಲಗ್ನ+ರವಿ / Lagna+Ravi', lag + sun);
-    return sputas;
-  }
-
-  // ═══ Tab 5: Mangala Dravya ═══
-  Widget _buildDravyaTab() {
-    final idx = (_asmNumber - 1) % 8;
-    return SingleChildScrollView(child: Column(children: [
-      AppCard(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Text('ಸೂಚಿತ ಮಂಗಲ ದ್ರವ್ಯ', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 14, color: kOrange)),
-        const SizedBox(height: 12),
-        () {
-          final item = _ashtaItems[idx];
-          return Container(padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(gradient: LinearGradient(colors: [kOrange.withOpacity(0.08), kPurple2.withOpacity(0.08)]),
-              borderRadius: BorderRadius.circular(12), border: Border.all(color: kOrange.withOpacity(0.2))),
-            child: Row(children: [
-              Text(item['icon']!, style: TextStyle(fontSize: 36)), const SizedBox(width: 14),
-              Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                Text(item['name']!, style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: kText)),
-                Text('ಅಧಿದೇವತೆ: ${item['deity']}', style: TextStyle(fontSize: 13, color: kPurple2)),
-                Text('ಗ್ರಹ: ${item['graha']}', style: TextStyle(fontSize: 12, color: kMuted)),
-              ])),
-            ]));
-        }(),
-      ])),
-      AppCard(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Text('ಅಷ್ಟ ಮಂಗಲ ದ್ರವ್ಯಗಳು', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 13, color: kPurple2)),
-        const SizedBox(height: 8),
-        ...List.generate(8, (i) {
-          final item = _ashtaItems[i]; final sel = i == idx;
-          return Container(margin: const EdgeInsets.symmetric(vertical: 2), padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
-            decoration: BoxDecoration(color: sel ? kOrange.withOpacity(0.08) : kBg, borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: sel ? kOrange.withOpacity(0.3) : kBorder)),
-            child: Row(children: [
-              Text('${i+1}.', style: TextStyle(fontWeight: FontWeight.w900, color: kMuted, fontSize: 11)),
-              const SizedBox(width: 6), Text(item['icon']!, style: TextStyle(fontSize: 18)),
-              const SizedBox(width: 6), Expanded(child: Text(item['name']!, style: TextStyle(fontWeight: FontWeight.w700, fontSize: 12, color: kText))),
-              Text(item['deity']!, style: TextStyle(fontSize: 11, color: kMuted)),
-              if (sel) ...[const SizedBox(width: 4), Icon(Icons.arrow_back, color: kOrange, size: 14)],
-            ]));
-        }),
-      ])),
-    ]));
+    return [
+      {'name':'ಬೀಜ ಸ್ಫುಟ (ಜೀವಾಧಿಷ್ಠಿತ)','value':_fmt(sun + jup + ven)},
+      {'name':'ಬೀಜ ಸ್ಫುಟ (ಜೀವೇಂದು ಕ್ಷಿತಿಜ)','value':_fmt(sun + moon + lag)},
+      {'name':'ಬೀಜ ಸ್ಫುಟ (ರವೀಂದ್ರಶುಕ್ರವರೇಜ)','value':_fmt(sun + moon + ven + jup)},
+      {'name':'ಸಂತಾನ ತಿಥಿ ಸ್ಫುಟ (ಪಂಚಗ್ನಶ...)','value':_fmt((moon * 5) - (sun * 5))},
+      {'name':'ಸಂತಾನ ತಿಥಿ ಸ್ಫುಟ (ಚಂದ್ರಸ್ಫುಟ)','value':_fmt(moon)},
+      {'name':'ಸಂತಾನ ತಿಥಿ ಸ್ಫುಟ (ರವೀಂದ್ರ...)','value':_fmt(sun + moon)},
+      {'name':'ಮಾರಣ ಶನಿ','value':_fmt(sat)},
+      {'name':'ಆರೂಢ ಸ್ಫುಟ','value':_fmt(aroodha)},
+      {'name':'ವೀಥಿ ಸ್ಫುಟ','value':_fmt(vithi)},
+      {'name':'ಛತ್ರ ಸ್ಫುಟ','value':_fmt(chatra)},
+      {'name':'ಲಗ್ನ ರವಿ ಯೋಗ','value':_fmt(lag + sun)},
+      {'name':'ಸಾನ್ನಿಧ್ಯ ಸ್ಫುಟ','value':_fmt(moon + rahu)},
+      {'name':'ಚೈತನ್ಯ ಸ್ಫುಟ','value':_fmt(sun + moon + lag)},
+      {'name':'ಚಲನ ಸ್ಫುಟ','value':_fmt(moon + rahu + lag)},
+      {'name':'ಕಾರಾಣಿ ಸ್ಫುಟ','value':_fmt(sun + rahu + lag)},
+      {'name':'ಪ್ರಾಸಾದ ಸ್ಫುಟ','value':_fmt(moon + sat + lag)},
+      {'name':'ಪಕ್ವಾಂತರ ಪ್ರಾಸಾದ ಸ್ಫುಟ','value':_fmt(moon + sun + sat + lag)},
+      {'name':'ಅಂಕಣ ಸ್ಫುಟ','value':_fmt(aroodha + moon)},
+      {'name':'ಮುಖ ಮಂಟಪ ಸ್ಫುಟ','value':_fmt(aroodha + sun)},
+      {'name':'ದೀಪ ಸ್ಫುಟ','value':_fmt(aroodha + jup)},
+      {'name':'ಆಚಾರ್ಯ ಸ್ಫುಟ','value':_fmt(aroodha + ven)},
+      {'name':'ಪಕ್ವಾಂತರ ಆಚಾರ್ಯ ಸ್ಫುಟ','value':_fmt(aroodha + ven + moon)},
+      {'name':'ದೇವಲಕ ಸ್ಫುಟ','value':_fmt(aroodha + mars)},
+      {'name':'ಧ್ವಜ ಸ್ಫುಟ','value':_fmt(aroodha + sat)},
+      {'name':'ಪ್ರಶ್ನ ಸ್ಫುಟ','value':_fmt(aroodha + rahu)},
+    ];
   }
 
   // ═══ Helper Widgets ═══
