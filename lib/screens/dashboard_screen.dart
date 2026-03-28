@@ -637,9 +637,14 @@ class _DashboardScreenState extends State<DashboardScreen>
                       onPressed: _syncing ? null : () async {
                             widget.onSave(_notes, _aroodhas, _janmaNakshatraIdx, isNew: false);
                             if (!mounted) return;
+                            final cId = widget.extraInfo['clientId'] ?? '';
                             ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(content: Text('ಉಳಿಸಲಾಗಿದೆ!')));
-
+                              SnackBar(
+                                content: Text('✅ ಜಾತಕವನ್ನು ಉಳಿಸಲಾಗಿದೆ! (Saved)\nClient ID: $cId'),
+                                backgroundColor: Colors.green,
+                                duration: const Duration(seconds: 4),
+                              )
+                            );
                             if (GoogleAuthService.isSignedIn) {
                               setState(() => _syncing = true);
                               // Google APIs removed, just simulate success for UI consistency
