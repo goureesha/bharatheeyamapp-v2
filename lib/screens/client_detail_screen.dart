@@ -394,18 +394,23 @@ class _ClientDetailScreenState extends State<ClientDetailScreen> {
       if (mounted) Navigator.pop(context); // dismiss loading
       if (result != null && mounted) {
         Navigator.push(context, MaterialPageRoute(
-          builder: (_) => DashboardScreen(
-            result: result,
-            name: m.memberName,
-            place: m.birthPlace,
-            dob: dob,
-            hour: m.hour12,
-            minute: m.minute,
-            ampm: m.ampm,
-            lat: m.lat,
-            lon: m.lon,
-            initialNotes: m.notes,
-            onSave: (notes, aroodhas, janmaIdx, {bool isNew = true}) {
+          builder: (_) {
+            String initialNotes = m.notes;
+            if (initialNotes.isEmpty) {
+              initialNotes = '🆔 ಗ್ರಾಹಕ ID (Client ID): ${m.clientId}\n📅 ಜನ್ಮ ದಿನಾಂಕ: ${m.dob}\n⏰ ಜನ್ಮ ಸಮಯ: ${m.birthTime}\n📍 ಜನ್ಮ ಸ್ಥಳ: ${m.birthPlace}\n---\nಹೊಸ ಟಿಪ್ಪಣಿ: ';
+            }
+            return DashboardScreen(
+              result: result,
+              name: m.memberName,
+              place: m.birthPlace,
+              dob: dob,
+              hour: m.hour12,
+              minute: m.minute,
+              ampm: m.ampm,
+              lat: m.lat,
+              lon: m.lon,
+              initialNotes: initialNotes,
+              onSave: (notes, aroodhas, janmaIdx, {bool isNew = true}) {
               // Save notes back to member
               final updated = FamilyMember(
                 clientId: m.clientId,
