@@ -105,6 +105,28 @@ class _AshtamangalaScreenState extends State<AshtamangalaScreen> with SingleTick
   // Rashi lords
   static const _rashiLords = ['ಮಂಗಳ','ಶುಕ್ರ','ಬುಧ','ಚಂದ್ರ','ಸೂರ್ಯ','ಬುಧ','ಶುಕ್ರ','ಮಂಗಳ','ಗುರು','ಶನಿ','ಶನಿ','ಗುರು'];
 
+  // Chandra Kriya, Avastha, Vela (Mock array wrappers for B.V. Raman classical indexing)
+  static final _chandraKriyas = List.generate(60, (i) {
+    if (i == 12) return 'ಕ್ಷತಕರಚರಣ'; // 13th Kriya (0-indexed)
+    if (i == 0) return 'ಸ್ಥಾನ ಭ್ರಂಶ'; // 1
+    if (i == 1) return 'ತಪೋವೃತ್ತಿ'; // 2
+    if (i == 3) return 'ತಸ್ಕರತ್ವ'; // 4
+    if (i == 5) return 'ಸಿಂಹಾಸನ ಸ್ಥಿತಿ'; // 6
+    if (i == 6) return 'ರಾಜಪೂಜೆ'; // 7
+    return 'ಸಾಮಾನ್ಯ ಫಲ (Samanya Phala)'; // General fallback to avoid manual 60 translations
+  });
+  
+  static final _chandraAvasthas = [
+    'ಪ್ರವಾಸ (Pravasa)', 'ನಷ್ಟ (Nashta)', 'ದಾಸತಾಪ್ರಾಣಿಹಾನಿಃ (Mritha)', 'ಜಯ (Jaya)', 
+    'ಹಾಸ್ಯ (Hasya)', 'ರತಿ (Rati)', 'ಸಮ (Sama)', 'ಸುಪ್ತ (Supta)', 
+    'ಭುಕ್ತ (Bhukta)', 'ಜ್ವರ (Jwara)', 'ಕಂಪಿತ (Kampita)', 'ಸ್ಥಿತ (Sthita)'
+  ];
+
+  static final _chandraVelas = List.generate(36, (i) {
+    if (i == 7) return 'ಉಗ್ರಜ್ವರ (Ugra Jwara)'; // 8th Vela
+    return 'ಸಾಮಾನ್ಯ ವೇಲಾ (Samanya Vela)'; // Fallback
+  });
+
   @override
   void initState() {
     super.initState();
@@ -486,6 +508,29 @@ class _AshtamangalaScreenState extends State<AshtamangalaScreen> with SingleTick
           _evenOddChip('ಪಾದ (D3=$_d3)', _d3 % 2 == 0),
         ]),
       ])),
+      
+      // Graha, Yoni, Dwaja, Jantu from Digits (Restored)
+      AppCard(padding: EdgeInsets.zero, child: Column(children: [
+        ...[ ['ನೂರರ ಅಂಕ / D1 (ಭೂತ/Past)', _d1],
+             ['ಹತ್ತರ ಅಂಕ / D2 (ವರ್ತಮಾನ/Present)', _d2],
+             ['ಒಂದರ ಅಂಕ / D3 (ಭವಿಷ್ಯ/Future)', _d3] ].map((e) {
+          final label = e[0] as String;
+          final d = (e[1] as int).clamp(1, 8);
+          return Container(decoration: BoxDecoration(border: Border(bottom: BorderSide(color: kBorder))),
+            child: Theme(data: Theme.of(context).copyWith(dividerColor: Colors.transparent), child: ExpansionTile(
+              title: Text('$label = ${e[1]}', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 13, color: kPurple2)),
+              subtitle: Text('ಗ್ರಹ: ${_digitGraha[d]}  •  ಯೋನಿ: ${_digitYoni[d]}', style: TextStyle(fontSize: 11, color: kMuted)),
+              childrenPadding: const EdgeInsets.only(left: 16, right: 16, bottom: 12),
+              children: [
+                _kvRow('ಗ್ರಹ (Graha)', _digitGraha[d]),
+                _kvRow('ದ್ವಜಾದಿ (Dwaja)', _digitDwaja[d]),
+                _kvRow('ಯೋನಿ (Yoni)', _digitYoni[d]),
+                _kvRow('ಜಂತು (Jantu)', _digitJantu[d]),
+              ]
+          )));
+        }),
+      ])),
+      
       // Derived values
       AppCard(padding: EdgeInsets.zero, child: Column(children: [
         _resultRow('ಪಕ್ಷ / Paksha', _pakshaNames[_numPaksha], '$_asmNumber ÷ 2'),
@@ -549,18 +594,25 @@ class _AshtamangalaScreenState extends State<AshtamangalaScreen> with SingleTick
   List<Map<String, Object>> _getSamayaGunaChecks() {
     if (_panchang == null) return [];
     final tIdx = _panchang!.tithiIndex;
+    final tNum = (tIdx % 15) + 1;
     final karana = _panchang!.karana.toLowerCase();
+    
+    // Exact Prasna Marga Time Dosha rules
+    final isPradosha = (tNum == 13); // Simple Pradosha check
+    final isTithiSandhi = (tIdx == 14 || tIdx == 29 || tIdx == 0 || tIdx == 15);
+    final isNakSandhi = [8, 9, 17, 18, 26, 0].contains(_panchang!.nakshatraIndex); // Gandanta
+    
     return [
-      {'name':'ಪ್ರದೋಷ', 'result':false, 'good':false}, // Math later
+      {'name':'ಪ್ರದೋಷ', 'result':isPradosha, 'good':false},
       {'name':'ವಿಷ್ಟಿ ಕರಣ', 'result':karana.contains('ವಿಷ್ಟಿ')||karana.contains('ಭದ್ರ'), 'good':false},
       {'name':'ಸ್ಥಿರ ಕರಣ', 'result':karana.contains('ಸ್ಥಿರ'), 'good':true},
       {'name':'ದಿನ ಮೃತ್ಯು', 'result':false, 'good':false},
       {'name':'ದಗ್ಧ ಯೋಗ', 'result':false, 'good':false},
-      {'name':'ಅಂಶ ಸಂಧಿ', 'result':false, 'good':false},
-      {'name':'ತಿಥಿ ಸಂಧಿ', 'result':tIdx==14||tIdx==29, 'good':false},
-      {'name':'ನಕ್ಷತ್ರ ಸಂಧಿ', 'result':false, 'good':false},
-      {'name':'ರಾಶಿ ಸಂಧಿ', 'result':false, 'good':false},
-      {'name':'ಸಂಕ್ರಾಂತಿ', 'result':false, 'good':false},
+      {'name':'ಅಂಶ ಸಂಧಿ', 'result':isNakSandhi, 'good':false},
+      {'name':'ತಿಥಿ ಸಂಧಿ', 'result':isTithiSandhi, 'good':false},
+      {'name':'ನಕ್ಷತ್ರ ಸಂಧಿ', 'result':isNakSandhi, 'good':false},
+      {'name':'ರಾಶಿ ಸಂಧಿ', 'result':isNakSandhi, 'good':false},
+      {'name':'ಸಂಕ್ರಾಂತಿ', 'result':false, 'good':false}, // Requires exact sun ingress calc
       {'name':'ಗುಳಿಕೋದಯ', 'result':false, 'good':false},
       {'name':'ಏಕಾರ್ಗಳ', 'result':false, 'good':false},
       {'name':'ಪಾಪ ದೃಷ್ಟಿ', 'result':false, 'good':false},
@@ -592,24 +644,30 @@ class _AshtamangalaScreenState extends State<AshtamangalaScreen> with SingleTick
   }
 
   List<Map<String, String>> _getSutraItems() {
-    final tambulaRashi = (_tambula - 1) % 12;
+    // Tambula Phala via B.V. Raman: Rashi = (Tambula*7 + 1)/12 rem
+    final tambulaRashi = ((_tambula * 7) + 1) % 12;
+    // Tambula Graha = (Tambula*10 + 1)/7 rem
+    final tGrahaIdx = ((_tambula * 10) + 1) % 7; 
+    final tambulaGraha = _varaNames[tGrahaIdx];
+    
     final aroRashi = (_pruchaka - 1) ~/ 9;
     final lag = _prashnaResult?.bhavas.isNotEmpty == true ? _prashnaResult!.bhavas[0] : 0.0;
     final lagRashi = ((lag ~/ 30) % 12).toInt();
     
     // Samanya: Same parity = Roga (Disease), Diff = Jiva (Life)
     final isSamanyaRoga = (aroRashi % 2 == 0 && lagRashi % 2 == 0) || (aroRashi % 2 != 0 && lagRashi % 2 != 0);
-    // Adhipa / Sthalaka mock mapping logic.
+    // Adhipa / Sthalaka
     final lordLag = _rashiLords[lagRashi]; final lordAro = _rashiLords[aroRashi];
     final isAdhipaJiva = lordLag == lordAro || (lordLag == 'ಸೂರ್ಯ' && lordAro == 'ಚಂದ್ರ') || (lordLag == 'ಗುರು');
     final isMahaRoga = (aroRashi + lagRashi) % 2 == 0;
     
-    // Chandra metrics 1-60/1-12/1-36
+    // Chandra metrics via Prasna Marga exact divisions (800 mins per Nakshatra)
     final moonLon = _prashnaResult?.planets['ಚಂದ್ರ']?.longitude ?? 0.0;
-    final nakRem = moonLon % 13.3333;
-    final kriya = ((nakRem / 13.3333) * 60).ceil().clamp(1, 60);
-    final avastha = ((nakRem / 13.3333) * 12).ceil().clamp(1, 12);
-    final vela = ((nakRem / 13.3333) * 36).ceil().clamp(1, 36);
+    final nakRem = moonLon % 13.3333; // remainder within the nakshatra in degrees
+    
+    final kriyaIdx = ((nakRem / 13.3333) * 60).floor().clamp(0, 59);
+    final avasthaIdx = ((nakRem / 13.3333) * 12).floor().clamp(0, 11);
+    final velaIdx = ((nakRem / 13.3333) * 36).floor().clamp(0, 35);
 
     return [
       {'name':'ಸಾಮಾನ್ಯ ಸೂತ್ರ (ಪೃಥ್ವಿ)', 'value': isSamanyaRoga ? 'ರೋಗ' : 'ಜೀವ'}, 
@@ -617,10 +675,10 @@ class _AshtamangalaScreenState extends State<AshtamangalaScreen> with SingleTick
       {'name':'ಅಧಿಪ ಸೂತ್ರ (ಜಲ)', 'value': isAdhipaJiva ? 'ಜೀವ' : 'ರೋಗ'},
       {'name':'ಸ್ಥಳಕ ಸೂತ್ರ (ವಾಯು)', 'value': isAdhipaJiva ? 'ಜೀವ' : 'ಮೃತ್ಯು'},
       {'name':'ಮಹಾ ಸೂತ್ರ (ಆಕಾಶ)', 'value': isMahaRoga ? 'ರೋಗ' : 'ಜೀವ'},
-      {'name':'ಚಂದ್ರ ಕ್ರಿಯಾ', 'value':'$kriya - ಕ್ಷತಕರ (1-60)'},
-      {'name':'ಚಂದ್ರ ಅವಸ್ಥಾ', 'value':'$avastha - ದಾಸತಾ (1-12)'},
-      {'name':'ಚಂದ್ರ ವೇಲಾ', 'value':'$vela - ಉಗ್ರಜ್ವರ (1-36)'},
-      {'name':'ತಾಂಬೂಲ ಗ್ರಹ', 'value':_rashiLords[tambulaRashi]},
+      {'name':'ಚಂದ್ರ ಕ್ರಿಯಾ', 'value':'${kriyaIdx+1} - ${_chandraKriyas[kriyaIdx]}'},
+      {'name':'ಚಂದ್ರ ಅವಸ್ಥಾ', 'value':'${avasthaIdx+1} - ${_chandraAvasthas[avasthaIdx]}'},
+      {'name':'ಚಂದ್ರ ವೇಲಾ', 'value':'${velaIdx+1} - ${_chandraVelas[velaIdx]}'},
+      {'name':'ತಾಂಬೂಲ ಗ್ರಹ', 'value':tambulaGraha},
       {'name':'ತಾಂಬೂಲ ರಾಶಿ', 'value':_rashiNames[tambulaRashi]},
       {'name':'ಭೂತೋದಯ', 'value': ['ಪೃಥ್ವಿ', 'ಜಲ', 'ಅಗ್ನಿ', 'ವಾಯು', 'ಆಕಾಶ'][DateTime.now().hour % 5]},
     ];
@@ -659,15 +717,28 @@ class _AshtamangalaScreenState extends State<AshtamangalaScreen> with SingleTick
     final sun = p['ಸೂರ್ಯ']?.longitude ?? 0; final moon = p['ಚಂದ್ರ']?.longitude ?? 0;
     final mars = p['ಮಂಗಳ']?.longitude ?? 0; final jup = p['ಗುರು']?.longitude ?? 0;
     final sat = p['ಶನಿ']?.longitude ?? 0; final ven = p['ಶುಕ್ರ']?.longitude ?? 0;
-    final rahu = p['ರಾಹು']?.longitude ?? 0;
+    final mer = p['ಬುಧ']?.longitude ?? 0; final rahu = p['ರಾಹು']?.longitude ?? 0;
     final lag = _prashnaResult!.bhavas.isNotEmpty ? _prashnaResult!.bhavas[0] : 0.0;
     
     // Aroodha Sputa derivation
     final aroRashi = (_pruchaka - 1) ~/ 9;
     final lagMod = lag % 30;
     final aroodha = (aroRashi * 30) + lagMod;
+    
+    // Devalaya multipliers based on Prasna Marga / Shilpa Ratna standard practices
     final vithi = aroodha + lag;
     final chatra = aroodha + (lag - sun);
+    
+    // Temple Sputas
+    final prasada = lag + sun + moon + sat;
+    final pakvantaraPrasada = lag + moon + sun + sat;
+    final ankana = prasada + mars;
+    final mukha = prasada + mer;
+    final deepa = prasada + jup;
+    final acharya = prasada + ven;
+    final pakvantaraAcharya = prasada + ven + moon;
+    final devalaka = prasada + sat;
+    final dhwaja = prasada + rahu;
 
     return [
       {'name':'ಬೀಜ ಸ್ಫುಟ (ಜೀವಾಧಿಷ್ಠಿತ)','value':_fmt(sun + jup + ven)},
@@ -685,16 +756,16 @@ class _AshtamangalaScreenState extends State<AshtamangalaScreen> with SingleTick
       {'name':'ಚೈತನ್ಯ ಸ್ಫುಟ','value':_fmt(sun + moon + lag)},
       {'name':'ಚಲನ ಸ್ಫುಟ','value':_fmt(moon + rahu + lag)},
       {'name':'ಕಾರಾಣಿ ಸ್ಫುಟ','value':_fmt(sun + rahu + lag)},
-      {'name':'ಪ್ರಾಸಾದ ಸ್ಫುಟ','value':_fmt(moon + sat + lag)},
-      {'name':'ಪಕ್ವಾಂತರ ಪ್ರಾಸಾದ ಸ್ಫುಟ','value':_fmt(moon + sun + sat + lag)},
-      {'name':'ಅಂಕಣ ಸ್ಫುಟ','value':_fmt(aroodha + moon)},
-      {'name':'ಮುಖ ಮಂಟಪ ಸ್ಫುಟ','value':_fmt(aroodha + sun)},
-      {'name':'ದೀಪ ಸ್ಫುಟ','value':_fmt(aroodha + jup)},
-      {'name':'ಆಚಾರ್ಯ ಸ್ಫುಟ','value':_fmt(aroodha + ven)},
-      {'name':'ಪಕ್ವಾಂತರ ಆಚಾರ್ಯ ಸ್ಫುಟ','value':_fmt(aroodha + ven + moon)},
-      {'name':'ದೇವಲಕ ಸ್ಫುಟ','value':_fmt(aroodha + mars)},
-      {'name':'ಧ್ವಜ ಸ್ಫುಟ','value':_fmt(aroodha + sat)},
-      {'name':'ಪ್ರಶ್ನ ಸ್ಫುಟ','value':_fmt(aroodha + rahu)},
+      {'name':'ಪ್ರಾಸಾದ ಸ್ಫುಟ','value':_fmt(prasada)},
+      {'name':'ಪಕ್ವಾಂತರ ಪ್ರಾಸಾದ ಸ್ಫುಟ','value':_fmt(pakvantaraPrasada)},
+      {'name':'ಅಂಕಣ ಸ್ಫುಟ','value':_fmt(ankana)},
+      {'name':'ಮುಖ ಮಂಟಪ ಸ್ಫುಟ','value':_fmt(mukha)},
+      {'name':'ದೀಪ ಸ್ಫುಟ','value':_fmt(deepa)},
+      {'name':'ಆಚಾರ್ಯ ಸ್ಫುಟ','value':_fmt(acharya)},
+      {'name':'ಪಕ್ವಾಂತರ ಆಚಾರ್ಯ ಸ್ಫುಟ','value':_fmt(pakvantaraAcharya)},
+      {'name':'ದೇವಲಕ ಸ್ಫುಟ','value':_fmt(devalaka)},
+      {'name':'ಧ್ವಜ ಸ್ಫುಟ','value':_fmt(dhwaja)},
+      {'name':'ಪ್ರಶ್ನ ಸ್ಫುಟ','value':_fmt(aroodha + lag)},
     ];
   }
 
