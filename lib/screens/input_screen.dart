@@ -46,6 +46,7 @@ class _InputScreenState extends State<InputScreen> {
   bool _loadedFromSaved = false; // true when user opened an existing profile
 
   String _loadedNotes = '';
+  String? _loadedClientId;
   Map<String, int> _loadedAroodhas = {};
   int? _loadedJanmaNakshatraIdx;
 
@@ -99,6 +100,7 @@ class _InputScreenState extends State<InputScreen> {
       _minute = p.minute;
       _ampm   = p.ampm;
       _loadedNotes = p.notes;
+      _loadedClientId = p.clientId;
       _loadedAroodhas = Map.from(p.aroodhas);
       _loadedJanmaNakshatraIdx = p.janmaNakshatraIdx;
       try {
@@ -237,6 +239,28 @@ class _InputScreenState extends State<InputScreen> {
       );
 
       if (result != null && mounted) {
+        String uiNotes = _loadedNotes;
+        String? activeClientId = _loadedClientId;
+
+        if (!_loadedFromSaved) {
+          activeClientId = await ClientService.generateNextClientId();
+          final timeStr = '$_hour:${_minute.toString().padLeft(2, '0')} $_ampm';
+          final dateStr = '${_dob.year}-${_dob.month.toString().padLeft(2, '0')}-${_dob.day.toString().padLeft(2, '0')}';
+
+          if (uiNotes.isEmpty) {
+            uiNotes = '🆔 ಗ್ರಾಹಕ ID (Client ID): $activeClientId\n📅 ಜನ್ಮ ದಿನಾಂಕ: $dateStr\n⏰ ಜನ್ಮ ಸಮಯ: $timeStr\n📍 ಜನ್ಮ ಸ್ಥಳ: ${_placeCtrl.text}\n---\nಹೊಸ ಟಿಪ್ಪಣಿ: ';
+          }
+
+          // Forcefully register the client right now so it exists in memory immediately
+          await ClientService.addClient(Client(
+            clientId: activeClientId,
+            name: _nameCtrl.text.trim().isNotEmpty ? _nameCtrl.text.trim() : 'ಅಜ್ಞಾತ ಜಾತಕ (Unknown)',
+            phone: '',
+            address: _placeCtrl.text,
+            createdAt: dateStr,
+          ));
+        }
+
         // Navigate to Dashboard
         Navigator.push(context, MaterialPageRoute(
           builder: (_) => DashboardScreen(
@@ -249,11 +273,12 @@ class _InputScreenState extends State<InputScreen> {
             ampm: _ampm,
             lat: lat,
             lon: lon,
-            initialNotes: _loadedNotes,
+            extraInfo: {'clientId': activeClientId ?? ''},
+            initialNotes: uiNotes,
             initialAroodhas: _loadedAroodhas,
             initialJanmaNakshatraIdx: _loadedJanmaNakshatraIdx,
             onSave: (notes, aroodhas, janmaIdx, {bool isNew = true}) =>
-                _saveProfile(notes: notes, aroodhas: aroodhas, janmaNakshatraIdx: janmaIdx, isNew: !_loadedFromSaved),
+                _saveProfile(activeClientId, notes: notes, aroodhas: aroodhas, janmaNakshatraIdx: janmaIdx, isNew: !_loadedFromSaved),
           ),
         )).then((_) {
           // Reset the form back to current time/empty strings when returning FROM dashboard
@@ -272,6 +297,7 @@ class _InputScreenState extends State<InputScreen> {
               _minute = now.minute;
               _ampm = now.hour >= 12 ? 'PM' : 'AM';
               _loadedNotes = '';
+              _loadedClientId = null;
               _loadedAroodhas = {};
               _loadedJanmaNakshatraIdx = null;
             });
@@ -285,30 +311,13 @@ class _InputScreenState extends State<InputScreen> {
     setState(() => _loading = false);
   }
 
-  void _saveProfile({String notes = '', Map<String, int> aroodhas = const {}, int? janmaNakshatraIdx, bool isNew = true}) async {
+  void _saveProfile(String? activeClientId, {String notes = '', Map<String, int> aroodhas = const {}, int? janmaNakshatraIdx, bool isNew = true}) async {
     String name = _nameCtrl.text.trim();
     if (name.isEmpty) name = 'Unknown_${_dob.toIso8601String().substring(0, 10)}';
 
     final profiles = await StorageService.loadAll();
     final existing = profiles[name];
-    String? cId = existing?.clientId;
-
-    if (cId == null) {
-      cId = await ClientService.generateNextClientId();
-      final timeStr = '$_hour:${_minute.toString().padLeft(2,'0')} $_ampm';
-      final dateStr = '${_dob.year}-${_dob.month.toString().padLeft(2,'0')}-${_dob.day.toString().padLeft(2,'0')}';
-      if (notes.isEmpty) {
-         notes = '🆔 ಗ್ರಾಹಕ ID (Client ID): $cId\n📅 ಜನ್ಮ ದಿನಾಂಕ: $dateStr\n⏰ ಜನ್ಮ ಸಮಯ: $timeStr\n📍 ಜನ್ಮ ಸ್ಥಳ: ${_placeCtrl.text}\n---\nಹೊಸ ಟಿಪ್ಪಣಿ: ';
-      }
-
-      await ClientService.addClient(Client(
-        clientId: cId,
-        name: name,
-        phone: '', // No phone strictly from Kundali screen
-        address: _placeCtrl.text, // Mapped place to address
-        createdAt: dateStr, // Mapped dateStr to createdAt
-      ));
-    }
+    String? cId = existing?.clientId ?? activeClientId;
 
     final p = Profile(
       name: name,
