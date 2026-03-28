@@ -26,10 +26,10 @@ class LocalExportService {
         // Escape quotes and wrap in quotes to handle commas inside text
         final cName = c.name.replaceAll('"', '""');
         final cPhone = c.phone.replaceAll('"', '""');
-        final cPlace = c.place.replaceAll('"', '""');
-        final cNotes = c.notes.replaceAll('"', '""').replaceAll('\n', ' ');
+        final cPlace = c.address.replaceAll('"', '""');
+        final cCreatedAt = c.createdAt.replaceAll('"', '""');
         
-        clientCsv.writeln('"${c.clientId}","$cName","$cPhone","$cPlace",${c.lat},${c.lon},"${c.dateStr}","${c.timeStr}","$cNotes"');
+        clientCsv.writeln('"${c.clientId}","$cName","$cPhone","$cPlace",0.0,0.0,"$cCreatedAt","",""');
       }
       await clientsFile.writeAsString(clientCsv.toString());
 

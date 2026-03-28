@@ -436,7 +436,8 @@ class _ClientDetailScreenState extends State<ClientDetailScreen> {
                 clientId: m.clientId,
               ));
             },
-          ),
+           );
+          },
         )).then((_) {
           _loadData(); // refresh after returning
         });

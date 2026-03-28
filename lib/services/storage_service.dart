@@ -100,59 +100,35 @@ class Profile {
   });
 
   Map<String, dynamic> toJson() => {
-    'date': date,
-    'hour': hour,
-    'minute': minute,
+    'd': date,
+    'h': hour,
+    'm': minute,
     'ampm': ampm,
     'lat': lat,
     'lon': lon,
-    'tzOffset': tzOffset,
-    'place': place,
+    'tz': tzOffset,
+    'p': place,
     'notes': notes,
     'aroodhas': aroodhas,
     'janmaNakshatraIdx': janmaNakshatraIdx,
     'clientId': clientId,
   };
 
-  factory Profile.fromJson(String name, Map<String, dynamic> json) => Profile(
-    name: name,
-    date: json['date'] as String? ?? '2000-01-01',
-    hour: json['hour'] as int? ?? 12,
-    minute: json['minute'] as int? ?? 0,
-    ampm: json['ampm'] as String? ?? 'PM',
-    lat: (json['lat'] as num?)?.toDouble() ?? 0.0,
-    lon: (json['lon'] as num?)?.toDouble() ?? 0.0,
-    tzOffset: (json['tzOffset'] as num?)?.toDouble() ?? 5.5,
-    place: json['place'] as String? ?? '',
-    notes: json['notes'] as String? ?? '',
-    aroodhas: (json['aroodhas'] as Map<String, dynamic>?)?.map(
-      (k, e) => MapEntry(k, e as int),
-    ) ?? {},
-    janmaNakshatraIdx: json['janmaNakshatraIdx'] as int?,
-    clientId: json['clientId'] as String?,
-  );
-}
-    'name': name, 'd': date, 'h': hour, 'm': minute,
-    'ampm': ampm, 'lat': lat, 'lon': lon, 'tz': tzOffset, 'p': place,
-    'notes': notes,
-    'aroodhas': aroodhas.map((k, v) => MapEntry(k, v)),
-    'janmaNakshatraIdx': janmaNakshatraIdx,
-  };
-
   factory Profile.fromJson(String name, Map<String, dynamic> j) => Profile(
     name: name,
-    date: j['d'] ?? '',
-    hour: j['h'] ?? 12,
-    minute: j['m'] ?? 0,
-    ampm: j['ampm'] ?? 'AM',
+    date: j['d'] ?? j['date'] ?? '2000-01-01',
+    hour: j['h'] ?? j['hour'] ?? 12,
+    minute: j['m'] ?? j['minute'] ?? 0,
+    ampm: j['ampm'] ?? 'PM',
     lat: (j['lat'] ?? 14.98).toDouble(),
     lon: (j['lon'] ?? 74.73).toDouble(),
-    tzOffset: (j['tz'] ?? 5.5).toDouble(),
-    place: j['p'] ?? '',
+    tzOffset: (j['tz'] ?? j['tzOffset'] ?? 5.5).toDouble(),
+    place: j['p'] ?? j['place'] ?? '',
     notes: j['notes'] ?? '',
     aroodhas: j['aroodhas'] != null 
         ? Map<String, int>.from((j['aroodhas'] as Map).map((k, v) => MapEntry(k.toString(), (v as num).toInt())))
         : {},
     janmaNakshatraIdx: j['janmaNakshatraIdx'] as int?,
+    clientId: j['clientId'] as String?,
   );
 }
