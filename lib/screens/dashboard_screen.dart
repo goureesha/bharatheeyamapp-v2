@@ -97,6 +97,8 @@ class _DashboardScreenState extends State<DashboardScreen>
   int? _janmaNakshatraIdx;
   int? _dinaNakshatraIdx;
   String? _bhavaPlanet; // planet selected for bhava recalculation
+  KundaliResult? _prastutaResult; // For Aroodha tab's Prastuta button
+
 
   // Multi-person support
   final List<_PersonEntry> _extraPersons = [];
@@ -935,22 +937,10 @@ class _DashboardScreenState extends State<DashboardScreen>
       );
       if (mounted) Navigator.pop(context); // close dialog
       if (result != null && mounted) {
-        Navigator.push(context, MaterialPageRoute(
-          builder: (_) => DashboardScreen(
-            result: result,
-            name: 'ಪ್ರಸ್ತುತ ಪ್ರಶ್ನ', // Prastuta Prashna
-            place: LocationService.place,
-            dob: now,
-            hour: now.hour % 12 == 0 ? 12 : now.hour % 12,
-            minute: now.minute,
-            ampm: now.hour >= 12 ? 'PM' : 'AM',
-            lat: LocationService.lat,
-            lon: LocationService.lon,
-            onSave: (notes, aroodhas, janmaIdx, {bool isNew = true}) {
-              // Usually transient chart, save logic bypass
-            },
-          ),
-        ));
+        setState(() {
+          _prastutaResult = result;
+        });
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('ಪ್ರಸ್ತುತ-ಕಾಲದ ಚಕ್ರವನ್ನು ಲೋಡ್ ಮಾಡಲಾಗಿದೆ.'))); // Current-time chart loaded
       }
     } catch (e) {
       if (mounted) Navigator.pop(context);
@@ -1026,12 +1016,12 @@ class _DashboardScreenState extends State<DashboardScreen>
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
               child: KundaliChart(
-                result: widget.result,
+                result: _prastutaResult ?? widget.result,
                 varga: 1,
                 isBhava: false,
                 showSphutas: false,
                 aroodhas: _aroodhas,
-                centerLabel: 'ಆರೂಢ\nಚಕ್ರ',
+                centerLabel: _prastutaResult != null ? 'ಪ್ರಸ್ತುತ\nಆರೂಢ' : 'ಆರೂಢ\nಚಕ್ರ',
                 onPlanetTap: _showPlanetDetail,
               ),
             ),
