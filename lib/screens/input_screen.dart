@@ -404,42 +404,24 @@ class _InputScreenState extends State<InputScreen> {
 
     return Scaffold(
       backgroundColor: kBg,
+      appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        leading: IconButton(
+          icon: Icon(Icons.arrow_back, color: kText),
+          onPressed: () => Navigator.pop(context),
+        ),
+      ),
       body: SafeArea(
         child: SingleChildScrollView(
           child: ResponsiveCenter(child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              const SizedBox(height: 8),
-              _buildSavedCard(),
-              const SizedBox(height: 4),
               _buildInputCard(),
               const SizedBox(height: 32),
             ],
           )),
         ),
-      ),
-    );
-  }
-
-  Widget _buildSavedCard() {
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      child: ElevatedButton.icon(
-        icon: Icon(Icons.folder_open, color: Colors.white),
-        label: Text('ಉಳಿಸಿದ ಜಾತಕ', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16, color: Colors.white)),
-        style: ElevatedButton.styleFrom(
-          backgroundColor: kPurple2,
-          padding: const EdgeInsets.symmetric(vertical: 16),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        ),
-        onPressed: () {
-          showModalBottomSheet(
-            context: context,
-            backgroundColor: kBg,
-            shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
-            builder: (_) => _buildProfileListSheet(),
-          );
-        },
       ),
     );
   }
