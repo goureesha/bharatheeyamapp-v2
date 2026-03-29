@@ -12,7 +12,7 @@ class GoogleAuthService {
 
   static GoogleSignIn get _instance {
     _googleSignIn ??= GoogleSignIn(
-      scopes: const ['email'],
+      scopes: const ['email', 'https://www.googleapis.com/auth/userinfo.profile'],
       clientId: kIsWeb ? _webClientId : null,
       serverClientId: _webClientId,
     );
