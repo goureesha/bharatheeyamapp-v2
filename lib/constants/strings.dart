@@ -1,5 +1,5 @@
 // String constants for the Bharatheeyam app — Kannada + Hindi
-
+import '../widgets/common.dart';
 const String appTitle = 'ಭಾರತೀಯಮ್';
 
 // ─── KANNADA TERMS ───
@@ -140,3 +140,19 @@ const List<String> hiSphutas16Order = [
   'त्रिस्फुट', 'चतुःस्फुट', 'पंचस्फुट',
   'प्राण', 'देह', 'मृत्यु', 'सूक्ष्म त्रि.'
 ];
+
+// ─── DYNAMIC LOCALE GETTERS ───
+
+List<String> get appRashi => AppLocale.isHindi ? hiRashi : knRashi;
+List<String> get appVara => AppLocale.isHindi ? hiVara : knVara;
+List<String> get appTithi => AppLocale.isHindi ? hiTithi : knTithi;
+List<String> get appNak => AppLocale.isHindi ? hiNak : knNak;
+List<String> get appYoga => AppLocale.isHindi ? hiYoga : knYoga;
+List<String> get appDashaLords => AppLocale.isHindi ? hiDashaLords : dashaLords;
+Map<String, String> get appPlanetNames => AppLocale.isHindi ? hiPlanetNames : planetNames;
+List<String> get appSphutas16Order => AppLocale.isHindi ? hiSphutas16Order : sphutas16Order;
+
+List<String> get appPlanetOrder => AppLocale.isHindi ? [
+  'लग्न', 'सूर्य', 'चन्द्र', 'मंगल', 'बुध',
+  'गुरु', 'शुक्र', 'शनि', 'राहु', 'केतु', 'मांदि'
+] : planetOrder;

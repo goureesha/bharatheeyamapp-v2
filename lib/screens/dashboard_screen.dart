@@ -558,7 +558,7 @@ class _DashboardScreenState extends State<DashboardScreen>
         final info = r.planets[p];
         if (info == null) continue;
         final ri = (info.longitude / 30).floor() % 12;
-        buf.writeln('$p,${knRashi[ri]},${formatDeg(info.longitude)},${info.nakshatra} - ${info.pada}');
+        buf.writeln('${appPlanetNames[p] ?? p},${appRashi[ri]},${formatDeg(info.longitude)},${info.nakshatra} - ${info.pada}');
       }
       buf.writeln(',');
 
@@ -571,7 +571,7 @@ class _DashboardScreenState extends State<DashboardScreen>
         final ri = (deg / 30).floor() % 12;
         final nakIdx = (deg / 13.333333).floor() % 27;
         final pada = ((deg % 13.333333) / 3.333333).floor() + 1;
-        buf.writeln('$sp,${knRashi[ri]},${formatDeg(deg)},${knNak[nakIdx]}-$pada');
+        buf.writeln('$sp,${appRashi[ri]},${formatDeg(deg)},${appNak[nakIdx]}-$pada');
       }
 
       // Save CSV to temp and share
@@ -881,8 +881,8 @@ class _DashboardScreenState extends State<DashboardScreen>
                       if (info == null) return const SizedBox.shrink();
                       final ri = (info.longitude / 30).floor() % 12;
                       return _tableRow([
-                        p,
-                        knRashi[ri],
+                        appPlanetNames[p] ?? p,
+                        appRashi[ri],
                         formatDeg(info.longitude),
                         '${info.nakshatra} - ${info.pada}'
                       ], bold0: true);
@@ -905,7 +905,7 @@ class _DashboardScreenState extends State<DashboardScreen>
                       final ri = (deg / 30).floor() % 12;
                       final nakIdx = (deg / 13.333333).floor() % 27;
                       final pada = ((deg % 13.333333) / 3.333333).floor() + 1;
-                      return _tableRow([sp, knRashi[ri], formatDeg(deg), '${knNak[nakIdx]}-$pada'],
+                      return _tableRow([sp, appRashi[ri], formatDeg(deg), '${appNak[nakIdx]}-$pada'],
                         bold0: true);
                     }),
                   ],
@@ -991,7 +991,7 @@ class _DashboardScreenState extends State<DashboardScreen>
                       child: DropdownButtonFormField<int>(
                         value: _selRashiIdx,
                         items: List.generate(12, (i) => DropdownMenuItem(
-                          value: i, child: Text(knRashi[i], style: TextStyle()))).toList(),
+                          value: i, child: Text(appRashi[i], style: TextStyle()))).toList(),
                         onChanged: (v) => setS(() => _selRashiIdx = v!),
                         decoration: const InputDecoration(labelText: 'ರಾಶಿ'),
                       ),
@@ -1236,7 +1236,7 @@ class _DashboardScreenState extends State<DashboardScreen>
                       ...List.generate(12, (i) {
                         final deg = currentMadhyas[i];
                         return _tableRow(
-                          ['${i+1}', formatDeg(deg), knRashi[(deg/30).floor() % 12]],
+                          ['${i+1}', formatDeg(deg), appRashi[(deg/30).floor() % 12]],
                           bold0: true,
                         );
                       }),

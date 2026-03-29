@@ -157,7 +157,7 @@ class _AshtakaVargaWidgetState extends State<AshtakaVargaWidget> {
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Text(
-            knRashi[rashiIdx],
+            appRashi[rashiIdx],
             style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: Color(0xFF718096)),
           ),
           const SizedBox(height: 2),
@@ -267,7 +267,7 @@ class _AshtakaVargaWidgetState extends State<AshtakaVargaWidget> {
               padding: const EdgeInsets.only(bottom: 6),
               child: Row(
                 children: [
-                  SizedBox(width: 55, child: Text(knRashi[i], style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: kText))),
+                  SizedBox(width: 55, child: Text(appRashi[i], style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: kText))),
                   Expanded(
                     child: Stack(
                       children: [

@@ -279,7 +279,7 @@ class NorthIndianChart extends StatelessWidget {
           children: [
             Image.asset('assets/images/logo.png', width: 36, height: 36),
             const SizedBox(height: 2),
-            Text(centerLabel ?? 'ಭಾರತೀಯಮ್',
+            Text(AppLocale.isHindi && centerLabel != null ? _translateCenter(centerLabel!) : (centerLabel ?? AppLocale.l('appName')),
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: 12 * textScale,
@@ -297,7 +297,8 @@ class NorthIndianChart extends StatelessWidget {
   }
 
   Widget _planetChip(String name, {PlanetInfo? info}) {
-    final shortName = _shortNames[name] ?? name;
+    final map = AppLocale.isHindi ? _shortNamesHi : _shortNamesKn;
+    final shortName = map[name] ?? name;
     String displayText = shortName;
     bool isCombust = false;
     bool isVakri = false;
@@ -364,7 +365,15 @@ class NorthIndianChart extends StatelessWidget {
     );
   }
 
-  static const _shortNames = <String, String>{
+  String _translateCenter(String label) {
+    if (label == 'ರಾಶಿ\nಚಕ್ರ') return 'राशि\nचक्र';
+    if (label == 'ನವಾಂಶ\nಚಕ್ರ') return 'नवांश\nचक्र';
+    if (label == 'ಆರೂಢ\nಚಕ್ರ') return 'आरूढ़\nचक्र';
+    if (label == 'ಪ್ರಸ್ತುತ\nಆರೂಢ') return 'वर्तमान\nआरूढ़';
+    return label;
+  }
+
+  static const _shortNamesKn = <String, String>{
     'ರವಿ': 'ರ', 'ಸೂರ್ಯ': 'ಸೂ',
     'ಚಂದ್ರ': 'ಚಂ',
     'ಕುಜ': 'ಕು', 'ಮಂಗಳ': 'ಮಂ',
@@ -376,6 +385,20 @@ class NorthIndianChart extends StatelessWidget {
     'ಕೇತು': 'ಕೇ',
     'ಲಗ್ನ': 'ಲ',
     'ಮಾಂದಿ': 'ಮಾಂ',
+  };
+
+  static const _shortNamesHi = <String, String>{
+    'ರವಿ': 'सू', 'ಸೂರ್ಯ': 'सू',
+    'ಚಂದ್ರ': 'चं',
+    'ಕುಜ': 'मं', 'ಮಂಗಳ': 'मं',
+    'ಬುಧ': 'बु',
+    'ಗುರು': 'गु',
+    'ಶುಕ್ರ': 'शु',
+    'ಶನಿ': 'श',
+    'ರಾಹು': 'रा',
+    'ಕೇತು': 'के',
+    'ಲಗ್ನ': 'ल',
+    'ಮಾಂದಿ': 'मां',
   };
 }
 

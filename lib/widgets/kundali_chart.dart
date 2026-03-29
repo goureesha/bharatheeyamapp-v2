@@ -278,7 +278,13 @@ class KundaliChart extends StatelessWidget {
   }
 
   Widget _centerBox() {
-    final label = centerLabel ?? 'ಭಾರತೀಯಮ್';
+    String label = centerLabel ?? AppLocale.l('appName');
+    if (AppLocale.isHindi && centerLabel != null) {
+      if (label == 'ರಾಶಿ\nಚಕ್ರ') label = 'राशि\nचक्र';
+      else if (label == 'ನವಾಂಶ\nಚಕ್ರ') label = 'नवांश\nचक्र';
+      else if (label == 'ಆರೂಢ\nಚಕ್ರ') label = 'आरूढ़\nचक्र';
+      else if (label == 'ಪ್ರಸ್ತುತ\nಆರೂಢ') label = 'वर्तमान\nआरूढ़';
+    }
     return Container(
       margin: const EdgeInsets.all(0),
       decoration: BoxDecoration(
@@ -323,8 +329,8 @@ class KundaliChart extends StatelessWidget {
     return (start + steps) % 12;
   }
 
-  /// Short name map: first 1-2 Kannada characters
-  static const _shortNames = <String, String>{
+  /// Short name map: first 1-2 characters
+  static const _shortNamesKn = <String, String>{
     'ರವಿ': 'ರ', 'ಸೂರ್ಯ': 'ಸೂ',
     'ಚಂದ್ರ': 'ಚಂ',
     'ಕುಜ': 'ಕು', 'ಮಂಗಳ': 'ಮಂ',
@@ -336,6 +342,20 @@ class KundaliChart extends StatelessWidget {
     'ಕೇತು': 'ಕೇ',
     'ಲಗ್ನ': 'ಲ',
     'ಮಾಂದಿ': 'ಮಾ',
+  };
+
+  static const _shortNamesHi = <String, String>{
+    'ರವಿ': 'सू', 'ಸೂರ್ಯ': 'सू',
+    'ಚಂದ್ರ': 'चं',
+    'ಕುಜ': 'मं', 'ಮಂಗಳ': 'मं',
+    'ಬುಧ': 'बु',
+    'ಗುರು': 'गु',
+    'ಶುಕ್ರ': 'शु',
+    'ಶನಿ': 'श',
+    'ರಾಹು': 'रा',
+    'ಕೇತು': 'के',
+    'ಲಗ್ನ': 'ल',
+    'ಮಾಂದಿ': 'मां',
   };
 
   Widget _planetChip(String name, {PlanetInfo? info, required ChipType type}) {
@@ -361,7 +381,8 @@ class KundaliChart extends StatelessWidget {
     }
 
     // Build display text
-    final shortName = _shortNames[name] ?? name;
+    final map = AppLocale.isHindi ? _shortNamesHi : _shortNamesKn;
+    final shortName = map[name] ?? name;
     String displayText = shortName;
     bool isCombust = false;
     bool isVakri = false;
