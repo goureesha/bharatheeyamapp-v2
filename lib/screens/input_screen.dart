@@ -410,7 +410,8 @@ class _InputScreenState extends State<InputScreen> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               const SizedBox(height: 8),
-
+              _buildSavedCard(),
+              const SizedBox(height: 4),
               _buildInputCard(),
               const SizedBox(height: 32),
             ],
