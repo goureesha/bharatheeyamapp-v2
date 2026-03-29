@@ -226,44 +226,34 @@ class ClientService {
 
       _isLoaded = true;
 
-      // Ensure total unification: auto-migrate any StorageService profiles not yet in ClientService
-      // Using a delayed Future to ensure StorageService has time to load natively elsewhere first if needed
-      Future.delayed(const Duration(milliseconds: 500), () async {
-        final storageList = await StorageService.loadAll();
-        bool changed = false;
-        for (final p in storageList.values) {
-          // Check if this explicit name and date combination already exists as a FamilyMember
-          final exists = _members.any((m) => m.memberName == p.name && m.dob == p.date);
-          if (!exists) {
-            // Check if it has an assigned Client ID implicitly
-            String cId = p.clientId ?? '';
-            if (cId.isEmpty || getClientById(cId) == null) {
-               final newClient = await getOrCreateClient(name: p.name, phone: 'No Phone');
-               cId = newClient?.clientId ?? '';
-            }
-
-            if (cId.isNotEmpty) {
-              final newMember = FamilyMember(
-                clientId: cId,
-                memberName: p.name,
-                relation: 'Self',
-                dob: p.date,
-                birthTime: p.hour.toString().padLeft(2, '0') + ':' + p.minute.toString().padLeft(2, '0') + ' ' + p.ampm,
-                birthPlace: p.place,
-                lat: p.lat,
-                lon: p.lon,
-                notes: p.notes,
-              );
-              _members.add(newMember);
-              changed = true;
-            }
-          }
-        }
-        if (changed) {
-          await _saveToLocal();
-          debugPrint('ClientService: Auto-migrated legacy StorageService profiles successfully.');
-        }
+      // Aggressively clean up duplicates that the previous auto-migration script accidentally created
+      bool changed = false;
+      final seenMembers = <String>{};
+      final originalMemberCount = _members.length;
+      _members.retainWhere((m) {
+         final key = '${m.memberName}|${m.dob}';
+         if (seenMembers.contains(key)) return false;
+         seenMembers.add(key);
+         return true;
       });
+      if (_members.length != originalMemberCount) changed = true;
+
+      // Clean up empty 'No Phone' redundant clients
+      final seenClients = <String>{};
+      final originalClientCount = _clients.length;
+      _clients.retainWhere((c) {
+         if (c.phone == 'No Phone') {
+             if (seenClients.contains(c.name)) return false;
+             seenClients.add(c.name);
+         }
+         return true;
+      });
+      if (_clients.length != originalClientCount) changed = true;
+
+      if (changed) {
+        await _saveToLocal();
+        debugPrint('ClientService: Deduplicated database. Cleaned up duplicates.');
+      }
 
       debugPrint('ClientService: loaded ${_clients.length} clients, ${_members.length} members (local)');
     } catch (e) {
