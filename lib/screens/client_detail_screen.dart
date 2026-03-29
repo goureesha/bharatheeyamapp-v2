@@ -395,7 +395,9 @@ class _ClientDetailScreenState extends State<ClientDetailScreen> {
         trueNode: true,
       );
 
-      if (mounted) Navigator.pop(context); // dismiss loading
+      await Future.delayed(const Duration(milliseconds: 300));
+      if (mounted) Navigator.of(context, rootNavigator: true).pop(); // dismiss loading safely
+
       if (result != null && mounted) {
         Navigator.push(context, MaterialPageRoute(
           builder: (_) {

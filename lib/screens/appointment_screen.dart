@@ -546,58 +546,7 @@ class _AppointmentScreenState extends State<AppointmentScreen> with SingleTicker
     );
   }
 
-  Future<void> _generateKundaliForMember(FamilyMember m) async {
-    final dob = m.dobDate;
-    if (dob == null) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('ಜನ್ಮ ದಿನಾಂಕ ಸರಿಯಾಗಿಲ್ಲ')));
-      return;
-    }
-    
-    showDialog(context: context, barrierDismissible: false, builder: (_) => const Center(child: CircularProgressIndicator()));
 
-    try {
-      final localHour = m.hour + m.minute / 60.0;
-      final result = await AstroCalculator.calculate(
-        year: dob.year, month: dob.month, day: dob.day,
-        hourUtcOffset: LocationService.tzOffset,
-        hour24: localHour,
-        lat: m.lat, lon: m.lon,
-        ayanamsaMode: 'lahiri',
-        trueNode: true,
-      );
-
-      if (mounted) Navigator.pop(context); // dismiss loading
-      if (result != null && mounted) {
-        Navigator.push(context, MaterialPageRoute(
-          builder: (_) => DashboardScreen(
-            result: result,
-            name: m.memberName,
-            place: m.birthPlace,
-            dob: dob,
-            hour: m.hour12,
-            minute: m.minute,
-            ampm: m.ampm,
-            lat: m.lat,
-            lon: m.lon,
-            extraInfo: {'clientId': m.clientId},
-            initialNotes: m.notes,
-            onSave: (notes, aroodhas, janmaIdx, {bool isNew = true}) {
-              StorageService.save(Profile(
-                name: m.memberName, date: m.dob,
-                hour: m.hour12, minute: m.minute, ampm: m.ampm,
-                lat: m.lat, lon: m.lon, place: m.birthPlace,
-                notes: notes, aroodhas: aroodhas, janmaNakshatraIdx: janmaIdx,
-                clientId: m.clientId,
-              ));
-            },
-          ),
-        )).then((_) => _loadData());
-      }
-    } catch (e) {
-      if (mounted) Navigator.pop(context);
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('ದೋಷ: $e')));
-    }
-  }
 
   Future<void> _confirmDeleteClient(Client client) async {
     final confirm = await showDialog<bool>(
