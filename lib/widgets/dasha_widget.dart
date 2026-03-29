@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../core/calculator.dart';
 import 'common.dart';
+import '../constants/strings.dart';
 
 class DashaWidget extends StatelessWidget {
   final List<DashaEntry> dashas;
@@ -37,7 +38,7 @@ class _MahaBlock extends StatelessWidget {
         ),
         child: ExpansionTile(
           title: Row(children: [
-            Text(md.lord, style: TextStyle(
+            Text(appPlanetNames[md.lord] ?? md.lord, style: TextStyle(
               color: Colors.white, fontWeight: FontWeight.w900, fontSize: 16)),
             const Spacer(),
             Text(fmt(md.end), style: TextStyle(
@@ -68,7 +69,7 @@ class _AntarBlock extends StatelessWidget {
           title: Row(children: [
             Container(width: 4, height: 24, color: const Color(0xFFFF9933),
               margin: const EdgeInsets.only(right: 10)),
-            Text(ad.lord, style: TextStyle(
+            Text(appPlanetNames[ad.lord] ?? ad.lord, style: TextStyle(
               color: kOrange2, fontWeight: FontWeight.w900, fontSize: 15)),
             const Spacer(),
             Text(fmt(ad.end), style: TextStyle(
@@ -83,7 +84,7 @@ class _AntarBlock extends StatelessWidget {
             child: Row(children: [
               Container(width: 3, height: 18, color: const Color(0xFF81E6D9),
                 margin: const EdgeInsets.only(right: 10)),
-              Text(pd.lord, style: TextStyle(
+              Text(appPlanetNames[pd.lord] ?? pd.lord, style: TextStyle(
                 color: kTeal, fontWeight: FontWeight.w800, fontSize: 14)),
               const Spacer(),
               Text(fmt(pd.end), style: TextStyle(

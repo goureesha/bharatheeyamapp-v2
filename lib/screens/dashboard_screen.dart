@@ -702,7 +702,15 @@ class _DashboardScreenState extends State<DashboardScreen>
   // TAB 1: KUNDALI (All vargas stacked vertically)
   // ─────────────────────────────────────────────
   Widget _buildKundaliTab() {
-    final charts = [
+    final charts = AppLocale.isHindi ? [
+      {'label': 'राशि कुण्डली', 'varga': 1, 'isBhava': false},
+      {'label': 'नवांश कुण्डली', 'varga': 9, 'isBhava': false},
+      {'label': 'भाव कुण्डली', 'varga': 1, 'isBhava': true},
+      {'label': 'होरा कुण्डली', 'varga': 2, 'isBhava': false},
+      {'label': 'द्रेष्काण कुण्डली', 'varga': 3, 'isBhava': false},
+      {'label': 'द्वादशांश कुण्डली', 'varga': 12, 'isBhava': false},
+      {'label': 'त्रिंशांश कुण्डली', 'varga': 30, 'isBhava': false},
+    ] : [
       {'label': 'ರಾಶಿ ಕುಂಡಲಿ', 'varga': 1, 'isBhava': false},
       {'label': 'ನವಾಂಶ ಕುಂಡಲಿ', 'varga': 9, 'isBhava': false},
       {'label': 'ಭಾವ ಕುಂಡಲಿ', 'varga': 1, 'isBhava': true},
@@ -869,13 +877,13 @@ class _DashboardScreenState extends State<DashboardScreen>
                   child: Text(personName, style: TextStyle(fontSize: 15, fontWeight: FontWeight.w900, color: kTeal)),
                 ),
               // Graha Sphuta added back per user request
-              Text('ಗ್ರಹ ಸ್ಫುಟ', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 15, color: kPurple2)),
+              Text(AppLocale.isHindi ? 'ग्रह स्फुट' : 'ಗ್ರಹ ಸ್ಫುಟ', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 15, color: kPurple2)),
               const SizedBox(height: 8),
               AppCard(
                 padding: EdgeInsets.zero,
                 child: Column(
                   children: [
-                    _tableHeader(['ಗ್ರಹ', 'ರಾಶಿ', 'ಸ್ಫುಟ', 'ನಕ್ಷತ್ರ - ಪಾದ']),
+                    _tableHeader(AppLocale.isHindi ? ['ग्रह', 'राशि', 'स्फुट', 'नक्षत्र - पाद'] : ['ಗ್ರಹ', 'ರಾಶಿ', 'ಸ್ಫುಟ', 'ನಕ್ಷತ್ರ - ಪಾದ']),
                     ...planetOrder.map((p) {
                       final info = personResult.planets[p];
                       if (info == null) return const SizedBox.shrink();
@@ -892,13 +900,13 @@ class _DashboardScreenState extends State<DashboardScreen>
               ),
               const SizedBox(height: 24),
 
-              Text('ಉಪಗ್ರಹ ಸ್ಫುಟ', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 15, color: kPurple2)),
+              Text(AppLocale.isHindi ? 'उपग्रह स्फुट' : 'ಉಪಗ್ರಹ ಸ್ಫುಟ', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 15, color: kPurple2)),
               const SizedBox(height: 8),
               AppCard(
                 padding: EdgeInsets.zero,
                 child: Column(
                   children: [
-                    _tableHeader(['ಉಪಗ್ರಹ', 'ರಾಶಿ', 'ಅಂಶ', 'ನಕ್ಷತ್ರ']),
+                    _tableHeader(AppLocale.isHindi ? ['उपग्रह', 'राशि', 'अंश', 'नक्षत्र'] : ['ಉಪಗ್ರಹ', 'ರಾಶಿ', 'ಅಂಶ', 'ನಕ್ಷತ್ರ']),
                     ...sphutas16Order.map((sp) {
                       final deg = personResult.advSphutas[sp];
                       if (deg == null) return const SizedBox.shrink();
@@ -980,7 +988,7 @@ class _DashboardScreenState extends State<DashboardScreen>
                     Expanded(
                       child: DropdownButtonFormField<String>(
                         value: _selAro,
-                        items: ['ಆರೂಢ','ಉದಯ','ಲಗ್ನಾಂಶ','ಛತ್ರ','ಸ್ಪೃಷ್ಟಾಂಗ','ಚಂದ್ರ','ತಾಂಬೂಲ']
+                        items: (AppLocale.isHindi ? ['आरूढ़','उदय','लग्नांश','छत्र','स्पृष्टांग','चन्द्र','ताम्बूल'] : ['ಆರೂಢ','ಉದಯ','ಲಗ್ನಾಂಶ','ಛತ್ರ','ಸ್ಪೃಷ್ಟಾಂಗ','ಚಂದ್ರ','ತಾಂಬೂಲ'])
                           .map((a) => DropdownMenuItem(value: a, child: Text(a, style: TextStyle()))).toList(),
                         onChanged: (v) => setS(() => _selAro = v!),
                         decoration: const InputDecoration(labelText: 'ಆರೂಢ'),
@@ -1055,7 +1063,7 @@ class _DashboardScreenState extends State<DashboardScreen>
                 ),
               AppCard(
                 child: Text(
-                  'ಶಿಷ್ಟ ದಶೆ: ${pan.dashaLord}  ಉಳಿಕೆ: ${pan.dashaBalance}',
+                  AppLocale.isHindi ? 'शेष दशा: ${pan.dashaLord}  बची हुई: ${pan.dashaBalance}' : 'ಶಿಷ್ಟ ದಶೆ: ${pan.dashaLord}  ಉಳಿಕೆ: ${pan.dashaBalance}',
                   style: TextStyle(color: kOrange, fontWeight: FontWeight.w900, fontSize: 14),
                 ),
               ),
@@ -1097,34 +1105,34 @@ class _DashboardScreenState extends State<DashboardScreen>
                   child: Text(pName, style: TextStyle(fontSize: 15, fontWeight: FontWeight.w900, color: kTeal)),
                 ),
               AppCard(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                if (pName.isNotEmpty) _kv('ಹೆಸರು', pName),
-                _kv('ಸ್ಥಳ', person['place'] as String),
-                _kv('ದಿನಾಂಕ', dateStr),
-                _kv('ಸಮಯ', timeStr),
+                if (pName.isNotEmpty) _kv(AppLocale.isHindi ? 'नाम' : 'ಹೆಸರು', pName),
+                _kv(AppLocale.isHindi ? 'स्थान' : 'ಸ್ಥಳ', person['place'] as String),
+                _kv(AppLocale.isHindi ? 'दिनांक' : 'ದಿನಾಂಕ', dateStr),
+                _kv(AppLocale.isHindi ? 'समय' : 'ಸಮಯ', timeStr),
               ])),
               const SizedBox(height: 8),
               AppCard(
                 padding: EdgeInsets.zero,
                 child: Column(children: [
-                  _tableRow(['ಸಂವತ್ಸರ', pan.samvatsara]),
-                  _tableRow(['ವಾರ', pan.vara]),
-                  _tableRow(['ತಿಥಿ', pan.tithi]),
-                  _tableRow(['ಚಂದ್ರ ನಕ್ಷತ್ರ', pan.nakshatra]),
-                  _tableRow(['ಯೋಗ', pan.yoga]),
-                  _tableRow(['ಕರಣ', pan.karana]),
-                  _tableRow(['ಚಂದ್ರ ರಾಶಿ', pan.chandraRashi]),
-                  _tableRow(['ಚಂದ್ರ ಮಾಸ', pan.chandraMasa]),
-                  _tableRow(['ಸೂರ್ಯ ನಕ್ಷತ್ರ', '${pan.suryaNakshatra} - ಪಾದ ${pan.suryaPada}']),
-                  _tableRow(['ಸೌರ ಮಾಸ', pan.souraMasa]),
-                  _tableRow(['ಸೌರ ಮಾಸ ಗತ ದಿನ', pan.souraMasaGataDina]),
-                  _tableRow(['ಸೂರ್ಯೋದಯ', pan.sunrise]),
-                  _tableRow(['ಸೂರ್ಯಾಸ್ತ', pan.sunset]),
-                  _tableRow(['ಉದಯಾದಿ ಘಟಿ', pan.udayadiGhati]),
-                  _tableRow(['ಗತ ಘಟಿ', pan.gataGhati]),
-                  _tableRow(['ಪರಮ ಘಟಿ', pan.paramaGhati]),
-                  _tableRow(['ಶೇಷ ಘಟಿ', pan.shesha]),
-                  _tableRow(['ವಿಷ ಪ್ರಘಟಿ', pan.vishaPraghati]),
-                  _tableRow(['ಅಮೃತ ಪ್ರಘಟಿ', pan.amrutaPraghati]),
+                  _tableRow([AppLocale.isHindi ? 'संवत्सर' : 'ಸಂವತ್ಸರ', pan.samvatsara]),
+                  _tableRow([AppLocale.isHindi ? 'वार' : 'ವಾರ', pan.vara]),
+                  _tableRow([AppLocale.isHindi ? 'तिथि' : 'ತಿಥಿ', pan.tithi]),
+                  _tableRow([AppLocale.isHindi ? 'चन्द्र नक्षत्र' : 'ಚಂದ್ರ ನಕ್ಷತ್ರ', pan.nakshatra]),
+                  _tableRow([AppLocale.isHindi ? 'योग' : 'ಯೋಗ', pan.yoga]),
+                  _tableRow([AppLocale.isHindi ? 'करण' : 'ಕರಣ', pan.karana]),
+                  _tableRow([AppLocale.isHindi ? 'चन्द्र राशि' : 'ಚಂದ್ರ ರಾಶಿ', pan.chandraRashi]),
+                  _tableRow([AppLocale.isHindi ? 'चन्द्र मास' : 'ಚಂದ್ರ ಮಾಸ', pan.chandraMasa]),
+                  _tableRow([AppLocale.isHindi ? 'सूर्य नक्षत्र' : 'ಸೂರ್ಯ ನಕ್ಷತ್ರ', '${pan.suryaNakshatra} - ${AppLocale.isHindi ? "पाद" : "ಪಾದ"} ${pan.suryaPada}']),
+                  _tableRow([AppLocale.isHindi ? 'सौर मास' : 'ಸೌರ ಮಾಸ', pan.souraMasa]),
+                  _tableRow([AppLocale.isHindi ? 'सौर मास गत दिन' : 'ಸೌರ ಮಾಸ ಗತ ದಿನ', pan.souraMasaGataDina]),
+                  _tableRow([AppLocale.isHindi ? 'सूर्योदय' : 'ಸೂರ್ಯೋದಯ', pan.sunrise]),
+                  _tableRow([AppLocale.isHindi ? 'सूर्यास्त' : 'ಸೂರ್ಯಾಸ್ತ', pan.sunset]),
+                  _tableRow([AppLocale.isHindi ? 'उदयादि घटी' : 'ಉದಯಾದಿ ಘಟಿ', pan.udayadiGhati]),
+                  _tableRow([AppLocale.isHindi ? 'गत घटी' : 'ಗತ ಘಟಿ', pan.gataGhati]),
+                  _tableRow([AppLocale.isHindi ? 'परम घटी' : 'ಪರಮ ಘಟಿ', pan.paramaGhati]),
+                  _tableRow([AppLocale.isHindi ? 'शेष घटी' : 'ಶೇಷ ಘಟಿ', pan.shesha]),
+                  _tableRow([AppLocale.isHindi ? 'विष प्रघटी' : 'ವಿಷ ಪ್ರಘಟಿ', pan.vishaPraghati]),
+                  _tableRow([AppLocale.isHindi ? 'अमृत प्रघटी' : 'ಅಮೃತ ಪ್ರಘಟಿ', pan.amrutaPraghati]),
                 ]),
               ),
               if (allPersons.length > 1) Divider(thickness: 2, color: kBorder),
@@ -1153,7 +1161,7 @@ class _DashboardScreenState extends State<DashboardScreen>
       child: Column(
         children: [
           // Planet selector (for primary person)
-          Text('ಗ್ರಹ ಆಧಾರ ಭಾವ', style: TextStyle(
+          Text(AppLocale.isHindi ? 'ग्रह आधारित भाव' : 'ಗ್ರಹ ಆಧಾರ ಭಾವ', style: TextStyle(
             fontWeight: FontWeight.w800, fontSize: 15, color: kPurple2)),
           const SizedBox(height: 8),
           Wrap(
@@ -1169,7 +1177,7 @@ class _DashboardScreenState extends State<DashboardScreen>
                     borderRadius: BorderRadius.circular(8),
                     border: Border.all(color: _bhavaPlanet == null ? kTeal : kBorder),
                   ),
-                  child: Text('ಲಗ್ನ', style: TextStyle(
+                  child: Text(AppLocale.isHindi ? 'लग्न' : 'ಲಗ್ನ', style: TextStyle(
                     fontSize: 13,
                     fontWeight: _bhavaPlanet == null ? FontWeight.w900 : FontWeight.w600,
                     color: _bhavaPlanet == null ? Colors.white : kText,
@@ -1187,7 +1195,7 @@ class _DashboardScreenState extends State<DashboardScreen>
                       borderRadius: BorderRadius.circular(8),
                       border: Border.all(color: isSelected ? kTeal : kBorder),
                     ),
-                    child: Text(p, style: TextStyle(
+                    child: Text(appPlanetNames[p] ?? p, style: TextStyle(
                       fontSize: 13,
                       fontWeight: isSelected ? FontWeight.w900 : FontWeight.w600,
                       color: isSelected ? Colors.white : kText,
@@ -1214,8 +1222,8 @@ class _DashboardScreenState extends State<DashboardScreen>
 
             final currentMadhyas = getMadhyas(_bhavaPlanet);
             final title = _bhavaPlanet != null
-                ? 'ಭಾವ ಮಧ್ಯ ಸ್ಫುಟ (${_bhavaPlanet} ಆಧಾರ)'
-                : 'ಭಾವ ಮಧ್ಯ ಸ್ಫುಟ (ಲಗ್ನ)';
+                ? (AppLocale.isHindi ? 'भाव मध्य स्फुट (${appPlanetNames[_bhavaPlanet] ?? _bhavaPlanet} आधार)' : 'ಭಾವ ಮಧ್ಯ ಸ್ಫುಟ (${_bhavaPlanet} ಆಧಾರ)')
+                : (AppLocale.isHindi ? 'भाव मध्य स्फुट (लग्न)' : 'ಭಾವ ಮಧ್ಯ ಸ್ಫುಟ (ಲಗ್ನ)');
 
             return Column(
               children: [
@@ -1232,7 +1240,7 @@ class _DashboardScreenState extends State<DashboardScreen>
                   padding: EdgeInsets.zero,
                   child: Column(
                     children: [
-                      _tableHeader(['ಭಾವ', 'ಮಧ್ಯ ಸ್ಫುಟ', 'ರಾಶಿ']),
+                      _tableHeader(AppLocale.isHindi ? ['भाव', 'मध्य स्फुट', 'राशि'] : ['ಭಾವ', 'ಮಧ್ಯ ಸ್ಫುಟ', 'ರಾಶಿ']),
                       ...List.generate(12, (i) {
                         final deg = currentMadhyas[i];
                         return _tableRow(
@@ -1389,7 +1397,7 @@ class _DashboardScreenState extends State<DashboardScreen>
                     launchUrl(Uri.parse('https://wa.me/?text=$encoded'), mode: LaunchMode.externalApplication);
                   },
                   icon: Icon(Icons.share, size: 18),
-                  label: Text('ಹಂಚಿಕೊಳ್ಳಿ', style: TextStyle(fontSize: 13)),
+                  label: Text(AppLocale.isHindi ? 'साझा करें' : 'ಹಂಚಿಕೊಳ್ಳಿ', style: TextStyle(fontSize: 13)),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.green,
                     foregroundColor: Colors.white,
@@ -1405,7 +1413,7 @@ class _DashboardScreenState extends State<DashboardScreen>
                     _showPrintPreview(text);
                   },
                   icon: Icon(Icons.print, size: 18),
-                  label: Text('ಪ್ರಿಂಟ್', style: TextStyle(fontSize: 13)),
+                  label: Text(AppLocale.isHindi ? 'प्रिंट' : 'ಪ್ರಿಂಟ್', style: TextStyle(fontSize: 13)),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: kOrange,
                     foregroundColor: Colors.white,
@@ -1465,7 +1473,7 @@ class _DashboardScreenState extends State<DashboardScreen>
                   maxLines: 20,
                   minLines: 10,
                   decoration: InputDecoration(
-                    hintText: 'ಹೊಸ ಟಿಪ್ಪಣಿ ಸೇರಿಸಿ...',
+                    hintText: AppLocale.isHindi ? 'नई टिप्पणी जोड़ें...' : 'ಹೊಸ ಟಿಪ್ಪಣಿ ಸೇರಿಸಿ...',
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
                       borderSide: BorderSide(color: kBorder),
@@ -1508,7 +1516,7 @@ class _DashboardScreenState extends State<DashboardScreen>
           const SizedBox(height: 14),
 
           // Section title
-          Text('📋 ಟಿಪ್ಪಣಿ ಇತಿಹಾಸ (${entries.length})', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w900, color: kText)),
+          Text(AppLocale.isHindi ? '📋 टिप्पणी इतिहास (${entries.length})' : '📋 ಟಿಪ್ಪಣಿ ಇತಿಹಾಸ (${entries.length})', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w900, color: kText)),
           const SizedBox(height: 8),
 
           // Notes history — inline (parent handles scroll)
@@ -1520,7 +1528,7 @@ class _DashboardScreenState extends State<DashboardScreen>
                   children: [
                     Icon(Icons.note_alt_outlined, size: 48, color: kMuted.withOpacity(0.3)),
                     const SizedBox(height: 8),
-                    Text('ಇನ್ನೂ ಟಿಪ್ಪಣಿಗಳಿಲ್ಲ', style: TextStyle(color: kMuted)),
+                    Text(AppLocale.isHindi ? 'कोई टिप्पणी नहीं' : 'ಇನ್ನೂ ಟಿಪ್ಪಣಿಗಳಿಲ್ಲ', style: TextStyle(color: kMuted)),
                   ],
                 ),
               ),
