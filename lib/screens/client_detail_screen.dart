@@ -350,7 +350,11 @@ class _ClientDetailScreenState extends State<ClientDetailScreen> {
                   ),
                 ),
                 if (!_familyMode)
-                  Icon(Icons.chevron_right, color: kMuted),
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(color: kTeal.withOpacity(0.1), shape: BoxShape.circle),
+                    child: Icon(Icons.auto_awesome, color: kTeal, size: 20),
+                  ),
               ],
             ),
           ),
