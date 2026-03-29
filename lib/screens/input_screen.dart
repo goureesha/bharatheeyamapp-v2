@@ -552,7 +552,42 @@ class _InputScreenState extends State<InputScreen> {
                           ),
                         ),
                         subtitle: Text('${profile.date} | ${profile.place}', style: TextStyle(color: kMuted)),
-                        trailing: Icon(Icons.chevron_right, color: kMuted),
+                        trailing: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            IconButton(
+                              icon: Icon(Icons.delete_outline, color: Colors.red.shade400, size: 20),
+                              tooltip: 'ಅಳಿಸಿ',
+                              onPressed: () async {
+                                final confirm = await showDialog<bool>(
+                                  context: ctx,
+                                  builder: (dCtx) => AlertDialog(
+                                    backgroundColor: kBg,
+                                    title: Text('ಅಳಿಸಬೇಕೇ?', style: TextStyle(color: kText, fontWeight: FontWeight.w900)),
+                                    content: Text('"$name" ಜಾತಕವನ್ನು ಅಳಿಸಬೇಕೇ?', style: TextStyle(color: kMuted)),
+                                    actions: [
+                                      TextButton(onPressed: () => Navigator.pop(dCtx, false), child: Text('ಬೇಡ', style: TextStyle(color: kMuted))),
+                                      TextButton(onPressed: () => Navigator.pop(dCtx, true), child: Text('ಅಳಿಸಿ', style: TextStyle(color: Colors.red))),
+                                    ],
+                                  ),
+                                );
+                                if (confirm == true) {
+                                  await StorageService.delete(name);
+                                  // Also remove the member from ClientService if it exists
+                                  if (profile.clientId != null && profile.clientId!.isNotEmpty) {
+                                    final members = ClientService.getMembersForClient(profile.clientId!);
+                                    if (members.any((m) => m.memberName == name)) {
+                                      members.removeWhere((m) => m.memberName == name);
+                                    }
+                                  }
+                                  await _loadProfiles();
+                                  setSheetState(() {}); // refresh the sheet
+                                }
+                              },
+                            ),
+                            Icon(Icons.chevron_right, color: kMuted),
+                          ],
+                        ),
                         onTap: () {
                           Navigator.pop(ctx);
                           _loadProfile(profile);
