@@ -920,6 +920,44 @@ class _DashboardScreenState extends State<DashboardScreen>
   // ─────────────────────────────────────────────
   // TAB 4: AROODHA
   // ─────────────────────────────────────────────
+  Future<void> _openPrastutaChart() async {
+    final now = DateTime.now();
+    showDialog(context: context, barrierDismissible: false, builder: (_) => const Center(child: CircularProgressIndicator()));
+    try {
+      final localHour = now.hour + now.minute / 60.0;
+      final result = await AstroCalculator.calculate(
+        year: now.year, month: now.month, day: now.day,
+        hourUtcOffset: LocationService.tzOffset,
+        hour24: localHour,
+        lat: LocationService.lat, lon: LocationService.lon,
+        ayanamsaMode: 'lahiri',
+        trueNode: true,
+      );
+      if (mounted) Navigator.pop(context); // close dialog
+      if (result != null && mounted) {
+        Navigator.push(context, MaterialPageRoute(
+          builder: (_) => DashboardScreen(
+            result: result,
+            name: 'ಪ್ರಸ್ತುತ ಪ್ರಶ್ನ', // Prastuta Prashna
+            place: LocationService.place,
+            dob: now,
+            hour: now.hour % 12 == 0 ? 12 : now.hour % 12,
+            minute: now.minute,
+            ampm: now.hour >= 12 ? 'PM' : 'AM',
+            lat: LocationService.lat,
+            lon: LocationService.lon,
+            onSave: (notes, aroodhas, janmaIdx, {bool isNew = true}) {
+              // Usually transient chart, save logic bypass
+            },
+          ),
+        ));
+      }
+    } catch (e) {
+      if (mounted) Navigator.pop(context);
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('ದೋಷ: $e')));
+    }
+  }
+
   Widget _buildAroodhaTab() {
     String _selAro = 'ಆರೂಢ';
     int _selRashiIdx = 0;
@@ -931,7 +969,23 @@ class _DashboardScreenState extends State<DashboardScreen>
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  SectionTitle('ಆರೂಢ ಚಕ್ರ'),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      SectionTitle('ಆರೂಢ ಚಕ್ರ'),
+                      ElevatedButton.icon(
+                        icon: const Icon(Icons.access_time, size: 16),
+                        label: const Text('ಪ್ರಸ್ತುತ', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: kTeal,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                        ),
+                        onPressed: _openPrastutaChart,
+                      ),
+                    ],
+                  ),
                   Row(children: [
                     Expanded(
                       child: DropdownButtonFormField<String>(
