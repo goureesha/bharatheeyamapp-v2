@@ -84,6 +84,35 @@ class _InputScreenState extends State<InputScreen> {
 
   Future<void> _loadProfiles() async {
     final p = await StorageService.loadAll();
+
+    // Fix old data: correct any stale clientIds in StorageService
+    // by looking up the canonical client ID from ClientService by name
+    bool fixed = false;
+    for (final entry in p.entries) {
+      final profile = entry.value;
+      // Find the canonical client by name
+      final matchingClient = ClientService.clients
+          .where((c) => c.name.toLowerCase() == entry.key.toLowerCase())
+          .toList();
+      if (matchingClient.isNotEmpty) {
+        final canonicalId = matchingClient.first.clientId;
+        if (profile.clientId != canonicalId) {
+          // Overwrite with correct ID and save permanently
+          p[entry.key] = Profile(
+            name: profile.name, date: profile.date, hour: profile.hour,
+            minute: profile.minute, ampm: profile.ampm, lat: profile.lat,
+            lon: profile.lon, tzOffset: profile.tzOffset, place: profile.place,
+            notes: profile.notes, aroodhas: profile.aroodhas,
+            janmaNakshatraIdx: profile.janmaNakshatraIdx,
+            clientId: canonicalId,
+          );
+          await StorageService.save(p[entry.key]!);
+          fixed = true;
+        }
+      }
+    }
+    if (fixed) debugPrint('InputScreen: Fixed stale clientIds in StorageService');
+
     if (mounted) setState(() => _savedProfiles = p);
   }
 
