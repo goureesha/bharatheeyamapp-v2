@@ -443,28 +443,37 @@ class _InputScreenState extends State<InputScreen> {
                   clientId: m.clientId,
                 );
               } else {
-                // If the old StorageService profile lacks its Client GUID, attach it for the display organically
-                if (unifiedProfiles[m.memberName]!.clientId == null || unifiedProfiles[m.memberName]!.clientId!.isEmpty) {
-                  final op = unifiedProfiles[m.memberName]!;
-                  unifiedProfiles[m.memberName] = Profile(
-                    name: op.name, date: op.date, hour: op.hour, minute: op.minute, ampm: op.ampm,
-                    lat: op.lat, lon: op.lon, tzOffset: op.tzOffset, place: op.place, notes: op.notes,
-                    aroodhas: op.aroodhas, janmaNakshatraIdx: op.janmaNakshatraIdx,
-                    clientId: m.clientId, // Insert the linked Client ID dynamically
-                  );
-                }
+                // FORCED SYNC: Always overwrite the old StorageService profile with the TRUE Appointments Client ID!
+                final op = unifiedProfiles[m.memberName]!;
+                unifiedProfiles[m.memberName] = Profile(
+                  name: op.name, date: op.date, hour: op.hour, minute: op.minute, ampm: op.ampm,
+                  lat: op.lat, lon: op.lon, tzOffset: op.tzOffset, place: op.place, notes: op.notes,
+                  aroodhas: op.aroodhas, janmaNakshatraIdx: op.janmaNakshatraIdx,
+                  clientId: m.clientId, // Force use the linked Client ID dynamically
+                );
               }
             }
           }
         }
 
-        final filtered = searchQuery.isEmpty
-          ? unifiedProfiles
-          : Map.fromEntries(unifiedProfiles.entries.where((e) =>
-              e.key.toLowerCase().contains(searchQuery.toLowerCase()) ||
-              e.value.place.toLowerCase().contains(searchQuery.toLowerCase()) ||
-              (e.value.clientId != null && e.value.clientId!.toLowerCase().contains(searchQuery.toLowerCase())) ||
-              e.value.date.contains(searchQuery)));
+        // Apply Search Filter and Sort Sequentially (In Serial)
+        final filteredEntries = unifiedProfiles.entries.where((e) {
+          if (searchQuery.isEmpty) return true;
+          final sq = searchQuery.toLowerCase();
+          return e.key.toLowerCase().contains(sq) ||
+                 e.value.place.toLowerCase().contains(sq) ||
+                 (e.value.clientId != null && e.value.clientId!.toLowerCase().contains(sq)) ||
+                 e.value.date.contains(searchQuery);
+        }).toList();
+
+        // Sort ascending by Client ID ("BH-2026-0001", "BH-2026-0002" ...) so they display in exact serial order
+        filteredEntries.sort((a, b) {
+          final aId = a.value.clientId ?? '';
+          final bId = b.value.clientId ?? '';
+          if (aId.isEmpty && bId.isNotEmpty) return 1;
+          if (aId.isNotEmpty && bId.isEmpty) return -1;
+          return aId.compareTo(bId); // Ascending serial order
+        });
 
         return SafeArea(
           child: Column(
@@ -493,17 +502,17 @@ class _InputScreenState extends State<InputScreen> {
                 ),
               ),
               const SizedBox(height: 8),
-              if (filtered.isEmpty)
+              if (filteredEntries.isEmpty)
                 Padding(padding: EdgeInsets.all(32), child: Text(searchQuery.isEmpty ? 'ಯಾವುದೇ ಜಾತಕ ಉಳಿಸಿಲ್ಲ.' : 'ಯಾವುದೇ ಫಲಿತಾಂಶ ಕಂಡುಬಂದಿಲ್ಲ.', style: TextStyle(color: kMuted)))
               else
                 Flexible(
                   child: ListView.separated(
                     shrinkWrap: true,
-                    itemCount: filtered.length,
+                    itemCount: filteredEntries.length,
                     separatorBuilder: (_, __) => Divider(height: 1),
                     itemBuilder: (ctx, i) {
-                      final name = filtered.keys.elementAt(i);
-                      final profile = filtered[name]!;
+                      final name = filteredEntries[i].key;
+                      final profile = filteredEntries[i].value;
                       return ListTile(
                         leading: CircleAvatar(backgroundColor: kBorder, child: Icon(Icons.person, color: kPurple2)),
                         title: RichText(

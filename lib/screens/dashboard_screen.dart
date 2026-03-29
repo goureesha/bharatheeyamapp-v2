@@ -184,8 +184,9 @@ class _DashboardScreenState extends State<DashboardScreen>
       final members = ClientService.getMembersForClient(client.clientId);
       for (var m in members) {
         if (m.dob.isNotEmpty && m.birthTime.isNotEmpty && m.lat != 0) {
-          // Check if already in allProfiles by name to avoid exact duplicates
-          if (!allProfiles.any((p) => p.name == m.memberName)) {
+          // Unconditionally sync the Profile inside allProfiles to match the True Appointments Client ID!
+          final index = allProfiles.indexWhere((p) => p.name == m.memberName);
+          if (index == -1) {
             allProfiles.add(Profile(
               name: m.memberName,
               date: m.dob,
@@ -199,6 +200,14 @@ class _DashboardScreenState extends State<DashboardScreen>
               tzOffset: LocationService.tzOffset,
               clientId: m.clientId,
             ));
+          } else {
+            final op = allProfiles[index];
+            allProfiles[index] = Profile(
+               name: op.name, date: op.date, hour: op.hour, minute: op.minute, ampm: op.ampm,
+               lat: op.lat, lon: op.lon, tzOffset: op.tzOffset, place: op.place, notes: op.notes,
+               aroodhas: op.aroodhas, janmaNakshatraIdx: op.janmaNakshatraIdx,
+               clientId: m.clientId, // Force exact sync with Appointment Database
+            );
           }
         }
       }
@@ -210,6 +219,15 @@ class _DashboardScreenState extends State<DashboardScreen>
         .where((p) => p.name != widget.name)
         .where((p) => !_extraPersons.any((ep) => ep.name == p.name))
         .toList();
+
+    // Sort ascending by Client ID ("BH-2026-0001", "BH-2026-0002" ...) so they display in exact serial order
+    otherProfiles.sort((a, b) {
+      final aId = a.clientId ?? '';
+      final bId = b.clientId ?? '';
+      if (aId.isEmpty && bId.isNotEmpty) return 1;
+      if (aId.isNotEmpty && bId.isEmpty) return -1;
+      return aId.compareTo(bId); // Ascending serial order
+    });
 
     showDialog(
       context: context,
