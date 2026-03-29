@@ -315,6 +315,12 @@ class _InputScreenState extends State<InputScreen> {
     final existing = profiles[name];
     String? cId = existing?.clientId ?? activeClientId;
 
+    // 1. Auto-create Client in Appointment system if none exists
+    if (cId == null || cId.isEmpty) {
+      final newClient = await ClientService.getOrCreateClient(name: name, phone: 'No Phone');
+      if (newClient != null) cId = newClient.clientId;
+    }
+
     final p = Profile(
       name: name,
       date: '${_dob.year}-${_dob.month.toString().padLeft(2,'0')}-${_dob.day.toString().padLeft(2,'0')}',
@@ -328,6 +334,28 @@ class _InputScreenState extends State<InputScreen> {
       janmaNakshatraIdx: janmaNakshatraIdx,
       clientId: cId,
     );
+    
+    // 2. Add or Update this profile as a member of the Client
+    if (cId != null && cId.isNotEmpty) {
+      final member = FamilyMember(
+        clientId: cId,
+        memberName: name,
+        relation: 'Self',
+        dob: p.date,
+        birthTime: '${p.hour.toString().padLeft(2,'0')}:${p.minute.toString().padLeft(2,'0')} ${p.ampm}',
+        birthPlace: p.place,
+        lat: p.lat,
+        lon: p.lon,
+        notes: p.notes,
+      );
+      final members = ClientService.getMembersForClient(cId);
+      if (!members.any((m) => m.memberName == name)) {
+        await ClientService.addFamilyMember(member);
+      } else {
+        await ClientService.updateFamilyMember(member);
+      }
+    }
+
     await StorageService.save(p);
     await _loadProfiles();
   }
