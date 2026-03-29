@@ -314,11 +314,9 @@ class _InputScreenState extends State<InputScreen> {
     final existing = profiles[name];
     String? cId = existing?.clientId ?? activeClientId;
 
-    // 1. Auto-create Client in Appointment system if none exists
-    if (cId == null || cId.isEmpty) {
-      final newClient = await ClientService.getOrCreateClient(name: name, phone: 'No Phone');
-      if (newClient != null) cId = newClient.clientId;
-    }
+    // 1. Always resolve Client ID through the canonical lookup (matches by name too now)
+    final resolvedClient = await ClientService.getOrCreateClient(name: name, phone: 'No Phone');
+    if (resolvedClient != null) cId = resolvedClient.clientId;
 
     final p = Profile(
       name: name,

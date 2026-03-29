@@ -226,8 +226,50 @@ class ClientService {
 
       _isLoaded = true;
 
-      // Aggressively clean up duplicates that the previous auto-migration script accidentally created
+      // Step 1: Merge duplicate clients by name → keep the FIRST (lowest) client ID
       bool changed = false;
+      final canonicalIdByName = <String, String>{}; // name.toLowerCase() → first clientId
+      final idsToRemove = <String>{};
+      
+      // Sort clients by clientId ascending so the lowest ID is always kept
+      _clients.sort((a, b) => a.clientId.compareTo(b.clientId));
+      
+      for (final c in _clients) {
+        final key = c.name.toLowerCase();
+        if (canonicalIdByName.containsKey(key)) {
+          // This is a duplicate — mark for removal and remap members
+          idsToRemove.add(c.clientId);
+        } else {
+          canonicalIdByName[key] = c.clientId;
+        }
+      }
+      
+      if (idsToRemove.isNotEmpty) {
+        // Reassign all members from duplicate client IDs to the canonical one
+        // clientId is final, so rebuild the member objects
+        _members = _members.map((m) {
+          final canonicalId = canonicalIdByName[m.memberName.toLowerCase()];
+          if (canonicalId != null && m.clientId != canonicalId && idsToRemove.contains(m.clientId)) {
+            return FamilyMember(
+              clientId: canonicalId,
+              memberName: m.memberName,
+              relation: m.relation,
+              dob: m.dob,
+              birthTime: m.birthTime,
+              birthPlace: m.birthPlace,
+              lat: m.lat,
+              lon: m.lon,
+              notes: m.notes,
+            );
+          }
+          return m;
+        }).toList();
+        // Remove duplicate clients
+        _clients.removeWhere((c) => idsToRemove.contains(c.clientId));
+        changed = true;
+      }
+
+      // Step 2: Remove duplicate members (same name + same dob)
       final seenMembers = <String>{};
       final originalMemberCount = _members.length;
       _members.retainWhere((m) {
@@ -238,21 +280,9 @@ class ClientService {
       });
       if (_members.length != originalMemberCount) changed = true;
 
-      // Clean up empty 'No Phone' redundant clients
-      final seenClients = <String>{};
-      final originalClientCount = _clients.length;
-      _clients.retainWhere((c) {
-         if (c.phone == 'No Phone') {
-             if (seenClients.contains(c.name)) return false;
-             seenClients.add(c.name);
-         }
-         return true;
-      });
-      if (_clients.length != originalClientCount) changed = true;
-
       if (changed) {
         await _saveToLocal();
-        debugPrint('ClientService: Deduplicated database. Cleaned up duplicates.');
+        debugPrint('ClientService: Deduplicated database. Merged ${idsToRemove.length} duplicate clients, removed ${originalMemberCount - _members.length} duplicate members.');
       }
 
       debugPrint('ClientService: loaded ${_clients.length} clients, ${_members.length} members (local)');
@@ -296,15 +326,27 @@ class ClientService {
     ).toList();
   }
 
-  /// Create new client or return existing one (by phone match)
+  /// Create new client or return existing one (by phone or name match)
   static Future<Client?> getOrCreateClient({
     required String name,
     required String phone,
     String email = '',
   }) async {
-    // Check if client already exists
+    // Check if client already exists by phone
     final existing = getClientByPhone(phone);
     if (existing != null) return existing;
+
+    // For phoneless entries (Kundali saves), match by exact name instead
+    if (phone == 'No Phone' || phone.isEmpty) {
+      try {
+        final byName = _clients.firstWhere(
+          (c) => c.name.toLowerCase() == name.toLowerCase(),
+        );
+        return byName;
+      } catch (_) {
+        // No match by name either, will create new below
+      }
+    }
 
     try {
       final clientId = await _generateClientId();
