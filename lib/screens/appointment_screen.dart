@@ -5,7 +5,11 @@ import '../services/appointment_service.dart';
 import '../services/google_auth_service.dart';
 import '../services/client_service.dart';
 import '../services/calendar_service.dart';
+import '../services/storage_service.dart';
+import '../services/location_service.dart';
+import '../core/calculator.dart';
 import 'client_detail_screen.dart';
+import 'dashboard_screen.dart';
 
 class AppointmentScreen extends StatefulWidget {
   const AppointmentScreen({super.key});
@@ -463,83 +467,176 @@ class _AppointmentScreenState extends State<AppointmentScreen> with SingleTicker
       (phone.isNotEmpty && a.clientPhone.replaceAll(RegExp(r'[^0-9]'), '') == phone)
     ).length;
 
-    return GestureDetector(
-      onTap: () => Navigator.push(
-        context,
-        MaterialPageRoute(builder: (_) => ClientDetailScreen(client: client)),
-      ).then((_) => _loadData()),
-      child: Card(
-        elevation: 0,
-        margin: const EdgeInsets.only(bottom: 10),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(14),
-          side: BorderSide(color: kBorder),
-        ),
-        color: kCard,
-        child: Padding(
-          padding: const EdgeInsets.all(14),
-          child: Row(
-            children: [
-              CircleAvatar(
-                radius: 22,
-                backgroundColor: kPurple2.withOpacity(0.15),
-                child: Text(
-                  client.name.isNotEmpty ? client.name[0].toUpperCase() : '?',
-                  style: TextStyle(fontWeight: FontWeight.w900, fontSize: 18, color: kPurple2),
-                ),
+    return Card(
+      elevation: 0,
+      margin: const EdgeInsets.only(bottom: 10),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(14),
+        side: BorderSide(color: kBorder),
+      ),
+      color: kCard,
+      child: Theme(
+        data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
+        child: ExpansionTile(
+          tilePadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
+          leading: GestureDetector(
+            onTap: () => Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => ClientDetailScreen(client: client)),
+            ).then((_) => _loadData()),
+            child: CircleAvatar(
+              radius: 22,
+              backgroundColor: kPurple2.withOpacity(0.15),
+              child: Text(
+                client.name.isNotEmpty ? client.name[0].toUpperCase() : '?',
+                style: TextStyle(fontWeight: FontWeight.w900, fontSize: 18, color: kPurple2),
               ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+            ),
+          ),
+          title: GestureDetector(
+            onTap: () => Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => ClientDetailScreen(client: client)),
+            ).then((_) => _loadData()),
+            child: Row(
+              children: [
+                Expanded(child: Text(client.name, style: TextStyle(fontWeight: FontWeight.w800, fontSize: 15, color: kText))),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: kTeal.withOpacity(0.12),
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                  child: Text(client.clientId, style: TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: kTeal)),
+                ),
+              ],
+            ),
+          ),
+          subtitle: GestureDetector(
+            onTap: () => Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => ClientDetailScreen(client: client)),
+            ).then((_) => _loadData()),
+            child: Padding(
+              padding: const EdgeInsets.only(top: 4),
+              child: Row(
+                children: [
+                  Icon(Icons.phone, size: 12, color: kMuted),
+                  const SizedBox(width: 4),
+                  Text(client.phone, style: TextStyle(fontSize: 12, color: kMuted)),
+                  const SizedBox(width: 12),
+                  Icon(Icons.event, size: 12, color: kMuted),
+                  const SizedBox(width: 4),
+                  Text('$visits ಭೇಟಿ', style: TextStyle(fontSize: 12, color: kMuted)),
+                  const SizedBox(width: 12),
+                  Icon(Icons.people, size: 12, color: kMuted),
+                  const SizedBox(width: 4),
+                  Text('${members.length}', style: TextStyle(fontSize: 12, color: kMuted, fontWeight: FontWeight.bold)),
+                ],
+              ),
+            ),
+          ),
+          trailing: IconButton(
+            icon: Icon(Icons.delete_outline, color: Colors.red.withOpacity(0.7)),
+            onPressed: () => _confirmDeleteClient(client),
+          ),
+          children: members.isEmpty 
+            ? [const Padding(padding: EdgeInsets.all(12), child: Text('ಯಾವುದೇ ಸದಸ್ಯರು ಇಲ್ಲ', style: TextStyle(color: Colors.grey)))]
+            : members.map((m) => Container(
+                margin: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: kBg,
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(color: kBorder),
+                ),
+                child: Row(
                   children: [
-                    Row(
-                      children: [
-                        Expanded(child: Text(client.name, style: TextStyle(fontWeight: FontWeight.w800, fontSize: 15, color: kText))),
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                          decoration: BoxDecoration(
-                            color: kTeal.withOpacity(0.12),
-                            borderRadius: BorderRadius.circular(6),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Text(m.memberName, style: TextStyle(fontWeight: FontWeight.w800, fontSize: 14, color: kText)),
+                              const SizedBox(width: 8),
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                decoration: BoxDecoration(color: kPurple2.withOpacity(0.1), borderRadius: BorderRadius.circular(4)),
+                                child: Text(m.relation, style: TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: kPurple2)),
+                              ),
+                            ],
                           ),
-                          child: Text(client.clientId, style: TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: kTeal)),
-                        ),
-                      ],
+                          const SizedBox(height: 4),
+                          Text('${m.dob} | ${m.birthTime} | ${m.birthPlace}', style: TextStyle(fontSize: 12, color: kMuted)),
+                        ],
+                      ),
                     ),
-                    const SizedBox(height: 4),
-                    Row(
-                      children: [
-                        Icon(Icons.phone, size: 12, color: kMuted),
-                        const SizedBox(width: 4),
-                        Text(client.phone, style: TextStyle(fontSize: 12, color: kMuted)),
-                        const SizedBox(width: 12),
-                        Icon(Icons.event, size: 12, color: kMuted),
-                        const SizedBox(width: 4),
-                        Text('$visits \u0cad\u0cc7\u0c9f\u0cbf', style: TextStyle(fontSize: 12, color: kMuted)),
-                        const SizedBox(width: 12),
-                        Icon(Icons.people, size: 12, color: kMuted),
-                        const SizedBox(width: 4),
-                        Text('${members.length} \u0cb8\u0ca6\u0cb8\u0ccd\u0caf', style: TextStyle(fontSize: 12, color: kMuted)),
-                      ],
+                    IconButton(
+                      icon: Icon(Icons.auto_awesome, color: kTeal),
+                      tooltip: 'ಕುಂಡಲಿ ತೆರೆಯಿರಿ',
+                      onPressed: () => _generateKundaliForMember(m),
+                      style: IconButton.styleFrom(backgroundColor: kTeal.withOpacity(0.1)),
                     ),
                   ],
                 ),
-              ),
-              Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  IconButton(
-                    icon: Icon(Icons.delete_outline, color: Colors.red.withOpacity(0.7)),
-                    onPressed: () => _confirmDeleteClient(client),
-                  ),
-                  Icon(Icons.chevron_right, color: kMuted),
-                ],
-              ),
-            ],
-          ),
+              )).toList(),
         ),
       ),
     );
+  }
+
+  Future<void> _generateKundaliForMember(FamilyMember m) async {
+    final dob = m.dobDate;
+    if (dob == null) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('ಜನ್ಮ ದಿನಾಂಕ ಸರಿಯಾಗಿಲ್ಲ')));
+      return;
+    }
+    
+    showDialog(context: context, barrierDismissible: false, builder: (_) => const Center(child: CircularProgressIndicator()));
+
+    try {
+      final localHour = m.hour + m.minute / 60.0;
+      final result = await AstroCalculator.calculate(
+        year: dob.year, month: dob.month, day: dob.day,
+        hourUtcOffset: LocationService.tzOffset,
+        hour24: localHour,
+        lat: m.lat, lon: m.lon,
+        ayanamsaMode: 'lahiri',
+        trueNode: true,
+      );
+
+      if (mounted) Navigator.pop(context); // dismiss loading
+      if (result != null && mounted) {
+        Navigator.push(context, MaterialPageRoute(
+          builder: (_) => DashboardScreen(
+            result: result,
+            name: m.memberName,
+            place: m.birthPlace,
+            dob: dob,
+            hour: m.hour12,
+            minute: m.minute,
+            ampm: m.ampm,
+            lat: m.lat,
+            lon: m.lon,
+            extraInfo: {'clientId': m.clientId},
+            initialNotes: m.notes,
+            onSave: (notes, aroodhas, janmaIdx, {bool isNew = true}) {
+              StorageService.save(Profile(
+                name: m.memberName, date: m.dob,
+                hour: m.hour12, minute: m.minute, ampm: m.ampm,
+                lat: m.lat, lon: m.lon, place: m.birthPlace,
+                notes: notes, aroodhas: aroodhas, janmaNakshatraIdx: janmaIdx,
+                clientId: m.clientId,
+              ));
+            },
+          ),
+        )).then((_) => _loadData());
+      }
+    } catch (e) {
+      if (mounted) Navigator.pop(context);
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('ದೋಷ: $e')));
+    }
   }
 
   Future<void> _confirmDeleteClient(Client client) async {
