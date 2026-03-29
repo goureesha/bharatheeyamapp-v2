@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'storage_service.dart'; // Added for migration
 
 // ─── Data Models ──────────────────────────────────────────
 
@@ -205,8 +206,6 @@ class ClientService {
     }
   }
 
-  // ─── Load All ─────────────────────────────────────────────
-
   static Future<void> loadAll() async {
     try {
       final prefs = await SharedPreferences.getInstance();
@@ -226,6 +225,46 @@ class ClientService {
       }
 
       _isLoaded = true;
+
+      // Ensure total unification: auto-migrate any StorageService profiles not yet in ClientService
+      // Using a delayed Future to ensure StorageService has time to load natively elsewhere first if needed
+      Future.delayed(const Duration(milliseconds: 500), () async {
+        final storageList = await StorageService.loadAll();
+        bool changed = false;
+        for (final p in storageList.values) {
+          // Check if this explicit name and date combination already exists as a FamilyMember
+          final exists = _members.any((m) => m.memberName == p.name && m.dob == p.date);
+          if (!exists) {
+            // Check if it has an assigned Client ID implicitly
+            String cId = p.clientId ?? '';
+            if (cId.isEmpty || getClientById(cId) == null) {
+               final newClient = await getOrCreateClient(name: p.name, phone: 'No Phone');
+               cId = newClient?.clientId ?? '';
+            }
+
+            if (cId.isNotEmpty) {
+              final newMember = FamilyMember(
+                clientId: cId,
+                memberName: p.name,
+                relation: 'Self',
+                dob: p.date,
+                birthTime: p.hour.toString().padLeft(2, '0') + ':' + p.minute.toString().padLeft(2, '0') + ' ' + p.ampm,
+                birthPlace: p.place,
+                lat: p.lat,
+                lon: p.lon,
+                notes: p.notes,
+              );
+              _members.add(newMember);
+              changed = true;
+            }
+          }
+        }
+        if (changed) {
+          await _saveToLocal();
+          debugPrint('ClientService: Auto-migrated legacy StorageService profiles successfully.');
+        }
+      });
+
       debugPrint('ClientService: loaded ${_clients.length} clients, ${_members.length} members (local)');
     } catch (e) {
       debugPrint('ClientService: loadAll error: $e');

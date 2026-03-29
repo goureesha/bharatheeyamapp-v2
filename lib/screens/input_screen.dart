@@ -87,11 +87,10 @@ class _InputScreenState extends State<InputScreen> {
     if (mounted) setState(() => _savedProfiles = p);
   }
 
-  void _loadProfile(String name) {
-    final p = _savedProfiles[name]!;
+  void _loadProfile(Profile p) {
     setState(() {
       _loadedFromSaved = true; // mark as existing — updates go in-place
-      _nameCtrl.text  = name;
+      _nameCtrl.text  = p.name;
       _placeCtrl.text = p.place;
       _latCtrl.text   = p.lat.toStringAsFixed(4);
       _lonCtrl.text   = p.lon.toStringAsFixed(4);
@@ -430,11 +429,41 @@ class _InputScreenState extends State<InputScreen> {
     String searchQuery = '';
     return StatefulBuilder(
       builder: (ctx, setSheetState) {
+        // Core Unification: Merge all current local storage profiles with active Appointment/Client family members dynamically
+        final Map<String, Profile> unifiedProfiles = Map.from(_savedProfiles);
+        for (var client in ClientService.clients) {
+          final members = ClientService.getMembersForClient(client.clientId);
+          for (var m in members) {
+            if (m.dob.isNotEmpty && m.birthTime.isNotEmpty && m.lat != 0) {
+              if (!unifiedProfiles.containsKey(m.memberName)) {
+                // Not in StorageService at all
+                unifiedProfiles[m.memberName] = Profile(
+                  name: m.memberName, date: m.dob, hour: m.hour12, minute: m.minute, ampm: m.ampm,
+                  lat: m.lat, lon: m.lon, place: m.birthPlace, notes: m.notes, tzOffset: LocationService.tzOffset,
+                  clientId: m.clientId,
+                );
+              } else {
+                // If the old StorageService profile lacks its Client GUID, attach it for the display organically
+                if (unifiedProfiles[m.memberName]!.clientId == null || unifiedProfiles[m.memberName]!.clientId!.isEmpty) {
+                  final op = unifiedProfiles[m.memberName]!;
+                  unifiedProfiles[m.memberName] = Profile(
+                    name: op.name, date: op.date, hour: op.hour, minute: op.minute, ampm: op.ampm,
+                    lat: op.lat, lon: op.lon, tzOffset: op.tzOffset, place: op.place, notes: op.notes,
+                    aroodhas: op.aroodhas, janmaNakshatraIdx: op.janmaNakshatraIdx,
+                    clientId: m.clientId, // Insert the linked Client ID dynamically
+                  );
+                }
+              }
+            }
+          }
+        }
+
         final filtered = searchQuery.isEmpty
-          ? _savedProfiles
-          : Map.fromEntries(_savedProfiles.entries.where((e) =>
+          ? unifiedProfiles
+          : Map.fromEntries(unifiedProfiles.entries.where((e) =>
               e.key.toLowerCase().contains(searchQuery.toLowerCase()) ||
               e.value.place.toLowerCase().contains(searchQuery.toLowerCase()) ||
+              (e.value.clientId != null && e.value.clientId!.toLowerCase().contains(searchQuery.toLowerCase())) ||
               e.value.date.contains(searchQuery)));
 
         return SafeArea(
@@ -443,7 +472,7 @@ class _InputScreenState extends State<InputScreen> {
             children: [
               Padding(
                 padding: EdgeInsets.all(16),
-                child: Text('ಉಳಿಸಿದ ಜಾತಕಗಳು', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: kPurple2)),
+                child: Text('ಉಳಿಸಿದ ಜಾತಕ (Appointments Merged)', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: kPurple2)),
               ),
               // Search bar
               Padding(
@@ -451,7 +480,7 @@ class _InputScreenState extends State<InputScreen> {
                 child: TextField(
                   onChanged: (v) => setSheetState(() => searchQuery = v),
                   decoration: InputDecoration(
-                    hintText: 'ಹೆಸರು, ಸ್ಥಳ ಅಥವಾ ದಿನಾಂಕ ಹುಡುಕಿ...',
+                    hintText: 'ಹೆಸರು, ದಿನಾಂಕ, Client ID ಅಥವಾ ಸ್ಥಳ ಹುಡುಕಿ...',
                     prefixIcon: Icon(Icons.search, color: kMuted),
                     isDense: true,
                     contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
@@ -474,14 +503,23 @@ class _InputScreenState extends State<InputScreen> {
                     separatorBuilder: (_, __) => Divider(height: 1),
                     itemBuilder: (ctx, i) {
                       final name = filtered.keys.elementAt(i);
+                      final profile = filtered[name]!;
                       return ListTile(
                         leading: CircleAvatar(backgroundColor: kBorder, child: Icon(Icons.person, color: kPurple2)),
-                        title: Text(name, style: TextStyle(fontWeight: FontWeight.w800, color: kText)),
-                        subtitle: Text('${filtered[name]!.date} | ${filtered[name]!.place}', style: TextStyle(color: kMuted)),
+                        title: RichText(
+                          text: TextSpan(
+                            children: [
+                              TextSpan(text: name, style: TextStyle(fontWeight: FontWeight.w800, color: kText, fontSize: 16)),
+                              if (profile.clientId != null && profile.clientId!.isNotEmpty) 
+                                TextSpan(text: '  (${profile.clientId})', style: TextStyle(fontWeight: FontWeight.w600, color: kTeal, fontSize: 12)),
+                            ],
+                          ),
+                        ),
+                        subtitle: Text('${profile.date} | ${profile.place}', style: TextStyle(color: kMuted)),
                         trailing: Icon(Icons.chevron_right, color: kMuted),
                         onTap: () {
                           Navigator.pop(ctx);
-                          _loadProfile(name);
+                          _loadProfile(profile);
                         },
                       );
                     },
