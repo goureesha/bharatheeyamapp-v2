@@ -158,7 +158,7 @@ class _InputScreenState extends State<InputScreen> {
       if (resp.statusCode == 200) {
         final data = jsonDecode(resp.body) as List;
         if (data.isEmpty) {
-          setState(() => _geoStatus = 'ಸ್ಥಳ ಕಂಡುಬಂದಿಲ್ಲ.');
+          setState(() => _geoStatus = AppLocale.l('placeNotFound'));
         } else if (data.length == 1) {
           // Single result — auto-fill
           final lat = double.parse(data[0]['lat']);
@@ -180,7 +180,7 @@ class _InputScreenState extends State<InputScreen> {
         }
       }
     } catch (_) {
-      setState(() => _geoStatus = 'ಸ್ಥಳ ಸಂಪರ್ಕ ದೋಷ. ನೇರವಾಗಿ ಅಕ್ಷಾಂಶ/ರೇಖಾಂಶ ನಮೂದಿಸಿ.');
+      setState(() => _geoStatus = AppLocale.l('networkError'));
     }
     setState(() => _geoLoading = false);
   }
@@ -198,9 +198,9 @@ class _InputScreenState extends State<InputScreen> {
           children: [
             Padding(
               padding: const EdgeInsets.all(16),
-              child: Text('ಸ್ಥಳ ಆಯ್ಕೆಮಾಡಿ', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: kPurple1)),
+              child: Text(AppLocale.l('selectPlace'), style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: kPurple1)),
             ),
-            Text('ಒಂದೇ ಹೆಸರಿನ ಹಲವು ಸ್ಥಳಗಳು ಕಂಡುಬಂದಿವೆ:', style: TextStyle(fontSize: 13, color: kMuted)),
+            Text(AppLocale.l('multiPlacesFound'), style: TextStyle(fontSize: 13, color: kMuted)),
             const SizedBox(height: 8),
             Flexible(
               child: ListView.separated(
@@ -278,7 +278,7 @@ class _InputScreenState extends State<InputScreen> {
           // Forcefully register the client right now so it exists in memory immediately
           await ClientService.addClient(Client(
             clientId: activeClientId,
-            name: _nameCtrl.text.trim().isNotEmpty ? _nameCtrl.text.trim() : 'ಅಜ್ಞಾತ ಜಾತಕ (Unknown)',
+            name: _nameCtrl.text.trim().isNotEmpty ? _nameCtrl.text.trim() : '${AppLocale.l('unknown')}',
             phone: '',
             address: _placeCtrl.text,
             createdAt: dateStr,
@@ -289,7 +289,7 @@ class _InputScreenState extends State<InputScreen> {
         Navigator.push(context, MaterialPageRoute(
           builder: (_) => DashboardScreen(
             result: result,
-            name: _nameCtrl.text.trim().isNotEmpty ? _nameCtrl.text.trim() : 'ಅಜ್ಞಾತ ಜಾತಕ (Unknown)',
+            name: _nameCtrl.text.trim().isNotEmpty ? _nameCtrl.text.trim() : '${AppLocale.l('unknown')}',
             place: _placeCtrl.text,
             dob: _dob,
             hour: _hour,
@@ -330,7 +330,7 @@ class _InputScreenState extends State<InputScreen> {
         setState(() => _loading = false);
       }
     } catch (e) {
-      _showError('ದೋಷ: $e');
+      _showError('${AppLocale.l('errorLabel')}: $e');
     }
     setState(() => _loading = false);
   }
@@ -408,7 +408,7 @@ class _InputScreenState extends State<InputScreen> {
               children: [
                 Icon(Icons.wifi_off, size: 80, color: Colors.red.shade400),
                 const SizedBox(height: 24),
-                Text('ಇಂಟರ್ನೆಟ್ ಸಂಪರ್ಕ ಅಗತ್ಯವಿದೆ', style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.red), textAlign: TextAlign.center),
+                Text(AppLocale.l('webBlockedTitle'), style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.red), textAlign: TextAlign.center),
                 const SizedBox(height: 16),
                 Text('ನಿಮ್ಮ ಚಂದಾದಾರಿಕೆಯನ್ನು ಪರಿಶೀಲಿಸಲು ದಯವಿಟ್ಟು ೪೮ ಗಂಟೆಗಳಿಗೊಮ್ಮೆ ಇಂಟರ್ನೆಟ್ ಸಂಪರ್ಕ ಕಲ್ಪಿಸಿ.', 
                     style: TextStyle(fontSize: 16, height: 1.5), textAlign: TextAlign.center),
@@ -419,7 +419,7 @@ class _InputScreenState extends State<InputScreen> {
                     _checkNetwork();
                   },
                   icon: Icon(Icons.refresh, color: Colors.white),
-                  label: Text('ಮರುಪ್ರಯತ್ನಿಸಿ'),
+                  label: Text(AppLocale.l('retryBtn')),
                 ),
               ],
             ),
@@ -508,7 +508,7 @@ class _InputScreenState extends State<InputScreen> {
             children: [
               Padding(
                 padding: EdgeInsets.all(16),
-                child: Text('ಉಳಿಸಿದ ಜಾತಕ (Appointments Merged)', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: kPurple2)),
+                child: Text(AppLocale.l('savedKundali'), style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: kPurple2)),
               ),
               // Search bar
               Padding(
@@ -516,7 +516,7 @@ class _InputScreenState extends State<InputScreen> {
                 child: TextField(
                   onChanged: (v) => setSheetState(() => searchQuery = v),
                   decoration: InputDecoration(
-                    hintText: 'ಹೆಸರು, ದಿನಾಂಕ, Client ID ಅಥವಾ ಸ್ಥಳ ಹುಡುಕಿ...',
+                    hintText: AppLocale.l('searchHint'),
                     prefixIcon: Icon(Icons.search, color: kMuted),
                     isDense: true,
                     contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
@@ -530,7 +530,7 @@ class _InputScreenState extends State<InputScreen> {
               ),
               const SizedBox(height: 8),
               if (filteredEntries.isEmpty)
-                Padding(padding: EdgeInsets.all(32), child: Text(searchQuery.isEmpty ? 'ಯಾವುದೇ ಜಾತಕ ಉಳಿಸಿಲ್ಲ.' : 'ಯಾವುದೇ ಫಲಿತಾಂಶ ಕಂಡುಬಂದಿಲ್ಲ.', style: TextStyle(color: kMuted)))
+                Padding(padding: EdgeInsets.all(32), child: Text(searchQuery.isEmpty ? AppLocale.l('noSavedKundali') : AppLocale.l('noResults'), style: TextStyle(color: kMuted)))
               else
                 Flexible(
                   child: ListView.separated(
@@ -557,17 +557,17 @@ class _InputScreenState extends State<InputScreen> {
                           children: [
                             IconButton(
                               icon: Icon(Icons.delete_outline, color: Colors.red.shade400, size: 20),
-                              tooltip: 'ಅಳಿಸಿ',
+                              tooltip: AppLocale.l('delete'),
                               onPressed: () async {
                                 final confirm = await showDialog<bool>(
                                   context: ctx,
                                   builder: (dCtx) => AlertDialog(
                                     backgroundColor: kBg,
-                                    title: Text('ಅಳಿಸಬೇಕೇ?', style: TextStyle(color: kText, fontWeight: FontWeight.w900)),
-                                    content: Text('"$name" ಜಾತಕವನ್ನು ಅಳಿಸಬೇಕೇ?', style: TextStyle(color: kMuted)),
+                                    title: Text(AppLocale.l('deleteConfirm'), style: TextStyle(color: kText, fontWeight: FontWeight.w900)),
+                                    content: Text('"$name" ${AppLocale.l('deleteMsg')}', style: TextStyle(color: kMuted)),
                                     actions: [
-                                      TextButton(onPressed: () => Navigator.pop(dCtx, false), child: Text('ಬೇಡ', style: TextStyle(color: kMuted))),
-                                      TextButton(onPressed: () => Navigator.pop(dCtx, true), child: Text('ಅಳಿಸಿ', style: TextStyle(color: Colors.red))),
+                                      TextButton(onPressed: () => Navigator.pop(dCtx, false), child: Text(AppLocale.l('noBtn'), style: TextStyle(color: kMuted))),
+                                      TextButton(onPressed: () => Navigator.pop(dCtx, true), child: Text(AppLocale.l('delete'), style: TextStyle(color: Colors.red))),
                                     ],
                                   ),
                                 );
@@ -610,7 +610,7 @@ class _InputScreenState extends State<InputScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('✨ ಹೊಸ ಜಾತಕ', style: TextStyle(
+          Text('✨ ${AppLocale.l('kundaliTitle')}', style: TextStyle(
             fontWeight: FontWeight.w800, fontSize: 15, color: kPurple2)),
           const SizedBox(height: 16),
 
@@ -618,7 +618,7 @@ class _InputScreenState extends State<InputScreen> {
           TextField(
             controller: _nameCtrl,
             decoration: InputDecoration(
-              labelText: 'ಹೆಸರು',
+              labelText: AppLocale.l('name'),
               prefixIcon: Icon(Icons.person_outline),
             ),
           ),
@@ -638,7 +638,7 @@ class _InputScreenState extends State<InputScreen> {
                 Icon(Icons.calendar_today, color: kMuted),
                 const SizedBox(width: 10),
                 Text(
-                  'ದಿನಾಂಕ: ${_dob.day.toString().padLeft(2,'0')}-${_dob.month.toString().padLeft(2,'0')}-${_dob.year}',
+                  '${AppLocale.l('date')}: ${_dob.day.toString().padLeft(2,'0')}-${_dob.month.toString().padLeft(2,'0')}-${_dob.year}',
                   style: TextStyle(fontSize: 14, color: kText),
                 ),
               ]),
@@ -660,7 +660,7 @@ class _InputScreenState extends State<InputScreen> {
                 Icon(Icons.access_time, color: kMuted),
                 const SizedBox(width: 10),
                 Text(
-                  'ಸಮಯ: ${_hour.toString().padLeft(2,'0')}:${_minute.toString().padLeft(2,'0')} $_ampm',
+                  '${AppLocale.l('timeLabel')}: ${_hour.toString().padLeft(2,'0')}:${_minute.toString().padLeft(2,'0')} $_ampm',
                   style: TextStyle(fontSize: 14, color: kText),
                 ),
               ]),
@@ -683,7 +683,7 @@ class _InputScreenState extends State<InputScreen> {
                 controller: textEditingController,
                 focusNode: focusNode,
                 decoration: InputDecoration(
-                  labelText: 'ಊರು ಹುಡುಕಿ',
+                  labelText: AppLocale.l('searchPlace'),
                   prefixIcon: Icon(Icons.search),
                   suffixIcon: _geoLoading
                     ? Padding(
@@ -757,7 +757,7 @@ class _InputScreenState extends State<InputScreen> {
               child: TextField(
                 controller: _latCtrl,
                 keyboardType: const TextInputType.numberWithOptions(decimal: true, signed: true),
-                decoration: const InputDecoration(labelText: 'ಅಕ್ಷಾಂಶ (Lat)', isDense: true),
+                decoration: InputDecoration(labelText: AppLocale.l('lat'), isDense: true),
               ),
             ),
             const SizedBox(width: 8),
@@ -766,7 +766,7 @@ class _InputScreenState extends State<InputScreen> {
               child: TextField(
                 controller: _lonCtrl,
                 keyboardType: const TextInputType.numberWithOptions(decimal: true, signed: true),
-                decoration: const InputDecoration(labelText: 'ರೇಖಾಂಶ (Lon)', isDense: true),
+                decoration: InputDecoration(labelText: AppLocale.l('lon'), isDense: true),
               ),
             ),
             const SizedBox(width: 8),
@@ -775,7 +775,7 @@ class _InputScreenState extends State<InputScreen> {
               child: TextField(
                 controller: _tzCtrl,
                 keyboardType: const TextInputType.numberWithOptions(decimal: true, signed: true),
-                decoration: const InputDecoration(labelText: 'ಟೈಮ್ ಜೋನ್', isDense: true),
+                decoration: InputDecoration(labelText: AppLocale.l('tzOffset'), isDense: true),
               ),
             ),
           ]),
@@ -785,14 +785,14 @@ class _InputScreenState extends State<InputScreen> {
           Theme(
             data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
             child: ExpansionTile(
-              title: Text('⚙️ ಸುಧಾರಿತ ಆಯ್ಕೆಗಳು', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14)),
+              title: Text('⚙️ ${AppLocale.l('advancedSettings')}', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14)),
               children: [
                 const SizedBox(height: 8),
                 Row(children: [
                   Expanded(
                     child: DropdownButtonFormField<String>(
                       value: _ayanamsa,
-                      decoration: const InputDecoration(labelText: 'ಅಯನಾಂಶ'),
+                      decoration: InputDecoration(labelText: AppLocale.l('ayanamsa')),
                       items: ['ಲಾಹಿರಿ','ರಾಮನ್','ಕೆ.ಪಿ'].map((v) => DropdownMenuItem(
                         value: v, child: Text(v, style: TextStyle()))).toList(),
                       onChanged: (v) => setState(() => _ayanamsa = v!),
@@ -802,7 +802,7 @@ class _InputScreenState extends State<InputScreen> {
                   Expanded(
                     child: DropdownButtonFormField<String>(
                       value: _nodeMode,
-                      decoration: const InputDecoration(labelText: 'ರಾಹು'),
+                      decoration: InputDecoration(labelText: AppLocale.l('nodeType')),
                       items: ['ನಿಜ ರಾಹು','ಸರಾಸರಿ ರಾಹು'].map((v) => DropdownMenuItem(
                         value: v, child: Text(v, style: TextStyle()))).toList(),
                       onChanged: (v) => setState(() => _nodeMode = v!),
@@ -832,7 +832,7 @@ class _InputScreenState extends State<InputScreen> {
                   backgroundColor: const Color(0xFF2B6CB0),
                   padding: const EdgeInsets.symmetric(vertical: 14),
                 ),
-                child: Text('ತೆರೆಯಿರಿ', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 13)),
+                child: Text(AppLocale.l('openSaved'), style: TextStyle(fontWeight: FontWeight.w800, fontSize: 13)),
               ),
             ),
             const SizedBox(width: 8),
@@ -853,7 +853,7 @@ class _InputScreenState extends State<InputScreen> {
                   backgroundColor: kTeal,
                   padding: const EdgeInsets.symmetric(vertical: 14),
                 ),
-                child: Text('ಪ್ರಸ್ತುತ', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 13)),
+                child: Text(AppLocale.l('currentTime'), style: TextStyle(fontWeight: FontWeight.w800, fontSize: 13)),
               ),
             ),
             const SizedBox(width: 8),
@@ -866,7 +866,7 @@ class _InputScreenState extends State<InputScreen> {
                 ),
                 child: _loading
                     ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-                    : Text('ರಚಿಸಿ', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 13)),
+                    : Text(AppLocale.l('generate'), style: TextStyle(fontWeight: FontWeight.w800, fontSize: 13)),
               ),
             ),
           ]),
