@@ -129,73 +129,118 @@ class _DashboardScreenState extends State<DashboardScreen>
 
   }
 
-  /// Show dialog to add a person from saved profiles
-  void _showAddPersonDialog() async {
-    final profiles = await StorageService.loadAll();
-    if (!mounted) return;
-
-    // Filter out the primary person
-    final otherProfiles = profiles.values
-        .where((p) => p.name != widget.name)
-        .where((p) => !_extraPersons.any((ep) => ep.name == p.name))
-        .toList();
-
-    if (otherProfiles.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('ಬೇರೆ ಪ್ರೊಫೈಲ್‌ಗಳಿಲ್ಲ — ಮೊದಲು ಹೊಸ ಜಾತಕ ಉಳಿಸಿ')),
-      );
-      return;
-    }
-
+  /// Show simple 2-option dialog to add a person
+  void _showAddPersonDialog() {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
         backgroundColor: kBg,
         title: Text('ವ್ಯಕ್ತಿ ಸೇರಿಸಿ', style: TextStyle(color: kText, fontWeight: FontWeight.w900)),
-        content: SizedBox(
-          width: double.maxFinite,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              // New person button
-              ListTile(
-                leading: CircleAvatar(
-                  backgroundColor: kTeal.withOpacity(0.15),
-                  child: Icon(Icons.add, color: kTeal),
-                ),
-                title: Text('ಹೊಸ ವ್ಯಕ್ತಿ ಸೇರಿಸಿ', style: TextStyle(color: kTeal, fontWeight: FontWeight.w800)),
-                subtitle: Text('ಹೊಸ ಜಾತಕ ವಿವರ ನಮೂದಿಸಿ', style: TextStyle(color: kMuted, fontSize: 12)),
-                onTap: () {
-                  Navigator.pop(ctx);
-                  _showNewPersonForm();
-                },
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: CircleAvatar(
+                backgroundColor: kTeal.withOpacity(0.15),
+                child: Icon(Icons.add, color: kTeal),
               ),
-              if (otherProfiles.isNotEmpty) Divider(color: kBorder),
-              // Saved profiles list
-              if (otherProfiles.isNotEmpty)
-                Flexible(
-                  child: ListView.builder(
-                    shrinkWrap: true,
-                    itemCount: otherProfiles.length,
-                    itemBuilder: (context, i) {
-                      final p = otherProfiles[i];
-                      return ListTile(
-                        leading: CircleAvatar(
-                          backgroundColor: kPurple2.withOpacity(0.15),
-                          child: Text(p.name.isNotEmpty ? p.name[0] : '?', style: TextStyle(color: kPurple2, fontWeight: FontWeight.w900)),
-                        ),
-                        title: Text(p.name, style: TextStyle(color: kText, fontWeight: FontWeight.w700)),
-                        subtitle: Text('${p.date} | ${p.place}', style: TextStyle(color: kMuted, fontSize: 12)),
-                        onTap: () => _addSavedProfile(ctx, p),
-                      );
-                    },
-                  ),
-                ),
-            ],
-          ),
+              title: Text('ಹೊಸ ವ್ಯಕ್ತಿ ಸೇರಿಸಿ', style: TextStyle(color: kTeal, fontWeight: FontWeight.w800)),
+              subtitle: Text('ಹೊಸ ಜಾತಕ ವಿವರ ನಮೂದಿಸಿ', style: TextStyle(color: kMuted, fontSize: 12)),
+              onTap: () {
+                Navigator.pop(ctx);
+                _showNewPersonForm();
+              },
+            ),
+            Divider(color: kBorder),
+            ListTile(
+              leading: CircleAvatar(
+                backgroundColor: kPurple2.withOpacity(0.15),
+                child: Icon(Icons.folder_open, color: kPurple2),
+              ),
+              title: Text('ಉಳಿಸಿದ ಜಾತಕದಿಂದ ಸೇರಿಸಿ', style: TextStyle(color: kPurple2, fontWeight: FontWeight.w800)),
+              subtitle: Text('ಸೇವ್ ಮಾಡಲಾದ / ಅಪಾಯಿಂಟ್‌ಮೆಂಟ್ ಲಿಸ್ಟ್', style: TextStyle(color: kMuted, fontSize: 12)),
+              onTap: () {
+                Navigator.pop(ctx);
+                _showSavedProfilesListDialog();
+              },
+            ),
+          ],
         ),
         actions: [
           TextButton(onPressed: () => Navigator.pop(ctx), child: Text('ಮುಚ್ಚಿ', style: TextStyle(color: kMuted))),
+        ],
+      ),
+    );
+  }
+
+  /// Show the combined list of saved profiles (StorageService + ClientService)
+  void _showSavedProfilesListDialog() async {
+    final storageProfilesResponse = await StorageService.loadAll();
+    final allProfiles = storageProfilesResponse.values.toList();
+    
+    // Merge Appointment Members
+    for (var client in ClientService.clients) {
+      final members = ClientService.getMembersForClient(client.clientId);
+      for (var m in members) {
+        if (m.dob.isNotEmpty && m.birthTime.isNotEmpty && m.lat != 0) {
+          // Check if already in allProfiles by name to avoid exact duplicates
+          if (!allProfiles.any((p) => p.name == m.memberName)) {
+            allProfiles.add(Profile(
+              name: m.memberName,
+              date: m.dob,
+              hour: m.hour12,
+              minute: m.minute,
+              ampm: m.ampm,
+              lat: m.lat,
+              lon: m.lon,
+              place: m.birthPlace,
+              notes: m.notes,
+              tzOffset: LocationService.tzOffset,
+              clientId: m.clientId,
+            ));
+          }
+        }
+      }
+    }
+
+    if (!mounted) return;
+
+    final otherProfiles = allProfiles
+        .where((p) => p.name != widget.name)
+        .where((p) => !_extraPersons.any((ep) => ep.name == p.name))
+        .toList();
+
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: kBg,
+        title: Text('ಉಳಿಸಿದ ಜಾತಕ ಆಯ್ಕೆಮಾಡಿ', style: TextStyle(color: kText, fontWeight: FontWeight.w900)),
+        content: SizedBox(
+          width: double.maxFinite,
+          child: otherProfiles.isEmpty
+              ? Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Text('ಬೇರೆ ಪ್ರೊಫೈಲ್‌ಗಳಿಲ್ಲ', textAlign: TextAlign.center, style: TextStyle(color: kMuted)),
+                )
+              : ListView.builder(
+                  shrinkWrap: true,
+                  itemCount: otherProfiles.length,
+                  itemBuilder: (context, i) {
+                    final p = otherProfiles[i];
+                    return ListTile(
+                      leading: CircleAvatar(
+                        backgroundColor: kPurple2.withOpacity(0.15),
+                        child: Text(p.name.isNotEmpty ? p.name[0] : '?', style: TextStyle(color: kPurple2, fontWeight: FontWeight.w900)),
+                      ),
+                      title: Text(p.name, style: TextStyle(color: kText, fontWeight: FontWeight.w700)),
+                      subtitle: Text('${p.date} | ${p.place}', style: TextStyle(color: kMuted, fontSize: 12)),
+                      onTap: () => _addSavedProfile(ctx, p),
+                    );
+                  },
+                ),
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx), child: Text('ಹಿಂದೆ', style: TextStyle(color: kMuted))),
         ],
       ),
     );
