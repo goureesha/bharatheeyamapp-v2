@@ -280,10 +280,8 @@ class KundaliChart extends StatelessWidget {
   Widget _centerBox() {
     String label = centerLabel ?? AppLocale.l('appName');
     if (AppLocale.isHindi && centerLabel != null) {
-      if (label == 'ರಾಶಿ\nಚಕ್ರ') label = 'राशि\nचक्र';
-      else if (label == 'ನವಾಂಶ\nಚಕ್ರ') label = 'नवांश\nचक्र';
-      else if (label == 'ಆರೂಢ\nಚಕ್ರ') label = 'आरूढ़\nचक्र';
-      else if (label == 'ಪ್ರಸ್ತುತ\nಆರೂಢ') label = 'वर्तमान\nआरूढ़';
+      // Auto-translate each line of the center label
+      label = label.split('\n').map((line) => tr(line)).join('\n');
     }
     return Container(
       margin: const EdgeInsets.all(0),

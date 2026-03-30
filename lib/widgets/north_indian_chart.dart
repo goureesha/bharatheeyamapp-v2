@@ -279,7 +279,7 @@ class NorthIndianChart extends StatelessWidget {
           children: [
             Image.asset('assets/images/logo.png', width: 36, height: 36),
             const SizedBox(height: 2),
-            Text(AppLocale.isHindi && centerLabel != null ? _translateCenter(centerLabel!) : (centerLabel ?? AppLocale.l('appName')),
+            Text(AppLocale.isHindi && centerLabel != null ? centerLabel!.split('\n').map((line) => tr(line)).join('\n') : (centerLabel ?? AppLocale.l('appName')),
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: 12 * textScale,
@@ -366,11 +366,8 @@ class NorthIndianChart extends StatelessWidget {
   }
 
   String _translateCenter(String label) {
-    if (label == 'ರಾಶಿ\nಚಕ್ರ') return 'राशि\nचक्र';
-    if (label == 'ನವಾಂಶ\nಚಕ್ರ') return 'नवांश\nचक्र';
-    if (label == 'ಆರೂಢ\nಚಕ್ರ') return 'आरूढ़\nचक्र';
-    if (label == 'ಪ್ರಸ್ತುತ\nಆರೂಢ') return 'वर्तमान\nआरूढ़';
-    return label;
+    // Now handled inline via tr()
+    return label.split('\n').map((line) => tr(line)).join('\n');
   }
 
   static const _shortNamesKn = <String, String>{

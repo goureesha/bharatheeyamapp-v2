@@ -47,7 +47,7 @@ class _AshtakaVargaWidgetState extends State<AshtakaVargaWidget> {
               child: ListView(
                 scrollDirection: Axis.horizontal,
                 children: [
-                  _chip('SAV', 'ಸರ್ವಾಷ್ಟಕ'),
+                  _chip('SAV', tr('ಸರ್ವಾಷ್ಟಕ')),
                   ...AshtakaVarga.planets.map((p) => _chip(p, p)),
                 ],
               ),
@@ -176,8 +176,8 @@ class _AshtakaVargaWidgetState extends State<AshtakaVargaWidget> {
 
   Widget _centerBox(int total) {
     final label = _selectedPlanet == 'SAV'
-        ? 'ಸರ್ವಾಷ್ಟಕ ವರ್ಗ'
-        : '$_selectedPlanet\nಅಷ್ಟಕವರ್ಗ';
+        ? tr('ಸರ್ವಾಷ್ಟಕ ವರ್ಗ')
+        : '$_selectedPlanet\n${tr('ಅಷ್ಟಕವರ್ಗ')}';
     return Container(
       margin: const EdgeInsets.all(0),
       decoration: BoxDecoration(
@@ -215,7 +215,7 @@ class _AshtakaVargaWidgetState extends State<AshtakaVargaWidget> {
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Text(
-                'ಒಟ್ಟು: $total',
+                '${tr('ಒಟ್ಟು')}: $total',
                 style: TextStyle(fontSize: 16, fontWeight: FontWeight.w900, color: kPurple2),
               ),
             ),
@@ -259,7 +259,7 @@ class _AshtakaVargaWidgetState extends State<AshtakaVargaWidget> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('ಬಿಂದು ವಿತರಣೆ / Bindu Distribution', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w800, color: kText)),
+          Text('${tr('ಬಿಂದು ವಿತರಣೆ')} / Bindu Distribution', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w800, color: kText)),
           const SizedBox(height: 12),
           ...List.generate(12, (i) {
             final pct = data[i] / maxBindu;
@@ -317,7 +317,7 @@ class _AshtakaVargaWidgetState extends State<AshtakaVargaWidget> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('ಗ್ರಹ ಬಿಂದು ಸಾರಾಂಶ / Planet Bindu Summary', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w800, color: kText)),
+          Text('${tr('ಗ್ರಹ ಬಿಂದು ಸಾರಾಂಶ')} / Planet Bindu Summary', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w800, color: kText)),
           const SizedBox(height: 10),
           Table(
             border: TableBorder.all(color: kBorder, width: 0.5),
@@ -326,8 +326,8 @@ class _AshtakaVargaWidgetState extends State<AshtakaVargaWidget> {
               TableRow(
                 decoration: BoxDecoration(color: kPurple2.withOpacity(0.08)),
                 children: [
-                  Padding(padding: const EdgeInsets.all(8), child: Text('ಗ್ರಹ', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w900, color: kPurple2))),
-                  Padding(padding: const EdgeInsets.all(8), child: Text('ಒಟ್ಟು', textAlign: TextAlign.center, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w900, color: kPurple2))),
+                  Padding(padding: const EdgeInsets.all(8), child: Text(tr('ಗ್ರಹ'), style: TextStyle(fontSize: 12, fontWeight: FontWeight.w900, color: kPurple2))),
+                  Padding(padding: const EdgeInsets.all(8), child: Text(tr('ಒಟ್ಟು'), textAlign: TextAlign.center, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w900, color: kPurple2))),
                 ],
               ),
               ...AshtakaVarga.planets.map((planet) {

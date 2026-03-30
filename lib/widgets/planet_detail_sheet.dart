@@ -29,7 +29,7 @@ class PlanetDetailSheet extends StatelessWidget {
             // Title
             Padding(
               padding: const EdgeInsets.symmetric(vertical: 12),
-              child: Text('ಗ್ರಹದ ಸಂಪೂರ್ಣ ವಿವರ — $pName',
+              child: Text('${tr('ಗ್ರಹದ ಸಂಪೂರ್ಣ ವಿವರ')} — ${tr(pName)}',
                 style: TextStyle(
                   fontSize: 16, fontWeight: FontWeight.w800, color: kPurple2)),
             ),
@@ -38,26 +38,26 @@ class PlanetDetailSheet extends StatelessWidget {
                 controller: ctrl,
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 children: [
-                  _section('📌 ಮೂಲ ವಿವರ', [
-                    ['ಸ್ಫುಟ',  detail['degFmt']],
-                    ['ಗತಿ',   detail['gati']],
-                    ['ಅಸ್ತ',  detail['isAsta'] == true ? 'ಹೌದು' : (detail['isAsta'] == false ? 'ಇಲ್ಲ' : 'ಅನ್ವಯಿಸುವುದಿಲ್ಲ')],
+                  _section('📌 ${tr('ಮೂಲ ವಿವರ')}', [
+                    [tr('ಸ್ಫುಟ'),  detail['degFmt']],
+                    [tr('ಗತಿ'),   detail['gati']],
+                    [tr('ಅಸ್ತ'),  detail['isAsta'] == true ? tr('ಹೌದು') : (detail['isAsta'] == false ? tr('ಇಲ್ಲ') : tr('ಅನ್ವಯಿಸುವುದಿಲ್ಲ'))],
                   ]),
                   const SizedBox(height: 8),
-                  _section('📊 ವರ್ಗಗಳು', [
-                    ['ರಾಶಿ',      detail['d1']],
-                    ['ಹೋರಾ',     detail['d2']],
-                    ['ದ್ರೇಕ್ಕಾಣ', detail['d3']],
-                    ['ನವಾಂಶ',    detail['d9']],
-                    ['ದ್ವಾದಶಾಂಶ',detail['d12']],
-                    ['ತ್ರಿಂಶಾಂಶ',detail['d30']],
+                  _section('📊 ${tr('ವರ್ಗಗಳು')}', [
+                    [tr('ರಾಶಿ'),      detail['d1']],
+                    [tr('ಹೋರಾ'),     detail['d2']],
+                    [tr('ದ್ರೇಕ್ಕಾಣ'), detail['d3']],
+                    [tr('ನವಾಂಶ'),    detail['d9']],
+                    [tr('ದ್ವಾದಶಾಂಶ'),detail['d12']],
+                    [tr('ತ್ರಿಂಶಾಂಶ'),detail['d30']],
                   ]),
                   const SizedBox(height: 8),
-                  _section('🧩 ಉಪ-ವಿಭಾಗಗಳು', [
-                    ['ರಾಶಿ ದ್ರೇಕ್ಕಾಣ', detail['subDrekD1']],
-                    ['ನವಾಂಶ ದ್ರೇಕ್ಕಾಣ', detail['subDrekD9']],
-                    ['ದ್ವಾದಶಾಂಶ ದ್ರೇಕ್ಕಾಣ', detail['subDrekD12']],
-                    ['ನವ-ನವಾಂಶ', detail['d9OfD9']],
+                  _section('🧩 ${tr('ಉಪ-ವಿಭಾಗಗಳು')}', [
+                    [tr('ರಾಶಿ ದ್ರೇಕ್ಕಾಣ'), detail['subDrekD1']],
+                    [tr('ನವಾಂಶ ದ್ರೇಕ್ಕಾಣ'), detail['subDrekD9']],
+                    [tr('ದ್ವಾದಶಾಂಶ ದ್ರೇಕ್ಕಾಣ'), detail['subDrekD12']],
+                    [tr('ನವ-ನವಾಂಶ'), detail['d9OfD9']],
                   ]),
                   const SizedBox(height: 24),
                 ],

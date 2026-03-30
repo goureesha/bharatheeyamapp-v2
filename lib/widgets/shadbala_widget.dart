@@ -9,7 +9,7 @@ class ShadbalaWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (shadbala.isEmpty) {
-      return Center(child: Text('ಷಡ್ಬಲ ಡೇಟಾ ಲಭ್ಯವಿಲ್ಲ (Shadbala Data Not Available)'));
+      return Center(child: Text(tr('ಷಡ್ಬಲ ಡೇಟಾ ಲಭ್ಯವಿಲ್ಲ') + ' (Shadbala Data Not Available)'));
     }
 
     final pKeysEng = ['Sun', 'Moon', 'Mars', 'Mercury', 'Jupiter', 'Venus', 'Saturn'];
@@ -31,12 +31,12 @@ class ShadbalaWidget extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'ಷಡ್ಬಲ (Shadbala - Six-fold Strength)',
+                  '${tr('ಷಡ್ಬಲ')} (Shadbala - Six-fold Strength)',
                   style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: kOrange2),
                 ),
                 SizedBox(height: 6),
                 Text(
-                  'ಗ್ರಹಗಳ ಆರು ಬಗೆಯ ಬಲಗಳನ್ನು ರೂಪಗಳಲ್ಲಿ (Rupas) ನೀಡಲಾಗಿದೆ. ಪ್ರತಿ ಗ್ರಹಕ್ಕೂ ನಿರ್ದಿಷ್ಟ ಕನಿಷ್ಠ ಬಲ (Shadbala Pinda) ಅಗತ್ಯವಿದೆ. 1 ರೂಪ = 60 ಷಷ್ಟ್ಯಾಂಶ (Virupas).',
+                  tr('ಗ್ರಹಗಳ ಆರು ಬಗೆಯ ಬಲಗಳನ್ನು ರೂಪಗಳಲ್ಲಿ (Rupas) ನೀಡಲಾಗಿದೆ. ಪ್ರತಿ ಗ್ರಹಕ್ಕೂ ನಿರ್ದಿಷ್ಟ ಕನಿಷ್ಠ ಬಲ (Shadbala Pinda) ಅಗತ್ಯವಿದೆ. 1 ರೂಪ = 60 ಷಷ್ಟ್ಯಾಂಶ (Virupas).'),
                   style: TextStyle(fontSize: 13, height: 1.4, color: kText),
                 ),
               ],
@@ -54,16 +54,16 @@ class ShadbalaWidget extends StatelessWidget {
                   columnSpacing: 16,
                   horizontalMargin: 12,
                   columns: [
-                    DataColumn(label: Text('ಗ್ರಹ', style: TextStyle(fontWeight: FontWeight.bold))),
-                    DataColumn(label: Text('ಸ್ಥಾನ', style: TextStyle(fontWeight: FontWeight.bold))),
-                    DataColumn(label: Text('ದಿಕ್', style: TextStyle(fontWeight: FontWeight.bold))),
-                    DataColumn(label: Text('ಕಾಲ', style: TextStyle(fontWeight: FontWeight.bold))),
-                    DataColumn(label: Text('ಚೇಷ್ಟಾ', style: TextStyle(fontWeight: FontWeight.bold))),
-                    DataColumn(label: Text('ನೈಸರ್ಗಿಕ', style: TextStyle(fontWeight: FontWeight.bold))),
-                    DataColumn(label: Text('ದೃಕ್', style: TextStyle(fontWeight: FontWeight.bold))),
-                    DataColumn(label: Text('ಒಟ್ಟು', style: TextStyle(fontWeight: FontWeight.w900, color: kPurple2))),
-                    DataColumn(label: Text('ಅರ್ಹತೆ', style: TextStyle(fontWeight: FontWeight.bold))),
-                    DataColumn(label: Text('ಫಲಿತಾಂಶ', style: TextStyle(fontWeight: FontWeight.bold))),
+                    DataColumn(label: Text(tr('ಗ್ರಹ'), style: TextStyle(fontWeight: FontWeight.bold))),
+                    DataColumn(label: Text(tr('ಸ್ಥಾನ'), style: TextStyle(fontWeight: FontWeight.bold))),
+                    DataColumn(label: Text(tr('ದಿಕ್'), style: TextStyle(fontWeight: FontWeight.bold))),
+                    DataColumn(label: Text(tr('ಕಾಲ'), style: TextStyle(fontWeight: FontWeight.bold))),
+                    DataColumn(label: Text(tr('ಚೇಷ್ಟಾ'), style: TextStyle(fontWeight: FontWeight.bold))),
+                    DataColumn(label: Text(tr('ನೈಸರ್ಗಿಕ'), style: TextStyle(fontWeight: FontWeight.bold))),
+                    DataColumn(label: Text(tr('ದೃಕ್'), style: TextStyle(fontWeight: FontWeight.bold))),
+                    DataColumn(label: Text(tr('ಒಟ್ಟು'), style: TextStyle(fontWeight: FontWeight.w900, color: kPurple2))),
+                    DataColumn(label: Text(tr('ಅರ್ಹತೆ'), style: TextStyle(fontWeight: FontWeight.bold))),
+                    DataColumn(label: Text(tr('ಫಲಿತಾಂಶ'), style: TextStyle(fontWeight: FontWeight.bold))),
                   ],
                   rows: List.generate(pKeysEng.length, (i) {
                     final eKey = pKeysEng[i];
@@ -76,7 +76,7 @@ class ShadbalaWidget extends StatelessWidget {
 
                     return DataRow(
                       cells: [
-                        DataCell(Text(kKey, style: TextStyle(fontWeight: FontWeight.bold, color: kPurple2))),
+                        DataCell(Text(tr(kKey), style: TextStyle(fontWeight: FontWeight.bold, color: kPurple2))),
                         DataCell(Text((data['Sthana'] ?? 0.0).toStringAsFixed(2))),
                         DataCell(Text((data['Dik'] ?? 0.0).toStringAsFixed(2))),
                         DataCell(Text((data['Kala'] ?? 0.0).toStringAsFixed(2))),
@@ -93,7 +93,7 @@ class ShadbalaWidget extends StatelessWidget {
                               borderRadius: BorderRadius.circular(4),
                             ),
                             child: Text(
-                              isStrong ? 'ಬಲಶಾಲಿ' : 'ದುರ್ಬಲ',
+                              isStrong ? tr('ಬಲಶಾಲಿ') : tr('ದುರ್ಬಲ'),
                               style: TextStyle(
                                 color: isStrong ? Colors.green.shade700 : Colors.red.shade700,
                                 fontWeight: FontWeight.bold,
