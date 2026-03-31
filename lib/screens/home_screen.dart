@@ -6,6 +6,7 @@ import '../services/calendar_service.dart';
 import 'input_screen.dart';
 import 'panchanga_screen.dart';
 import 'taranukoola_screen.dart';
+import 'muhurta_screen.dart';
 import 'match_making_tab.dart';
 import 'mantra_sangraha_screen.dart';
 import 'planets_screen.dart';
@@ -28,6 +29,9 @@ class HomeScreen extends StatelessWidget {
       }),
       _Section(AppLocale.l('taranukoola'), 'Taranukoola', Icons.stars_rounded, kGreen, () {
         Navigator.push(context, MaterialPageRoute(builder: (_) => const TaranukoolaScreen()));
+      }),
+      _Section('ಮುಹೂರ್ತ', 'Muhurta', Icons.access_time_filled, const Color(0xFF8E44AD), () {
+        Navigator.push(context, MaterialPageRoute(builder: (_) => const MuhurtaScreen()));
       }),
       _Section(AppLocale.l('matchMaking'), 'Match Making', Icons.favorite, const Color(0xFFE53E3E), () {
         Navigator.push(context, MaterialPageRoute(builder: (_) => const MatchMakingScreen()));
