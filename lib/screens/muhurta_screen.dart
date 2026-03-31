@@ -398,6 +398,7 @@ class _MuhurtaScreenState extends State<MuhurtaScreen> {
             saptamaGrahas: saptamaM,
             ashtamaGrahas: ashtamaM,
             guruFromLagna: guruHouse,
+            requiredShuddhis: rules?.requiredShuddhis ?? const {ShuddhiType.lagna},
           ));
 
           currentRashi = samples[i].rashiIdx;
@@ -728,8 +729,15 @@ class _MuhurtaScreenState extends State<MuhurtaScreen> {
                     children: [
                       Text('🏠 ಲಗ್ನ ಶುದ್ಧಿ (Lagna Shuddhi)', style: TextStyle(fontWeight: FontWeight.w800, color: const Color(0xFF2E86AB), fontSize: 14)),
                       const SizedBox(height: 4),
-                      Text('ಲಗ್ನ / ಸಪ್ತಮ / ಅಷ್ಟಮ ಶುದ್ಧಿ + ಗುರು ಅನುಕೂಲ',
-                          style: TextStyle(fontSize: 11, color: kMuted, fontWeight: FontWeight.w500)),
+                      Builder(builder: (_) {
+                        final req = muhurtaRules[_selectedEvent]?.requiredShuddhis ?? {ShuddhiType.lagna};
+                        final parts = <String>[];
+                        if (req.contains(ShuddhiType.lagna)) parts.add('ಲಗ್ನ');
+                        if (req.contains(ShuddhiType.saptama)) parts.add('ಸಪ್ತಮ');
+                        if (req.contains(ShuddhiType.ashtama)) parts.add('ಅಷ್ಟಮ');
+                        return Text('ಅಗತ್ಯ: ${parts.join(' + ')} ಶುದ್ಧಿ + ಗುರು ಅನುಕೂಲ',
+                            style: TextStyle(fontSize: 11, color: kMuted, fontWeight: FontWeight.w500));
+                      }),
                     ],
                   ),
                 ),
@@ -796,9 +804,15 @@ class _MuhurtaScreenState extends State<MuhurtaScreen> {
                           spacing: 6,
                           runSpacing: 4,
                           children: [
-                            _shuddhiChip('ಲ', lw.lagnaShuddhi, lw.lagnaGrahas),
-                            _shuddhiChip('೭', lw.saptamaShuddhi, lw.saptamaGrahas),
-                            _shuddhiChip('೮', lw.ashtamaShuddhi, lw.ashtamaGrahas),
+                            // Lagna shuddhi — always shown (always required)
+                            _shuddhiChip('ಲಗ್ನ', lw.lagnaShuddhi, lw.lagnaGrahas,
+                                required: lw.requiredShuddhis.contains(ShuddhiType.lagna)),
+                            // Saptama shuddhi — show required/optional
+                            _shuddhiChip('೭ ಸಪ್ತಮ', lw.saptamaShuddhi, lw.saptamaGrahas,
+                                required: lw.requiredShuddhis.contains(ShuddhiType.saptama)),
+                            // Ashtama shuddhi — show required/optional
+                            _shuddhiChip('೮ ಅಷ್ಟಮ', lw.ashtamaShuddhi, lw.ashtamaGrahas,
+                                required: lw.requiredShuddhis.contains(ShuddhiType.ashtama)),
                             Container(
                               padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                               decoration: BoxDecoration(
@@ -999,8 +1013,30 @@ class _MuhurtaScreenState extends State<MuhurtaScreen> {
   }
 
   /// Shuddhi chip: shows ✓ or ✗ with malefic names
-  /// label: 'ಲ' (Lagna), '೭' (Saptama), '೮' (Ashtama)
-  Widget _shuddhiChip(String label, bool isShuddha, List<String> malefics) {
+  /// If required=false, shows dimmed (informational only, not scoring)
+  Widget _shuddhiChip(String label, bool isShuddha, List<String> malefics,
+      {bool required = true}) {
+    if (!required) {
+      // Non-required: show dimmed grey chip
+      final text = isShuddha
+          ? '$label ✓'
+          : '$label ✗ ${malefics.join(',')}';
+      return Container(
+        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+        decoration: BoxDecoration(
+          color: Colors.grey.withOpacity(0.06),
+          borderRadius: BorderRadius.circular(4),
+          border: Border.all(color: Colors.grey.shade300, width: 0.5),
+        ),
+        child: Text(text, style: TextStyle(
+          fontSize: 9,
+          color: kMuted,
+          fontWeight: FontWeight.w500,
+          fontStyle: FontStyle.italic,
+        )),
+      );
+    }
+    // Required: bold color chip
     final MaterialColor color = isShuddha ? Colors.green : Colors.red;
     final text = isShuddha
         ? '$label ✓'

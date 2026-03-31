@@ -49,9 +49,8 @@ const Map<MuhurtaEvent, MuhurtaEventInfo> muhurtaEventNames = {
   MuhurtaEvent.krishi:         MuhurtaEventInfo('ಕೃಷಿ', 'Agriculture'),
 };
 
-// ============================================================
-// PANCHANGA-BASED RULES PER EVENT
-// ============================================================
+/// Which shuddhi checks are required for the event
+enum ShuddhiType { lagna, saptama, ashtama }
 
 /// Rules for each muhurta event type
 class MuhurtaEventRules {
@@ -67,6 +66,8 @@ class MuhurtaEventRules {
   final bool requireShukla;
   /// Allowed lagna rashi indices (0-11). Null = not checked in Phase 1.
   final List<int>? allowedLagnas;
+  /// Which shuddhi checks this event requires
+  final Set<ShuddhiType> requiredShuddhis;
 
   const MuhurtaEventRules({
     this.allowedTithis,
@@ -75,82 +76,84 @@ class MuhurtaEventRules {
     this.avoidVishti = true,
     this.requireShukla = false,
     this.allowedLagnas,
+    this.requiredShuddhis = const {ShuddhiType.lagna}, // default: at least lagna
   });
 }
 
 /// Mapping of event types to their Panchanga rules
 const Map<MuhurtaEvent, MuhurtaEventRules> muhurtaRules = {
   // ── ವಿವಾಹ (Marriage) ──
+  // Needs ALL three: lagna (self), saptama (spouse 7th house), ashtama (longevity/mangalya)
   MuhurtaEvent.vivaha: MuhurtaEventRules(
-    // Shukla: 2,3,5,7,10,11,12,13 (indices 1,2,4,6,9,10,11,12)
     allowedTithis: [1, 2, 4, 6, 9, 10, 11, 12],
-    // Rohini(3), Mrigashira(4), Magha(9), U.Phalguni(11), Hasta(12), Swati(14),
-    // Anuradha(16), Moola(18), U.Ashadha(20), U.Bhadra(25), Revati(26)
     allowedNakshatras: [3, 4, 9, 11, 12, 14, 16, 18, 20, 25, 26],
-    // Mon(1), Wed(3), Thu(4), Fri(5)
     allowedVaras: [1, 3, 4, 5],
     avoidVishti: true,
     requireShukla: true,
-    allowedLagnas: [2, 5, 6, 8, 11], // Mithuna, Kanya, Tula, Dhanu, Meena
+    allowedLagnas: [2, 5, 6, 8, 11],
+    requiredShuddhis: {ShuddhiType.lagna, ShuddhiType.saptama, ShuddhiType.ashtama},
   ),
 
   // ── ಉಪನಯನ (Thread Ceremony) ──
+  // Lagna + Ashtama (longevity of the boy)
   MuhurtaEvent.upanayana: MuhurtaEventRules(
-    // Shukla: 2,3,5,10,11,12; Krishna: 2,3,5 (indices 1,2,4,9,10,11 + 16,17,19)
     allowedTithis: [1, 2, 4, 9, 10, 11, 16, 17, 19],
-    // Ashwini(0), Rohini(3), Mrigashira(4), Punarvasu(6), Pushya(7), Hasta(12),
-    // Chitra(13), Swati(14), Anuradha(16), Shravana(21), Dhanishtha(22),
-    // Shatabhisha(23), U.Phalguni(11), U.Ashadha(20), U.Bhadra(25), Revati(26)
     allowedNakshatras: [0, 3, 4, 6, 7, 11, 12, 13, 14, 16, 20, 21, 22, 23, 25, 26],
     allowedVaras: [1, 3, 4, 5],
     avoidVishti: true,
     allowedLagnas: [2, 5, 8, 11],
+    requiredShuddhis: {ShuddhiType.lagna, ShuddhiType.ashtama},
   ),
 
   // ── ಗೃಹಪ್ರವೇಶ (House Warming) ──
+  // Lagna + Ashtama (house longevity/safety). Saptama less critical.
   MuhurtaEvent.grihaPrevesha: MuhurtaEventRules(
     allowedTithis: [1, 2, 4, 6, 9, 10, 11, 12],
-    // Sthira: Rohini(3), U.Phalguni(11), U.Ashadha(20), U.Bhadra(25)
-    // Mridu: Mrigashira(4), Chitra(13), Anuradha(16), Revati(26)
     allowedNakshatras: [3, 4, 11, 13, 16, 20, 25, 26],
     allowedVaras: [1, 3, 4, 5],
     avoidVishti: true,
     requireShukla: true,
-    allowedLagnas: [1, 4, 7, 10], // Sthira rashis
+    allowedLagnas: [1, 4, 7, 10],
+    requiredShuddhis: {ShuddhiType.lagna, ShuddhiType.ashtama},
   ),
 
   // ── ದೇವ ಪ್ರತಿಷ್ಠಾ (Deity Installation) ──
+  // Lagna + Ashtama (deity's protection/longevity of installation)
   MuhurtaEvent.devaPratishtha: MuhurtaEventRules(
-    // Deity-specific tithis are handled separately; general shubha tithis here
     allowedTithis: [1, 2, 4, 6, 7, 9, 10, 11, 12, 13],
-    // Sthira nakshatras preferred
     allowedNakshatras: [3, 4, 11, 12, 13, 14, 16, 20, 21, 25, 26],
     allowedVaras: [1, 3, 4, 5],
     avoidVishti: true,
     requireShukla: true,
     allowedLagnas: [1, 4, 7, 10],
+    requiredShuddhis: {ShuddhiType.lagna, ShuddhiType.ashtama},
   ),
 
   // ── ಅಕ್ಷರಾಭ್ಯಾಸ (Starting Education) ──
+  // Lagna shuddhi only — no saptama/ashtama needed per tradition
   MuhurtaEvent.aksharabhyasa: MuhurtaEventRules(
     allowedTithis: [1, 2, 4, 9, 10],
     allowedNakshatras: [0, 3, 4, 6, 7, 11, 12, 13, 14, 20, 21, 22, 25, 26],
-    allowedVaras: [3, 4], // Wed, Thu (Mercury + Jupiter days)
+    allowedVaras: [3, 4],
     avoidVishti: true,
     requireShukla: true,
     allowedLagnas: [2, 5, 8],
+    requiredShuddhis: {ShuddhiType.lagna},
   ),
 
   // ── ಯಾತ್ರಾ (Travel) ──
+  // Lagna + Ashtama (safety during journey)
   MuhurtaEvent.yatra: MuhurtaEventRules(
     allowedTithis: [1, 2, 4, 6, 9, 10, 11, 12],
     allowedNakshatras: [0, 4, 7, 12, 16, 21, 26],
     allowedVaras: [1, 3, 4, 5],
     avoidVishti: true,
-    allowedLagnas: [0, 3, 6, 9], // Chara rashis
+    allowedLagnas: [0, 3, 6, 9],
+    requiredShuddhis: {ShuddhiType.lagna, ShuddhiType.ashtama},
   ),
 
   // ── ವ್ಯಾಪಾರ (Business Start) ──
+  // Lagna + Saptama (7th = partnerships/clients/trade)
   MuhurtaEvent.vyapara: MuhurtaEventRules(
     allowedTithis: [1, 2, 4, 6, 9, 10, 12],
     allowedNakshatras: [0, 3, 6, 7, 11, 12, 13, 14, 16, 21, 22, 26],
@@ -158,45 +161,55 @@ const Map<MuhurtaEvent, MuhurtaEventRules> muhurtaRules = {
     avoidVishti: true,
     requireShukla: true,
     allowedLagnas: [2, 5, 6, 8, 10],
+    requiredShuddhis: {ShuddhiType.lagna, ShuddhiType.saptama},
   ),
 
   // ── ಅನ್ನಪ್ರಾಶನ (First Feeding) ──
+  // Lagna shuddhi only
   MuhurtaEvent.annaprashana: MuhurtaEventRules(
     allowedTithis: [1, 2, 4, 6, 9, 10, 11, 12],
     allowedNakshatras: [0, 3, 4, 6, 7, 11, 12, 13, 14, 16, 20, 21, 25, 26],
     allowedVaras: [1, 3, 4, 5],
     avoidVishti: true,
     requireShukla: true,
+    requiredShuddhis: {ShuddhiType.lagna},
   ),
 
   // ── ನಾಮಕರಣ (Naming Ceremony) ──
+  // Lagna shuddhi only
   MuhurtaEvent.namakarana: MuhurtaEventRules(
     allowedTithis: [1, 2, 4, 6, 9, 10, 11, 12],
     allowedNakshatras: [0, 3, 4, 6, 7, 11, 12, 13, 14, 16, 20, 21, 25, 26],
     allowedVaras: [1, 3, 4, 5],
     avoidVishti: true,
     requireShukla: true,
+    requiredShuddhis: {ShuddhiType.lagna},
   ),
 
   // ── ಸೀಮಂತ (Prenatal Rite) ──
+  // Lagna + Ashtama (mother & baby safety)
   MuhurtaEvent.seemanta: MuhurtaEventRules(
     allowedTithis: [1, 2, 4, 6, 9, 10, 11, 12],
-    allowedNakshatras: [3, 4, 11, 13, 16, 20, 25, 26], // Mridu + Sthira
+    allowedNakshatras: [3, 4, 11, 13, 16, 20, 25, 26],
     allowedVaras: [1, 3, 4, 5],
     avoidVishti: true,
     requireShukla: true,
+    requiredShuddhis: {ShuddhiType.lagna, ShuddhiType.ashtama},
   ),
 
   // ── ಚೌಲ (Tonsure) ──
+  // Lagna shuddhi only
   MuhurtaEvent.chowla: MuhurtaEventRules(
     allowedTithis: [1, 2, 4, 6, 9, 10, 11, 12],
     allowedNakshatras: [0, 4, 6, 7, 12, 13, 14, 21, 26],
     allowedVaras: [1, 3, 4, 5],
     avoidVishti: true,
     requireShukla: true,
+    requiredShuddhis: {ShuddhiType.lagna},
   ),
 
   // ── ವಾಸ್ತು ಶಿಲಾನ್ಯಾಸ (Foundation Laying) ──
+  // Lagna + Ashtama (building longevity)
   MuhurtaEvent.vastuShilanyas: MuhurtaEventRules(
     allowedTithis: [1, 2, 4, 6, 9, 10, 11, 12],
     allowedNakshatras: [0, 3, 4, 6, 7, 11, 12, 13, 14, 16, 20, 21, 25, 26],
@@ -204,26 +217,30 @@ const Map<MuhurtaEvent, MuhurtaEventRules> muhurtaRules = {
     avoidVishti: true,
     requireShukla: true,
     allowedLagnas: [1, 4, 7, 10],
+    requiredShuddhis: {ShuddhiType.lagna, ShuddhiType.ashtama},
   ),
 
   // ── ಔಷಧ (Medical Treatment) ──
+  // Lagna + Ashtama (patient safety)
   MuhurtaEvent.aushadha: MuhurtaEventRules(
-    // Avoid Rikta tithis (3,8,13 = Chaturthi, Navami, Chaturdashi)
     allowedTithis: [0, 1, 2, 4, 5, 6, 9, 10, 11, 12, 14,
                     15, 16, 17, 19, 20, 21, 24, 25, 26, 29],
     allowedNakshatras: [0, 3, 4, 7, 12, 16, 21, 26],
     allowedVaras: [1, 3, 4, 5],
     avoidVishti: true,
     allowedLagnas: [2, 5, 8, 11],
+    requiredShuddhis: {ShuddhiType.lagna, ShuddhiType.ashtama},
   ),
 
   // ── ಕೃಷಿ (Agriculture) ──
+  // Lagna shuddhi only
   MuhurtaEvent.krishi: MuhurtaEventRules(
     allowedTithis: [0, 1, 2, 4, 6, 9, 10, 11, 12],
     allowedNakshatras: [3, 4, 11, 12, 13, 14, 16, 20, 21, 25, 26],
     allowedVaras: [1, 3, 4, 5],
     avoidVishti: true,
-    allowedLagnas: [1, 3, 5, 11], // Earth/Water signs
+    allowedLagnas: [1, 3, 5, 11],
+    requiredShuddhis: {ShuddhiType.lagna},
   ),
 };
 
@@ -345,6 +362,9 @@ class LagnaWindow {
   final List<String> ashtamaGrahas;  // malefics found in 8th
   final int guruFromLagna;           // Jupiter's house from lagna (1-12)
 
+  // Event-specific required shuddhis
+  final Set<ShuddhiType> requiredShuddhis;
+
   LagnaWindow({
     required this.rashiIndex,
     required this.rashiName,
@@ -359,12 +379,19 @@ class LagnaWindow {
     this.saptamaGrahas = const [],
     this.ashtamaGrahas = const [],
     this.guruFromLagna = 0,
+    this.requiredShuddhis = const {ShuddhiType.lagna},
   });
 
-  /// Overall shuddhi — all three must pass + event-allowed
-  bool get isShubha => isAllowed && lagnaShuddhi && saptamaShuddhi && ashtamaShuddhi;
+  /// Event-aware shuddhi — only checks the shuddhis required for this event
+  bool get isShubha {
+    if (!isAllowed) return false;
+    if (requiredShuddhis.contains(ShuddhiType.lagna) && !lagnaShuddhi) return false;
+    if (requiredShuddhis.contains(ShuddhiType.saptama) && !saptamaShuddhi) return false;
+    if (requiredShuddhis.contains(ShuddhiType.ashtama) && !ashtamaShuddhi) return false;
+    return true;
+  }
 
-  /// Best quality: all shuddhi + guru anukoola
+  /// Best quality: all required shuddhi pass + guru anukoola
   bool get isPerfect => isShubha && guruAnukoola;
 }
 
