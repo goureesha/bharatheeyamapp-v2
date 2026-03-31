@@ -48,7 +48,7 @@ class _AshtakaVargaWidgetState extends State<AshtakaVargaWidget> {
                 scrollDirection: Axis.horizontal,
                 children: [
                   _chip('SAV', tr('ಸರ್ವಾಷ್ಟಕ')),
-                  ...AshtakaVarga.planets.map((p) => _chip(p, p)),
+                  ...AshtakaVarga.planets.map((p) => _chip(p, tr(p))),
                 ],
               ),
             ),
@@ -334,7 +334,7 @@ class _AshtakaVargaWidgetState extends State<AshtakaVargaWidget> {
                 final bav = _avData[planet] ?? List.filled(12, 0);
                 final planetTotal = bav.reduce((a, b) => a + b);
                 return TableRow(children: [
-                  Padding(padding: const EdgeInsets.all(8), child: Text(planet, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: kText))),
+                  Padding(padding: const EdgeInsets.all(8), child: Text(tr(planet), style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: kText))),
                   Padding(padding: const EdgeInsets.all(8), child: Text('$planetTotal', textAlign: TextAlign.center, style: TextStyle(fontSize: 13, fontWeight: FontWeight.w900, color: kText))),
                 ]);
               }),
