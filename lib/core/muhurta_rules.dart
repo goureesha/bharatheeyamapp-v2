@@ -391,6 +391,10 @@ class MuhurtaDayResult {
   final List<String> doshas;
   final List<String> doshaBhangas; // active dosha cancellations
   final List<LagnaWindow> lagnaWindows; // available lagna windows for the day
+  final bool hasAbhijit;    // true if Abhijit muhurta bonus applied
+  final bool hasGodhuli;    // true if Godhuli Lagna bonus applied (Vivaha)
+  final String? abhijitTime; // Abhijit muhurta time window string
+  final String? godhuliTime; // Godhuli time window string
 
   MuhurtaDayResult({
     required this.score,
@@ -400,6 +404,10 @@ class MuhurtaDayResult {
     required this.doshas,
     required this.doshaBhangas,
     this.lagnaWindows = const [],
+    this.hasAbhijit = false,
+    this.hasGodhuli = false,
+    this.abhijitTime,
+    this.godhuliTime,
   });
 }
 
@@ -428,6 +436,9 @@ MuhurtaDayResult evaluateMuhurta({
   // Person 2 (optional)
   int? janmaNakIdx2,
   int? janmaRashiIdx2,
+  // Phase 3: Abhijit & Godhuli overrides
+  String? abhijitTimeWindow,  // e.g. "11:48 AM - 12:20 PM"
+  String? godhuliTimeWindow,  // e.g. "05:55 PM - 06:43 PM"
 }) {
   final rules = muhurtaRules[event]!;
   final List<MuhurtaCheckItem> checks = [];
@@ -610,6 +621,41 @@ MuhurtaDayResult evaluateMuhurta({
     maxPoints += 5;
   }
 
+  // ── ABHIJIT MUHURTA BONUS (5 points) ──
+  // The 8th muhurta period (midday, ~local noon) is universally auspicious.
+  // If abhijitTimeWindow is provided, it means this day has Abhijit muhurta.
+  bool abhijitApplied = false;
+  if (abhijitTimeWindow != null) {
+    maxPoints += 5;
+    totalPoints += 5;
+    abhijitApplied = true;
+    doshaBhangas.add('ಅಭಿಜಿತ್ ಮುಹೂರ್ತ ಲಭ್ಯ ($abhijitTimeWindow)');
+    checks.add(MuhurtaCheckItem(
+      label: 'ಅಭಿಜಿತ್',
+      value: abhijitTimeWindow,
+      passed: true,
+      note: 'ಸರ್ವ ಕಾರ್ಯ ಶುಭ — ಮಧ್ಯಾಹ್ನ ಮುಹೂರ್ತ',
+    ));
+  }
+
+  // ── GODHULI LAGNA BONUS (5 points — Vivaha only) ──
+  // The period around sunset (~24 min before/after) is considered highly
+  // auspicious for Vivaha per Muhurta Chintamani, as cows returning home
+  // raise dust (Godhuli = cow-dust).
+  bool godhuliApplied = false;
+  if (event == MuhurtaEvent.vivaha && godhuliTimeWindow != null) {
+    maxPoints += 5;
+    totalPoints += 5;
+    godhuliApplied = true;
+    doshaBhangas.add('ಗೋಧೂಳಿ ಲಗ್ನ ಲಭ್ಯ ($godhuliTimeWindow)');
+    checks.add(MuhurtaCheckItem(
+      label: 'ಗೋಧೂಳಿ',
+      value: godhuliTimeWindow,
+      passed: true,
+      note: 'ವಿವಾಹಕ್ಕೆ ಅತ್ಯಂತ ಶುಭ',
+    ));
+  }
+
   // ── COMPUTE FINAL SCORE ──
   final score = maxPoints > 0 ? ((totalPoints / maxPoints) * 100).round().clamp(0, 100) : 0;
 
@@ -632,5 +678,10 @@ MuhurtaDayResult evaluateMuhurta({
     personResults: personResults,
     doshas: doshas,
     doshaBhangas: doshaBhangas,
+    hasAbhijit: abhijitApplied,
+    hasGodhuli: godhuliApplied,
+    abhijitTime: abhijitTimeWindow,
+    godhuliTime: godhuliTimeWindow,
   );
 }
+

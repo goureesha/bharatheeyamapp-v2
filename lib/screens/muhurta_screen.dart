@@ -248,6 +248,19 @@ class _MuhurtaScreenState extends State<MuhurtaScreen> {
           final varaIdx = knVara.indexOf(p.vara);
           final yogaIdx = knYoga.indexOf(p.yoga);
 
+          // Compute Abhijit muhurta time (8th of 15 periods)
+          final srMins = _parseTimeToMinutes(p.sunrise);
+          final ssMins = _parseTimeToMinutes(p.sunset);
+          final muhDur = (ssMins - srMins) / 15.0;
+          final abhijitStart = srMins + 7 * muhDur;
+          final abhijitEnd = abhijitStart + muhDur;
+          final abhijitTimeStr = '${_minutesToTimeStr(abhijitStart)} - ${_minutesToTimeStr(abhijitEnd)}';
+
+          // Compute Godhuli Lagna time (sunset ±24 minutes)
+          final godhuliStart = ssMins - 24;
+          final godhuliEnd = ssMins + 24;
+          final godhuliTimeStr = '${_minutesToTimeStr(godhuliStart)} - ${_minutesToTimeStr(godhuliEnd)}';
+
           final dayResult = evaluateMuhurta(
             event: _selectedEvent,
             tithiIndex: p.tithiIndex,
@@ -265,6 +278,8 @@ class _MuhurtaScreenState extends State<MuhurtaScreen> {
             janmaRashiIdx1: _rashiIdx1!,
             janmaNakIdx2: _isTwoPersonMode ? _nakIdx2 : null,
             janmaRashiIdx2: _isTwoPersonMode ? _rashiIdx2 : null,
+            abhijitTimeWindow: abhijitTimeStr,
+            godhuliTimeWindow: (_selectedEvent == MuhurtaEvent.vivaha) ? godhuliTimeStr : null,
           );
 
           final dateKey = DateTime(year, month, day);
@@ -884,6 +899,149 @@ class _MuhurtaScreenState extends State<MuhurtaScreen> {
   }
 
   // ============================================================
+  // BEST DAYS SUMMARY
+  // ============================================================
+
+  Widget _buildBestDaysSummary() {
+    if (!_generated || _results.isEmpty) return const SizedBox();
+
+    // Sort by score descending, take top 5
+    final sorted = _results.entries.toList()
+      ..sort((a, b) => b.value.score.compareTo(a.value.score));
+    final top5 = sorted.take(5).toList();
+
+    // Count by category
+    final shreshtha = _results.values.where((r) => r.score >= 80).length;
+    final madhyama = _results.values.where((r) => r.score >= 60 && r.score < 80).length;
+    final ashubha = _results.values.where((r) => r.score < 60).length;
+
+    return AppCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.star, color: Colors.amber.shade700, size: 20),
+              const SizedBox(width: 8),
+              Text('ಶ್ರೇಷ್ಠ ದಿನಗಳು (Best Days)',
+                  style: TextStyle(fontWeight: FontWeight.w900, color: kPurple1, fontSize: 14)),
+            ],
+          ),
+          const SizedBox(height: 8),
+
+          // Summary counts
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            children: [
+              _countChip('🟢 ಶ್ರೇಷ್ಠ', shreshtha, Colors.green),
+              _countChip('🟡 ಮಧ್ಯಮ', madhyama, Colors.orange),
+              _countChip('🔴 ಅಶುಭ', ashubha, Colors.red),
+            ],
+          ),
+          const SizedBox(height: 12),
+
+          // Top 5 days
+          ...top5.map((entry) {
+            final date = entry.key;
+            final result = entry.value;
+            final scoreColor = _getColorForScore(result.score);
+            final bool isSelected = _selectedDay != null && isSameDay(_selectedDay!, date);
+
+            return InkWell(
+              onTap: () async {
+                setState(() => _selectedDay = date);
+                // Trigger lagna scan
+                final existing = _results[date];
+                if (existing != null && existing.lagnaWindows.isEmpty) {
+                  final windows = await _scanLagnaWindows(date);
+                  if (windows.isNotEmpty && mounted) {
+                    setState(() {
+                      _results[date] = MuhurtaDayResult(
+                        score: existing.score,
+                        verdict: existing.verdict,
+                        checks: existing.checks,
+                        personResults: existing.personResults,
+                        doshas: existing.doshas,
+                        doshaBhangas: existing.doshaBhangas,
+                        lagnaWindows: windows,
+                        hasAbhijit: existing.hasAbhijit,
+                        hasGodhuli: existing.hasGodhuli,
+                        abhijitTime: existing.abhijitTime,
+                        godhuliTime: existing.godhuliTime,
+                      );
+                    });
+                  }
+                }
+              },
+              child: Container(
+                margin: const EdgeInsets.only(bottom: 4),
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                decoration: BoxDecoration(
+                  color: isSelected ? kPurple1.withOpacity(0.1) : scoreColor.withOpacity(0.05),
+                  border: Border.all(
+                    color: isSelected ? kPurple1 : scoreColor.withOpacity(0.3),
+                    width: isSelected ? 2 : 1,
+                  ),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Row(
+                  children: [
+                    Container(
+                      width: 36, height: 36,
+                      decoration: BoxDecoration(
+                        color: scoreColor.withOpacity(0.15),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      alignment: Alignment.center,
+                      child: Text('${date.day}', style: TextStyle(
+                        fontWeight: FontWeight.w900, fontSize: 16, color: scoreColor)),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text('${date.day}/${date.month}/${date.year}',
+                              style: TextStyle(fontWeight: FontWeight.w700, color: kText, fontSize: 13)),
+                          Text(result.verdict,
+                              style: TextStyle(fontSize: 11, color: scoreColor, fontWeight: FontWeight.w700)),
+                        ],
+                      ),
+                    ),
+                    Text('${result.score}/100',
+                        style: TextStyle(fontWeight: FontWeight.w900, color: scoreColor, fontSize: 16)),
+                    if (result.hasAbhijit) ...[
+                      const SizedBox(width: 4),
+                      Text('🌟', style: TextStyle(fontSize: 14)),
+                    ],
+                    if (result.hasGodhuli) ...[
+                      const SizedBox(width: 4),
+                      Text('🐄', style: TextStyle(fontSize: 14)),
+                    ],
+                  ],
+                ),
+              ),
+            );
+          }),
+        ],
+      ),
+    );
+  }
+
+  Widget _countChip(String label, int count, Color color) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.08),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: color.withOpacity(0.3)),
+      ),
+      child: Text('$label: $count',
+          style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: color)),
+    );
+  }
+
+  // ============================================================
   // MAIN BUILD
   // ============================================================
 
@@ -1187,6 +1345,10 @@ class _MuhurtaScreenState extends State<MuhurtaScreen> {
                                   doshas: existing.doshas,
                                   doshaBhangas: existing.doshaBhangas,
                                   lagnaWindows: windows,
+                                  hasAbhijit: existing.hasAbhijit,
+                                  hasGodhuli: existing.hasGodhuli,
+                                  abhijitTime: existing.abhijitTime,
+                                  godhuliTime: existing.godhuliTime,
                                 );
                               });
                             }
@@ -1279,6 +1441,11 @@ class _MuhurtaScreenState extends State<MuhurtaScreen> {
                     ],
                   ),
                 ),
+
+                const SizedBox(height: 16),
+
+                // ── Best Days Summary ──
+                _buildBestDaysSummary(),
 
                 const SizedBox(height: 16),
 
