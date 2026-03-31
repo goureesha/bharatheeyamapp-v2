@@ -69,7 +69,17 @@ class _PanchangaScreenState extends State<PanchangaScreen> {
     setState(() => _loading = true);
 
     try {
-      const hour24 = 6.0; // Fixed sunrise time for festival calculation
+      // Compute actual sunrise for the selected date, then add 5 minutes
+      await Ephemeris.initSweph();
+      final srSs = Ephemeris.findSunriseSetForDate(
+        _selectedDate.year, _selectedDate.month, _selectedDate.day,
+        _lat, _lon, tzOffset: LocationService.tzOffset,
+      );
+      // Convert sunrise JD to local hour (decimal)
+      final srJd = srSs[0];
+      final srLocalFrac = ((srJd + 0.5 + (LocationService.tzOffset / 24.0)) % 1.0 + 1.0) % 1.0;
+      final hour24 = (srLocalFrac * 24.0) + (5.0 / 60.0); // sunrise + 5 minutes
+
       final result = await AstroCalculator.calculate(
         year: _selectedDate.year, month: _selectedDate.month, day: _selectedDate.day,
         hourUtcOffset: LocationService.tzOffset,

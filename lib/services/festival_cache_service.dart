@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../core/calculator.dart';
+import '../core/ephemeris.dart';
 import '../core/events.dart';
 import 'location_service.dart';
 
@@ -24,7 +25,7 @@ class FestivalCacheService {
 
   static const String _cachePrefix = 'fc_'; // Short prefix to save space
   static const String _cacheVersionKey = 'fc_ver';
-  static const int _cacheVersion = 2; // Bump when event rules change
+  static const int _cacheVersion = 3; // Bumped: now uses sunrise+5min instead of 6AM
 
   static bool get isLoaded => _isLoaded;
   static bool get isLoading => _isLoading;
@@ -92,10 +93,16 @@ class FestivalCacheService {
       await Future.delayed(Duration.zero);
 
       try {
+        // Compute sunrise + 5 minutes for correct Vedic day
+        await Ephemeris.initSweph();
+        final srSs = Ephemeris.findSunriseSetForDate(year, month, day, _lat, _lon, tzOffset: _tzOffset);
+        final srFrac = ((srSs[0] + 0.5 + (_tzOffset / 24.0)) % 1.0 + 1.0) % 1.0;
+        final h24 = (srFrac * 24.0) + (5.0 / 60.0);
+
         final res = await AstroCalculator.calculate(
           year: year, month: month, day: day,
           hourUtcOffset: _tzOffset,
-          hour24: 6.0,
+          hour24: h24,
           lat: _lat, lon: _lon,
           ayanamsaMode: 'lahiri',
           trueNode: true,
@@ -131,10 +138,16 @@ class FestivalCacheService {
         if (_cache.containsKey(dateKey)) continue;
 
         try {
+          // Compute sunrise + 5 minutes for correct Vedic day
+          await Ephemeris.initSweph();
+          final srSs2 = Ephemeris.findSunriseSetForDate(year, month, day, _lat, _lon, tzOffset: _tzOffset);
+          final srFrac2 = ((srSs2[0] + 0.5 + (_tzOffset / 24.0)) % 1.0 + 1.0) % 1.0;
+          final h24v = (srFrac2 * 24.0) + (5.0 / 60.0);
+
           final res = await AstroCalculator.calculate(
             year: year, month: month, day: day,
             hourUtcOffset: _tzOffset,
-            hour24: 6.0,
+            hour24: h24v,
             lat: _lat, lon: _lon,
             ayanamsaMode: 'lahiri',
             trueNode: true,
