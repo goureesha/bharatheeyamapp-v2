@@ -589,46 +589,46 @@ class _DashboardScreenState extends State<DashboardScreen>
       buf.write('\uFEFF');
 
       // Personal Info
-      buf.writeln('ಜಾತಕ ವಿವರ,,');
-      buf.writeln('ಹೆಸರು,$name,');
-      buf.writeln('ಸ್ಥಳ,${widget.place},');
-      buf.writeln('ದಿನಾಂಕ,$dateStr,');
-      buf.writeln('ಸಮಯ,$timeStr,');
-      buf.writeln('ಅಕ್ಷಾಂಶ,${widget.lat},');
-      buf.writeln('ರೇಖಾಂಶ,${widget.lon},');
+      buf.writeln('${tr('ಜಾತಕ ವಿವರ')},,');
+      buf.writeln('${tr('ಹೆಸರು')},$name,');
+      buf.writeln('${tr('ಸ್ಥಳ')},${widget.place},');
+      buf.writeln('${tr('ದಿನಾಂಕ')},$dateStr,');
+      buf.writeln('${tr('ಸಮಯ')},$timeStr,');
+      buf.writeln('${tr('ಅಕ್ಷಾಂಶ')},${widget.lat},');
+      buf.writeln('${tr('ರೇಖಾಂಶ')},${widget.lon},');
       buf.writeln(',');
 
       // Panchanga
-      buf.writeln('ಪಂಚಾಂಗ,,');
-      buf.writeln('ಸಂವತ್ಸರ,${pan.samvatsara},');
-      buf.writeln('ವಾರ,${pan.vara},');
-      buf.writeln('ತಿಥಿ,${pan.tithi},');
-      buf.writeln('ನಕ್ಷತ್ರ,${pan.nakshatra},');
-      buf.writeln('ಯೋಗ,${pan.yoga},');
-      buf.writeln('ಕರಣ,${pan.karana},');
-      buf.writeln('ಚಂದ್ರ ರಾಶಿ,${pan.chandraRashi},');
-      buf.writeln('ಚಂದ್ರ ಮಾಸ,${pan.chandraMasa},');
-      buf.writeln('ಸೌರ ಮಾಸ,${pan.souraMasa},');
-      buf.writeln('ಸೂರ್ಯೋದಯ,${pan.sunrise},');
-      buf.writeln('ಸೂರ್ಯಾಸ್ತ,${pan.sunset},');
-      buf.writeln('ದಶಾ ನಾಥ,${pan.dashaLord},');
-      buf.writeln('ದಶಾ ಉಳಿಕೆ,${pan.dashaBalance},');
+      buf.writeln('${tr('ಪಂಚಾಂಗ')},,');
+      buf.writeln('${tr('ಸಂವತ್ಸರ')},${tr(pan.samvatsara)},');
+      buf.writeln('${tr('ವಾರ')},${tr(pan.vara)},');
+      buf.writeln('${tr('ತಿಥಿ')},${tr(pan.tithi)},');
+      buf.writeln('${tr('ನಕ್ಷತ್ರ')},${tr(pan.nakshatra)},');
+      buf.writeln('${tr('ಯೋಗ')},${tr(pan.yoga)},');
+      buf.writeln('${tr('ಕರಣ')},${tr(pan.karana)},');
+      buf.writeln('${tr('ಚಂದ್ರ ರಾಶಿ')},${tr(pan.chandraRashi)},');
+      buf.writeln('${tr('ಚಂದ್ರ ಮಾಸ')},${tr(pan.chandraMasa)},');
+      buf.writeln('${tr('ಸೌರ ಮಾಸ')},${tr(pan.souraMasa)},');
+      buf.writeln('${tr('ಸೂರ್ಯೋದಯ')},${pan.sunrise},');
+      buf.writeln('${tr('ಸೂರ್ಯಾಸ್ತ')},${pan.sunset},');
+      buf.writeln('${tr('ದಶಾ ನಾಥ')},${tr(pan.dashaLord)},');
+      buf.writeln('${tr('ದಶಾ ಉಳಿಕೆ')},${pan.dashaBalance},');
       buf.writeln(',');
 
       // Graha Sphuta
-      buf.writeln('ಗ್ರಹ ಸ್ಫುಟ,,,');
-      buf.writeln('ಗ್ರಹ,ರಾಶಿ,ಸ್ಫುಟ,ನಕ್ಷತ್ರ - ಪಾದ');
+      buf.writeln('${tr('ಗ್ರಹ ಸ್ಫುಟ')},,,');
+      buf.writeln('${tr('ಗ್ರಹ')},${tr('ರಾಶಿ')},${tr('ಸ್ಫುಟ')},${tr('ನಕ್ಷತ್ರ')} - ${tr('ಪಾದ')}');
       for (final p in planetOrder) {
         final info = r.planets[p];
         if (info == null) continue;
         final ri = (info.longitude / 30).floor() % 12;
-        buf.writeln('${appPlanetNames[p] ?? p},${appRashi[ri]},${formatDeg(info.longitude)},${info.nakshatra} - ${info.pada}');
+        buf.writeln('${appPlanetNames[p] ?? tr(p)},${appRashi[ri]},${formatDeg(info.longitude)},${tr(info.nakshatra)} - ${info.pada}');
       }
       buf.writeln(',');
 
       // Upagraha Sphuta
-      buf.writeln('ಉಪಗ್ರಹ ಸ್ಫುಟ,,,');
-      buf.writeln('ಉಪಗ್ರಹ,ರಾಶಿ,ಅಂಶ,ನಕ್ಷತ್ರ');
+      buf.writeln('${tr('ಉಪಗ್ರಹ ಸ್ಫುಟ')},,,');
+      buf.writeln('${tr('ಉಪಗ್ರಹ')},${tr('ರಾಶಿ')},${tr('ಅಂಶ')},${tr('ನಕ್ಷತ್ರ')}');
       for (final sp in sphutas16Order) {
         final deg = r.advSphutas[sp];
         if (deg == null) continue;
@@ -642,7 +642,7 @@ class _DashboardScreenState extends State<DashboardScreen>
       if (kIsWeb) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('ವೆಬ್‌ನಲ್ಲಿ ಹಂಚಿಕೊಳ್ಳಲು ಸಾಧ್ಯವಿಲ್ಲ.')));
+            SnackBar(content: Text(tr('ವೆಬ್‌ನಲ್ಲಿ ಹಂಚಿಕೊಳ್ಳಲು ಸಾಧ್ಯವಿಲ್ಲ.'))));
         }
         return;
       }
@@ -953,10 +953,10 @@ class _DashboardScreenState extends State<DashboardScreen>
                       if (info == null) return const SizedBox.shrink();
                       final ri = (info.longitude / 30).floor() % 12;
                       return _tableRow([
-                        appPlanetNames[p] ?? p,
+                        appPlanetNames[p] ?? tr(p),
                         appRashi[ri],
                         formatDeg(info.longitude),
-                        '${info.nakshatra} - ${info.pada}'
+                        '${tr(info.nakshatra)} - ${info.pada}'
                       ], bold0: true);
                     }),
                   ],
@@ -1127,7 +1127,7 @@ class _DashboardScreenState extends State<DashboardScreen>
                 ),
               AppCard(
                 child: Text(
-                  '${tr('ಶಿಷ್ಟ ದಶೆ')}: ${tr(pan.dashaLord)}  ${tr('ಉಳಿಕೆ')}: ${pan.dashaBalance}',
+                  '${tr('ಶಿಷ್ಟ ದಶೆ')}: ${tr(pan.dashaLord)}  ${tr('ಉಳಿಕೆ')}: ${AppLocale.isHindi ? pan.dashaBalance.replaceAll('ವ', 'व').replaceAll('ತಿ', 'मा') : pan.dashaBalance}',
                   style: TextStyle(color: kOrange, fontWeight: FontWeight.w900, fontSize: 14),
                 ),
               ),
@@ -1259,7 +1259,7 @@ class _DashboardScreenState extends State<DashboardScreen>
                       borderRadius: BorderRadius.circular(8),
                       border: Border.all(color: isSelected ? kTeal : kBorder),
                     ),
-                    child: Text(appPlanetNames[p] ?? p, style: TextStyle(
+                    child: Text(appPlanetNames[p] ?? tr(p), style: TextStyle(
                       fontSize: 13,
                       fontWeight: isSelected ? FontWeight.w900 : FontWeight.w600,
                       color: isSelected ? Colors.white : kText,
