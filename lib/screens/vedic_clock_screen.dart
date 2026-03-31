@@ -240,7 +240,7 @@ class _GhatiClockPainter extends CustomPainter {
       canvas.drawPath(p, Paint()..color = _rashiColors[i].withOpacity(0.5)..style = PaintingStyle.stroke..strokeWidth = 0.8);
 
       final la = _d2r(i * 30.0 + 15 + rashiOffset - 90);
-      _txt(canvas, knRashi[i], cx + midRashi * cos(la), cy + midRashi * sin(la),
+      _txt(canvas, tr(knRashi[i]), cx + midRashi * cos(la), cy + midRashi * sin(la),
         Colors.white.withOpacity(0.9), outerR * 0.055, true);
     }
 
