@@ -405,15 +405,15 @@ class _PanchangaScreenState extends State<PanchangaScreen> {
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  Text(e.name, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: kPurple2)),
+                                  Text(tr(e.name), style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: kPurple2)),
                                   const SizedBox(height: 4),
-                                  Text(e.description, style: TextStyle(color: kText, fontSize: 14)),
+                                  Text(tr(e.description), style: TextStyle(color: kText, fontSize: 14)),
                                   const SizedBox(height: 8),
                                   Row(
                                     mainAxisAlignment: MainAxisAlignment.end,
                                     children: [
                                       Text(tr('- ಆಕರ: '), style: TextStyle(fontSize: 12, color: Colors.grey[600])),
-                                      Flexible(child: Text(e.source, style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: kPurple2))),
+                                      Flexible(child: Text(tr(e.source), style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: kPurple2))),
                                     ],
                                   ),
                                 ],
