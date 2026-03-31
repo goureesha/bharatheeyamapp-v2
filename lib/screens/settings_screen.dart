@@ -164,47 +164,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     Divider(color: kBorder),
                     const SizedBox(height: 24),
 
-                    // Language selection
-                    SectionTitle(AppLocale.l('language')),
-                    const SizedBox(height: 10),
-                    ValueListenableBuilder<String>(
-                      valueListenable: AppLocale.langNotifier,
-                      builder: (context, currentLang, _) {
-                        return Column(
-                          children: [
-                            RadioListTile<String>(
-                              value: 'kn',
-                              groupValue: currentLang,
-                              title: Text('ಕನ್ನಡ (Kannada)', style: TextStyle(fontWeight: FontWeight.w800, color: kText)),
-                              activeColor: kPurple2,
-                              onChanged: (val) {
-                                if (val != null) {
-                                  AppLocale.setLang(val);
-                                  setState(() {});
-                                }
-                              },
-                            ),
-                            RadioListTile<String>(
-                              value: 'hi',
-                              groupValue: currentLang,
-                              title: Text('हिन्दी (Hindi)', style: TextStyle(fontWeight: FontWeight.w800, color: kText)),
-                              activeColor: kPurple2,
-                              onChanged: (val) {
-                                if (val != null) {
-                                  AppLocale.setLang(val);
-                                  setState(() {});
-                                }
-                              },
-                            ),
-                          ],
-                        );
-                      },
-                    ),
-
-                    const SizedBox(height: 24),
-                    Divider(color: kBorder),
-                    const SizedBox(height: 24),
-
                     // Default Location
                     SectionTitle('ಡೀಫಾಲ್ಟ್ ಸ್ಥಳ / Default Location'),
                     const SizedBox(height: 6),
