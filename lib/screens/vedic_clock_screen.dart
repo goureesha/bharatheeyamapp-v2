@@ -117,7 +117,7 @@ class _VedicClockScreenState extends State<VedicClockScreen> {
       backgroundColor: kBg,
       appBar: AppBar(
         backgroundColor: kCard,
-        title: Text('ವೈದಿಕ ಘಡಿಯಾರ',
+        title: Text(tr('ವೈದಿಕ ಘಡಿಯಾರ'),
           style: TextStyle(color: kText, fontSize: 16, fontWeight: FontWeight.w800)),
         iconTheme: IconThemeData(color: kText), elevation: 0,
       ),
@@ -262,7 +262,7 @@ class _GhatiClockPainter extends CustomPainter {
 
       if (isMajor) {
         final numR = R * 0.72;
-        final label = i == 0 ? 'ಉದಯ' : '$i';
+        final label = i == 0 ? tr('ಉದಯ') : '$i';
         final fontSize = i == 0 ? R * 0.052 : R * 0.046;
         final color = i == 0 ? Colors.amber : Colors.white.withOpacity(0.7);
         _txt(canvas, label, cx + numR * cos(a), cy + numR * sin(a), color, fontSize, i == 0 || i % 15 == 0);
@@ -286,17 +286,17 @@ class _GhatiClockPainter extends CustomPainter {
     _txt(canvas, fullDigital, cx, digitalY, Colors.white.withOpacity(0.95), digitFs, true);
 
     // Labels below digits
-    _txt(canvas, 'ಘಟಿ    ವಿಘಟಿ   ಅನುವಿಘಟಿ', cx, digitalY + digitFs * 0.9, Colors.white.withOpacity(0.4), labelFs, false);
+    _txt(canvas, tr('ಘಟಿ    ವಿಘಟಿ   ಅನುವಿಘಟಿ'), cx, digitalY + digitFs * 0.9, Colors.white.withOpacity(0.4), labelFs, false);
 
     // === SUNRISE/SUNSET INFO (below center) ===
     final infoY = cy + R * 0.28;
     final infoFs = R * 0.042;
 
     // Sunrise
-    _txt(canvas, '☀ ಉದಯ $sunriseStr', cx - R * 0.18, infoY,
+    _txt(canvas, tr('☀ ಉದಯ ') + sunriseStr, cx - R * 0.18, infoY,
       const Color(0xFFFFAB40), infoFs, true);
     // Sunset
-    _txt(canvas, '🌙 ಅಸ್ತ $sunsetStr', cx + R * 0.18, infoY,
+    _txt(canvas, tr('🌙 ಅಸ್ತ ') + sunsetStr, cx + R * 0.18, infoY,
       const Color(0xFF7986CB), infoFs, true);
 
     // === GHATI HAND (short, thick, red) ===
@@ -317,9 +317,9 @@ class _GhatiClockPainter extends CustomPainter {
 
     // === LEGEND ===
     final legendY = cy + R * 0.42;
-    _txt(canvas, '● ಘಟಿ', cx - R * 0.22, legendY, const Color(0xFFE53E3E), R * 0.038, true);
-    _txt(canvas, '● ವಿಘಟಿ', cx, legendY, const Color(0xFF2B6CB0), R * 0.038, true);
-    _txt(canvas, '● ಅನುವಿಘಟಿ', cx + R * 0.25, legendY, const Color(0xFF38A169), R * 0.038, true);
+    _txt(canvas, '● ' + tr('ಘಟಿ'), cx - R * 0.22, legendY, const Color(0xFFE53E3E), R * 0.038, true);
+    _txt(canvas, '● ' + tr('ವಿಘಟಿ'), cx, legendY, const Color(0xFF2B6CB0), R * 0.038, true);
+    _txt(canvas, '● ' + tr('ಅನುವಿಘಟಿ'), cx + R * 0.25, legendY, const Color(0xFF38A169), R * 0.038, true);
   }
 
   void _drawHand(Canvas canvas, double cx, double cy, double angle, double length, double width, Color color, double tailLen) {

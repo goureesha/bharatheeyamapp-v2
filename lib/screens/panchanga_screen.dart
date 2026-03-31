@@ -277,7 +277,7 @@ class _PanchangaScreenState extends State<PanchangaScreen> {
       backgroundColor: kBg,
       appBar: AppBar(
         backgroundColor: kCard,
-        title: Text('ಪಂಚಾಂಗ / Panchanga',
+        title: Text(tr('ಪಂಚಾಂಗ') + ' / Panchang',
             style: TextStyle(color: kText, fontSize: 16, fontWeight: FontWeight.w800)),
         iconTheme: IconThemeData(color: kText),
         elevation: 0,
@@ -294,7 +294,7 @@ class _PanchangaScreenState extends State<PanchangaScreen> {
                       Row(children: [
                         Icon(Icons.calendar_month, color: kPurple2, size: 20),
                         const SizedBox(width: 8),
-                        Text('ದಿನಾಂಕ ಆಯ್ಕೆಮಾಡಿ', style: TextStyle(
+                        Text(tr('ದಿನಾಂಕ ಆಯ್ಕೆಮಾಡಿ'), style: TextStyle(
                           fontWeight: FontWeight.w800, fontSize: 15, color: kPurple2)),
                         const Spacer(),
                         TextButton.icon(
@@ -305,7 +305,7 @@ class _PanchangaScreenState extends State<PanchangaScreen> {
                             _calcPanchang();
                           },
                           icon: Icon(Icons.today, size: 16),
-                          label: Text('ಇಂದು', style: TextStyle(fontSize: 12)),
+                          label: Text(tr('ಇಂದು'), style: TextStyle(fontSize: 12)),
                           style: TextButton.styleFrom(padding: EdgeInsets.symmetric(horizontal: 8)),
                         ),
                       ]),
@@ -374,8 +374,8 @@ class _PanchangaScreenState extends State<PanchangaScreen> {
 
                   // Date & Place info
                   AppCard(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                    _kv('ಸ್ಥಳ', _place),
-                    _kv('ದಿನಾಂಕ', dateStr),
+                    _kv(tr('ಸ್ಥಳ'), _place),
+                    _kv(tr('ದಿನಾಂಕ'), dateStr),
                   ])),
 
                   // Events Card - ALWAYS show events for the selected day
@@ -388,7 +388,7 @@ class _PanchangaScreenState extends State<PanchangaScreen> {
                             children: [
                               Icon(Icons.festival, color: Colors.green, size: 22),
                               const SizedBox(width: 8),
-                              Expanded(child: Text('ಹಬ್ಬಗಳು ಮತ್ತು ವಿಶೇಷ ದಿನಗಳು', 
+                              Expanded(child: Text(tr('ಹಬ್ಬಗಳು ಮತ್ತು ವಿಶೇಷ ದಿನಗಳು'), 
                                 style: TextStyle(color: Colors.green, fontWeight: FontWeight.bold, fontSize: 16))),
                             ],
                           ),
@@ -412,7 +412,7 @@ class _PanchangaScreenState extends State<PanchangaScreen> {
                                   Row(
                                     mainAxisAlignment: MainAxisAlignment.end,
                                     children: [
-                                      Text('- ಆಕರ: ', style: TextStyle(fontSize: 12, color: Colors.grey[600])),
+                                      Text(tr('- ಆಕರ: '), style: TextStyle(fontSize: 12, color: Colors.grey[600])),
                                       Flexible(child: Text(e.source, style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: kPurple2))),
                                     ],
                                   ),
@@ -435,27 +435,27 @@ class _PanchangaScreenState extends State<PanchangaScreen> {
                     AppCard(
                       padding: EdgeInsets.zero,
                       child: Column(children: [
-                        _tableRow(['ಸಂವತ್ಸರ', _panchang!.samvatsara]),
-                        _tableRow(['ಋತು', _panchang!.rutu]),
-                        _tableRow(['ವಾರ', _panchang!.vara]),
-                        _tableRow(['ತಿಥಿ', _formatEnd(_panchang!.tithi, _panchang!.tithiEndTime, _panchang!.tithiEndsNextDay)]),
-                        _tableRow(['ಚಂದ್ರ ನಕ್ಷತ್ರ', _formatEnd(_panchang!.nakshatra, _panchang!.nakEndTime, _panchang!.nakEndsNextDay)]),
-                        _tableRow(['ಯೋಗ', _formatEnd(_panchang!.yoga, _panchang!.yogaEndTime, _panchang!.yogaEndsNextDay)]),
-                        _tableRow(['ಕರಣ', _formatEnd(_panchang!.karana, _panchang!.karanaEndTime, _panchang!.karanaEndsNextDay)]),
-                        _tableRow(['ಚಂದ್ರ ರಾಶಿ', _panchang!.chandraRashi]),
-                        _tableRow(['ಚಂದ್ರ ಮಾಸ', _panchang!.chandraMasa]),
-                        _tableRow(['ಸೂರ್ಯ ನಕ್ಷತ್ರ', '${_panchang!.suryaNakshatra} - ಪಾದ ${_panchang!.suryaPada}']),
-                        _tableRow(['ಸೌರ ಮಾಸ', _panchang!.souraMasa]),
-                        _tableRow(['ಸೌರ ಮಾಸ ಗತ ದಿನ', _panchang!.souraMasaGataDina]),
-                        _tableRow(['ಸೂರ್ಯೋದಯ', _panchang!.sunrise]),
-                        _tableRow(['ಸೂರ್ಯಾಸ್ತ', _panchang!.sunset]),
-                        _tableRow(['ಚಂದ್ರೋದಯ', _moonrise]),
-                        _tableRow(['ಚಂದ್ರಾಸ್ತ', _moonset]),
-                        _tableRow(['ಹಗಲಿನ ಪ್ರಮಾಣ', _panchang!.divamana]),
-                        _tableRow(['ರಾತ್ರಿಯ ಪ್ರಮಾಣ', _panchang!.ratrimana]),
-                        _tableRow(['ಪರಮ ಘಟಿ', _panchang!.paramaGhati]),
-                        _tableRow(['ವಿಷ ಪ್ರಘಟಿ', _panchang!.vishaPraghati]),
-                        _tableRow(['ಅಮೃತ ಪ್ರಘಟಿ', _panchang!.amrutaPraghati]),
+                        _tableRow([tr('ಸಂವತ್ಸರ'), _panchang!.samvatsara]),
+                        _tableRow([tr('ಋತು'), _panchang!.rutu]),
+                        _tableRow([tr('ವಾರ'), _panchang!.vara]),
+                        _tableRow([tr('ತಿಥಿ'), _formatEnd(_panchang!.tithi, _panchang!.tithiEndTime, _panchang!.tithiEndsNextDay)]),
+                        _tableRow([tr('ಚಂದ್ರ ನಕ್ಷತ್ರ'), _formatEnd(_panchang!.nakshatra, _panchang!.nakEndTime, _panchang!.nakEndsNextDay)]),
+                        _tableRow([tr('ಯೋಗ'), _formatEnd(_panchang!.yoga, _panchang!.yogaEndTime, _panchang!.yogaEndsNextDay)]),
+                        _tableRow([tr('ಕರಣ'), _formatEnd(_panchang!.karana, _panchang!.karanaEndTime, _panchang!.karanaEndsNextDay)]),
+                        _tableRow([tr('ಚಂದ್ರ ರಾಶಿ'), _panchang!.chandraRashi]),
+                        _tableRow([tr('ಚಂದ್ರ ಮಾಸ'), _panchang!.chandraMasa]),
+                        _tableRow([tr('ಸೂರ್ಯ ನಕ್ಷತ್ರ'), '${_panchang!.suryaNakshatra} - ಪಾದ ${_panchang!.suryaPada}']),
+                        _tableRow([tr('ಸೌರ ಮಾಸ'), _panchang!.souraMasa]),
+                        _tableRow([tr('ಸೌರ ಮಾಸ ಗತ ದಿನ'), _panchang!.souraMasaGataDina]),
+                        _tableRow([tr('ಸೂರ್ಯೋದಯ'), _panchang!.sunrise]),
+                        _tableRow([tr('ಸೂರ್ಯಾಸ್ತ'), _panchang!.sunset]),
+                        _tableRow([tr('ಚಂದ್ರೋದಯ'), _moonrise]),
+                        _tableRow([tr('ಚಂದ್ರಾಸ್ತ'), _moonset]),
+                        _tableRow([tr('ಹಗಲಿನ ಪ್ರಮಾಣ'), _panchang!.divamana]),
+                        _tableRow([tr('ರಾತ್ರಿಯ ಪ್ರಮಾಣ'), _panchang!.ratrimana]),
+                        _tableRow([tr('ಪರಮ ಘಟಿ'), _panchang!.paramaGhati]),
+                        _tableRow([tr('ವಿಷ ಪ್ರಘಟಿ'), _panchang!.vishaPraghati]),
+                        _tableRow([tr('ಅಮೃತ ಪ್ರಘಟಿ'), _panchang!.amrutaPraghati]),
                       ]),
                     ),
 
@@ -479,21 +479,21 @@ class _PanchangaScreenState extends State<PanchangaScreen> {
   // ─── Day Muhurtas (15 divisions of daytime) ───
   // Traditional names and nature: S=Shubha, A=Ashubha, M=Madhyama
   static const _muhurtaNames = [
-    {'name': 'ರುದ್ರ', 'nameEn': 'Rudra', 'nature': 'A'},
-    {'name': 'ಅಹಿ', 'nameEn': 'Ahi', 'nature': 'A'},
-    {'name': 'ಮಿತ್ರ', 'nameEn': 'Mitra', 'nature': 'S'},
-    {'name': 'ಪಿತ್ರು', 'nameEn': 'Pitru', 'nature': 'A'},
-    {'name': 'ವಸು', 'nameEn': 'Vasu', 'nature': 'S'},
-    {'name': 'ವಾರಾಹ', 'nameEn': 'Varaha', 'nature': 'S'},
-    {'name': 'ವಿಶ್ವೇದೇವ', 'nameEn': 'Vishwedeva', 'nature': 'S'},
-    {'name': 'ವಿಧಿ', 'nameEn': 'Vidhi', 'nature': 'M'},
-    {'name': 'ಸತ್ಮುಖಿ', 'nameEn': 'Satmukhi', 'nature': 'S'},
-    {'name': 'ಪುರುಹೂತ', 'nameEn': 'Puruhuta', 'nature': 'A'},
-    {'name': 'ವಾಹಿನಿ', 'nameEn': 'Vahini', 'nature': 'A'},
-    {'name': 'ನಕ್ತನಕರ', 'nameEn': 'Naktanakara', 'nature': 'M'},
-    {'name': 'ವರುಣ', 'nameEn': 'Varuna', 'nature': 'S'},
-    {'name': 'ಅರ್ಯಮ', 'nameEn': 'Aryama', 'nature': 'S'},
-    {'name': 'ಭಗ', 'nameEn': 'Bhaga', 'nature': 'A'},
+    {'name': tr('ರುದ್ರ'), 'nameEn': 'Rudra', 'nature': 'A'},
+    {'name': tr('ಅಹಿ'), 'nameEn': 'Ahi', 'nature': 'A'},
+    {'name': tr('ಮಿತ್ರ'), 'nameEn': 'Mitra', 'nature': 'S'},
+    {'name': tr('ಪಿತ್ರು'), 'nameEn': 'Pitru', 'nature': 'A'},
+    {'name': tr('ವಸು'), 'nameEn': 'Vasu', 'nature': 'S'},
+    {'name': tr('ವಾರಾಹ'), 'nameEn': 'Varaha', 'nature': 'S'},
+    {'name': tr('ವಿಶ್ವೇದೇವ'), 'nameEn': 'Vishwedeva', 'nature': 'S'},
+    {'name': tr('ವಿಧಿ'), 'nameEn': 'Vidhi', 'nature': 'M'},
+    {'name': tr('ಸತ್ಮುಖಿ'), 'nameEn': 'Satmukhi', 'nature': 'S'},
+    {'name': tr('ಪುರುಹೂತ'), 'nameEn': 'Puruhuta', 'nature': 'A'},
+    {'name': tr('ವಾಹಿನಿ'), 'nameEn': 'Vahini', 'nature': 'A'},
+    {'name': tr('ನಕ್ತನಕರ'), 'nameEn': 'Naktanakara', 'nature': 'M'},
+    {'name': tr('ವರುಣ'), 'nameEn': 'Varuna', 'nature': 'S'},
+    {'name': tr('ಅರ್ಯಮ'), 'nameEn': 'Aryama', 'nature': 'S'},
+    {'name': tr('ಭಗ'), 'nameEn': 'Bhaga', 'nature': 'A'},
   ];
 
   Widget _buildMuhurtaCard() {
@@ -507,11 +507,11 @@ class _PanchangaScreenState extends State<PanchangaScreen> {
         Row(children: [
           Icon(Icons.schedule, color: const Color(0xFF5B2C6F), size: 22),
           const SizedBox(width: 8),
-          Text('ಹಗಲಿನ ಮುಹೂರ್ತ / Day Muhurtas', style: TextStyle(
+          Text(tr('ಹಗಲಿನ ಮುಹೂರ್ತ') + ' / Day Muhurtas', style: TextStyle(
             fontWeight: FontWeight.w900, fontSize: 14, color: const Color(0xFF5B2C6F))),
         ]),
         const SizedBox(height: 6),
-        Text('ದಿನವನ್ನು 15 ಸಮಭಾಗಗಳಾಗಿ ವಿಂಗಡಿಸಿದೆ', style: TextStyle(color: kMuted, fontSize: 11)),
+        Text(tr('ದಿನವನ್ನು 15 ಸಮಭಾಗಗಳಾಗಿ ವಿಂಗಡಿಸಿದೆ'), style: TextStyle(color: kMuted, fontSize: 11)),
         const SizedBox(height: 10),
         ...List.generate(15, (i) {
           final item = _muhurtaNames[i];
@@ -519,7 +519,7 @@ class _PanchangaScreenState extends State<PanchangaScreen> {
           final end = start + duration;
           final nature = item['nature']!;
           final color = nature == 'S' ? Colors.green : nature == 'A' ? Colors.red : kOrange;
-          final label = nature == 'S' ? 'ಶುಭ' : nature == 'A' ? 'ಅಶುಭ' : 'ಮಧ್ಯಮ';
+          final label = nature == 'S' ? tr('ಶುಭ') : nature == 'A' ? tr('ಅಶುಭ') : tr('ಮಧ್ಯಮ');
 
           // Check if current time falls in this muhurta
           final now = DateTime.now();
@@ -585,10 +585,10 @@ class _PanchangaScreenState extends State<PanchangaScreen> {
     final abhijitStart = midday - muhurtaDur / 2.0;
     final abhijitEnd = midday + muhurtaDur / 2.0;
     timings.add({
-      'name': 'ಅಭಿಜಿತ್ ಮುಹೂರ್ತ', 'nameEn': 'Abhijit Muhurta',
+      'name': tr('ಅಭಿಜಿತ್ ಮುಹೂರ್ತ'), 'nameEn': 'Abhijit Muhurta',
       'start': _minutesToTimeStr(abhijitStart), 'end': _minutesToTimeStr(abhijitEnd),
       'icon': Icons.star, 'color': Colors.green,
-      'desc': 'ಅತ್ಯಂತ ಶುಭ — Most auspicious (midday ± ½ muhurta)',
+      'desc': tr('ಅತ್ಯಂತ ಶುಭ — ') + 'Most auspicious (midday ± ½ muhurta)',
     });
 
     // ═══ Durmuhurta — fixed offsets from sunrise per weekday ═══
@@ -615,11 +615,11 @@ class _PanchangaScreenState extends State<PanchangaScreen> {
       final dStart = sr + offset;
       final dEnd = dStart + dur;
       timings.add({
-        'name': weekdayDurs.length > 1 ? 'ದುರ್ಮುಹೂರ್ತ ${i + 1}' : 'ದುರ್ಮುಹೂರ್ತ',
+        'name': weekdayDurs.length > 1 ? '${tr('ದುರ್ಮುಹೂರ್ತ')} ${i + 1}' : tr('ದುರ್ಮುಹೂರ್ತ'),
         'nameEn': weekdayDurs.length > 1 ? 'Durmuhurta ${i + 1}' : 'Durmuhurta',
         'start': _minutesToTimeStr(dStart % (24 * 60)), 'end': _minutesToTimeStr(dEnd % (24 * 60)),
         'icon': Icons.dangerous, 'color': Colors.red,
-        'desc': 'ಅಶುಭ ಸಮಯ — Inauspicious (${dur.toInt()} min)',
+        'desc': tr('ಅಶುಭ ಸಮಯ — ') + 'Inauspicious (${dur.toInt()} min)',
       });
     }
 
@@ -636,11 +636,11 @@ class _PanchangaScreenState extends State<PanchangaScreen> {
     final varjyaStartMins = sr + (varjyaStartGhati * 24.0);
     final varjyaEndMins = varjyaStartMins + (4 * 24.0); // 4 ghatis = 96 min
     timings.add({
-      'name': 'ವರ್ಜ್ಯ', 'nameEn': 'Varjyam (Tyajya)',
+      'name': tr('ವರ್ಜ್ಯ'), 'nameEn': 'Varjyam (Tyajya)',
       'start': _minutesToTimeStr(varjyaStartMins % (24 * 60)),
       'end': _minutesToTimeStr(varjyaEndMins % (24 * 60)),
       'icon': Icons.block, 'color': Colors.orange,
-      'desc': 'ವರ್ಜ್ಯ ಕಾಲ — Avoid (nakshatra ghati: $varjyaStartGhati-${varjyaStartGhati + 4})',
+      'desc': tr('ವರ್ಜ್ಯ ಕಾಲ — ') + 'Avoid (nakshatra ghati: $varjyaStartGhati-${varjyaStartGhati + 4})',
     });
 
     return AppCard(
@@ -648,11 +648,11 @@ class _PanchangaScreenState extends State<PanchangaScreen> {
         Row(children: [
           Icon(Icons.access_alarm, color: kOrange, size: 22),
           const SizedBox(width: 8),
-          Text('ಮುಹೂರ್ತ ಸಮಯ / Muhurta Timings', style: TextStyle(
+          Text(tr('ಮುಹೂರ್ತ ಸಮಯ') + ' / Muhurta Timings', style: TextStyle(
             fontWeight: FontWeight.w900, fontSize: 14, color: kOrange)),
         ]),
         const SizedBox(height: 6),
-        Text('ಅಭಿಜಿತ್, ದುರ್ಮುಹೂರ್ತ ಮತ್ತು ವರ್ಜ್ಯ ಕಾಲ', style: TextStyle(color: kMuted, fontSize: 11)),
+        Text(tr('ಅಭಿಜಿತ್, ದುರ್ಮುಹೂರ್ತ ಮತ್ತು ವರ್ಜ್ಯ ಕಾಲ'), style: TextStyle(color: kMuted, fontSize: 11)),
         const SizedBox(height: 10),
         ...timings.map((t) {
           final color = t['color'] as Color;
@@ -694,13 +694,13 @@ class _PanchangaScreenState extends State<PanchangaScreen> {
         Row(children: [
           Icon(Icons.warning_amber_rounded, color: Colors.red, size: 22),
           const SizedBox(width: 8),
-          Text('ಅಶುಭ ಕಾಲ / Inauspicious Periods', style: TextStyle(
+          Text(tr('ಅಶುಭ ಕಾಲ') + ' / Inauspicious Periods', style: TextStyle(
             fontWeight: FontWeight.w900, fontSize: 14, color: Colors.red)),
         ]),
         const SizedBox(height: 12),
-        _kalaRow('ರಾಹು ಕಾಲ', rahu['start']!, rahu['end']!, Colors.red),
-        _kalaRow('ಯಮಗಂಡ ಕಾಲ', yama['start']!, yama['end']!, Colors.orange),
-        _kalaRow('ಗುಳಿಕ ಕಾಲ', gulika['start']!, gulika['end']!, Colors.deepOrange),
+        _kalaRow(tr('ರಾಹು ಕಾಲ'), rahu['start']!, rahu['end']!, Colors.red),
+        _kalaRow(tr('ಯಮಗಂಡ ಕಾಲ'), yama['start']!, yama['end']!, Colors.orange),
+        _kalaRow(tr('ಗುಳಿಕ ಕಾಲ'), gulika['start']!, gulika['end']!, Colors.deepOrange),
       ]),
     );
   }
@@ -734,7 +734,7 @@ class _PanchangaScreenState extends State<PanchangaScreen> {
           Icon(isDay ? Icons.wb_sunny : Icons.nightlight_round,
             color: isDay ? kOrange : kPurple2, size: 22),
           const SizedBox(width: 8),
-          Text(isDay ? 'ಹಗಲಿನ ಚೌಘಡಿಯಾ / Day Chougadiya' : 'ರಾತ್ರಿ ಚೌಘಡಿಯಾ / Night Chougadiya',
+          Text(isDay ? tr('ಹಗಲಿನ ಚೌಘಡಿಯಾ') + ' / Day Chougadiya' : tr('ರಾತ್ರಿ ಚೌಘಡಿಯಾ') + ' / Night Chougadiya',
             style: TextStyle(fontWeight: FontWeight.w900, fontSize: 14, color: isDay ? kOrange : kPurple2)),
         ]),
         const SizedBox(height: 10),
@@ -777,7 +777,7 @@ class _PanchangaScreenState extends State<PanchangaScreen> {
           Icon(isDay ? Icons.access_time : Icons.access_time_filled,
             color: isDay ? kTeal : kPurple1, size: 22),
           const SizedBox(width: 8),
-          Text(isDay ? 'ಹಗಲಿನ ಹೋರಾ / Day Hora' : 'ರಾತ್ರಿ ಹೋರಾ / Night Hora',
+          Text(isDay ? tr('ಹಗಲಿನ ಹೋರಾ') + ' / Day Hora' : tr('ರಾತ್ರಿ ಹೋರಾ') + ' / Night Hora',
             style: TextStyle(fontWeight: FontWeight.w900, fontSize: 14, color: isDay ? kTeal : kPurple1)),
         ]),
         const SizedBox(height: 10),
@@ -811,7 +811,7 @@ class _PanchangaScreenState extends State<PanchangaScreen> {
 
   String _formatEnd(String base, String endTime, bool nextDay) {
     if (endTime.isEmpty) return base;
-    return '$base (ಅಂತ್ಯ: $endTime${nextDay ? ' ಮುಂದಿನ ದಿನ' : ''})';
+    return '$base (${tr('ಅಂತ್ಯ')}: $endTime${nextDay ? tr(' ಮುಂದಿನ ದಿನ') : ''})';
   }
 
   Widget _tableRow(List<String> cols) {
