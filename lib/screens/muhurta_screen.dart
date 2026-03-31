@@ -491,8 +491,31 @@ class _MuhurtaScreenState extends State<MuhurtaScreen> {
     return Colors.red;
   }
 
+  /// Rashi to Nakshatra mapping — same as matchmaking
+  static const Map<int, List<int>> _rashiNakMap = {
+    0: [0, 1, 2],       // ಮೇಷ: Ashwini, Bharani, Krittika
+    1: [2, 3, 4],       // ವೃಷಭ: Krittika, Rohini, Mrigashira
+    2: [4, 5, 6],       // ಮಿಥುನ: Mrigashira, Ardra, Punarvasu
+    3: [6, 7, 8],       // ಕರ್ಕ: Punarvasu, Pushya, Ashlesha
+    4: [9, 10, 11],     // ಸಿಂಹ: Magha, Purva Phalguni, Uttara Phalguni
+    5: [11, 12, 13],    // ಕನ್ಯಾ: Uttara Phalguni, Hasta, Chitra
+    6: [13, 14, 15],    // ತುಲಾ: Chitra, Swati, Vishakha
+    7: [15, 16, 17],    // ವೃಶ್ಚಿಕ: Vishakha, Anuradha, Jyeshtha
+    8: [18, 19, 20],    // ಧನು: Mula, Purva Ashadha, Uttara Ashadha
+    9: [20, 21, 22],    // ಮಕರ: Uttara Ashadha, Shravana, Dhanishta
+    10: [22, 23, 24],   // ಕುಂಭ: Dhanishta, Shatabhisha, Purva Bhadrapada
+    11: [24, 25, 26],   // ಮೀನ: Purva Bhadrapada, Uttara Bhadrapada, Revati
+  };
+
   Widget _buildPersonInput(String title, int? rashiIdx, int? nakIdx,
       ValueChanged<int?> onRashiChanged, ValueChanged<int?> onNakChanged) {
+    // Get allowed nakshatras based on selected rashi
+    final allowedNaks = rashiIdx != null
+        ? _rashiNakMap[rashiIdx]!
+        : List.generate(27, (i) => i);
+    // Clear nakIdx display if it's not in the allowed list
+    final displayNakIdx = (nakIdx != null && allowedNaks.contains(nakIdx)) ? nakIdx : null;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -536,12 +559,12 @@ class _MuhurtaScreenState extends State<MuhurtaScreen> {
                   child: DropdownButton<int>(
                     isExpanded: true,
                     hint: Text('ನಕ್ಷತ್ರ', style: TextStyle(color: kMuted, fontSize: 13)),
-                    value: nakIdx,
+                    value: displayNakIdx,
                     dropdownColor: kCard,
-                    items: List.generate(27, (i) => DropdownMenuItem(
+                    items: allowedNaks.map((i) => DropdownMenuItem(
                       value: i,
                       child: Text(knNak[i], style: TextStyle(fontSize: 13, color: kText)),
-                    )),
+                    )).toList(),
                     onChanged: onNakChanged,
                   ),
                 ),
@@ -1291,7 +1314,11 @@ class _MuhurtaScreenState extends State<MuhurtaScreen> {
                           ? (_selectedEvent == MuhurtaEvent.vivaha ? '👤 ವರ (Groom)' : '👤 ವ್ಯಕ್ತಿ 1')
                           : '👤 ನಿಮ್ಮ ವಿವರ',
                       _rashiIdx1, _nakIdx1,
-                      (v) => setState(() { _rashiIdx1 = v; _generated = false; }),
+                      (v) => setState(() {
+                        _rashiIdx1 = v;
+                        if (v != null && !_rashiNakMap[v]!.contains(_nakIdx1)) _nakIdx1 = null;
+                        _generated = false;
+                      }),
                       (v) => setState(() { _nakIdx1 = v; _generated = false; }),
                     ),
 
@@ -1301,7 +1328,11 @@ class _MuhurtaScreenState extends State<MuhurtaScreen> {
                       _buildPersonInput(
                         _selectedEvent == MuhurtaEvent.vivaha ? '👤 ವಧು (Bride)' : '👤 ವ್ಯಕ್ತಿ 2',
                         _rashiIdx2, _nakIdx2,
-                        (v) => setState(() { _rashiIdx2 = v; _generated = false; }),
+                        (v) => setState(() {
+                          _rashiIdx2 = v;
+                          if (v != null && !_rashiNakMap[v]!.contains(_nakIdx2)) _nakIdx2 = null;
+                          _generated = false;
+                        }),
                         (v) => setState(() { _nakIdx2 = v; _generated = false; }),
                       ),
                     ],
