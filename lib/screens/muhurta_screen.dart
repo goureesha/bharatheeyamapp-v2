@@ -56,6 +56,8 @@ class _MuhurtaScreenState extends State<MuhurtaScreen> {
   Map<DateTime, List<LagnaWindow>> _lagnaCache = {};
   // Store sunrise/sunset JDs per day for lagna scanning
   Map<DateTime, List<double>> _srssCache = {};
+  // Store planet rashi indices per day for shuddhi checks
+  Map<DateTime, Map<String, int>> _planetRashiCache = {};
 
   @override
   void initState() {
@@ -213,6 +215,7 @@ class _MuhurtaScreenState extends State<MuhurtaScreen> {
       _panchangCache.clear();
       _lagnaCache.clear();
       _srssCache.clear();
+      _planetRashiCache.clear();
       _selectedDay = null;
     });
 
@@ -286,6 +289,12 @@ class _MuhurtaScreenState extends State<MuhurtaScreen> {
           _results[dateKey] = dayResult;
           _panchangCache[dateKey] = p;
           _srssCache[dateKey] = srSs;
+          // Store planet rashi indices for shuddhi checks
+          final Map<String, int> planetRashis = {};
+          for (final entry in result.planets.entries) {
+            planetRashis[entry.key] = entry.value.rashiIndex;
+          }
+          _planetRashiCache[dateKey] = planetRashis;
         } catch (_) {}
       }
 
@@ -322,6 +331,10 @@ class _MuhurtaScreenState extends State<MuhurtaScreen> {
     final rules = muhurtaRules[_selectedEvent];
     final allowedLagnas = rules?.allowedLagnas;
 
+    // Get planet rashi positions for shuddhi checks
+    final planetRashis = _planetRashiCache[key] ?? {};
+    final guruRashiIdx = planetRashis['ಗುರು'] ?? -1;
+
     try {
       final double srJd = srSs[0];
       final double ssJd = srSs[1];
@@ -350,7 +363,7 @@ class _MuhurtaScreenState extends State<MuhurtaScreen> {
 
       if (samples.isEmpty) return [];
 
-      // Extract rashi transitions
+      // Extract rashi transitions with shuddhi checks
       final List<LagnaWindow> windows = [];
       int currentRashi = samples.first.rashiIdx;
       double startMins = samples.first.localMins;
@@ -361,12 +374,30 @@ class _MuhurtaScreenState extends State<MuhurtaScreen> {
               ? samples[i].localMins
               : samples[i].localMins;
 
+          // Compute shuddhi checks for this lagna rashi
+          final saptamaRashi = (currentRashi + 6) % 12;
+          final ashtamaRashi = (currentRashi + 7) % 12;
+
+          final lagnaM = findMaleficsInRashi(currentRashi, planetRashis);
+          final saptamaM = findMaleficsInRashi(saptamaRashi, planetRashis);
+          final ashtamaM = findMaleficsInRashi(ashtamaRashi, planetRashis);
+          final guruOk = guruRashiIdx >= 0 ? isGuruAnukoolaForLagna(currentRashi, guruRashiIdx) : false;
+          final guruHouse = guruRashiIdx >= 0 ? ((guruRashiIdx - currentRashi + 12) % 12) + 1 : 0;
+
           windows.add(LagnaWindow(
             rashiIndex: currentRashi,
             rashiName: knRashi[currentRashi],
             startTime: _minutesToTimeStr(startMins),
             endTime: _minutesToTimeStr(endMins),
             isAllowed: allowedLagnas == null || allowedLagnas.contains(currentRashi),
+            lagnaShuddhi: lagnaM.isEmpty,
+            saptamaShuddhi: saptamaM.isEmpty,
+            ashtamaShuddhi: ashtamaM.isEmpty,
+            guruAnukoola: guruOk,
+            lagnaGrahas: lagnaM,
+            saptamaGrahas: saptamaM,
+            ashtamaGrahas: ashtamaM,
+            guruFromLagna: guruHouse,
           ));
 
           currentRashi = samples[i].rashiIdx;
@@ -674,7 +705,7 @@ class _MuhurtaScreenState extends State<MuhurtaScreen> {
           }),
         ],
 
-        // ── Lagna Windows ──
+        // ── Lagna Windows with Shuddhi ──
         if (result.lagnaWindows.isNotEmpty) ...[
           const SizedBox(height: 12),
           Container(
@@ -692,39 +723,114 @@ class _MuhurtaScreenState extends State<MuhurtaScreen> {
                     color: const Color(0xFF2E86AB).withOpacity(0.08),
                     borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
                   ),
-                  child: Text('🏠 ಲಗ್ನ ಸಮಯ (Lagna Windows)', style: TextStyle(fontWeight: FontWeight.w800, color: const Color(0xFF2E86AB), fontSize: 14)),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('🏠 ಲಗ್ನ ಶುದ್ಧಿ (Lagna Shuddhi)', style: TextStyle(fontWeight: FontWeight.w800, color: const Color(0xFF2E86AB), fontSize: 14)),
+                      const SizedBox(height: 4),
+                      Text('ಲಗ್ನ / ಸಪ್ತಮ / ಅಷ್ಟಮ ಶುದ್ಧಿ + ಗುರು ಅನುಕೂಲ',
+                          style: TextStyle(fontSize: 11, color: kMuted, fontWeight: FontWeight.w500)),
+                    ],
+                  ),
                 ),
                 ...result.lagnaWindows.asMap().entries.map((entry) {
                   final i = entry.key;
                   final lw = entry.value;
+
+                  // Color coding based on overall quality
+                  Color rowBg;
+                  IconData rowIcon;
+                  Color iconColor;
+                  if (lw.isPerfect) {
+                    rowBg = Colors.green.withOpacity(0.1);
+                    rowIcon = Icons.star;
+                    iconColor = Colors.amber.shade700;
+                  } else if (lw.isShubha) {
+                    rowBg = Colors.green.withOpacity(0.05);
+                    rowIcon = Icons.check_circle;
+                    iconColor = Colors.green;
+                  } else if (lw.isAllowed) {
+                    rowBg = Colors.orange.withOpacity(0.05);
+                    rowIcon = Icons.warning_amber_rounded;
+                    iconColor = Colors.orange;
+                  } else {
+                    rowBg = Colors.red.withOpacity(0.03);
+                    rowIcon = Icons.remove_circle_outline;
+                    iconColor = Colors.red.shade300;
+                  }
+
                   return Container(
                     padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                     decoration: BoxDecoration(
-                      color: lw.isAllowed ? Colors.green.withOpacity(0.05) : Colors.red.withOpacity(0.03),
+                      color: rowBg,
                       border: i < result.lagnaWindows.length - 1
                           ? Border(bottom: BorderSide(color: kBorder.withOpacity(0.4)))
                           : null,
                     ),
-                    child: Row(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Icon(
-                          lw.isAllowed ? Icons.check_circle : Icons.remove_circle_outline,
-                          color: lw.isAllowed ? Colors.green : Colors.red.shade300,
-                          size: 16,
+                        // Main row: icon, name, time
+                        Row(
+                          children: [
+                            Icon(rowIcon, color: iconColor, size: 16),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(lw.rashiName, style: TextStyle(
+                                fontWeight: lw.isShubha ? FontWeight.w800 : FontWeight.w500,
+                                color: lw.isShubha ? kText : kMuted,
+                                fontSize: 13,
+                              )),
+                            ),
+                            Text('${lw.startTime} - ${lw.endTime}', style: TextStyle(
+                              fontSize: 12,
+                              color: lw.isShubha ? Colors.green.shade700 : kMuted,
+                              fontWeight: FontWeight.w600,
+                            )),
+                          ],
                         ),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: Text(lw.rashiName, style: TextStyle(
-                            fontWeight: lw.isAllowed ? FontWeight.w800 : FontWeight.w500,
-                            color: lw.isAllowed ? kText : kMuted,
-                            fontSize: 13,
-                          )),
+
+                        // Shuddhi details row
+                        const SizedBox(height: 4),
+                        Wrap(
+                          spacing: 6,
+                          runSpacing: 4,
+                          children: [
+                            _shuddhiChip('ಲ', lw.lagnaShuddhi, lw.lagnaGrahas),
+                            _shuddhiChip('೭', lw.saptamaShuddhi, lw.saptamaGrahas),
+                            _shuddhiChip('೮', lw.ashtamaShuddhi, lw.ashtamaGrahas),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                              decoration: BoxDecoration(
+                                color: lw.guruAnukoola ? Colors.amber.withOpacity(0.15) : Colors.grey.withOpacity(0.08),
+                                borderRadius: BorderRadius.circular(4),
+                                border: Border.all(
+                                  color: lw.guruAnukoola ? Colors.amber.shade600 : Colors.grey.shade300,
+                                  width: 0.5,
+                                ),
+                              ),
+                              child: Text(
+                                lw.guruAnukoola
+                                    ? 'ಗುರು ✓ (${lw.guruFromLagna})'
+                                    : 'ಗುರು ✗ (${lw.guruFromLagna})',
+                                style: TextStyle(
+                                  fontSize: 10,
+                                  color: lw.guruAnukoola ? Colors.amber.shade800 : kMuted,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                            ),
+                            if (!lw.isAllowed)
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                decoration: BoxDecoration(
+                                  color: Colors.red.withOpacity(0.1),
+                                  borderRadius: BorderRadius.circular(4),
+                                ),
+                                child: Text('ನಿಷಿದ್ಧ ಲಗ್ನ', style: TextStyle(fontSize: 10, color: Colors.red.shade700, fontWeight: FontWeight.w700)),
+                              ),
+                          ],
                         ),
-                        Text('${lw.startTime} - ${lw.endTime}', style: TextStyle(
-                          fontSize: 12,
-                          color: lw.isAllowed ? Colors.green.shade700 : kMuted,
-                          fontWeight: FontWeight.w600,
-                        )),
                       ],
                     ),
                   );
@@ -889,6 +995,28 @@ class _MuhurtaScreenState extends State<MuhurtaScreen> {
         const SizedBox(width: 4),
         Text(text, style: TextStyle(color: kText, fontSize: 12)),
       ],
+    );
+  }
+
+  /// Shuddhi chip: shows ✓ or ✗ with malefic names
+  /// label: 'ಲ' (Lagna), '೭' (Saptama), '೮' (Ashtama)
+  Widget _shuddhiChip(String label, bool isShuddha, List<String> malefics) {
+    final MaterialColor color = isShuddha ? Colors.green : Colors.red;
+    final text = isShuddha
+        ? '$label ✓'
+        : '$label ✗ ${malefics.join(',')}';
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(4),
+        border: Border.all(color: color.withOpacity(0.3), width: 0.5),
+      ),
+      child: Text(text, style: TextStyle(
+        fontSize: 10,
+        color: color.shade700,
+        fontWeight: FontWeight.w700,
+      )),
     );
   }
 
@@ -1364,6 +1492,7 @@ class _MuhurtaScreenState extends State<MuhurtaScreen> {
                               _panchangCache.clear();
                               _lagnaCache.clear();
                               _srssCache.clear();
+                              _planetRashiCache.clear();
                             });
                           }
                         },

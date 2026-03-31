@@ -322,6 +322,10 @@ bool calculateGuruBala(int janmaRashiIdx, int jupiterRashiIdx) {
 // LAGNA WINDOW — time windows for each rashi lagna
 // ============================================================
 
+/// Malefic planets (Paapa Grahas) for shuddhi checks
+/// Mars(ಕುಜ), Saturn(ಶನಿ), Rahu(ರಾಹು), Ketu(ಕೇತು), Sun(ರವಿ)
+const List<String> paapGrahas = ['ಕುಜ', 'ಶನಿ', 'ರಾಹು', 'ಕೇತು', 'ರವಿ'];
+
 class LagnaWindow {
   final int rashiIndex;    // 0-11
   final String rashiName;  // e.g. 'ಮೇಷ'
@@ -329,14 +333,59 @@ class LagnaWindow {
   final String endTime;    // e.g. '08:45 AM'
   final bool isAllowed;    // true if this lagna is allowed for the event
 
+  // Shuddhi checks
+  final bool lagnaShuddhi;   // No malefics in lagna rashi (1st house)
+  final bool saptamaShuddhi; // No malefics in 7th from lagna
+  final bool ashtamaShuddhi; // No malefics in 8th from lagna
+  final bool guruAnukoola;   // Jupiter in Kendra(1,4,7,10) or Trikona(5,9) from lagna
+
+  // Details for display
+  final List<String> lagnaGrahas;    // malefics found in lagna
+  final List<String> saptamaGrahas;  // malefics found in 7th
+  final List<String> ashtamaGrahas;  // malefics found in 8th
+  final int guruFromLagna;           // Jupiter's house from lagna (1-12)
+
   LagnaWindow({
     required this.rashiIndex,
     required this.rashiName,
     required this.startTime,
     required this.endTime,
     required this.isAllowed,
+    this.lagnaShuddhi = true,
+    this.saptamaShuddhi = true,
+    this.ashtamaShuddhi = true,
+    this.guruAnukoola = false,
+    this.lagnaGrahas = const [],
+    this.saptamaGrahas = const [],
+    this.ashtamaGrahas = const [],
+    this.guruFromLagna = 0,
   });
+
+  /// Overall shuddhi — all three must pass + event-allowed
+  bool get isShubha => isAllowed && lagnaShuddhi && saptamaShuddhi && ashtamaShuddhi;
+
+  /// Best quality: all shuddhi + guru anukoola
+  bool get isPerfect => isShubha && guruAnukoola;
 }
+
+/// Check if Guru (Jupiter) is in Kendra or Trikona from lagna
+bool isGuruAnukoolaForLagna(int lagnaRashiIdx, int guruRashiIdx) {
+  final count = ((guruRashiIdx - lagnaRashiIdx + 12) % 12) + 1; // 1-indexed
+  // Kendra: 1, 4, 7, 10 — Trikona: 1, 5, 9
+  return const [1, 4, 5, 7, 9, 10].contains(count);
+}
+
+/// Find malefic planets in a given rashi
+List<String> findMaleficsInRashi(int rashiIdx, Map<String, int> planetRashis) {
+  final List<String> found = [];
+  for (final paapa in paapGrahas) {
+    if (planetRashis[paapa] == rashiIdx) {
+      found.add(paapa);
+    }
+  }
+  return found;
+}
+
 
 // ============================================================
 // DEITY-SPECIFIC TITHIS FOR DEVA PRATISHTHA
