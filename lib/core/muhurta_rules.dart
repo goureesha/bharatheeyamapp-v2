@@ -319,6 +319,41 @@ bool calculateGuruBala(int janmaRashiIdx, int jupiterRashiIdx) {
 
 
 // ============================================================
+// LAGNA WINDOW — time windows for each rashi lagna
+// ============================================================
+
+class LagnaWindow {
+  final int rashiIndex;    // 0-11
+  final String rashiName;  // e.g. 'ಮೇಷ'
+  final String startTime;  // e.g. '06:30 AM'
+  final String endTime;    // e.g. '08:45 AM'
+  final bool isAllowed;    // true if this lagna is allowed for the event
+
+  LagnaWindow({
+    required this.rashiIndex,
+    required this.rashiName,
+    required this.startTime,
+    required this.endTime,
+    required this.isAllowed,
+  });
+}
+
+// ============================================================
+// DEITY-SPECIFIC TITHIS FOR DEVA PRATISHTHA
+// ============================================================
+/// For Deva Pratishtha, specific deities have preferred tithis
+const Map<String, List<int>> deityTithiTable = {
+  'ಗಣಪತಿ':     [3, 8, 13],  // Chaturthi
+  'ಶಿವ':       [7, 12, 13], // Ashtami, Trayodashi, Chaturdashi
+  'ವಿಷ್ಣು':    [10, 11, 12],// Ekadashi, Dwadashi
+  'ದೇವಿ':      [7, 8, 13],  // Navami, Dashami
+  'ಸೂರ್ಯ':     [6],         // Saptami
+  'ಹನುಮಂತ':   [13],        // Chaturdashi (Tues pref)
+  'ನಾಗ':       [4],         // Panchami
+  'ಸಾಮಾನ್ಯ':  [1, 2, 4, 6, 7, 9, 10, 11, 12, 13], // General
+};
+
+// ============================================================
 // MUHURTA CHECK RESULT — output of the rule engine
 // ============================================================
 
@@ -355,6 +390,7 @@ class MuhurtaDayResult {
   final List<PersonBalaResult> personResults; // 1 or 2
   final List<String> doshas;
   final List<String> doshaBhangas; // active dosha cancellations
+  final List<LagnaWindow> lagnaWindows; // available lagna windows for the day
 
   MuhurtaDayResult({
     required this.score,
@@ -363,6 +399,7 @@ class MuhurtaDayResult {
     required this.personResults,
     required this.doshas,
     required this.doshaBhangas,
+    this.lagnaWindows = const [],
   });
 }
 

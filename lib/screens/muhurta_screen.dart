@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:sweph/sweph.dart';
 import 'package:table_calendar/table_calendar.dart';
 import '../widgets/common.dart';
 import '../constants/strings.dart';
@@ -51,6 +52,10 @@ class _MuhurtaScreenState extends State<MuhurtaScreen> {
   Map<DateTime, MuhurtaDayResult> _results = {};
   // Store panchanga data for muhurta timing display
   Map<DateTime, PanchangData> _panchangCache = {};
+  // Store lagna windows per day (computed on-tap)
+  Map<DateTime, List<LagnaWindow>> _lagnaCache = {};
+  // Store sunrise/sunset JDs per day for lagna scanning
+  Map<DateTime, List<double>> _srssCache = {};
 
   @override
   void initState() {
@@ -206,6 +211,8 @@ class _MuhurtaScreenState extends State<MuhurtaScreen> {
       _generated = false;
       _results.clear();
       _panchangCache.clear();
+      _lagnaCache.clear();
+      _srssCache.clear();
       _selectedDay = null;
     });
 
@@ -263,6 +270,7 @@ class _MuhurtaScreenState extends State<MuhurtaScreen> {
           final dateKey = DateTime(year, month, day);
           _results[dateKey] = dayResult;
           _panchangCache[dateKey] = p;
+          _srssCache[dateKey] = srSs;
         } catch (_) {}
       }
 
@@ -279,6 +287,82 @@ class _MuhurtaScreenState extends State<MuhurtaScreen> {
           SnackBar(content: Text('ದೋಷ: $e')),
         );
       }
+    }
+  }
+
+  // ============================================================
+  // LAGNA WINDOW SCANNING
+  // ============================================================
+  // Scans ascendant from sunrise to sunset at 10-minute intervals
+  // and finds when each rashi rises/sets to create time windows.
+
+  Future<List<LagnaWindow>> _scanLagnaWindows(DateTime date) async {
+    // Check cache first
+    final key = DateTime(date.year, date.month, date.day);
+    if (_lagnaCache.containsKey(key)) return _lagnaCache[key]!;
+
+    final srSs = _srssCache[key];
+    if (srSs == null) return [];
+
+    final rules = muhurtaRules[_selectedEvent];
+    final allowedLagnas = rules?.allowedLagnas;
+
+    try {
+      final double srJd = srSs[0];
+      final double ssJd = srSs[1];
+
+      // Get ayanamsa at sunrise
+      Sweph.swe_set_sid_mode(SiderealMode.SE_SIDM_LAHIRI);
+      final ayn = Sweph.swe_get_ayanamsa(srJd);
+
+      // Sample ascendant at 10-minute intervals
+      final double step = 10.0 / (24.0 * 60.0); // 10 min in JD
+      final List<_AscSample> samples = [];
+
+      double jd = srJd;
+      while (jd <= ssJd + step) {
+        final houses = Ephemeris.placidusHousesFull(jd, _lat, _lon);
+        if (houses != null && houses.ascmc.length >= 1) {
+          final sidAsc = ((houses.ascmc[0] as double) - ayn) % 360.0;
+          final rashiIdx = (sidAsc / 30.0).floor() % 12;
+          // Convert JD to local time minutes
+          final localFrac = ((jd + 0.5 + (_tz / 24.0)) % 1.0 + 1.0) % 1.0;
+          final localMins = localFrac * 24.0 * 60.0;
+          samples.add(_AscSample(jd: jd, rashiIdx: rashiIdx, localMins: localMins));
+        }
+        jd += step;
+      }
+
+      if (samples.isEmpty) return [];
+
+      // Extract rashi transitions
+      final List<LagnaWindow> windows = [];
+      int currentRashi = samples.first.rashiIdx;
+      double startMins = samples.first.localMins;
+
+      for (int i = 1; i < samples.length; i++) {
+        if (samples[i].rashiIdx != currentRashi || i == samples.length - 1) {
+          final endMins = (i == samples.length - 1 && samples[i].rashiIdx == currentRashi)
+              ? samples[i].localMins
+              : samples[i].localMins;
+
+          windows.add(LagnaWindow(
+            rashiIndex: currentRashi,
+            rashiName: knRashi[currentRashi],
+            startTime: _minutesToTimeStr(startMins),
+            endTime: _minutesToTimeStr(endMins),
+            isAllowed: allowedLagnas == null || allowedLagnas.contains(currentRashi),
+          ));
+
+          currentRashi = samples[i].rashiIdx;
+          startMins = samples[i].localMins;
+        }
+      }
+
+      _lagnaCache[key] = windows;
+      return windows;
+    } catch (_) {
+      return [];
     }
   }
 
@@ -573,6 +657,66 @@ class _MuhurtaScreenState extends State<MuhurtaScreen> {
               ),
             );
           }),
+        ],
+
+        // ── Lagna Windows ──
+        if (result.lagnaWindows.isNotEmpty) ...[
+          const SizedBox(height: 12),
+          Container(
+            decoration: BoxDecoration(
+              border: Border.all(color: kBorder),
+              borderRadius: BorderRadius.circular(12),
+              color: kCard,
+            ),
+            child: Column(
+              children: [
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF2E86AB).withOpacity(0.08),
+                    borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
+                  ),
+                  child: Text('🏠 ಲಗ್ನ ಸಮಯ (Lagna Windows)', style: TextStyle(fontWeight: FontWeight.w800, color: const Color(0xFF2E86AB), fontSize: 14)),
+                ),
+                ...result.lagnaWindows.asMap().entries.map((entry) {
+                  final i = entry.key;
+                  final lw = entry.value;
+                  return Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    decoration: BoxDecoration(
+                      color: lw.isAllowed ? Colors.green.withOpacity(0.05) : Colors.red.withOpacity(0.03),
+                      border: i < result.lagnaWindows.length - 1
+                          ? Border(bottom: BorderSide(color: kBorder.withOpacity(0.4)))
+                          : null,
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(
+                          lw.isAllowed ? Icons.check_circle : Icons.remove_circle_outline,
+                          color: lw.isAllowed ? Colors.green : Colors.red.shade300,
+                          size: 16,
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(lw.rashiName, style: TextStyle(
+                            fontWeight: lw.isAllowed ? FontWeight.w800 : FontWeight.w500,
+                            color: lw.isAllowed ? kText : kMuted,
+                            fontSize: 13,
+                          )),
+                        ),
+                        Text('${lw.startTime} - ${lw.endTime}', style: TextStyle(
+                          fontSize: 12,
+                          color: lw.isAllowed ? Colors.green.shade700 : kMuted,
+                          fontWeight: FontWeight.w600,
+                        )),
+                      ],
+                    ),
+                  );
+                }),
+              ],
+            ),
+          ),
         ],
 
         // ── 15 Muhurta Timings ──
@@ -1024,10 +1168,29 @@ class _MuhurtaScreenState extends State<MuhurtaScreen> {
                         lastDay: DateTime(2040, 12, 31),
                         focusedDay: _selectedDay ?? DateTime(_focusedMonth.year, _focusedMonth.month, 1),
                         selectedDayPredicate: (day) => isSameDay(_selectedDay, day),
-                        onDaySelected: (selected, focused) {
+                        onDaySelected: (selected, focused) async {
                           setState(() {
                             _selectedDay = selected;
                           });
+                          // Compute lagna windows on-tap
+                          final key = DateTime(selected.year, selected.month, selected.day);
+                          final existing = _results[key];
+                          if (existing != null && existing.lagnaWindows.isEmpty) {
+                            final windows = await _scanLagnaWindows(selected);
+                            if (windows.isNotEmpty && mounted) {
+                              setState(() {
+                                _results[key] = MuhurtaDayResult(
+                                  score: existing.score,
+                                  verdict: existing.verdict,
+                                  checks: existing.checks,
+                                  personResults: existing.personResults,
+                                  doshas: existing.doshas,
+                                  doshaBhangas: existing.doshaBhangas,
+                                  lagnaWindows: windows,
+                                );
+                              });
+                            }
+                          }
                         },
                         onPageChanged: (focusedDay) {
                           // When user swipes calendar month, allow re-generate
@@ -1037,6 +1200,8 @@ class _MuhurtaScreenState extends State<MuhurtaScreen> {
                               _generated = false;
                               _results.clear();
                               _panchangCache.clear();
+                              _lagnaCache.clear();
+                              _srssCache.clear();
                             });
                           }
                         },
@@ -1128,4 +1293,12 @@ class _MuhurtaScreenState extends State<MuhurtaScreen> {
       ),
     );
   }
+}
+
+/// Helper class for lagna ascendant sampling
+class _AscSample {
+  final double jd;
+  final int rashiIdx;
+  final double localMins;
+  _AscSample({required this.jd, required this.rashiIdx, required this.localMins});
 }
