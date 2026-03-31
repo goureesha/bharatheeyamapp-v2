@@ -219,7 +219,7 @@ class _PanchangaScreenState extends State<PanchangaScreen> {
       final s = periodStart + i * duration;
       final e = s + duration;
       result.add({
-        'name': _chougNames[idx],
+        'name': tr(_chougNames[idx]),
         'nature': _chougNature[idx],
         'start': _minutesToTimeStr(s % (24 * 60)),
         'end': _minutesToTimeStr(e % (24 * 60)),
@@ -260,7 +260,7 @@ class _PanchangaScreenState extends State<PanchangaScreen> {
       final s = periodStart + i * duration;
       final e = s + duration;
       result.add({
-        'planet': _horaOrder[idx],
+        'planet': tr(_horaOrder[idx]),
         'icon': _horaIcons[idx],
         'start': _minutesToTimeStr(s % (24 * 60)),
         'end': _minutesToTimeStr(e % (24 * 60)),
@@ -478,7 +478,7 @@ class _PanchangaScreenState extends State<PanchangaScreen> {
 
   // ─── Day Muhurtas (15 divisions of daytime) ───
   // Traditional names and nature: S=Shubha, A=Ashubha, M=Madhyama
-  static const _muhurtaNames = [
+  static List<Map<String, String>> get _muhurtaNames => [
     {'name': tr('ರುದ್ರ'), 'nameEn': 'Rudra', 'nature': 'A'},
     {'name': tr('ಅಹಿ'), 'nameEn': 'Ahi', 'nature': 'A'},
     {'name': tr('ಮಿತ್ರ'), 'nameEn': 'Mitra', 'nature': 'S'},
