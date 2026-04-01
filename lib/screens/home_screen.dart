@@ -14,6 +14,8 @@ import 'settings_screen.dart';
 import 'vedic_clock_screen.dart';
 import 'appointment_screen.dart';
 import 'ashtamangala_screen.dart';
+import 'library_screen.dart';
+import '../services/tester_service.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -55,6 +57,14 @@ class HomeScreen extends StatelessWidget {
         Navigator.push(context, MaterialPageRoute(builder: (_) => const SettingsScreen()));
       }),
     ];
+
+    if (TesterService.isTester) {
+      sections.add(
+        _Section('ಗ್ರಂಥಾಲಯ', 'Books & Kosha', Icons.library_books, Colors.brown, () {
+          Navigator.push(context, MaterialPageRoute(builder: (_) => const LibraryScreen()));
+        }),
+      );
+    }
 
     return Scaffold(
       backgroundColor: kBg,
