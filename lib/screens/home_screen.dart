@@ -58,13 +58,7 @@ class HomeScreen extends StatelessWidget {
       }),
     ];
 
-    if (TesterService.isTester) {
-      sections.add(
-        _Section('ಗ್ರಂಥಾಲಯ', 'Books & Kosha', Icons.library_books, Colors.brown, () {
-          Navigator.push(context, MaterialPageRoute(builder: (_) => const LibraryScreen()));
-        }),
-      );
-    }
+    ];
 
     return Scaffold(
       backgroundColor: kBg,
@@ -102,14 +96,28 @@ class HomeScreen extends StatelessWidget {
                   // Sections Grid
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 16),
-                    child: GridView.count(
-                      crossAxisCount: tablet ? 3 : 2,
-                      mainAxisSpacing: 14,
-                      crossAxisSpacing: 14,
-                      childAspectRatio: tablet ? 1.1 : 1.15,
-                      shrinkWrap: true,
-                      physics: const NeverScrollableScrollPhysics(),
-                      children: sections.map((s) => _buildCard(s)).toList(),
+                    child: ValueListenableBuilder<bool>(
+                      valueListenable: TesterService.isTesterNotifier,
+                      builder: (context, isTester, _) {
+                        final currentSections = List<_Section>.from(sections);
+                        if (isTester) {
+                          currentSections.add(
+                            _Section('ಗ್ರಂಥಾಲಯ', 'Books & Kosha', Icons.library_books, Colors.brown, () {
+                              Navigator.push(context, MaterialPageRoute(builder: (_) => const LibraryScreen()));
+                            }),
+                          );
+                        }
+
+                        return GridView.count(
+                          crossAxisCount: tablet ? 3 : 2,
+                          mainAxisSpacing: 14,
+                          crossAxisSpacing: 14,
+                          childAspectRatio: tablet ? 1.1 : 1.15,
+                          shrinkWrap: true,
+                          physics: const NeverScrollableScrollPhysics(),
+                          children: currentSections.map((s) => _buildCard(s)).toList(),
+                        );
+                      },
                     ),
                   ),
                   const SizedBox(height: 16),

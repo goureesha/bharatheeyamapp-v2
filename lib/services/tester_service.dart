@@ -4,16 +4,15 @@ import 'package:flutter/foundation.dart';
 
 class TesterService {
   static const String _testerCacheKey = 'is_beta_tester';
-  static bool _isTester = false;
+  static final ValueNotifier<bool> isTesterNotifier = ValueNotifier<bool>(false);
 
   /// Returns true if the user is a verified tester.
-  /// This checks the local cache instantly, and does not block the UI.
-  static bool get isTester => _isTester;
+  static bool get isTester => isTesterNotifier.value;
 
   /// Initializes the service by loading the cached tester status.
   static Future<void> init() async {
     final prefs = await SharedPreferences.getInstance();
-    _isTester = prefs.getBool(_testerCacheKey) ?? false;
+    isTesterNotifier.value = prefs.getBool(_testerCacheKey) ?? false;
   }
 
   /// Verifies with Firestore if the given [email] belongs to a tester.
@@ -32,11 +31,11 @@ class TesterService {
 
       final bool isTesterNow = doc.exists;
       
-      if (_isTester != isTesterNow) {
-        _isTester = isTesterNow;
+      if (isTesterNotifier.value != isTesterNow) {
+        isTesterNotifier.value = isTesterNow;
         final prefs = await SharedPreferences.getInstance();
-        await prefs.setBool(_testerCacheKey, _isTester);
-        debugPrint('TesterService: Status updated -> isTester: $_isTester');
+        await prefs.setBool(_testerCacheKey, isTesterNow);
+        debugPrint('TesterService: Status updated -> isTester: $isTesterNow');
       }
     } catch (e) {
       debugPrint('TesterService: Failed to check tester status: $e');
@@ -46,7 +45,7 @@ class TesterService {
 
   /// Clears the tester status (used on logout).
   static Future<void> _clearStatus() async {
-    _isTester = false;
+    isTesterNotifier.value = false;
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove(_testerCacheKey);
   }
