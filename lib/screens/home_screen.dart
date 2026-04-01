@@ -15,6 +15,7 @@ import 'vedic_clock_screen.dart';
 import 'appointment_screen.dart';
 import 'ashtamangala_screen.dart';
 import 'library_screen.dart';
+import 'yoga_input_screen.dart';
 import '../services/tester_service.dart';
 
 class HomeScreen extends StatelessWidget {
@@ -52,6 +53,9 @@ class HomeScreen extends StatelessWidget {
       }),
       _Section(AppLocale.isHindi ? 'अष्टमंगल' : 'ಅಷ್ಟಮಂಗಲ', 'Ashtamangala', Icons.auto_fix_high, const Color(0xFFE67E22), () {
         Navigator.push(context, MaterialPageRoute(builder: (_) => const AshtamangalaScreen()));
+      }),
+      _Section(AppLocale.isHindi ? 'योग' : 'ಯೋಗ', 'Yoga Scanner', Icons.self_improvement, const Color(0xFF2980B9), () {
+        Navigator.push(context, MaterialPageRoute(builder: (_) => const YogaInputScreen()));
       }),
       _Section(AppLocale.l('settings'), 'Settings', Icons.settings, kMuted, () {
         Navigator.push(context, MaterialPageRoute(builder: (_) => const SettingsScreen()));
