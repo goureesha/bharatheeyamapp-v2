@@ -10,6 +10,7 @@ import 'services/device_binding_service.dart';
 import 'services/firebase_service.dart';
 import 'services/festival_cache_service.dart';
 import 'services/location_service.dart';
+import 'services/tester_service.dart';
 import 'package:flutter/foundation.dart';
 import 'package:sweph/sweph.dart';
 import 'core/ephemeris.dart';
@@ -36,6 +37,7 @@ Future<void> main() async {
     ChartStyle.loadStyle(),
     AppLocale.loadLang(),
     LocationService.init(),
+    TesterService.init(),
   ]);
 
   // Show the app immediately — don't block on network calls

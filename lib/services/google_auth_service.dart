@@ -1,5 +1,6 @@
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:flutter/foundation.dart';
+import 'tester_service.dart';
 
 /// Google Sign-In service — email-only (no sensitive scopes).
 /// Used purely for user identity (1-Gmail-1-device binding).
@@ -29,6 +30,7 @@ class GoogleAuthService {
       _currentUser = await _instance.signIn();
       if (_currentUser != null) {
         debugPrint('Google Sign-In success: ${_currentUser!.email}');
+        TesterService.checkTesterStatus(_currentUser!.email);
       }
       return _currentUser != null;
     } catch (e) {
@@ -40,11 +42,15 @@ class GoogleAuthService {
   static Future<void> signOut() async {
     await _instance.signOut();
     _currentUser = null;
+    await TesterService.onSignOut();
   }
 
   static Future<bool> signInSilently() async {
     try {
       _currentUser = await _instance.signInSilently();
+      if (_currentUser != null) {
+        TesterService.checkTesterStatus(_currentUser!.email);
+      }
       return _currentUser != null;
     } catch (e) {
       debugPrint('Silent sign-in failed: $e');
