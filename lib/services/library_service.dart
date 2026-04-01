@@ -36,11 +36,48 @@ class LibraryService {
     }
   }
 
-  /// Search Amara Kosha by exact word
+  /// Search Amara Kosha intelligently
   static AmaraKoshaEntry? lookupWord(String word) {
-    // Strip punctuation
-    final cleanWord = word.replaceAll(RegExp(r'[।॥,\.]'), '').trim();
-    return _amaraKosha[cleanWord];
+    // 1. Clean the word of all punctuation and isolate characters
+    final cleanWord = word.replaceAll(RegExp(r'[।॥,\.\-\?\!\s]'), '');
+    if (cleanWord.isEmpty) return null;
+
+    // 2. Exact Match (Best case)
+    if (_amaraKosha.containsKey(cleanWord)) {
+      return _amaraKosha[cleanWord];
+    }
+
+    // 3. Known Vibhakti / Suffix Stripping
+    // Sanskrit words often end in these inflectional suffixes in Shlokas.
+    // By aggressively stripping them, we test if the root maps exactly to a dictionary entry.
+    final suffixes = [
+      'म्', 'ः', 'े', 'ौ', 'ा', 'ी', 'ू', 'स्य', 'तः', 'ये', 'या', 'वान्',
+      'ेपु', 'ाणाम्', 'ाः', 'ान्', 'ौ', 'म्', 'न्', 'त्'
+    ];
+
+    for (var suffix in suffixes) {
+      if (cleanWord.endsWith(suffix)) {
+        final stripped = cleanWord.substring(0, cleanWord.length - suffix.length);
+        if (stripped.isNotEmpty && _amaraKosha.containsKey(stripped)) {
+          return _amaraKosha[stripped];
+        }
+      }
+    }
+
+    // 4. Aggressive prefix partial match (e.g. "नमस्तुभ्यं" -> "नमः" or "सरस्वति" -> "सरस्वती")
+    for (var key in _amaraKosha.keys) {
+      // If the entry root is at least 3 characters and is present at the START of the cleanWord
+      if (key.length >= 3 && cleanWord.startsWith(key)) {
+         return _amaraKosha[key];
+      }
+      // Conversely, if the cleanWord (at least 3 chars) is the START of the dictionary root
+      if (cleanWord.length >= 3 && key.startsWith(cleanWord)) {
+         return _amaraKosha[key];
+      }
+    }
+
+    // Nothing found
+    return null;
   }
 
   /// Search Shlokas by Tag across all books
