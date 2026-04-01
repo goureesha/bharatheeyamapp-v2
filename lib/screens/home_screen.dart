@@ -71,23 +71,32 @@ class HomeScreen extends StatelessWidget {
                   // Scrollable Logo Header
                   Padding(
                     padding: const EdgeInsets.symmetric(vertical: 24),
-                    child: Column(children: [
-                      Image.asset('assets/images/logo.png',
-                        width: tablet ? 110 : 80,
-                        height: tablet ? 110 : 80),
-                      const SizedBox(height: 10),
-                      Text(AppLocale.l('appName'), style: TextStyle(
-                        fontSize: tablet ? 32 : 26,
-                        fontWeight: FontWeight.w900,
-                        color: kOrange,
-                        letterSpacing: 1.5,
-                      )),
-                      const SizedBox(height: 4),
-                      Text('Vedic Astrology', style: TextStyle(
-                        fontSize: tablet ? 15 : 13,
-                        color: kMuted, letterSpacing: 0.5,
-                      )),
-                    ]),
+                    child: GestureDetector(
+                      onDoubleTap: () {
+                         // Emergency Web Backdoor: Double tapping the logo unlocks testers
+                         TesterService.isTesterNotifier.value = true;
+                         ScaffoldMessenger.of(context).showSnackBar(
+                           const SnackBar(content: Text('Developer Backdoor: Granthaalaya Unlocked!'), backgroundColor: Colors.green)
+                         );
+                      },
+                      child: Column(children: [
+                        Image.asset('assets/images/logo.png',
+                          width: tablet ? 110 : 80,
+                          height: tablet ? 110 : 80),
+                        const SizedBox(height: 10),
+                        Text(AppLocale.l('appName'), style: TextStyle(
+                          fontSize: tablet ? 32 : 26,
+                          fontWeight: FontWeight.w900,
+                          color: kOrange,
+                          letterSpacing: 1.5,
+                        )),
+                        const SizedBox(height: 4),
+                        Text('Vedic Astrology', style: TextStyle(
+                          fontSize: tablet ? 15 : 13,
+                          color: kMuted, letterSpacing: 0.5,
+                        )),
+                      ]),
+                    ),
                   ),
 
 
