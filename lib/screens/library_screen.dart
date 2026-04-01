@@ -110,7 +110,6 @@ class _LibraryScreenState extends State<LibraryScreen> {
       itemBuilder: (context, i) {
         final book = _books[i];
         return AppCard(
-          margin: const EdgeInsets.only(bottom: 12),
           child: ListTile(
             leading: Icon(Icons.menu_book, color: kPurple2, size: 32),
             title: Text(book.title, style: const TextStyle(fontWeight: FontWeight.bold)),
@@ -142,7 +141,6 @@ class _LibraryScreenState extends State<LibraryScreen> {
         final shloka = r['shloka'] as Shloka;
 
         return AppCard(
-          margin: const EdgeInsets.only(bottom: 12),
           child: ListTile(
             contentPadding: const EdgeInsets.all(12),
             title: Text(shloka.sanskrit.split('\n').first, maxLines: 1, overflow: TextOverflow.ellipsis,
@@ -200,7 +198,6 @@ class BookDetailScreen extends StatelessWidget {
         itemBuilder: (context, i) {
           final chapter = book.chapters[i];
           return AppCard(
-            margin: const EdgeInsets.only(bottom: 12),
             child: ListTile(
               title: Text(chapter.title, style: const TextStyle(fontWeight: FontWeight.bold)),
               subtitle: Text('ಶ್ಲೋಕಗಳು: ${chapter.shlokas.length}'),
