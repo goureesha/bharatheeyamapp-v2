@@ -253,22 +253,36 @@ class _AmaraKoshaSheet extends StatelessWidget {
             
             if (entry != null) ...[
               const Text('ಅರ್ಥ (Meaning):', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Colors.grey)),
-              const SizedBox(height: 4),
-              Text(entry!.meaning, style: const TextStyle(fontSize: 18)),
+              const SizedBox(height: 12),
               
-              if (entry!.synonyms.isNotEmpty) ...[
-                const SizedBox(height: 24),
-                const Text('ಪರ್ಯಾಯ ಪದಗಳು (Synonyms):', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Colors.grey)),
-                const SizedBox(height: 8),
-                Wrap(
-                  spacing: 8, runSpacing: 8,
-                  children: entry!.synonyms.map((s) => Chip(
-                    label: Text(s),
-                    backgroundColor: kGreen.withOpacity(0.1),
-                    side: BorderSide(color: kGreen.withOpacity(0.3)),
-                  )).toList(),
+              Flexible(
+                child: SingleChildScrollView(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Format the wall-of-text by splitting on Sanskrit danda marks
+                      Text(
+                        entry!.meaning.replaceAll(RegExp(r'[।|]'), '।\n\n'), 
+                        style: const TextStyle(fontSize: 18, height: 1.5),
+                      ),
+                      
+                      if (entry!.synonyms.isNotEmpty) ...[
+                        const SizedBox(height: 24),
+                        const Text('ಪರ್ಯಾಯ ಪದಗಳು (Synonyms):', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Colors.grey)),
+                        const SizedBox(height: 12),
+                        Wrap(
+                          spacing: 8, runSpacing: 8,
+                          children: entry!.synonyms.map((s) => Chip(
+                            label: Text(s),
+                            backgroundColor: kGreen.withOpacity(0.1),
+                            side: BorderSide(color: kGreen.withOpacity(0.3)),
+                          )).toList(),
+                        ),
+                      ],
+                    ],
+                  ),
                 ),
-              ],
+              ),
             ] else ...[
               Center(
                 child: Padding(
