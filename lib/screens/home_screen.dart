@@ -58,8 +58,6 @@ class HomeScreen extends StatelessWidget {
       }),
     ];
 
-    ];
-
     return Scaffold(
       backgroundColor: kBg,
       body: SafeArea(
