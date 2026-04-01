@@ -377,26 +377,60 @@ class _MuhurtaScreenState extends State<MuhurtaScreen> {
           // Compute shuddhi checks for this lagna rashi
           final saptamaRashi = (currentRashi + 6) % 12;
           final ashtamaRashi = (currentRashi + 7) % 12;
+          final dashamaRashi = (currentRashi + 9) % 12;
 
           final lagnaM = findMaleficsInRashi(currentRashi, planetRashis);
-          final saptamaM = findMaleficsInRashi(saptamaRashi, planetRashis);
-          final ashtamaM = findMaleficsInRashi(ashtamaRashi, planetRashis);
+          
+          // Saptama: For Vivaha, ALL planets are banned. For others, only malefics.
+          final saptamaM = _selectedEvent == MuhurtaEvent.vivaha 
+              ? findAllPlanetsInRashi(saptamaRashi, planetRashis)
+              : findMaleficsInRashi(saptamaRashi, planetRashis);
+              
+          // Ashtama: Banned for all planets per MC, but check Dosha Bhanga
+          final ashtamaM = findAllPlanetsInRashi(ashtamaRashi, planetRashis);
+          final rashiLords = [4, 5, 3, 1, 0, 3, 5, 4, 8, 6, 6, 8];
+          if (rashiLords[currentRashi] == rashiLords[ashtamaRashi]) {
+             // Ashtama Dosha Bhanga (Aries/Scorpio and Taurus/Libra)
+             // Clear the dosha if lagna lord = 8th lord
+             ashtamaM.clear();
+          }
+
+          // Dashama: Emtpy 10th house
+          final dashamaM = findAllPlanetsInRashi(dashamaRashi, planetRashis);
+
+          // Chandra Saptama: Sun, Saturn, Mars in 7th from Moon
+          final chandraRashi = planetRashis['ಚಂದ್ರ'] ?? -1;
+          final chandraSaptamaRashi = chandraRashi >= 0 ? (chandraRashi + 6) % 12 : -1;
+          final List<String> chandraSaptamaM = [];
+          if (chandraSaptamaRashi >= 0) {
+            if (planetRashis['ರವಿ'] == chandraSaptamaRashi) chandraSaptamaM.add('ರವಿ');
+            if (planetRashis['ಕುಜ'] == chandraSaptamaRashi) chandraSaptamaM.add('ಕುಜ');
+            if (planetRashis['ಶನಿ'] == chandraSaptamaRashi) chandraSaptamaM.add('ಶನಿ');
+          }
+
           final guruOk = guruRashiIdx >= 0 ? isGuruAnukoolaForLagna(currentRashi, guruRashiIdx) : false;
           final guruHouse = guruRashiIdx >= 0 ? ((guruRashiIdx - currentRashi + 12) % 12) + 1 : 0;
+
+          // Check if this lagna is allowed either explicitly or by default
+          final bool isLagnaAllowed = allowedLagnas == null || allowedLagnas.contains(currentRashi);
 
           windows.add(LagnaWindow(
             rashiIndex: currentRashi,
             rashiName: knRashi[currentRashi],
             startTime: _minutesToTimeStr(startMins),
             endTime: _minutesToTimeStr(endMins),
-            isAllowed: allowedLagnas == null || allowedLagnas.contains(currentRashi),
+            isAllowed: isLagnaAllowed,
             lagnaShuddhi: lagnaM.isEmpty,
             saptamaShuddhi: saptamaM.isEmpty,
             ashtamaShuddhi: ashtamaM.isEmpty,
+            dashamaShuddhi: dashamaM.isEmpty,
+            chandraSaptamaShuddhi: chandraSaptamaM.isEmpty,
             guruAnukoola: guruOk,
             lagnaGrahas: lagnaM,
             saptamaGrahas: saptamaM,
             ashtamaGrahas: ashtamaM,
+            dashamaGrahas: dashamaM,
+            chandraSaptamaGrahas: chandraSaptamaM,
             guruFromLagna: guruHouse,
             requiredShuddhis: rules?.requiredShuddhis ?? const {ShuddhiType.lagna},
           ));
@@ -758,6 +792,8 @@ class _MuhurtaScreenState extends State<MuhurtaScreen> {
                         if (req.contains(ShuddhiType.lagna)) parts.add('ಲಗ್ನ');
                         if (req.contains(ShuddhiType.saptama)) parts.add('ಸಪ್ತಮ');
                         if (req.contains(ShuddhiType.ashtama)) parts.add('ಅಷ್ಟಮ');
+                        if (req.contains(ShuddhiType.dashama)) parts.add('ದಶಮ');
+                        if (req.contains(ShuddhiType.chandraSaptama)) parts.add('ಚಂದ್ರಸಪ್ತಮ');
                         return Text('ಅಗತ್ಯ: ${parts.join(' + ')} ಶುದ್ಧಿ + ಗುರು ಅನುಕೂಲ',
                             style: TextStyle(fontSize: 11, color: kMuted, fontWeight: FontWeight.w500));
                       }),
@@ -836,6 +872,14 @@ class _MuhurtaScreenState extends State<MuhurtaScreen> {
                             // Ashtama shuddhi — show required/optional
                             _shuddhiChip('೮ ಅಷ್ಟಮ', lw.ashtamaShuddhi, lw.ashtamaGrahas,
                                 required: lw.requiredShuddhis.contains(ShuddhiType.ashtama)),
+                            // Dashama shuddhi — conditionally shown
+                            if (lw.requiredShuddhis.contains(ShuddhiType.dashama) || lw.dashamaGrahas.isNotEmpty)
+                              _shuddhiChip('೧೦ ದಶಮ', lw.dashamaShuddhi, lw.dashamaGrahas,
+                                  required: lw.requiredShuddhis.contains(ShuddhiType.dashama)),
+                            // Chandra Saptama shuddhi
+                            if (lw.requiredShuddhis.contains(ShuddhiType.chandraSaptama) || lw.chandraSaptamaGrahas.isNotEmpty)
+                              _shuddhiChip('ಚಂದ್ರ-೭', lw.chandraSaptamaShuddhi, lw.chandraSaptamaGrahas,
+                                  required: lw.requiredShuddhis.contains(ShuddhiType.chandraSaptama)),
                             Container(
                               padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                               decoration: BoxDecoration(
