@@ -7,6 +7,7 @@ import '../services/subscription_service.dart';
 import '../services/backup_service.dart';
 import '../services/google_auth_service.dart';
 import '../services/device_binding_service.dart';
+import '../services/tester_service.dart';
 import '../services/local_export_service.dart';
 import 'about_screen.dart';
 import 'privacy_policy_screen.dart';
@@ -324,6 +325,17 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                 children: [
                                   Text(GoogleAuthService.userName ?? '', style: TextStyle(fontWeight: FontWeight.bold, color: kText)),
                                   Text(GoogleAuthService.userEmail ?? '', style: TextStyle(fontSize: 12, color: kMuted)),
+                                  const SizedBox(height: 6),
+                                  ValueListenableBuilder<String>(
+                                    valueListenable: TesterService.statusMessage,
+                                    builder: (context, msg, _) => Text(
+                                      'Beta Status: $msg',
+                                      style: TextStyle(
+                                          fontSize: 11,
+                                          fontWeight: FontWeight.bold,
+                                          color: msg.contains('Verified') ? Colors.green : Colors.red),
+                                    ),
+                                  ),
                                 ],
                               )),
                             ]),

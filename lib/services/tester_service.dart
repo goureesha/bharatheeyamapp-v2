@@ -5,6 +5,7 @@ import 'package:flutter/foundation.dart';
 class TesterService {
   static const String _testerCacheKey = 'is_beta_tester';
   static final ValueNotifier<bool> isTesterNotifier = ValueNotifier<bool>(false);
+  static final ValueNotifier<String> statusMessage = ValueNotifier<String>('Waiting to check...');
 
   /// Returns true if the user is a verified tester.
   static bool get isTester => isTesterNotifier.value;
@@ -19,9 +20,12 @@ class TesterService {
   /// It updates the local cache and the [_isTester] flag.
   static Future<void> checkTesterStatus(String? email) async {
     if (email == null || email.isEmpty) {
+      statusMessage.value = 'Not logged in.';
       await _clearStatus();
       return;
     }
+    
+    statusMessage.value = 'Checking $email...';
 
     try {
       final doc = await FirebaseFirestore.instance
@@ -31,6 +35,12 @@ class TesterService {
 
       final bool isTesterNow = doc.exists;
       
+      if (isTesterNow) {
+        statusMessage.value = 'Verified. Granthaalaya unlocked!';
+      } else {
+        statusMessage.value = 'Email $email not found in testers collection.';
+      }
+
       if (isTesterNotifier.value != isTesterNow) {
         isTesterNotifier.value = isTesterNow;
         final prefs = await SharedPreferences.getInstance();
@@ -38,6 +48,7 @@ class TesterService {
         debugPrint('TesterService: Status updated -> isTester: $isTesterNow');
       }
     } catch (e) {
+      statusMessage.value = 'Firestore Error: $e';
       debugPrint('TesterService: Failed to check tester status: $e');
       // On failure, we retain the cached status so users don't lose access if offline
     }
