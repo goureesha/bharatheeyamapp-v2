@@ -137,9 +137,9 @@ class _LibraryScreenState extends State<LibraryScreen> {
       itemCount: _searchResults.length,
       itemBuilder: (context, i) {
         final r = _searchResults[i];
-        final Book book = r['book'];
-        final Chapter chapter = r['chapter'];
-        final Shloka shloka = r['shloka'];
+        final book = r['book'] as Book;
+        final chapter = r['chapter'] as Chapter;
+        final shloka = r['shloka'] as Shloka;
 
         return AppCard(
           margin: const EdgeInsets.only(bottom: 12),

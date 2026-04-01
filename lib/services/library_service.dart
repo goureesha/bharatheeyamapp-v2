@@ -18,7 +18,7 @@ class LibraryService {
       final booksString = await rootBundle.loadString('assets/data/books.json');
       final booksJson = json.decode(booksString);
       final booksList = booksJson['books'] as List;
-      _books = booksList.map((b) => Book.fromJson(b)).toList();
+      _books = booksList.map((b) => Book.fromJson(b as Map<String, dynamic>)).toList();
 
       // Load Amara Kosha
       final amaraString = await rootBundle.loadString('assets/data/amara_kosha.json');
@@ -26,7 +26,7 @@ class LibraryService {
       final wordsList = amaraJson['words'] as List;
       
       for (var w in wordsList) {
-        final entry = AmaraKoshaEntry.fromJson(w);
+        final entry = AmaraKoshaEntry.fromJson(w as Map<String, dynamic>);
         _amaraKosha[entry.word] = entry;
       }
 
