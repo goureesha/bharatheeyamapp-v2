@@ -148,6 +148,27 @@ class _ShlokaReaderScreenState extends State<ShlokaReaderScreen> {
                   // The Interactive Text
                   _buildInteractiveSanskrit(shloka.sanskrit),
                   
+                  if (shloka.kannada != null && shloka.kannada!.isNotEmpty) ...[
+                    const SizedBox(height: 16),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                      width: double.infinity,
+                      decoration: BoxDecoration(
+                        border: Border(left: BorderSide(color: kOrange, width: 4)),
+                        color: kOrange.withOpacity(0.05),
+                      ),
+                      child: Text(
+                        shloka.kannada!,
+                        style: TextStyle(
+                          fontSize: 17,
+                          fontWeight: FontWeight.w700,
+                          color: kText,
+                          height: 1.5,
+                        ),
+                      ),
+                    ),
+                  ],
+
                   const SizedBox(height: 16),
                   Container(
                     padding: const EdgeInsets.all(12),

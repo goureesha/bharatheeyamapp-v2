@@ -16,11 +16,25 @@ class _LibraryScreenState extends State<LibraryScreen> {
   List<Book> _books = [];
   List<Map<String, dynamic>> _searchResults = [];
   bool _isSearching = false;
+  String _selectedCategory = 'All';
 
   @override
   void initState() {
     super.initState();
     _books = LibraryService.books;
+  }
+
+  Set<String> get _categories {
+    final cats = {'All'};
+    for (var b in _books) {
+      if (b.category.isNotEmpty) cats.add(b.category);
+    }
+    return cats;
+  }
+
+  List<Book> get _filteredBooks {
+    if (_selectedCategory == 'All') return _books;
+    return _books.where((b) => b.category == _selectedCategory).toList();
   }
 
   void _onSearch(String query) {
@@ -89,6 +103,35 @@ class _LibraryScreenState extends State<LibraryScreen> {
               ),
             ),
           ),
+          
+          if (!_isSearching) // Only show category filters if not actively searching
+            SizedBox(
+              height: 50,
+              child: ListView(
+                scrollDirection: Axis.horizontal,
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                children: _categories.map((cat) {
+                  final isSelected = _selectedCategory == cat;
+                  return Padding(
+                    padding: const EdgeInsets.only(right: 8.0),
+                    child: ChoiceChip(
+                      label: Text(cat, style: TextStyle(
+                        color: isSelected ? Colors.white : kText,
+                        fontWeight: isSelected ? FontWeight.bold : FontWeight.normal
+                      )),
+                      selected: isSelected,
+                      selectedColor: kOrange,
+                      backgroundColor: kBg,
+                      side: BorderSide(color: isSelected ? kOrange : kBorder),
+                      onSelected: (val) {
+                        setState(() { _selectedCategory = cat; });
+                      },
+                    ),
+                  );
+                }).toList(),
+              ),
+            ),
+            
           Expanded(
             child: _isSearching 
               ? _buildSearchResults() 
@@ -100,15 +143,17 @@ class _LibraryScreenState extends State<LibraryScreen> {
   }
 
   Widget _buildBooksList() {
-    if (_books.isEmpty) {
+    final currentBooks = _filteredBooks;
+    
+    if (currentBooks.isEmpty) {
       return const Center(child: Text('ಗ್ರಂಥಾಲಯ ಖಾಲಿಯಾಗಿದೆ (Library is empty)'));
     }
 
     return ListView.builder(
       padding: const EdgeInsets.symmetric(horizontal: 16),
-      itemCount: _books.length,
+      itemCount: currentBooks.length,
       itemBuilder: (context, i) {
-        final book = _books[i];
+        final book = currentBooks[i];
         return AppCard(
           child: ListTile(
             leading: Icon(Icons.menu_book, color: kPurple2, size: 32),
