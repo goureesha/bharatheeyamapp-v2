@@ -736,10 +736,6 @@ class AstroCalculator {
         // Check if a Sankranti occurred: Sun must have changed Rashi
         final bool hasSankranti = (prevAmaRashi != nextAmaRashi);
         
-        // Month name is based on Sun's Rashi at the START of the lunar month
-        // Both Adhika and the following Nija month share the same prevAmaRashi,
-        // so they get the same month name (only prefix differs)
-        // Example: Adhika Jyeshtha → Nija Jyeshtha → Nija Ashadha
         final masaName = knChandraMasa[prevAmaRashi];
         chandraMasaRaw = masaName;
         
@@ -753,6 +749,24 @@ class AstroCalculator {
         chandraMasaRaw = knChandraMasa[sunRashiIdx];
       }
       
+      // Visha Praghati & Amruta Praghati (starting ghati within each nakshatra, 4 ghati duration)
+      // Index: 0=Ashwini..26=Revati
+      final vishaGhatis =  [50,24,30,40,14,11,30,20,32,30,20,18,22,20,14,14,10,14,20,24,20,10,10,18,16,24,30];
+      final amrutaGhatis = [42,48,54,52,38,35,54,44,56,54,44,43,45,44,38,38,34,38,44,48,44,34,34,43,40,48,54];
+      final vishaG = nIdx < 27 ? vishaGhatis[nIdx].toDouble() : 0.0;
+      final amrutaG = nIdx < 27 ? amrutaGhatis[nIdx].toDouble() : 0.0;
+
+      // Calculate actual clock timings for Visha/Amruta Ghati
+      // The fixed ghati values are scaled based on the actual duration of the Nakshatra for that specific day.
+      final nakDurationDays = je - js;
+      final jdVS = js + (nakDurationDays * (vishaG / 60.0));
+      final jdVE = js + (nakDurationDays * ((vishaG + 4.0) / 60.0)); // 4 ghati duration
+      final jdAS = js + (nakDurationDays * (amrutaG / 60.0));
+      final jdAE = js + (nakDurationDays * ((amrutaG + 4.0) / 60.0)); // 4 ghati duration
+
+      final vishaStr = '${formatTimeFromJd(jdVS, tzOffset: hourUtcOffset)} - ${formatTimeFromJd(jdVE, tzOffset: hourUtcOffset)}';
+      final amrutaStr = '${formatTimeFromJd(jdAS, tzOffset: hourUtcOffset)} - ${formatTimeFromJd(jdAE, tzOffset: hourUtcOffset)}';
+
       // Samvatsara (Shalivahana Shaka - changes at Ugadi/Chaitra Shukla Pratipada)
       final knSamvatsara = [
         'ಪ್ರಭವ','ವಿಭವ','ಶುಕ್ಲ','ಪ್ರಮೋದೂತ','ಪ್ರಜೋತ್ಪತ್ತಿ','ಆಂಗೀರಸ','ಶ್ರೀಮುಖ','ಭಾವ','ಯುವ','ಧಾತೃ',
@@ -774,13 +788,6 @@ class AstroCalculator {
       if (beforeUgadi) shakaYear -= 1;
       final samvatsaraIdx = ((shakaYear + 11) % 60);
       final samvatsara = '${knSamvatsara[samvatsaraIdx]} (ಶಕ $shakaYear)';
-      
-      // Visha Praghati & Amruta Praghati (starting ghati within each nakshatra, 4 ghati duration)
-      // Index: 0=Ashwini..26=Revati — traditional Panchanga values
-      final vishaGhatis =  [50,24,30,40,14,11,30,20,32,30,20,18,22,20,14,14,10,14,20,24,20,10,10,18,16,24,30];
-      final amrutaGhatis = [54,52,38,35,54,44,56,54,44,40,45,44,38,38,34,38,44,48,44,54,34,32,40,48,54,42,48];
-      final vishaG = nIdx < 27 ? vishaGhatis[nIdx] : 0;
-      final amrutaG = nIdx < 27 ? amrutaGhatis[nIdx] : 0;
 
       // === End Times, Divamana, Ratrimana, Rutu ===
       // Rutu — Vedic seasons based on Sun's rashi (solar month pairs)
@@ -857,8 +864,8 @@ class AstroCalculator {
         souraMasaGataDina: souraMasaGataDina,
         chandraMasa: chandraMasa,
         samvatsara: samvatsara,
-        vishaPraghati: '$vishaG - ${vishaG + 4} ಘಟಿ',
-        amrutaPraghati: '$amrutaG - ${amrutaG + 4} ಘಟಿ',
+        vishaPraghati: '${vishaG.toInt()}ನೇ ಘಟಿ ($vishaStr)',
+        amrutaPraghati: '${amrutaG.toInt()}ನೇ ಘಟಿ ($amrutaStr)',
         tithiEndTime: formatTimeFromJd(jdTEnd, tzOffset: hourUtcOffset),
         tithiEndsNextDay: isNextDay(jdBirth, jdTEnd),
         karanaEndTime: formatTimeFromJd(jdKEnd, tzOffset: hourUtcOffset),
