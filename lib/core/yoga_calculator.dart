@@ -17,6 +17,8 @@ class KundaliYoga {
     required this.contributingPlanets,
     required this.chartReference,
   });
+
+  String get type => isAuspicious ? 'शुभ' : 'अशुभ';
 }
 
 class YogaCalculator {
