@@ -1196,10 +1196,10 @@ class _MuhurtaScreenState extends State<MuhurtaScreen> {
                 children: [
                   Text('ಶಾಸ್ತ್ರ ಪ್ರಮಾಣ ಶ್ಲೋಕ (Reference):', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 11, color: Colors.amber.shade800)),
                   const SizedBox(height: 6),
-                  Text(rules.shloka!, style: const TextStyle(fontStyle: FontStyle.italic, fontSize: 11, color: Colors.black87, height: 1.4)),
+                  Text(rules.shloka!, style: TextStyle(fontStyle: FontStyle.italic, fontSize: 11, color: Colors.black87, height: 1.4)),
                   if (rules.shastraRef != null) ...[
                     const SizedBox(height: 4),
-                    Text('📖 ಆಕರ ಗ್ರಂಥ: ${rules.shastraRef}', style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 10, color: kPurple1)),
+                    Text('📖 ಆಕರ ಗ್ರಂಥ: ${rules.shastraRef}', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 10, color: kPurple1)),
                   ]
                 ],
               ),

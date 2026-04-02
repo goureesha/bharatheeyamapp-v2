@@ -200,6 +200,8 @@ const Map<MuhurtaEvent, MuhurtaEventRules> muhurtaRules = {
     requireShukla: true,
     allowedLagnas: null,
     requiredShuddhis: {ShuddhiType.lagna, ShuddhiType.dashama},
+    shloka: 'ಪುಷ್ಯೇ ಪುನರ್ವಸೌ ಹಸ್ತೇ ರೇವತ್ಯಾಂ ಶ್ರವಣೇ ತಥಾ ।\nಅನ್ನಪ್ರಾಶನ ಕರ್ಮಾಣಿ ಕುರ್ಯಾತ್ ಸಂಪತ್ಕರಾಣಿ ಹಿ ॥',
+    shastraRef: 'ಮುಹೂರ್ತ ಚಿಂತಾಮಣಿ (ಅನ್ನಪ್ರಾಶನ ಪ್ರಕರಣ)',
   ),
 
   // ── ನಾಮಕರಣ (Naming Ceremony) ──
