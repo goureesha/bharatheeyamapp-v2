@@ -109,8 +109,8 @@ class _DashboardScreenState extends State<DashboardScreen>
 
 
   static List<String> get _tabs => AppLocale.isHindi
-    ? ['कुंडली', 'स्फुट', 'आरूढ', 'दशा', 'पंचांग', 'भाव', 'षड्बल', 'अष्टक', 'टिप्पणी']
-    : ['ಕುಂಡಲಿ', 'ಸ್ಫುಟ', 'ಆರೂಢ', 'ದಶ', 'ಪಂಚಾಂಗ', 'ಭಾವ', 'ಷಡ್ಬಲ', 'ಅಷ್ಟಕ', 'ಟಿಪ್ಪಣಿ'];
+    ? ['कुंडली', 'स्फुट', 'आरूढ', 'दशा', 'पंचांग', 'भाव', 'भाव द्रेष्काण', 'षड्बल', 'अष्टक', 'टिप्पणी']
+    : ['ಕುಂಡಲಿ', 'ಸ್ಫುಟ', 'ಆರೂಢ', 'ದಶ', 'ಪಂಚಾಂಗ', 'ಭಾವ', 'ಭಾವ ದ್ರೇಕ್ಕಾಣ', 'ಷಡ್ಬಲ', 'ಅಷ್ಟಕ', 'ಟಿಪ್ಪಣಿ'];
 
   @override
   void initState() {
@@ -749,6 +749,7 @@ class _DashboardScreenState extends State<DashboardScreen>
                   _buildDashaTab(),
                   _buildPanchangTab(),
                   _buildBhavaTab(),
+                  _buildBhavaDrekkaanaTab(),
                   _buildShadbalaTab(),
                   _buildAshtakaTab(),
                   _buildNotesTab(),
@@ -1202,6 +1203,100 @@ class _DashboardScreenState extends State<DashboardScreen>
               if (allPersons.length > 1) Divider(thickness: 2, color: kBorder),
               const SizedBox(height: 12),
             ],
+          );
+        }).toList(),
+      ),
+    );
+  }
+  // ─────────────────────────────────────────────
+  // TAB 7.5: BHAVA DREKKAANA
+  // ─────────────────────────────────────────────
+  Widget _buildBhavaDrekkaanaTab() {
+    final allPersons = <Map<String, dynamic>>[
+      {'name': widget.name, 'result': widget.result},
+      ..._extraPersons.map((p) => {'name': p.name, 'result': p.result}),
+    ];
+
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        children: allPersons.map((person) {
+          final r = person['result'] as KundaliResult;
+          final pName = person['name'] as String;
+
+          final title = AppLocale.isHindi ? 'भाव द्रेष्काण' : 'ಭಾವ ದ್ರೇಕ್ಕಾಣ ಹಾಗೂ ವರ್ಗಗಳು';
+
+          final hBhava = tr('ಭಾವ');
+          final hD9 = AppLocale.isHindi ? 'नवांश' : 'ನವಾಂಶ';
+          final hD3D1 = AppLocale.isHindi ? 'राशि द्रेष्काण' : 'ರಾಶಿ ದ್ರೇಕ್ಕಾಣ';
+          final hD3D9 = AppLocale.isHindi ? 'नवांश द्रेष्काण' : 'ನವಾಂಶ ದ್ರೇಕ್ಕಾಣ';
+          final hD3D12 = AppLocale.isHindi ? 'द्वादशांश द्रेष्काण' : 'ದ್ವಾದಶಾಂಶ ದ್ರೇಕ್ಕಾಣ';
+
+          return Column(
+            children: [
+              if (allPersons.length > 1)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 8),
+                  child: Text(pName, style: TextStyle(fontSize: 15, fontWeight: FontWeight.w900, color: kTeal)),
+                ),
+              Text(title, style: TextStyle(
+                fontWeight: FontWeight.w800, fontSize: 15,
+                color: kPurple2)),
+              const SizedBox(height: 12),
+              
+              AppCard(
+                padding: EdgeInsets.zero,
+                child: Table(
+                  border: TableBorder(
+                    horizontalInside: BorderSide(color: kBorder),
+                    verticalInside: BorderSide(color: kBorder),
+                  ),
+                  columnWidths: const {
+                    0: FlexColumnWidth(1),
+                    1: FlexColumnWidth(1.2),
+                    2: FlexColumnWidth(1.4),
+                    3: FlexColumnWidth(1.4),
+                    4: FlexColumnWidth(1.4),
+                  },
+                  children: [
+                    TableRow(
+                      decoration: BoxDecoration(color: kPurple2.withOpacity(0.08), borderRadius: const BorderRadius.vertical(top: Radius.circular(16))),
+                      children: [
+                        Padding(padding: const EdgeInsets.all(8), child: Text(hBhava, textAlign: TextAlign.center, style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 11))),
+                        Padding(padding: const EdgeInsets.all(8), child: Text(hD9, textAlign: TextAlign.center, style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 11))),
+                        Padding(padding: const EdgeInsets.all(8), child: Text(hD3D1, textAlign: TextAlign.center, style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 11))),
+                        Padding(padding: const EdgeInsets.all(8), child: Text(hD3D9, textAlign: TextAlign.center, style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 11))),
+                        Padding(padding: const EdgeInsets.all(8), child: Text(hD3D12, textAlign: TextAlign.center, style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 11))),
+                      ],
+                    ),
+                    ...List.generate(12, (i) {
+                      final madhya = r.bhavas[i];
+                      final details = AstroCalculator.getPlanetDetail('ಲಗ್ನ', madhya, 0, 0);
+
+                      // Helper to translate 'Rashi N' format
+                      String formatPart(String raw) {
+                        final parts = raw.split(' ');
+                        if (parts.length == 2) {
+                          return '${tr(parts[0])} ${parts[1]}';
+                        }
+                        return tr(raw);
+                      }
+
+                      return TableRow(
+                        children: [
+                          Padding(padding: const EdgeInsets.all(8), child: Text('${i+1}', textAlign: TextAlign.center, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 13))),
+                          Padding(padding: const EdgeInsets.all(8), child: Text(tr(details['d9'] as String), textAlign: TextAlign.center, style: const TextStyle(fontSize: 11.5, fontWeight: FontWeight.w600))),
+                          Padding(padding: const EdgeInsets.all(8), child: Text(formatPart(details['subDrekD1'] as String), textAlign: TextAlign.center, style: const TextStyle(fontSize: 11.5, fontWeight: FontWeight.w600))),
+                          Padding(padding: const EdgeInsets.all(8), child: Text(formatPart(details['subDrekD9'] as String), textAlign: TextAlign.center, style: const TextStyle(fontSize: 11.5, fontWeight: FontWeight.w600))),
+                          Padding(padding: const EdgeInsets.all(8), child: Text(formatPart(details['subDrekD12'] as String), textAlign: TextAlign.center, style: const TextStyle(fontSize: 11.5, fontWeight: FontWeight.w600))),
+                        ],
+                      );
+                    }),
+                  ],
+                ),
+              ),
+              if (allPersons.length > 1) const SizedBox(height: 16),
+            ]
           );
         }).toList(),
       ),
