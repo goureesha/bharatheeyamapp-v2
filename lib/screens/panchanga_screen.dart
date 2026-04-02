@@ -449,7 +449,7 @@ class _PanchangaScreenState extends State<PanchangaScreen> {
                         _tableRow([tr('ಋತು'), tr(_panchang!.rutu)]),
                         _tableRow([tr('ವಾರ'), tr(_panchang!.vara)]),
                         _tableRow([tr('ತಿಥಿ'), _formatEnd(tr(_panchang!.tithi), _panchang!.tithiEndTime, _panchang!.tithiEndsNextDay)]),
-                        _tableRow([tr('ಚಂದ್ರ ನಕ್ಷತ್ರ'), _formatEnd(tr(_panchang!.nakshatra), _panchang!.nakEndTime, _panchang!.nakEndsNextDay)]),
+                        _tableRow([tr('ಚಂದ್ರ ನಕ್ಷತ್ರ'), _formatEnd('${tr(_panchang!.nakshatra)} - ${tr('ಪಾದ')} ${((_panchang!.nakPercent * 4).floor() + 1).clamp(1, 4)}', _panchang!.nakEndTime, _panchang!.nakEndsNextDay)]),
                         _tableRow([tr('ಯೋಗ'), _formatEnd(tr(_panchang!.yoga), _panchang!.yogaEndTime, _panchang!.yogaEndsNextDay)]),
                         _tableRow([tr('ಕರಣ'), _formatEnd(tr(_panchang!.karana), _panchang!.karanaEndTime, _panchang!.karanaEndsNextDay)]),
                         _tableRow([tr('ಚಂದ್ರ ರಾಶಿ'), tr(_panchang!.chandraRashi)]),
