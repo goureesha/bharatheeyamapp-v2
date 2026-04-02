@@ -388,51 +388,6 @@ class _PanchangaScreenState extends State<PanchangaScreen> {
                     _kv(tr('ದಿನಾಂಕ'), dateStr),
                   ])),
 
-                  // Events Card - ALWAYS show events for the selected day
-                  if (_currentEvents.isNotEmpty)
-                    AppCard(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            children: [
-                              Icon(Icons.festival, color: Colors.green, size: 22),
-                              const SizedBox(width: 8),
-                              Expanded(child: Text(tr('ಹಬ್ಬಗಳು ಮತ್ತು ವಿಶೇಷ ದಿನಗಳು'), 
-                                style: TextStyle(color: Colors.green, fontWeight: FontWeight.bold, fontSize: 16))),
-                            ],
-                          ),
-                          const SizedBox(height: 12),
-                          ..._currentEvents.map((e) => Padding(
-                            padding: const EdgeInsets.only(bottom: 12.0),
-                            child: Container(
-                              padding: const EdgeInsets.all(12),
-                              decoration: BoxDecoration(
-                                color: Colors.green.withOpacity(0.05),
-                                borderRadius: BorderRadius.circular(8),
-                                border: Border.all(color: Colors.green.withOpacity(0.3)),
-                              ),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(tr(e.name), style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: kPurple2)),
-                                  const SizedBox(height: 4),
-                                  Text(tr(e.description), style: TextStyle(color: kText, fontSize: 14)),
-                                  const SizedBox(height: 8),
-                                  Row(
-                                    mainAxisAlignment: MainAxisAlignment.end,
-                                    children: [
-                                      Text(tr('- ಆಕರ: '), style: TextStyle(fontSize: 12, color: Colors.grey[600])),
-                                      Flexible(child: Text(tr(e.source), style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: kPurple2))),
-                                    ],
-                                  ),
-                                ],
-                              ),
-                            ),
-                          )).toList(),
-                        ],
-                      ),
-                    ),
 
                   // Loading or Panchanga data
                   if (_loading)
