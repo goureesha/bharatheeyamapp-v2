@@ -31,9 +31,6 @@ class HomeScreen extends StatelessWidget {
       _Section(AppLocale.l('taranukoola'), 'Taranukoola', Icons.stars_rounded, kGreen, () {
         Navigator.push(context, MaterialPageRoute(builder: (_) => const TaranukoolaScreen()));
       }),
-      _Section('ಮುಹೂರ್ತ', 'Muhurta', Icons.access_time_filled, const Color(0xFF8E44AD), () {
-        Navigator.push(context, MaterialPageRoute(builder: (_) => const MuhurtaScreen()));
-      }),
       _Section(AppLocale.l('matchMaking'), 'Match Making', Icons.favorite, const Color(0xFFE53E3E), () {
         Navigator.push(context, MaterialPageRoute(builder: (_) => const MatchMakingScreen()));
       }),
@@ -49,12 +46,19 @@ class HomeScreen extends StatelessWidget {
       _Section(AppLocale.l('appointment'), 'Appointments', Icons.event_note, kTeal, () {
         Navigator.push(context, MaterialPageRoute(builder: (_) => const AppointmentScreen()));
       }),
-      _Section(AppLocale.isHindi ? 'अष्टमंगल' : 'ಅಷ್ಟಮಂಗಲ', 'Ashtamangala', Icons.auto_fix_high, const Color(0xFFE67E22), () {
-        Navigator.push(context, MaterialPageRoute(builder: (_) => const AshtamangalaScreen()));
-      }),
 
       _Section(AppLocale.l('settings'), 'Settings', Icons.settings, kMuted, () {
         Navigator.push(context, MaterialPageRoute(builder: (_) => const SettingsScreen()));
+      }),
+    ];
+
+    // Tester-only sections (incomplete features)
+    final testerSections = [
+      _Section('ಮುಹೂರ್ತ', 'Muhurta', Icons.access_time_filled, const Color(0xFF8E44AD), () {
+        Navigator.push(context, MaterialPageRoute(builder: (_) => const MuhurtaScreen()));
+      }),
+      _Section(AppLocale.isHindi ? 'अष्टमंगल' : 'ಅಷ್ಟಮಂಗಲ', 'Ashtamangala', Icons.auto_fix_high, const Color(0xFFE67E22), () {
+        Navigator.push(context, MaterialPageRoute(builder: (_) => const AshtamangalaScreen()));
       }),
     ];
 
@@ -103,14 +107,24 @@ class HomeScreen extends StatelessWidget {
                   // Sections Grid
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 16),
-                    child: GridView.count(
-                      crossAxisCount: tablet ? 3 : 2,
-                      mainAxisSpacing: 14,
-                      crossAxisSpacing: 14,
-                      childAspectRatio: tablet ? 1.1 : 1.15,
-                      shrinkWrap: true,
-                      physics: const NeverScrollableScrollPhysics(),
-                      children: sections.map((s) => _buildCard(s)).toList(),
+                    child: ValueListenableBuilder<bool>(
+                      valueListenable: TesterService.isTesterNotifier,
+                      builder: (context, isTester, _) {
+                        final allSections = List<_Section>.from(sections);
+                        if (isTester) {
+                          // Insert tester sections before Settings (last item)
+                          allSections.insertAll(allSections.length - 1, testerSections);
+                        }
+                        return GridView.count(
+                          crossAxisCount: tablet ? 3 : 2,
+                          mainAxisSpacing: 14,
+                          crossAxisSpacing: 14,
+                          childAspectRatio: tablet ? 1.1 : 1.15,
+                          shrinkWrap: true,
+                          physics: const NeverScrollableScrollPhysics(),
+                          children: allSections.map((s) => _buildCard(s)).toList(),
+                        );
+                      },
                     ),
                   ),
                   const SizedBox(height: 16),
