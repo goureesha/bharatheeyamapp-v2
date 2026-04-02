@@ -424,6 +424,12 @@ class _PanchangaScreenState extends State<PanchangaScreen> {
                       ]),
                     ),
 
+                    // ═══ Muhurta Timings ═══
+                    _buildSpecialMuhurtaCard(),
+
+                    // ═══ Ashubha Kala (Rahu/Yama/Gulika) ═══
+                    _buildKalaCard(),
+
                     // ═══ Hora (Day) ═══
                     _buildHoraCard(true),
 
@@ -601,12 +607,38 @@ class _PanchangaScreenState extends State<PanchangaScreen> {
     final varjyaStartMins = sr + (varjyaStartGhati * 24.0);
     final varjyaEndMins = varjyaStartMins + (4 * 24.0); // 4 ghatis = 96 min
     timings.add({
-      'name': tr('ವರ್ಜ್ಯ'), 'nameEn': 'Varjyam (Tyajya)',
+      'name': tr('ವರ್ಜ್ಯ (ತ್ಯಾಜ್ಯ)'), 'nameEn': 'Varjyam (Tyajya)',
       'start': _minutesToTimeStr(varjyaStartMins % (24 * 60)),
       'end': _minutesToTimeStr(varjyaEndMins % (24 * 60)),
       'icon': Icons.block, 'color': Colors.orange,
       'desc': tr('ವರ್ಜ್ಯ ಕಾಲ — ') + 'Avoid (nakshatra ghati: $varjyaStartGhati-${varjyaStartGhati + 4})',
     });
+
+    // ═══ Amrita Siddhi Yoga ═══
+    // Combinations of Weekday and Nakshatra
+    bool hasAmritaSiddhi = false;
+    final nIdx = nakIdx % 27;
+    switch (_weekday) {
+      case 0: hasAmritaSiddhi = (nIdx == 12 || nIdx == 18 || nIdx == 20); break; // Sun: Hasta, Moola, U.Ashadha
+      case 1: hasAmritaSiddhi = (nIdx == 21 || nIdx == 3 || nIdx == 4); break;   // Mon: Shravana, Rohini, Mrigashira
+      case 2: hasAmritaSiddhi = (nIdx == 0); break;                              // Tue: Ashwini
+      case 3: hasAmritaSiddhi = (nIdx == 16); break;                             // Wed: Anuradha
+      case 4: hasAmritaSiddhi = (nIdx == 7); break;                              // Thu: Pushya
+      case 5: hasAmritaSiddhi = (nIdx == 26); break;                             // Fri: Revati
+      case 6: hasAmritaSiddhi = (nIdx == 3); break;                              // Sat: Rohini
+    }
+
+    if (hasAmritaSiddhi) {
+      final varas = [tr('ಭಾನುವಾರ'), tr('ಸೋಮವಾರ'), tr('ಮಂಗಳವಾರ'), tr('ಬುಧವಾರ'), tr('ಗುರುವಾರ'), tr('ಶುಕ್ರವಾರ'), tr('ಶನಿವಾರ')];
+      final varaName = varas[_weekday];
+      final nakName = tr(_panchang!.nakshatra.split(' ')[0]); // Get exact nakshatra name without extra text
+      timings.add({
+        'name': tr('ಅಮೃತ ಸಿದ್ಧಿ ಯೋಗ'), 'nameEn': 'Amrita Siddhi Yoga',
+        'start': _minutesToTimeStr(sr % (24*60)), 'end': _minutesToTimeStr(ss % (24*60)),
+        'icon': Icons.diamond, 'color': Colors.green,
+        'desc': '$varaName + $nakName ನಕ್ಷತ್ರ ವಿಶೇಷ ಸಂಯೋಜನೆ ಅತ್ಯಂತ ಶುಭ',
+      });
+    }
 
     return AppCard(
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
