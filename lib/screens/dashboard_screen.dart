@@ -1770,7 +1770,7 @@ class _DashboardScreenState extends State<DashboardScreen>
     final r = widget.result;
     final yogas = YogaCalculator.scanYogas(r);
 
-    final Color yogaColor(String type) {
+    Color yogaColor(String type) {
       switch (type) {
         case 'शुभ': return kGreen;
         case 'अशुभ': return Colors.redAccent;
