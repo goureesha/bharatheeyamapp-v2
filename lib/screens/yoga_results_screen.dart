@@ -27,11 +27,16 @@ class _YogaResultsScreenState extends State<YogaResultsScreen> {
 
   void _showPlanetDetail(String planetName) {
     if (planetName == 'ಲಗ್ನ') return;
+    final info = widget.result.planets[planetName];
+    if (info == null) return;
+    final sun = widget.result.planets['ರವಿ'];
+    final detail = AstroCalculator.getPlanetDetail(
+      planetName, info.longitude, info.speed, sun?.longitude ?? 0);
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (_) => PlanetDetailSheet(planetName: planetName, result: widget.result),
+      builder: (_) => PlanetDetailSheet(pName: planetName, detail: detail),
     );
   }
 
