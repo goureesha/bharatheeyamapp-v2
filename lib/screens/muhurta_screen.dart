@@ -1180,24 +1180,6 @@ class _MuhurtaScreenState extends State<MuhurtaScreen> {
             const Text('• ಕಡ್ಡಾಯ ಶುದ್ಧಿ: ', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 12)),
             Expanded(child: Text(shuddhis, style: TextStyle(color: kPurple1, fontWeight: FontWeight.w700, fontSize: 12))),
           ]),
-          const SizedBox(height: 12),
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(
-              color: Colors.amber.withOpacity(0.08),
-              borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: Colors.amber.shade300, width: 0.5),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text('ಶಾಸ್ತ್ರ ಪ್ರಮಾಣ ಶ್ಲೋಕ (Reference):', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 11, color: Colors.amber.shade800)),
-                const SizedBox(height: 6),
-                const Text('ದ್ವಿತೀಯೇ ಪಂಚಮೇ ಚೈವ ಸಪ್ತಮೇ ನವಮೇ ತಥಾ ।\nಏಕಾದಶೇ ಗುರುಃ ಶ್ರೇಷ್ಠಃ ಶೇಷೇಷು ನೇಷ್ಟಕಾರಕಃ ॥\n(೨, ೫, ೭, ೯, ೧೧ನೇ ಸ್ಥಾನಗಳಲ್ಲಿ ಗುರು ಶುಭ.\n೧, ೩, ೬, ೧೦ನೇ ಸ್ಥಾನಗಳಲ್ಲಿ ಶಾಂತಿ ಪೂರ್ವಕ ಪೂಜ್ಯ.)\n\n📖 ಆಕರ ಗ್ರಂಥ: ಮುಹೂರ್ತ ಚಿಂತಾಮಣಿ (ಸಂಸ್ಕಾರ / ವಿವಾಹ ಪ್ರಕರಣ)', style: TextStyle(fontStyle: FontStyle.italic, fontSize: 11, color: Colors.black87, height: 1.4)),
-              ],
-            ),
-          ),
         ],
       ),
     );
