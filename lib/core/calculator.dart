@@ -372,27 +372,104 @@ class AstroCalculator {
 
       final List<DashaEntry> antars = [];
       DateTime cad = cur;
-      for (int j = 0; j < 9; j++) {
-        final ia = (im + j) % 9;
-        double adY = dashaYears[im] * dashaYears[ia] / 120.0;
-        if (i == 0) adY *= (1 - perc);
-        final adDays = (adY * 365.25).round();
-        final ae = cad.add(Duration(days: adDays));
-        
-        final List<DashaEntry> pratyantars = [];
-        DateTime cpd = cad;
-        for (int k = 0; k < 9; k++) {
-          final ip = (ia + k) % 9;
-          double pdY = (dashaYears[im] * dashaYears[ia] * dashaYears[ip]) / (120.0 * 120.0);
-          if (i == 0) pdY *= (1 - perc);
-          final pdDays = (pdY * 365.25).round();
-          final pe = cpd.add(Duration(days: pdDays));
-          pratyantars.add(DashaEntry(lord: dashaLords[ip], start: cpd, end: pe));
-          cpd = pe;
-        }
 
-        antars.add(DashaEntry(lord: dashaLords[ia], start: cad, end: ae, antardashas: pratyantars));
-        cad = ae;
+      if (i == 0) {
+        // FIRST MAHADASHA: find which bhukti we're born into
+        final totalMdYears = dashaYears[im].toDouble();
+        final elapsedYears = totalMdYears * perc;
+        double cumulative = 0;
+
+        for (int j = 0; j < 9; j++) {
+          final ia = (im + j) % 9;
+          final fullAdY = totalMdYears * dashaYears[ia] / 120.0;
+          final nextCum = cumulative + fullAdY;
+
+          if (nextCum <= elapsedYears) {
+            // This bhukti is fully elapsed before birth — skip it
+            cumulative = nextCum;
+            continue;
+          }
+
+          // This bhukti is either partially elapsed or fully remaining
+          double adY;
+          double adPerc; // fraction elapsed within this bhukti
+          if (cumulative < elapsedYears) {
+            // Partially elapsed — only show the balance
+            adPerc = (elapsedYears - cumulative) / fullAdY;
+            adY = fullAdY * (1 - adPerc);
+          } else {
+            // Fully remaining
+            adPerc = 0;
+            adY = fullAdY;
+          }
+          cumulative = nextCum;
+
+          final adDays = (adY * 365.25).round();
+          final ae = cad.add(Duration(days: adDays));
+
+          // Pratyantara dashas within this bhukti
+          final List<DashaEntry> pratyantars = [];
+          DateTime cpd = cad;
+          final fullAdYForPd = totalMdYears * dashaYears[ia] / 120.0;
+
+          if (adPerc > 0) {
+            // First remaining bhukti — also need partial pratyantara
+            final elapsedAdYears = fullAdYForPd * adPerc;
+            double pdCum = 0;
+            for (int k = 0; k < 9; k++) {
+              final ip = (ia + k) % 9;
+              final fullPdY = (totalMdYears * dashaYears[ia] * dashaYears[ip]) / (120.0 * 120.0);
+              final nextPdCum = pdCum + fullPdY;
+              if (nextPdCum <= elapsedAdYears) { pdCum = nextPdCum; continue; }
+              double pdY;
+              if (pdCum < elapsedAdYears) {
+                pdY = fullPdY * (1 - (elapsedAdYears - pdCum) / fullPdY);
+              } else {
+                pdY = fullPdY;
+              }
+              pdCum = nextPdCum;
+              final pdDays = (pdY * 365.25).round();
+              final pe = cpd.add(Duration(days: pdDays));
+              pratyantars.add(DashaEntry(lord: dashaLords[ip], start: cpd, end: pe));
+              cpd = pe;
+            }
+          } else {
+            // Full bhukti — full pratyantaras
+            for (int k = 0; k < 9; k++) {
+              final ip = (ia + k) % 9;
+              double pdY = (totalMdYears * dashaYears[ia] * dashaYears[ip]) / (120.0 * 120.0);
+              final pdDays = (pdY * 365.25).round();
+              final pe = cpd.add(Duration(days: pdDays));
+              pratyantars.add(DashaEntry(lord: dashaLords[ip], start: cpd, end: pe));
+              cpd = pe;
+            }
+          }
+
+          antars.add(DashaEntry(lord: dashaLords[ia], start: cad, end: ae, antardashas: pratyantars));
+          cad = ae;
+        }
+      } else {
+        // SUBSEQUENT MAHADASHAS: full bhuktis
+        for (int j = 0; j < 9; j++) {
+          final ia = (im + j) % 9;
+          double adY = dashaYears[im] * dashaYears[ia] / 120.0;
+          final adDays = (adY * 365.25).round();
+          final ae = cad.add(Duration(days: adDays));
+
+          final List<DashaEntry> pratyantars = [];
+          DateTime cpd = cad;
+          for (int k = 0; k < 9; k++) {
+            final ip = (ia + k) % 9;
+            double pdY = (dashaYears[im] * dashaYears[ia] * dashaYears[ip]) / (120.0 * 120.0);
+            final pdDays = (pdY * 365.25).round();
+            final pe = cpd.add(Duration(days: pdDays));
+            pratyantars.add(DashaEntry(lord: dashaLords[ip], start: cpd, end: pe));
+            cpd = pe;
+          }
+
+          antars.add(DashaEntry(lord: dashaLords[ia], start: cad, end: ae, antardashas: pratyantars));
+          cad = ae;
+        }
       }
 
       result.add(DashaEntry(
