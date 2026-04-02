@@ -419,12 +419,6 @@ class _PanchangaScreenState extends State<PanchangaScreen> {
                       ]),
                     ),
 
-                    // ═══ Muhurta Timings ═══
-                    _buildSpecialMuhurtaCard(),
-
-                    // ═══ Ashubha Kala (Rahu/Yama/Gulika) ═══
-                    _buildKalaCard(),
-
                     // ═══ Hora (Day) ═══
                     _buildHoraCard(true),
 
