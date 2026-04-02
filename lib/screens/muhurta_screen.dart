@@ -1194,7 +1194,7 @@ class _MuhurtaScreenState extends State<MuhurtaScreen> {
               children: [
                 Text('ಶಾಸ್ತ್ರ ಪ್ರಮಾಣ ಶ್ಲೋಕ (Reference):', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 11, color: Colors.amber.shade800)),
                 const SizedBox(height: 6),
-                const Text('ದ್ವಿತೀಯೇ ಪಂಚಮೇ ಚೈವ ಸಪ್ತಮೇ ನವಮೇ ತಥಾ ।\nಏಕಾದಶೇ ಗುರುಃ ಶ್ರೇಷ್ಠಃ ಶೇಷೇಷು ನೇಷ್ಟಕಾರಕಃ ॥\n(೨, ೫, ೭, ೯, ೧೧ನೇ ಸ್ಥಾನಗಳಲ್ಲಿ ಗುರು ಶುಭ.\n೧, ೩, ೬, ೧೦ನೇ ಸ್ಥಾನಗಳಲ್ಲಿ ಶಾಂತಿ ಪೂರ್ವಕ ಪೂಜ್ಯ.)', style: TextStyle(fontStyle: FontStyle.italic, fontSize: 11, color: Colors.black87, height: 1.4)),
+                const Text('ದ್ವಿತೀಯೇ ಪಂಚಮೇ ಚೈವ ಸಪ್ತಮೇ ನವಮೇ ತಥಾ ।\nಏಕಾದಶೇ ಗುರುಃ ಶ್ರೇಷ್ಠಃ ಶೇಷೇಷು ನೇಷ್ಟಕಾರಕಃ ॥\n(೨, ೫, ೭, ೯, ೧೧ನೇ ಸ್ಥಾನಗಳಲ್ಲಿ ಗುರು ಶುಭ.\n೧, ೩, ೬, ೧೦ನೇ ಸ್ಥಾನಗಳಲ್ಲಿ ಶಾಂತಿ ಪೂರ್ವಕ ಪೂಜ್ಯ.)\n\n📖 ಆಕರ ಗ್ರಂಥ: ಮುಹೂರ್ತ ಚಿಂತಾಮಣಿ (ಸಂಸ್ಕಾರ / ವಿವಾಹ ಪ್ರಕರಣ)', style: TextStyle(fontStyle: FontStyle.italic, fontSize: 11, color: Colors.black87, height: 1.4)),
               ],
             ),
           ),
