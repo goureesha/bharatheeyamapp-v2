@@ -54,9 +54,7 @@ class HomeScreen extends StatelessWidget {
       _Section(AppLocale.isHindi ? 'अष्टमंगल' : 'ಅಷ್ಟಮಂಗಲ', 'Ashtamangala', Icons.auto_fix_high, const Color(0xFFE67E22), () {
         Navigator.push(context, MaterialPageRoute(builder: (_) => const AshtamangalaScreen()));
       }),
-      _Section(AppLocale.isHindi ? 'योग' : 'ಯೋಗ', 'Yoga Scanner', Icons.self_improvement, const Color(0xFF2980B9), () {
-        Navigator.push(context, MaterialPageRoute(builder: (_) => const YogaInputScreen()));
-      }),
+
       _Section(AppLocale.l('settings'), 'Settings', Icons.settings, kMuted, () {
         Navigator.push(context, MaterialPageRoute(builder: (_) => const SettingsScreen()));
       }),
@@ -115,6 +113,11 @@ class HomeScreen extends StatelessWidget {
                           currentSections.add(
                             _Section('ಗ್ರಂಥಾಲಯ', 'Books & Kosha', Icons.library_books, Colors.brown, () {
                               Navigator.push(context, MaterialPageRoute(builder: (_) => const LibraryScreen()));
+                            }),
+                          );
+                          currentSections.add(
+                            _Section(AppLocale.isHindi ? 'योग' : 'ಯೋಗ', 'Yoga Scanner', Icons.self_improvement, const Color(0xFF2980B9), () {
+                              Navigator.push(context, MaterialPageRoute(builder: (_) => const YogaInputScreen()));
                             }),
                           );
                         }
