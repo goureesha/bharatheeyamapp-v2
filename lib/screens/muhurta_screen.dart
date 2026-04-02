@@ -277,6 +277,7 @@ class _MuhurtaScreenState extends State<MuhurtaScreen> {
             karanaName: p.karana,
             moonRashiIndex: moonRashiIdx,
             jupiterRashiIndex: jupiterRashiIdx,
+            sunRashiIndex: result.planets['ರವಿ']?.rashiIndex ?? 0,
             janmaNakIdx1: _nakIdx1!,
             janmaRashiIdx1: _rashiIdx1!,
             janmaNakIdx2: _isTwoPersonMode ? _nakIdx2 : null,

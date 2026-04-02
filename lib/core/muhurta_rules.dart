@@ -74,6 +74,8 @@ class MuhurtaEventRules {
   final bool avoidVishti;
   /// Only Shukla Paksha (tithiIndex 0-14)
   final bool requireShukla;
+  /// Requires Uttarayana (Sun in Makara to Mithuna, i.e., indices 9, 10, 11, 0, 1, 2)
+  final bool requireUttarayana;
   /// Allowed lagna rashi indices (0-11). Null = not checked in Phase 1.
   final List<int>? allowedLagnas;
   /// Which shuddhi checks this event requires
@@ -90,6 +92,7 @@ class MuhurtaEventRules {
     this.allowedVaras,
     this.avoidVishti = true,
     this.requireShukla = false,
+    this.requireUttarayana = false,
     this.allowedLagnas,
     this.requiredShuddhis = const {ShuddhiType.lagna}, // default: at least lagna
     this.shloka,
@@ -130,6 +133,7 @@ const Map<MuhurtaEvent, MuhurtaEventRules> muhurtaRules = {
     allowedNakshatras: [0, 3, 4, 6, 7, 11, 12, 13, 14, 16, 20, 21, 22, 23, 25, 26],
     allowedVaras: [1, 3, 4, 5],
     avoidVishti: true,
+    requireUttarayana: true,
     allowedLagnas: null,
     requiredShuddhis: {ShuddhiType.lagna, ShuddhiType.ashtama},
     shloka: '''೧. ನಕ್ಷತ್ರ ನಿಯಮ:
@@ -153,6 +157,7 @@ const Map<MuhurtaEvent, MuhurtaEventRules> muhurtaRules = {
     allowedNakshatras: [3, 4, 11, 13, 16, 20, 25, 26],
     allowedVaras: [1, 3, 4, 5],
     avoidVishti: true,
+    requireUttarayana: true,
     requireShukla: true,
     allowedLagnas: [1, 4, 7, 10], // Sthira rashis
     requiredShuddhis: {ShuddhiType.lagna, ShuddhiType.ashtama, ShuddhiType.chandraSaptama},
@@ -176,6 +181,7 @@ const Map<MuhurtaEvent, MuhurtaEventRules> muhurtaRules = {
     allowedNakshatras: [3, 4, 11, 12, 13, 14, 16, 20, 21, 25, 26],
     allowedVaras: [1, 3, 4, 5],
     avoidVishti: true,
+    requireUttarayana: true,
     requireShukla: true,
     allowedLagnas: [1, 4, 7, 10], // Sthira
     requiredShuddhis: {ShuddhiType.lagna, ShuddhiType.ashtama},
@@ -189,6 +195,7 @@ const Map<MuhurtaEvent, MuhurtaEventRules> muhurtaRules = {
     allowedNakshatras: [0, 3, 4, 6, 7, 11, 12, 13, 14, 20, 21, 22, 25, 26],
     allowedVaras: [3, 4],
     avoidVishti: true,
+    requireUttarayana: true,
     requireShukla: true,
     allowedLagnas: null,
     requiredShuddhis: {ShuddhiType.lagna},
@@ -293,6 +300,7 @@ const Map<MuhurtaEvent, MuhurtaEventRules> muhurtaRules = {
     allowedNakshatras: [0, 4, 6, 7, 12, 13, 14, 21, 26],
     allowedVaras: [1, 3, 4, 5],
     avoidVishti: true,
+    requireUttarayana: true,
     requireShukla: true,
     allowedLagnas: null,
     requiredShuddhis: {ShuddhiType.lagna, ShuddhiType.ashtama, ShuddhiType.chandraSaptama},
@@ -316,6 +324,7 @@ const Map<MuhurtaEvent, MuhurtaEventRules> muhurtaRules = {
     allowedNakshatras: [0, 3, 4, 6, 7, 11, 12, 13, 14, 16, 20, 21, 25, 26],
     allowedVaras: [1, 3, 4, 5],
     avoidVishti: true,
+    requireUttarayana: true,
     requireShukla: true,
     allowedLagnas: [1, 4, 7, 10], // Sthira
     requiredShuddhis: {ShuddhiType.lagna, ShuddhiType.ashtama},
@@ -792,6 +801,7 @@ MuhurtaDayResult evaluateMuhurta({
   required String karanaName,
   required int moonRashiIndex,    // 0-11
   required int jupiterRashiIndex, // 0-11
+  required int sunRashiIndex,     // 0-11 (for Ayana check)
   // Person 1
   required int janmaNakIdx1,
   required int janmaRashiIdx1,
@@ -863,6 +873,20 @@ MuhurtaDayResult evaluateMuhurta({
     passed: nakPassed,
     note: hasAmritaSiddhi ? 'ಅಮೃತ ಸಿದ್ಧಿ: $varaName + $cleanNakName ನಕ್ಷತ್ರ' : null,
   ));
+
+  // ── 2B. AYANA CHECK (10 points) ──
+  if (rules.requireUttarayana) {
+    maxPoints += 10;
+    // sidereal sun in Makara, Kumbha, Meena, Mesha, Vrishabha, Mithuna (indices 9,10,11,0,1,2)
+    bool isUttarayana = (sunRashiIndex >= 9 || sunRashiIndex <= 2);
+    if (!isUttarayana) doshas.add('ಅಯನ ದೋಷ (ದಕ್ಷಿಣಾಯನ)');
+    if (isUttarayana) totalPoints += 10;
+    checks.add(MuhurtaCheckItem(
+      label: 'ಅಯನ (ಉತ್ತರಾಯಣ ಮಾತ್ರ)',
+      value: isUttarayana ? 'ಉತ್ತರಾಯಣ' : 'ದಕ್ಷಿಣಾಯನ',
+      passed: isUttarayana,
+    ));
+  }
 
   // ── 3. VARA CHECK (10 points) ──
   maxPoints += 10;
