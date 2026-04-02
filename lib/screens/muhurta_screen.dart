@@ -1123,6 +1123,68 @@ class _MuhurtaScreenState extends State<MuhurtaScreen> {
     );
   }
 
+  Widget _buildEventRulesCard() {
+    final rules = muhurtaRules[_selectedEvent];
+    if (rules == null) return const SizedBox();
+
+    String tithiText = rules.allowedTithis == null ? 'ಎಲ್ಲಾ ತಿಥಿಗಳು (All Tithis)' : rules.allowedTithis!.map((i) => knTithi[i]).join(', ');
+    if (rules.requireShukla) tithiText = 'ಶುಕ್ಲ ಪಕ್ಷ ಮಾತ್ರ: $tithiText';
+
+    String nakText = rules.allowedNakshatras == null ? 'ಎಲ್ಲಾ ನಕ್ಷತ್ರಗಳು (All)' : rules.allowedNakshatras!.map((i) => knNak[i].split(' ')[0]).join(', ');
+    
+    String varaText = rules.allowedVaras == null ? 'ಎಲ್ಲಾ ವಾರಗಳು (All)' : rules.allowedVaras!.map((i) => knVara[i].replaceAll('ವಾರ', '')).join(', ');
+
+    final shuddhis = rules.requiredShuddhis.map((s) {
+      switch (s) {
+        case ShuddhiType.lagna: return 'ಲಗ್ನ';
+        case ShuddhiType.saptama: return 'ಸಪ್ತಮ';
+        case ShuddhiType.ashtama: return 'ಅಷ್ಟಮ';
+        case ShuddhiType.dashama: return 'ದಶಮ';
+        case ShuddhiType.chandraSaptama: return 'ಚಂದ್ರ ಸಪ್ತಮ';
+      }
+    }).join(' + ');
+
+    return Theme(
+      data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
+      child: ExpansionTile(
+        title: Text('ಶಾಸ್ತ್ರೋಕ್ತ ನಿಯಮಗಳು (Muhurta Rules)', style: TextStyle(fontWeight: FontWeight.w800, color: kPurple1, fontSize: 13)),
+        collapsedBackgroundColor: kPurple1.withOpacity(0.05),
+        backgroundColor: kCard,
+        iconColor: kPurple1,
+        collapsedIconColor: kPurple1,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8), side: BorderSide(color: kPurple1.withOpacity(0.3))),
+        collapsedShape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8), side: BorderSide(color: kBorder)),
+        childrenPadding: const EdgeInsets.only(left: 12, right: 12, bottom: 12),
+        children: [
+          Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            const Text('• ತಿಥಿಗಳು: ', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 12)),
+            Expanded(child: Text(tithiText, style: TextStyle(color: kMuted, fontSize: 12))),
+          ]),
+          const SizedBox(height: 6),
+          Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            const Text('• ನಕ್ಷತ್ರಗಳು: ', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 12)),
+            Expanded(child: Text(nakText, style: TextStyle(color: kMuted, fontSize: 12))),
+          ]),
+          const SizedBox(height: 6),
+          Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            const Text('• ವಾರಗಳು: ', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 12)),
+            Expanded(child: Text(varaText, style: TextStyle(color: kMuted, fontSize: 12))),
+          ]),
+          const SizedBox(height: 6),
+          Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            const Text('• ಲಗ್ನಗಳು: ', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 12)),
+            Expanded(child: Text(rules.allowedLagnas == null ? 'ಸಾಮಾನ್ಯ (ಶುದ್ಧಿ ಆಧಾರಿತ)' : rules.allowedLagnas!.map((i) => knRashi[i]).join(', '), style: TextStyle(color: kMuted, fontSize: 12))),
+          ]),
+          const SizedBox(height: 6),
+          Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            const Text('• ಕಡ್ಡಾಯ ಶುದ್ಧಿ: ', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 12)),
+            Expanded(child: Text(shuddhis, style: TextStyle(color: kPurple1, fontWeight: FontWeight.w700, fontSize: 12))),
+          ]),
+        ],
+      ),
+    );
+  }
+
   String _getMonthName(int month) {
     const months = ['ಜನವರಿ', 'ಫೆಬ್ರವರಿ', 'ಮಾರ್ಚ್', 'ಏಪ್ರಿಲ್', 'ಮೇ', 'ಜೂನ್',
                      'ಜುಲೈ', 'ಆಗಸ್ಟ್', 'ಸೆಪ್ಟೆಂಬರ್', 'ಅಕ್ಟೋಬರ್', 'ನವೆಂಬರ್', 'ಡಿಸೆಂಬರ್'];
@@ -1325,6 +1387,9 @@ class _MuhurtaScreenState extends State<MuhurtaScreen> {
                         ),
                       ),
                     ),
+
+                    const SizedBox(height: 12),
+                    _buildEventRulesCard(),
 
                     const SizedBox(height: 16),
 

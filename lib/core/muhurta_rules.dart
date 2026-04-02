@@ -643,11 +643,12 @@ MuhurtaDayResult evaluateMuhurta({
   // Check Amrita Siddhi Yoga override
   bool hasAmritaSiddhi = false;
   final amritaList = amritaSiddhiTable[varaIndex];
+  final cleanNakName = nakshatraName.split(' ')[0]; // avoid full string
   if (amritaList != null && amritaList.contains(nakshatraIndex)) {
     hasAmritaSiddhi = true;
     if (!nakPassed) {
       nakPassed = true;
-      doshaBhangas.add('ಅಮೃತ ಸಿದ್ಧಿ ಯೋಗ — ನಕ್ಷತ್ರ ದೋಷ ಭಂಗ');
+      doshaBhangas.add('ಅಮೃತ ಸಿದ್ಧಿ ಯೋಗ ($varaName + $cleanNakName) — ನಕ್ಷತ್ರ ದೋಷ ಭಂಗ');
     }
   }
   if (nakPassed) totalPoints += 15;
@@ -655,7 +656,7 @@ MuhurtaDayResult evaluateMuhurta({
     label: 'ನಕ್ಷತ್ರ',
     value: nakshatraName,
     passed: nakPassed,
-    note: hasAmritaSiddhi ? 'ಅಮೃತ ಸಿದ್ಧಿ ಯೋಗ' : null,
+    note: hasAmritaSiddhi ? 'ಅಮೃತ ಸಿದ್ಧಿ: $varaName + $cleanNakName ನಕ್ಷತ್ರ' : null,
   ));
 
   // ── 3. VARA CHECK (10 points) ──
@@ -776,6 +777,10 @@ MuhurtaDayResult evaluateMuhurta({
   if (hasAmritaSiddhi) {
     totalPoints += 5; // Bonus
     maxPoints += 5;
+    final txt = 'ಅಮೃತ ಸಿದ್ಧಿ ಯೋಗ: $varaName + $cleanNakName';
+    if (!doshaBhangas.any((d) => d.contains('ಅಮೃತ ಸಿದ್ಧಿ'))) {
+      doshaBhangas.add(txt);
+    }
   }
 
   // ── ABHIJIT MUHURTA BONUS (5 points) ──
