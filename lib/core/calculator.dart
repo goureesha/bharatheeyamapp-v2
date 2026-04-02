@@ -775,11 +775,12 @@ class AstroCalculator {
       final samvatsaraIdx = ((shakaYear + 11) % 60);
       final samvatsara = '${knSamvatsara[samvatsaraIdx]} (ಶಕ $shakaYear)';
       
-      // Visha Praghati & Amruta Praghati
-      final vishaGhatis = [30,28,22,20,18,26,24,10,14,12,8,6,4,2,30,22,20,14,12,10,8,6,4,2,28,26,24,22,20,18];
-      final amrutaGhatis = [6,8,10,4,28,26,20,22,12,16,18,14,24,2,6,8,10,4,28,26,20,22,12,16,18,14,24,2,6,8];
-      final vishaG = nIdx < vishaGhatis.length ? vishaGhatis[nIdx] : 0;
-      final amrutaG = nIdx < amrutaGhatis.length ? amrutaGhatis[nIdx] : 0;
+      // Visha Praghati & Amruta Praghati (starting ghati within each nakshatra, 4 ghati duration)
+      // Index: 0=Ashwini..26=Revati — traditional Panchanga values
+      final vishaGhatis =  [50,24,30,40,14,11,30,20,32,30,20,18,22,20,14,14,10,14,20,24,20,10,10,18,16,24,30];
+      final amrutaGhatis = [54,52,38,35,54,44,56,54,44,40,45,44,38,38,34,38,44,48,44,54,34,32,40,48,54,42,48];
+      final vishaG = nIdx < 27 ? vishaGhatis[nIdx] : 0;
+      final amrutaG = nIdx < 27 ? amrutaGhatis[nIdx] : 0;
 
       // === End Times, Divamana, Ratrimana, Rutu ===
       // Rutu — Vedic seasons based on Sun's rashi (solar month pairs)
@@ -856,8 +857,8 @@ class AstroCalculator {
         souraMasaGataDina: souraMasaGataDina,
         chandraMasa: chandraMasa,
         samvatsara: samvatsara,
-        vishaPraghati: '$vishaG ಘಟಿ',
-        amrutaPraghati: '$amrutaG ಘಟಿ',
+        vishaPraghati: '$vishaG - ${vishaG + 4} ಘಟಿ',
+        amrutaPraghati: '$amrutaG - ${amrutaG + 4} ಘಟಿ',
         tithiEndTime: formatTimeFromJd(jdTEnd, tzOffset: hourUtcOffset),
         tithiEndsNextDay: isNextDay(jdBirth, jdTEnd),
         karanaEndTime: formatTimeFromJd(jdKEnd, tzOffset: hourUtcOffset),
