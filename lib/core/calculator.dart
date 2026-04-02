@@ -842,7 +842,7 @@ class AstroCalculator {
         gataGhati: gataGhati,
         paramaGhati: paramaGhati,
         shesha: sheshaGhati,
-        dashaBalance: '${bal.floor()}ವ ${((bal % 1) * 12).floor()}ತಿ',
+        dashaBalance: '${bal.floor()}ವ ${((bal % 1) * 12).floor()}ತಿ ${((((bal % 1) * 12) % 1) * 30).floor()}ದಿ',
         dashaLord: dashaLord,
         nakshatraIndex: nIdx,
         nakPercent: perc,
