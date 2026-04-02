@@ -385,10 +385,23 @@ bool calculateChandraBala(int janmaRashiIdx, int moonRashiIdx) {
 // ============================================================
 // GURU BALA
 // ============================================================
-/// Jupiter's transit rashi counted from birth rashi. Good in 2,5,7,9,11.
-bool calculateGuruBala(int janmaRashiIdx, int jupiterRashiIdx) {
+class BalaScore {
+  final int score; // 2=Shubha, 1=Poojya, 0=Ashubha
+  final String label;
+  BalaScore(this.score, this.label);
+}
+
+/// Jupiter's transit rashi counted from birth rashi. 
+/// Shubha: 2, 5, 7, 9, 11. Poojya: 1, 3, 6, 10. Ashubha: 4, 8, 12.
+BalaScore calculateGuruBala(int janmaRashiIdx, int jupiterRashiIdx) {
   final count = ((jupiterRashiIdx - janmaRashiIdx + 12) % 12) + 1; // 1-indexed
-  return const [2, 5, 7, 9, 11].contains(count);
+  if (const [2, 5, 7, 9, 11].contains(count)) {
+    return BalaScore(2, 'ಶುಭ');
+  } else if (const [1, 3, 6, 10].contains(count)) {
+    return BalaScore(1, 'ಪೂಜ್ಯ (ಶಾಂತಿ ಅಗತ್ಯ)');
+  } else {
+    return BalaScore(0, 'ಅಶುಭ');
+  }
 }
 
 
@@ -531,7 +544,7 @@ class MuhurtaCheckItem {
 class PersonBalaResult {
   final TaraResult taraBala;
   final bool chandraBala;
-  final bool guruBala;
+  final BalaScore guruBala;
 
   PersonBalaResult({
     required this.taraBala,
@@ -738,11 +751,16 @@ MuhurtaDayResult evaluateMuhurta({
 
   // Guru Bala (Person 1) — 10 pts
   maxPoints += 10;
-  if (guru1) totalPoints += 10;
+  if (guru1.score == 2) {
+    totalPoints += 10;
+  } else if (guru1.score == 1) {
+    totalPoints += 5; // Poojya gives partial points
+    doshaBhangas.add('ಗುರು ಬಲ: ಪೂಜ್ಯ ಸ್ಥಾನ (ಶಾಂತಿ ಮಾಡಿ)');
+  }
 
   checks.add(MuhurtaCheckItem(label: 'ತಾರಾ ಬಲ', value: tara1.taraName, passed: tara1Passed));
   checks.add(MuhurtaCheckItem(label: 'ಚಂದ್ರ ಬಲ', value: chandra1 ? '✓' : '✗', passed: chandra1));
-  checks.add(MuhurtaCheckItem(label: 'ಗುರು ಬಲ', value: guru1 ? '✓' : '✗', passed: guru1));
+  checks.add(MuhurtaCheckItem(label: 'ಗುರು ಬಲ', value: guru1.label, passed: guru1.score > 0));
 
   // Person 2 (if provided)
   if (janmaNakIdx2 != null && janmaRashiIdx2 != null) {
@@ -760,7 +778,13 @@ MuhurtaDayResult evaluateMuhurta({
     }
     if (tara2Passed) totalPoints += 10;
     if (chandra2) totalPoints += 10;
-    if (guru2) totalPoints += 10;
+    
+    if (guru2.score == 2) {
+      totalPoints += 10;
+    } else if (guru2.score == 1) {
+      totalPoints += 5;
+      doshaBhangas.add('ಗುರು ಬಲ (ವ್ಯಕ್ತಿ 2): ಪೂಜ್ಯ ಸ್ಥಾನ (ಶಾಂತಿ ಮಾಡಿ)');
+    }
 
     // Tara dosha bhanga for Vivaha: same rashi lord cancels
     if (event == MuhurtaEvent.vivaha) {
