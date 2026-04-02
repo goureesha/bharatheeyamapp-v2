@@ -15,7 +15,6 @@ import 'vedic_clock_screen.dart';
 import 'appointment_screen.dart';
 import 'ashtamangala_screen.dart';
 import 'library_screen.dart';
-import 'yoga_input_screen.dart';
 import '../services/tester_service.dart';
 
 class HomeScreen extends StatelessWidget {
@@ -113,11 +112,6 @@ class HomeScreen extends StatelessWidget {
                           currentSections.add(
                             _Section('ಗ್ರಂಥಾಲಯ', 'Books & Kosha', Icons.library_books, Colors.brown, () {
                               Navigator.push(context, MaterialPageRoute(builder: (_) => const LibraryScreen()));
-                            }),
-                          );
-                          currentSections.add(
-                            _Section(AppLocale.isHindi ? 'योग' : 'ಯೋಗ', 'Yoga Scanner', Icons.self_improvement, const Color(0xFF2980B9), () {
-                              Navigator.push(context, MaterialPageRoute(builder: (_) => const YogaInputScreen()));
                             }),
                           );
                         }
