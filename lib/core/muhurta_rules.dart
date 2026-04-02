@@ -185,8 +185,20 @@ const Map<MuhurtaEvent, MuhurtaEventRules> muhurtaRules = {
     requireShukla: true,
     allowedLagnas: [1, 4, 7, 10], // Sthira
     requiredShuddhis: {ShuddhiType.lagna, ShuddhiType.ashtama},
-    shloka: 'ಸ್ಥಿರಲಗ್ನೇ ಶುಭೇ ತಾರೇ ಶುಭಗ್ರಹ ನಿರೀಕ್ಷಿತೇ ।\nದೇವತಾನಾಂ ಪ್ರತಿಷ್ಠಾ ಚ ಕಾರ್ಯಾ ಸರ್ವಾರ್ಥ ಸಿದ್ಧಯೇ ॥',
-    shastraRef: 'ಮುಹೂರ್ತ ದರ್ಪಣ',
+    shloka: '''೧. ಅಯನ-ಮಾಸ ನಿಯಮ:
+ಉತ್ತರಾಯಣೇ ವಸಂತೇ ವಾ ಜೇಷ್ಠೇ ವಾ ಫಾಲ್ಗುನೇ ತಥಾ ।
+ದೇವತಾನಾಂ ಪ್ರತಿಷ್ಠಾ ಚ ಕಾರ್ಯಾ ಸರ್ವಾರ್ಥ ಸಿದ್ಧಯೇ ॥
+
+೨. ನಕ್ಷತ್ರ-ತಿಥಿ ನಿಯಮ:
+ರೋಹಿಣೀ ಶ್ರವಣೋ ಹಸ್ತಃ ಪುಷ್ಯೋತ್ತರ-ತ್ರಯಂ ತಥಾ ।
+ರೇವತೀ ಚ ಅಶ್ವಿನೀ ಮೃಗೋ ದೇವ-ಪ್ರತಿಷ್ಠನೇ ಶುಭಮ್ ॥
+ದ್ವಿತೀಯಾ ಪಂಚಮೀ ಷಷ್ಠೀ ಸಪ್ತಮೀ ದಶಮೀ ತಥಾ ।
+ಏಕಾದಶೀ ತ್ರಯೋದಶೀ ಶುಕ್ಲಪಕ್ಷೇ ಪ್ರಶಸ್ಯತೇ ॥
+
+೩. ಲಗ್ನ ಶುದ್ಧಿ:
+ಸ್ಥಿರಲಗ್ನೇ ಶುಭೇ ತಾರೇ ಶುಭಗ್ರಹ ನಿರೀಕ್ಷಿತೇ ।
+ಅಷ್ಟಮೇ ಪಾಪ ವರ್ಜೇ ಚ ದೇವತಾನಾಂ ಪ್ರತಿಷ್ಠನಮ್ ॥''',
+    shastraRef: 'ಮುಹೂರ್ತ ಚಿಂತಾಮಣಿ (ದೇವ-ಪ್ರತಿಷ್ಠಾ ಪ್ರಕರಣ)',
   ),
 
   // ── ಅಕ್ಷರಾಭ್ಯಾಸ (Starting Education) ──
@@ -818,6 +830,7 @@ MuhurtaDayResult evaluateMuhurta({
   final List<String> doshaBhangas = [];
   int totalPoints = 0;
   int maxPoints = 0;
+  bool hasAyanaDosha = false;
 
   // Paksha (used for display)
   final bool isShukla = tithiIndex < 15;
@@ -879,7 +892,10 @@ MuhurtaDayResult evaluateMuhurta({
     maxPoints += 10;
     // sidereal sun in Makara, Kumbha, Meena, Mesha, Vrishabha, Mithuna (indices 9,10,11,0,1,2)
     bool isUttarayana = (sunRashiIndex >= 9 || sunRashiIndex <= 2);
-    if (!isUttarayana) doshas.add('ಅಯನ ದೋಷ (ದಕ್ಷಿಣಾಯನ)');
+    if (!isUttarayana) {
+      doshas.add('ಅಯನ ದೋಷ (ದಕ್ಷಿಣಾಯನ)');
+      hasAyanaDosha = true;
+    }
     if (isUttarayana) totalPoints += 10;
     checks.add(MuhurtaCheckItem(
       label: 'ಅಯನ (ಉತ್ತರಾಯಣ ಮಾತ್ರ)',
@@ -1061,8 +1077,8 @@ MuhurtaDayResult evaluateMuhurta({
   // ── COMPUTE FINAL SCORE ──
   final score = maxPoints > 0 ? ((totalPoints / maxPoints) * 100).round().clamp(0, 100) : 0;
 
-  // Hard penalty for Dagdha — cap at 30
-  final finalScore = hasDagdha ? score.clamp(0, 30) : score;
+  // Hard penalty for Dagdha or Ayana violation — cap at 30
+  final finalScore = (hasDagdha || hasAyanaDosha) ? score.clamp(0, 30) : score;
 
   String verdict;
   if (finalScore >= 80) {
