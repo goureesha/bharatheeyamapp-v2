@@ -334,7 +334,6 @@ class _PanchangaScreenState extends State<PanchangaScreen> {
                           selectedDayPredicate: (day) => isSameDay(_selectedDate, day),
                           calendarFormat: CalendarFormat.month,
                           availableCalendarFormats: const {CalendarFormat.month: 'Month'},
-                          eventLoader: _getEventsForDay,
                           startingDayOfWeek: StartingDayOfWeek.sunday,
                           onDaySelected: (selectedDay, focusedDay) {
                             setState(() {
@@ -360,10 +359,6 @@ class _PanchangaScreenState extends State<PanchangaScreen> {
                             ),
                             selectedDecoration: BoxDecoration(
                               color: kPurple2,
-                              shape: BoxShape.circle,
-                            ),
-                            markerDecoration: BoxDecoration(
-                              color: Colors.green,
                               shape: BoxShape.circle,
                             ),
                           ),
