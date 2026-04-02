@@ -79,6 +79,11 @@ class MuhurtaEventRules {
   /// Which shuddhi checks this event requires
   final Set<ShuddhiType> requiredShuddhis;
 
+  /// Shastra shloka for this event
+  final String? shloka;
+  /// Shastra reference source
+  final String? shastraRef;
+
   const MuhurtaEventRules({
     this.allowedTithis,
     this.allowedNakshatras,
@@ -87,6 +92,8 @@ class MuhurtaEventRules {
     this.requireShukla = false,
     this.allowedLagnas,
     this.requiredShuddhis = const {ShuddhiType.lagna}, // default: at least lagna
+    this.shloka,
+    this.shastraRef,
   });
 }
 
@@ -102,6 +109,8 @@ const Map<MuhurtaEvent, MuhurtaEventRules> muhurtaRules = {
     requireShukla: true,
     allowedLagnas: null, // Removed static limits, rely purely on Shuddhi
     requiredShuddhis: {ShuddhiType.lagna, ShuddhiType.saptama, ShuddhiType.ashtama, ShuddhiType.chandraSaptama},
+    shloka: 'ರೋಹಿಣೀಮೃಗಶೀರ್ಷಂ ಚ ಉತ್ತರಾತ್ರಯಮೇವ ಚ ।\nರೇವತೀ ಹಸ್ತಮೂಲಂ ಚ ಸ್ವಾತೀ ಮಾಘಮನುರಾಧಕಾಃ ॥\nಏತೇ ವಿವಾಹೇ ಶುಭದಾಃ ತಾರಾಃ ಪ್ರೋಕ್ತಾ ಮನೀಷಿಭಿಃ ।',
+    shastraRef: 'ಮುಹೂರ್ತ ಚಿಂತಾಮಣಿ (ವಿವಾಹ ಪ್ರಕರಣ)',
   ),
 
   // ── ಉಪನಯನ (Thread Ceremony) ──
@@ -112,6 +121,8 @@ const Map<MuhurtaEvent, MuhurtaEventRules> muhurtaRules = {
     avoidVishti: true,
     allowedLagnas: null,
     requiredShuddhis: {ShuddhiType.lagna, ShuddhiType.ashtama},
+    shloka: 'ಆಶ್ಲೇಷಾ ಮೂಲ ಕೃತ್ತಿಕಾ ವರ್ಜಯಿತ್ವಾಖಿಲಾನಿ ಚ ।\nಉಪನಯನೇ ಶುಭದಾನಿ ನಕ್ಷತ್ರಾಣಿ ಭವಂತಿ ಹಿ ॥\n(ಹಸ್ತ, ಚಿತ್ರ, ಸ್ವಾತಿ, ಶ್ರವಣ, ಧನಿಷ್ಠಾ ಮುಂತಾದವು ಶ್ರೇಷ್ಠ)',
+    shastraRef: 'ಮುಹೂರ್ತ ಚಿಂತಾಮಣಿ (ಸಂಸ್ಕಾರ ಪ್ರಕರಣ)',
   ),
 
   // ── ಗೃಹಪ್ರವೇಶ (House Warming) ──
@@ -124,6 +135,8 @@ const Map<MuhurtaEvent, MuhurtaEventRules> muhurtaRules = {
     requireShukla: true,
     allowedLagnas: [1, 4, 7, 10], // Sthira rashis
     requiredShuddhis: {ShuddhiType.lagna, ShuddhiType.ashtama, ShuddhiType.chandraSaptama},
+    shloka: 'ರೋಹಿಣೀ ಮೃಗಶೀರ್ಷಂ ಚ ಉತ್ತರಾತ್ರಯಮೇವ ಚ ।\nಪುಷ್ಯೋ ಧನಿಷ್ಠಾ ಶತತಾರಾ ನಕ್ಷತ್ರಾಣಿ ಶುಭಾನಿ ಚ ॥\nಸ್ಥಿರ ಲಗ್ನಂ ಗೃಹಪ್ರವೇಶೇ ಶ್ರೇಷ್ಠಂ ಭವತಿ ಸರ್ವದಾ ।',
+    shastraRef: 'ಮುಹೂರ್ತ ಚಿಂತಾಮಣಿ (ವಾಸ್ತು ಪ್ರಕರಣ)',
   ),
 
   // ── ದೇವ ಪ್ರತಿಷ್ಠಾ (Deity Installation) ──
@@ -135,6 +148,8 @@ const Map<MuhurtaEvent, MuhurtaEventRules> muhurtaRules = {
     requireShukla: true,
     allowedLagnas: [1, 4, 7, 10], // Sthira
     requiredShuddhis: {ShuddhiType.lagna, ShuddhiType.ashtama},
+    shloka: 'ಸ್ಥಿರಲಗ್ನೇ ಶುಭೇ ತಾರೇ ಶುಭಗ್ರಹ ನಿರೀಕ್ಷಿತೇ ।\nದೇವತಾನಾಂ ಪ್ರತಿಷ್ಠಾ ಚ ಕಾರ್ಯಾ ಸರ್ವಾರ್ಥ ಸಿದ್ಧಯೇ ॥',
+    shastraRef: 'ಮುಹೂರ್ತ ದರ್ಪಣ',
   ),
 
   // ── ಅಕ್ಷರಾಭ್ಯಾಸ (Starting Education) ──
@@ -146,6 +161,8 @@ const Map<MuhurtaEvent, MuhurtaEventRules> muhurtaRules = {
     requireShukla: true,
     allowedLagnas: null,
     requiredShuddhis: {ShuddhiType.lagna},
+    shloka: 'ಅಶ್ವಿನೀ ಪುಷ್ಯ ಹಸ್ತೇಷು ಚಿತ್ರಾ ಸ್ವಾತೀ ಪುನರ್ವಸು ।\nಶ್ರವಣೇ ಧನಿಷ್ಠಾಯಾಂ ಚ ಅಕ್ಷರಾರಂಭ ಶುಭದಾಯಕಃ ॥',
+    shastraRef: 'ಮುಹೂರ್ತ ಚಿಂತಾಮಣಿ (ವಿದ್ಯಾರಂಭ ಪ್ರಕರಣ)',
   ),
 
   // ── ಯಾತ್ರಾ (Travel) ──
@@ -156,6 +173,8 @@ const Map<MuhurtaEvent, MuhurtaEventRules> muhurtaRules = {
     avoidVishti: true,
     allowedLagnas: null,
     requiredShuddhis: {ShuddhiType.lagna, ShuddhiType.ashtama, ShuddhiType.chandraSaptama},
+    shloka: 'ಅಶ್ವಿನಿ ಪುಷ್ಯ ಹಸ್ತೇಷು ಚಿತ್ರಾ ಸ್ವಾತೀ ಪುನರ್ವಸು ।\nಮೃಗಶಿರೋ ರೇವತೀ ಚ ಯಾತ್ರಾಯಾಂ ಶುಭದಾಯಕಾಃ ॥',
+    shastraRef: 'ಮುಹೂರ್ತ ಪಾರಿಜಾತ (ಯಾತ್ರಾ ಪ್ರಕರಣ)',
   ),
 
   // ── ವ್ಯಾಪಾರ (Business Start) ──
@@ -167,6 +186,8 @@ const Map<MuhurtaEvent, MuhurtaEventRules> muhurtaRules = {
     requireShukla: true,
     allowedLagnas: null,
     requiredShuddhis: {ShuddhiType.lagna, ShuddhiType.saptama},
+    shloka: 'ಅಶ್ವಿನಿ ಪುಷ್ಯ ಹಸ್ತೇಷು ರೇವತೀ ಚಿತ್ರಕೇ ತಥಾ ।\nವ್ಯಾಪಾರಾರಂಭ ಕಾರ್ಯಾಣಿ ಶುಭದಾನಿ ನ ಸಂಶಯಃ ॥',
+    shastraRef: 'ವಾಸ್ತು ರತ್ನಾಕರ',
   ),
 
   // ── ಅನ್ನಪ್ರಾಶನ (First Feeding) ──

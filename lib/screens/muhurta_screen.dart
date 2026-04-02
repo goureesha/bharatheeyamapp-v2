@@ -1180,6 +1180,31 @@ class _MuhurtaScreenState extends State<MuhurtaScreen> {
             const Text('• ಕಡ್ಡಾಯ ಶುದ್ಧಿ: ', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 12)),
             Expanded(child: Text(shuddhis, style: TextStyle(color: kPurple1, fontWeight: FontWeight.w700, fontSize: 12))),
           ]),
+          
+          if (rules.shloka != null) ...[
+            const SizedBox(height: 12),
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: Colors.amber.withOpacity(0.08),
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: Colors.amber.shade300, width: 0.5),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('ಶಾಸ್ತ್ರ ಪ್ರಮಾಣ ಶ್ಲೋಕ (Reference):', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 11, color: Colors.amber.shade800)),
+                  const SizedBox(height: 6),
+                  Text(rules.shloka!, style: const TextStyle(fontStyle: FontStyle.italic, fontSize: 11, color: Colors.black87, height: 1.4)),
+                  if (rules.shastraRef != null) ...[
+                    const SizedBox(height: 4),
+                    Text('📖 ಆಕರ ಗ್ರಂಥ: ${rules.shastraRef}', style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 10, color: kPurple1)),
+                  ]
+                ],
+              ),
+            ),
+          ],
         ],
       ),
     );
