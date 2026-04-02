@@ -14,6 +14,7 @@ import '../widgets/shadbala_widget.dart';
 import '../widgets/ashtakavarga_widget.dart';
 import '../core/yoga_calculator.dart';
 import '../core/varga_calculator.dart';
+import '../services/tester_service.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import '../services/storage_service.dart';
@@ -110,14 +111,21 @@ class _DashboardScreenState extends State<DashboardScreen>
 
 
 
-  static List<String> get _tabs => AppLocale.isHindi
-    ? ['कुंडली', 'स्फुट', 'आरूढ', 'दशा', 'पंचांग', 'भाव', 'षड्बल', 'अष्टक', 'योग', 'टिप्पणी']
-    : ['ಕುಂಡಲಿ', 'ಸ್ಫುಟ', 'ಆರೂಢ', 'ದಶ', 'ಪಂಚಾಂಗ', 'ಭಾವ', 'ಷಡ್ಬಲ', 'ಅಷ್ಟಕ', 'ಯೋಗ', 'ಟಿಪ್ಪಣಿ'];
+  static List<String> _buildTabs() {
+    final base = AppLocale.isHindi
+      ? ['कुंडली', 'स्फुट', 'आरूढ', 'दशा', 'पंचांग', 'भाव', 'षड्बल', 'अष्टक']
+      : ['ಕುಂಡಲಿ', 'ಸ್ಫುಟ', 'ಆರೂಢ', 'ದಶ', 'ಪಂಚಾಂಗ', 'ಭಾವ', 'ಷಡ್ಬಲ', 'ಅಷ್ಟಕ'];
+    if (TesterService.isTesterNotifier.value) {
+      base.add(AppLocale.isHindi ? 'योग' : 'ಯೋಗ');
+    }
+    base.add(AppLocale.isHindi ? 'टिप्पणी' : 'ಟಿಪ್ಪಣಿ');
+    return base;
+  }
 
   @override
   void initState() {
     super.initState();
-    _tabCtrl = TabController(length: _tabs.length, vsync: this);
+    _tabCtrl = TabController(length: _buildTabs().length, vsync: this);
     _notes = widget.initialNotes;
     _aroodhas = Map.from(widget.initialAroodhas);
     _janmaNakshatraIdx = widget.initialJanmaNakshatraIdx;
@@ -736,7 +744,7 @@ class _DashboardScreenState extends State<DashboardScreen>
               child: TabBar(
                 controller: _tabCtrl,
                 isScrollable: true,
-                tabs: _tabs.map((t) => Tab(text: t)).toList(),
+                tabs: _buildTabs().map((t) => Tab(text: t)).toList(),
               ),
             ),
 
@@ -753,7 +761,7 @@ class _DashboardScreenState extends State<DashboardScreen>
                   _buildBhavaTab(),
                   _buildShadbalaTab(),
                   _buildAshtakaTab(),
-                  _buildYogaTab(),
+                  if (TesterService.isTesterNotifier.value) _buildYogaTab(),
                   _buildNotesTab(),
                 ],
               ),
