@@ -250,6 +250,18 @@ const Map<MuhurtaEvent, MuhurtaEventRules> muhurtaRules = {
     requireShukla: true,
     allowedLagnas: null,
     requiredShuddhis: {ShuddhiType.lagna, ShuddhiType.ashtama},
+    shloka: '''೧. ಮಾಸ-ದಿನ ನಿಯಮ:
+ಏಕಾದಶೇ ತಥಾಹ್ನಿ ಸ್ಯಾತ್ ದ್ವಾದಶೇ ನಾಮಕರ್ಮ ಚ ।
+ರಿಕ್ತಾ-ಅಮಾವಾಸ್ಯಾ-ಪರ್ವ-ದಿನೇ ನಾಮಕರ್ಮ ವಿವರ್ಜಯೇತ್ ॥
+
+೨. ತಿಥಿ-ನಕ್ಷತ್ರ:
+ಅಶ್ವಿನೀ-ರೋಹಿಣೀ-ಪುಷ್ಯ-ಹಸ್ತ-ರೇವತಿಭಿಃ ಶುಭಮ್ ।
+ಲಗ್ನೇ ಶುಭಗ್ರಹೈರ್ದೃಷ್ಟೇ ಅಷ್ಟಮೇ ಪಾಪ-ವರ್ಜಿತೇ ॥
+
+೩. ಸಾರ್ವತ್ರಿಕ ಶುದ್ಧಿ:
+ಗುರು-ಶುಕ್ರ-ಬುಧೈರ್ದೃಷ್ಟೇ ಕೇಂದ್ರ-ತ್ರಿಕೋಣ ಸಂಸ್ಥಿತೇ ।
+ನಾಮಕರಣಂ ಶಿಶೂನಾಂ ಚ ಆಯುರ್ವೃದ್ಧಿಕರಂ ಭವೇತ್ ॥''',
+    shastraRef: 'ಮುಹೂರ್ತ ಚಿಂತಾಮಣಿ (ನಾಮಕರಣ ಪ್ರಕರಣ)',
   ),
 
   // ── ಸೀಮಂತ (Prenatal Rite) ──
@@ -261,6 +273,18 @@ const Map<MuhurtaEvent, MuhurtaEventRules> muhurtaRules = {
     requireShukla: true,
     allowedLagnas: null,
     requiredShuddhis: {ShuddhiType.lagna, ShuddhiType.ashtama},
+    shloka: '''೧. ಮಾಸ-ಪಕ್ಷ ನಿಯಮ:
+ಷಷ್ಠೇ ವಾ ಅಷ್ಟಮೇ ಮಾಸಿ ಶುಕ್ಲಪಕ್ಷೇ ಶುಭಾವಹೇ ।
+ಪುಂಸವನ-ಸೀಮಂತಕರ್ಮ ಗರ್ಭ-ರಕ್ಷಾಕರಂ ಭವೇತ್ ॥
+
+೨. ನಕ್ಷತ್ರ-ಲಗ್ನ:
+ಪುಷ್ಯ-ಶ್ರವಣ-ರೋಹಿಣೀ-ಉತ್ತರ-ಹಸ್ತ-ರೇವತೀ ।
+ಲಗ್ನೇ ಕೇಂದ್ರೇ ಶುಭೈರ್ದೃಷ್ಟೇ ಅಷ್ಟಮೇ ಪಾಪ ವರ್ಜಿತೇ ॥
+
+೩. ಗುರು-ಚಂದ್ರ ಬಲ:
+ಗುರು-ಚಂದ್ರ-ಬಲಂ ದೃಷ್ಟ್ವಾ ಗರ್ಭಿಣ್ಯಾಃ ಪ್ರೀತಿ-ವರ್ಧನಮ್ ।
+ಮಂಗಳೇವಾಸರೇ ಚೈವ ವರ್ಜಯೇತ್ ಸರ್ವಕರ್ಮಸು ॥''',
+    shastraRef: 'ಸಂಸ್ಕಾರ ಭಾಸ್ಕರ / ಮುಹೂರ್ತ ದರ್ಪಣ',
   ),
 
   // ── ಚೌಲ (Tonsure) ──
@@ -272,6 +296,18 @@ const Map<MuhurtaEvent, MuhurtaEventRules> muhurtaRules = {
     requireShukla: true,
     allowedLagnas: null,
     requiredShuddhis: {ShuddhiType.lagna, ShuddhiType.ashtama, ShuddhiType.chandraSaptama},
+    shloka: '''೧. ಅಯನ-ಮಾಸ ನಿಯಮ:
+ಉತ್ತರಾಯಣೇ ಶುಭದಂ ಪ್ರೋಕ್ತಂ ಚೈತ್ರ ವೈಶಾಖ-ಜೇಷ್ಠಕೇ ।
+ಸೋಮ-ಬುಧ-ಗುರು-ಶುಕ್ರೇ ಚ ಚೌಲಕರ್ಮ ಪ್ರಶಸ್ಯತೇ ॥
+
+೨. ನಕ್ಷತ್ರ-ಮತ್ತು ತಿಥಿ:
+ಪುನರ್ವಸು-ಪುಷ್ಯ-ಶ್ರವಣೇ ಅಶ್ವಿನೀ ಹಸ್ತ ರೇವತೀ ।
+ರಿಕ್ತಾ-ಚತುರ್ದಶೀ-ಅಮಾವಾಸ್ಯಾಂ ಚೈವ ವಿವರ್ಜಯೇತ್ ॥
+
+೩. ಲಗ್ನ ಶುದ್ಧಿ:
+ಲಗ್ನ ಶುದ್ಧೇ ಅಷ್ಟಮ ಶುದ್ಧೇ ಚೌಲಕರ್ಮ ಭವೇತ್ ಶುಭಮ್ ।
+ಕೇಂದ್ರೇ ದೃಷ್ಟೇ ಶುಭೈರ್ಗೃಹೈರ್-ಬಾಲಾಯುರ್-ವೃದ್ಧಿದಾಯಕಮ್ ॥''',
+    shastraRef: 'ಮುಹೂರ್ತ ಮಾರ್ಥಾಂಡ (ಚೌಲ ಪ್ರಕರಣ)',
   ),
 
   // ── ವಾಸ್ತು ಶಿಲಾನ್ಯಾಸ (Foundation Laying) ──
@@ -283,6 +319,18 @@ const Map<MuhurtaEvent, MuhurtaEventRules> muhurtaRules = {
     requireShukla: true,
     allowedLagnas: [1, 4, 7, 10], // Sthira
     requiredShuddhis: {ShuddhiType.lagna, ShuddhiType.ashtama},
+    shloka: '''೧. ಮಾಸ ನಿಯಮ:
+ವೈಶಾಖೇ ಫಾಲ್ಗುಣೇ ಚೈತ್ರೇ ಶ್ರಾವಣೇ ಮಾರ್ಗಶೀರ್ಷಕೇ ।
+ಶುಕ್ಲಪಕ್ಷೇ ಶುಭಂ ಪ್ರೋಕ್ತಂ ವಾಸ್ತು-ಶಿಲಾನ್ಯಾಸ ಕರ್ಮಣಿ ॥
+
+೨. ನಕ್ಷತ್ರ ಮತ್ತು ವಾರ:
+ರೋಹಿಣೀ ಮೃಗಶೀರ್ಷಂ ಚ ಉತ್ತರಾತ್ರಯ-ರೇವತೀ ।
+ಸೋಮ-ಬುಧ-ಗುರು-ಶುಕ್ರೇ ಚ ವಾಸ್ತುಪೂಜಾ ಸಿದ್ಧಿದಾ ॥
+
+೩. ಲಗ್ನ ಶುದ್ಧಿ:
+ಸ್ಥಿರಲಗ್ನೇ ಶುಭೇ ದೃಷ್ಟೇ ಅಷ್ಟಮೇ ಪಾಪ ವರ್ಜಿತೇ ।
+ಕೇಂದ್ರ-ತ್ರಿಕೋಣೇ ಶುಭೈರ್ಯುಕ್ತೇ ಗೃಹಂ ಭವತಿ ಶಾಶ್ವತಮ್ ॥''',
+    shastraRef: 'ವಾಸ್ತು ರತ್ನಾಕರ / ವಾಸ್ತು ಮಂಡಲ',
   ),
 
   // ── ಔಷಧ (Medical Treatment) ──
@@ -293,6 +341,18 @@ const Map<MuhurtaEvent, MuhurtaEventRules> muhurtaRules = {
     avoidVishti: true,
     allowedLagnas: null,
     requiredShuddhis: {ShuddhiType.lagna, ShuddhiType.ashtama},
+    shloka: '''೧. ನಕ್ಷತ್ರ ನಿಯಮ:
+ಅಶ್ವಿನೀ ಹಸ್ತ ಪುಷ್ಯೇ ಚ ಪುನರ್ವಸು ಶ್ರವಣೇ ತಥಾ ।
+ರೋಗಾಣಾಂ ಭೇಷಜಂ ದದ್ಯಾತ್ ಶೀಘ್ರಮಾರೋಗ್ಯಕಾರಕಮ್ ॥
+
+೨. ವಾರ-ತಿಥಿ ನಿಯಮ:
+ರವಿ-ಸೋಮ-ಗುರು-ಶುಕ್ರೇ ಚ ರಿಕ್ತಾ-ಪರ್ವ-ವಿವರ್ಜಿತೇ ।
+ಉಗ್ರ-ಕ್ರೂರ ನಕ್ಷತ್ರಾಣಿ ರೋಗ-ನಾಶನಾಯ ಯಥಾ ॥
+
+೩. ಲಗ್ನ ಶುದ್ಧಿ:
+ಲಗ್ನೇ ಪಾಪ-ಗ್ರಹೇ ದೃಷ್ಟೇ ಷಷ್ಠೇ-ಅಷ್ಟಮೇ ವಿವರ್ಜಯೇತ್ ।
+ಔಷಧ-ಸೇವನಂ ಭಕ್ತ್ಯಾ ಸರ್ವವ್ಯಾಧಿ ವಿನಾಶನಮ್ ॥''',
+    shastraRef: 'ಮುಹೂರ್ತ ಪಾರಿಜಾತ',
   ),
 
   // ── ಕೃಷಿ (Agriculture) ──
@@ -303,6 +363,18 @@ const Map<MuhurtaEvent, MuhurtaEventRules> muhurtaRules = {
     avoidVishti: true,
     allowedLagnas: null,
     requiredShuddhis: {ShuddhiType.lagna},
+    shloka: '''೧. ನಕ್ಷತ್ರ-ತಿಥಿ ನಿಯಮ:
+ರೋಹಿಣೀಮೃಗಶೀರ್ಷಂ ಚ ಉತ್ತರಾತ್ರಯಮೇವ ಚ ।
+ಪುಷ್ಯ-ಹಸ್ತ-ರೇವತೀ ಶುಭಾಃ ಕೃಷಿಕರ್ಮಣಿ ಸರ್ವದಾ ॥
+
+೨. ವಾರ-ಪಕ್ಷ:
+ಸೋಮ-ಬುಧ-ಗುರು-ಶುಕ್ರೇ ಶುಕ್ಲ-ಪಕ್ಷೇ ಶುಭಾವಹೇ ।
+ರಿಕ್ತಾಮಾವಾಸ್ಯಾಂ ಹಿತ್ವಾ ಬೀಜ-ವಾಪನಮಾಚರೇತ್ ॥
+
+೩. ಲಗ್ನ ಶುದ್ಧಿ:
+ಲಗ್ನೇ ಕೇಂದ್ರೇ ಶುಭೇ ದೃಷ್ಟೇ ಪೃಥ್ವೀ ಸಸ್ಯಪ್ರದಾಯಿನೀ ।
+ಅಷ್ಟಮೇ ಶುದ್ಧಿ-ಯುಕ್ತೇ ತು ವ್ಯವಸಾಯಃ ಫಲಪ್ರದಃ ॥''',
+    shastraRef: 'ಕೃಷಿ ಪರಾಶರ',
   ),
 
   // ── ವಾಹನ ಖರೀದಿ (Vehicle Purchase) ──
@@ -314,6 +386,18 @@ const Map<MuhurtaEvent, MuhurtaEventRules> muhurtaRules = {
     requireShukla: true,
     allowedLagnas: null,
     requiredShuddhis: {ShuddhiType.lagna, ShuddhiType.ashtama},
+    shloka: '''೧. ನಕ್ಷತ್ರ ನಿಯಮ:
+ಅಶ್ವಿನೀ ಹಸ್ತ ಪುಷ್ಯೇ ಚ ಪುನರ್ವಸು ಶ್ರವಣೇ ತಥಾ ।
+ಚರ-ಕ್ಷಿಪ್ರ-ನಕ್ಷತ್ರೇಷು ವಾಹನಕ್ರಯಮಾಚರೇತ್ ॥
+
+೨. ವಾರ ಮತ್ತು ತಿಥಿ:
+ಬುಧ-ಗುರು-ಶುಕ್ರ-ವಾರೇಷು ಶುಕ್ಲಪಕ್ಷೇ ಶುಭಾವಹೇ ।
+ರಿಕ್ತಾ-ಅಮಾವಾಸ್ಯಾ-ಹೀನಾನಿ ದಿನಾನಿ ಶುಭದಾನಿ ಚ ॥
+
+೩. ಲಗ್ನ ಶುದ್ಧಿ:
+ಲಗ್ನೇ ಚತುರ್ಥೇ ಶುದ್ಧೇ ವಾ ಪಾಪ-ದೃಷ್ಟಿ ವಿವರ್ಜಿತೇ ।
+ವಾಹನಂ ಸುಖದಂ ನಿತ್ಯಂ ಅಪಮೃತ್ಯು ವಿನಾಶನಮ್ ॥''',
+    shastraRef: 'ಮುಹೂರ್ತ ದೀಪಿಕಾ',
   ),
 
   // ── ಆಸ್ತಿ ಖರೀದಿ (Property Purchase) ──
@@ -325,6 +409,18 @@ const Map<MuhurtaEvent, MuhurtaEventRules> muhurtaRules = {
     requireShukla: true,
     allowedLagnas: null,
     requiredShuddhis: {ShuddhiType.lagna, ShuddhiType.ashtama},
+    shloka: '''೧. ನಕ್ಷತ್ರ ನಿಯಮ:
+ರೋಹಿಣೀ ಮೃಗಶೀರ್ಷಂ ಚ ಉತ್ತರಾತ್ರಯಮೇವ ಚ ।
+ಸ್ಥಿರ-ನಕ್ಷತ್ರ-ಯೋಗೇಷು ಭೂಮಿ-ಕ್ರಯ-ವಿಕ್ರಯಃ ಶುಭಃ ॥
+
+೨. ವಾರ-ತಿಥಿ-ಲಗ್ನ:
+ಗುರು-ಶುಕ್ರ-ಬುಧ-ವಾರೇ ಶುಕ್ಲಪಕ್ಷೇ ವಿಶೇಷತಃ ।
+ಸ್ಥಿರ ಲಗ್ನೇ ಶುಭೇ ದೃಷ್ಟೇ ಸಂಪದ್-ವೃದ್ಧಿಕರಂ ಭವೇತ್ ॥
+
+೩. ಅಷ್ಟಮ-ಶುದ್ಧಿ:
+ಲಗ್ನಾತ್ ಅಷ್ಟಮ ಭಾವೇ ತು ಪಾಪ-ಗ್ರಹ ವಿವರ್ಜಿತೇ ।
+ಆಸ್ತಿ-ಭೂಮಿ-ಕ್ರಯೇ ನಿತ್ಯಂ ಶಾಶ್ವತಂ ಸುಖದಾಯಕಮ್ ॥''',
+    shastraRef: 'ವಾಸ್ತು ಚಿಂತಾಮಣಿ',
   ),
 
   // ── ಆಭರಣ ಖರೀದಿ (Gold Purchase) ──
@@ -336,6 +432,18 @@ const Map<MuhurtaEvent, MuhurtaEventRules> muhurtaRules = {
     requireShukla: true,
     allowedLagnas: null,
     requiredShuddhis: {ShuddhiType.lagna},
+    shloka: '''೧. ನಕ್ಷತ್ರ ಮತ್ತು ವಾರ:
+ಪುಷ್ಯ-ಹಸ್ತ-ರೇವತ್ಯಾಂ ಚ ಪುನರ್ವಸು ಶ್ರವಣೇ ತಥಾ ।
+ಗುರುಪೂಷ್ಯ-ಯೋಗ-ಕಾಲೇ ತು ಸ್ವರ್ಣ-ಕ್ರಯ-ಮಹೋತ್ಸವಃ ॥
+
+೨. ತಿಥಿ ನಿಯಮ:
+ಪಕ್ಷೇ ಶುಕ್ಲೇ ತಥಾ ಕೃಷ್ಣೇ ರಿಕ್ತಾ-ಪರ್ವ ವಿವರ್ಜಿತೇ ।
+ಏಕಾದಶೀ ಪೂರ್ಣಿಮಾ ಚ ಸ್ವರ್ಣ ಖರೀದಿಗೆ ಸಿದ್ಧಿದಾ ॥
+
+೩. ಲಗ್ನ-ಧನ ಶುದ್ಧಿ:
+ಲಗ್ನ-ವ್ಯಯ-ಧನ-ಭಾವೇ ಪಾಪದೃಷ್ಟಿ ವಿವರ್ಜಿತೇ ।
+ಮಹಾಲಕ್ಷ್ಮೀ-ಕೃಪಾಯುಕ್ತಂ ಸ್ವರ್ಣ-ಮಂಗಳ-ಕಾರಕಮ್ ॥''',
+    shastraRef: 'ಮಹಾಲಕ್ಷ್ಮೀ ತಂತ್ರ / ಮುಹೂರ್ತ ದರ್ಪಣ',
   ),
 
   // ── ಉದ್ಯೋಗ (Job Joining / Office) ──
@@ -347,6 +455,18 @@ const Map<MuhurtaEvent, MuhurtaEventRules> muhurtaRules = {
     requireShukla: true,
     allowedLagnas: null,
     requiredShuddhis: {ShuddhiType.lagna, ShuddhiType.dashama},
+    shloka: '''೧. ನಕ್ಷತ್ರ-ತಿಥಿ ನಿಯಮ:
+ಅಶ್ವಿನೀ ಪುಷ್ಯ ಹಸ್ತೇಷು ರೋಹಿಣೀ ಮೃಗಶೀರ್ಷಕೇ ।
+ರಿಕ್ತಾಮಾವಾಸ್ಯಾಂ ಹಿತ್ವಾ ಉದ್ಯೋಗ-ಪದ-ಸಿದ್ಧಿದಃ ॥
+
+೨. ವಾರ ನಿಯಮ:
+ಸೋಮ-ಬುಧ-ಗುರು-ಶುಕ್ರೇ ಚ ಭಾನುವಾರೇ ವಿಶೇಷತಃ ।
+ರಾಜ-ದರ್ಶನ-ಕಾರ್ಯೇಷು ಉದ್ಯೋಗ-ಗ್ರಹಣೇ ಶುಭಮ್ ॥
+
+೩. ದಶಮ-ಲಗ್ನ-ಶುದ್ಧಿ:
+ದಶಮೇ ಪಾಪ-ರಹಿತೇ ಲಗ್ನೇ ಶುಭ-ನಿರೀಕ್ಷಿತೇ ।
+ಉದ್ಯೋಗ-ಸ್ಥೈರ್ಯ-ಲಾಭಾಯ ಸರ್ವ-ಕಾರ್ಯ-ಜಯಪ್ರದಮ್ ॥''',
+    shastraRef: 'ಕರ್ಮ-ಪ್ರಕಾಶಿಕಾ',
   ),
 
   // ── ಕರ್ಣವೇಧ (Ear Piercing) ──
@@ -358,6 +478,18 @@ const Map<MuhurtaEvent, MuhurtaEventRules> muhurtaRules = {
     requireShukla: true,
     allowedLagnas: null,
     requiredShuddhis: {ShuddhiType.lagna, ShuddhiType.ashtama},
+    shloka: '''೧. ನಕ್ಷತ್ರ ನಿಯಮ:
+ಮೃಗಶಿರೋ-ಪುನರ್ವಸು-ಪುಷ್ಯೇ ಹಸ್ತೇ ಚೈವೋತ್ತರಾತ್ರಯೇ ।
+ರೇವತ್ಯಾಂ ಶ್ರವಣೇ ವಾಪಿ ಕರ್ಣವೇಧಃ ಶುಭಾವಹಃ ॥
+
+೨. ಮಾಸ-ತಿಥಿ ನಿಯಮ:
+ಷಷ್ಠೇ ವಾ ಸಪ್ತಮೇ ಮಾಸಿ ರಿಕ್ತಾ-ಅಮಾವಾಸ್ಯಾ ವರ್ಜಿತೇ ।
+ಶುಕ್ಲಪಕ್ಷೇ ದ್ವಿತೀಯಾಯಾಂ ತೃತೀಯಾಯಾಂ ಶುಭಂ ಭವೇತ್ ॥
+
+೩. ಲಗ್ನ-ಅಷ್ಟಮ ಶುದ್ಧಿ:
+ಲಗ್ನೇ ಕೇಂದ್ರೇ ಶುಭೈರ್ದೃಷ್ಟೇ ಅಷ್ಟಮೇ ಪಾಪ ವರ್ಜಿತೇ ।
+ಕರ್ಣ-ರೋಗ-ವಿನಾಶಾಯ ಆಯುರ್-ವೃದ್ಧಿಕರಂ ಭವೇತ್ ॥''',
+    shastraRef: 'ಮುಹೂರ್ತ ಚಿಂತಾಮಣಿ (ಸಂಸ್ಕಾರ ಪ್ರಕರಣ)',
   ),
 };
 
