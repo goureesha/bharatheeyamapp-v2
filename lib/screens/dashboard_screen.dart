@@ -1295,6 +1295,59 @@ class _DashboardScreenState extends State<DashboardScreen>
                   ],
                 ),
               ),
+              const SizedBox(height: 16),
+              Text(AppLocale.isHindi ? 'षड्वर्ग' : 'ಷಡ್ವರ್ಗ (Shadvarga)', style: TextStyle(
+                fontWeight: FontWeight.w800, fontSize: 15,
+                color: kPurple2)),
+              const SizedBox(height: 12),
+              AppCard(
+                padding: EdgeInsets.zero,
+                child: Table(
+                  border: TableBorder(
+                    horizontalInside: BorderSide(color: kBorder),
+                    verticalInside: BorderSide(color: kBorder),
+                  ),
+                  columnWidths: const {
+                    0: FlexColumnWidth(0.8),
+                    1: FlexColumnWidth(1),
+                    2: FlexColumnWidth(1),
+                    3: FlexColumnWidth(1),
+                    4: FlexColumnWidth(1),
+                    5: FlexColumnWidth(1),
+                    6: FlexColumnWidth(1),
+                  },
+                  children: [
+                    TableRow(
+                      decoration: BoxDecoration(color: kPurple2.withOpacity(0.08), borderRadius: const BorderRadius.vertical(top: Radius.circular(16))),
+                      children: [
+                        Padding(padding: const EdgeInsets.all(6), child: Text(hBhava, textAlign: TextAlign.center, style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 11))),
+                        Padding(padding: const EdgeInsets.all(6), child: Text('D1', textAlign: TextAlign.center, style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 11))),
+                        Padding(padding: const EdgeInsets.all(6), child: Text('D2', textAlign: TextAlign.center, style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 11))),
+                        Padding(padding: const EdgeInsets.all(6), child: Text('D3', textAlign: TextAlign.center, style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 11))),
+                        Padding(padding: const EdgeInsets.all(6), child: Text('D9', textAlign: TextAlign.center, style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 11))),
+                        Padding(padding: const EdgeInsets.all(6), child: Text('D12', textAlign: TextAlign.center, style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 11))),
+                        Padding(padding: const EdgeInsets.all(6), child: Text('D30', textAlign: TextAlign.center, style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 11))),
+                      ],
+                    ),
+                    ...List.generate(12, (i) {
+                      final madhya = r.bhavas[i];
+                      final details = AstroCalculator.getPlanetDetail('ಲಗ್ನ', madhya, 0, 0);
+
+                      return TableRow(
+                        children: [
+                          Padding(padding: const EdgeInsets.all(6), child: Text('${i+1}', textAlign: TextAlign.center, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 12))),
+                          Padding(padding: const EdgeInsets.all(6), child: Text(tr(details['d1'] as String), textAlign: TextAlign.center, style: const TextStyle(fontSize: 10.5, fontWeight: FontWeight.w600))),
+                          Padding(padding: const EdgeInsets.all(6), child: Text(tr(details['d2'] as String), textAlign: TextAlign.center, style: const TextStyle(fontSize: 10.5, fontWeight: FontWeight.w600))),
+                          Padding(padding: const EdgeInsets.all(6), child: Text(tr(details['d3'] as String), textAlign: TextAlign.center, style: const TextStyle(fontSize: 10.5, fontWeight: FontWeight.w600))),
+                          Padding(padding: const EdgeInsets.all(6), child: Text(tr(details['d9'] as String), textAlign: TextAlign.center, style: const TextStyle(fontSize: 10.5, fontWeight: FontWeight.w600))),
+                          Padding(padding: const EdgeInsets.all(6), child: Text(tr(details['d12'] as String), textAlign: TextAlign.center, style: const TextStyle(fontSize: 10.5, fontWeight: FontWeight.w600))),
+                          Padding(padding: const EdgeInsets.all(6), child: Text(tr(details['d30'] as String), textAlign: TextAlign.center, style: const TextStyle(fontSize: 10.5, fontWeight: FontWeight.w600))),
+                        ],
+                      );
+                    }),
+                  ],
+                ),
+              ),
               if (allPersons.length > 1) const SizedBox(height: 16),
             ]
           );
