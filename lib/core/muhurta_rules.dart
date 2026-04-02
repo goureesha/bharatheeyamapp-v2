@@ -489,11 +489,11 @@ List<String> findAllPlanetsInRashi(int rashiIdx, Map<String, int> planetRashis) 
   return found;
 }
 
-/// Check if Guru (Jupiter) is in Kendra or Trikona from lagna
+/// Check if Guru (Jupiter) is in Kendra/Trikona or auspicious houses (2, 11) from lagna
 bool isGuruAnukoolaForLagna(int lagnaRashiIdx, int guruRashiIdx) {
   final count = ((guruRashiIdx - lagnaRashiIdx + 12) % 12) + 1; // 1-indexed
-  // Kendra: 1, 4, 7, 10 — Trikona: 1, 5, 9
-  return const [1, 4, 5, 7, 9, 10].contains(count);
+  // Kendra: 1, 4, 7, 10 — Trikona: 5, 9 — Dhana/Labha: 2, 11
+  return const [1, 2, 4, 5, 7, 9, 10, 11].contains(count);
 }
 
 /// Find malefic planets in a given rashi
