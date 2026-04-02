@@ -224,7 +224,7 @@ const Map<MuhurtaEvent, MuhurtaEventRules> muhurtaRules = {
     allowedLagnas: null,
     requiredShuddhis: {ShuddhiType.lagna, ShuddhiType.ashtama, ShuddhiType.chandraSaptama},
     shloka: 'ಅಶ್ವಿನಿ ಪುಷ್ಯ ಹಸ್ತೇಷು ಚಿತ್ರಾ ಸ್ವಾತೀ ಪುನರ್ವಸು ।\nಮೃಗಶಿರೋ ರೇವತೀ ಚ ಯಾತ್ರಾಯಾಂ ಶುಭದಾಯಕಾಃ ॥',
-    shastraRef: 'ಮುಹೂರ್ತ ಪಾರಿಜಾತ (ಯಾತ್ರಾ ಪ್ರಕರಣ)',
+    shastraRef: 'ಮುಹೂರ್ತ ಚಿಂತಾಮಣಿ (ಯಾತ್ರಾ ಪ್ರಕರಣ)',
   ),
 
   // ── ವ್ಯಾಪಾರ (Business Start) ──
@@ -237,7 +237,7 @@ const Map<MuhurtaEvent, MuhurtaEventRules> muhurtaRules = {
     allowedLagnas: null,
     requiredShuddhis: {ShuddhiType.lagna, ShuddhiType.saptama},
     shloka: 'ಅಶ್ವಿನಿ ಪುಷ್ಯ ಹಸ್ತೇಷು ರೇವತೀ ಚಿತ್ರಕೇ ತಥಾ ।\nವ್ಯಾಪಾರಾರಂಭ ಕಾರ್ಯಾಣಿ ಶುಭದಾನಿ ನ ಸಂಶಯಃ ॥',
-    shastraRef: 'ವಾಸ್ತು ರತ್ನಾಕರ',
+    shastraRef: 'ಮುಹೂರ್ತ ಚಿಂತಾಮಣಿ (ವ್ಯವಹಾರ ಪ್ರಕರಣ)',
   ),
 
   // ── ಅನ್ನಪ್ರಾಶನ (First Feeding) ──
@@ -303,7 +303,7 @@ const Map<MuhurtaEvent, MuhurtaEventRules> muhurtaRules = {
 ೩. ಗುರು-ಚಂದ್ರ ಬಲ:
 ಗುರು-ಚಂದ್ರ-ಬಲಂ ದೃಷ್ಟ್ವಾ ಗರ್ಭಿಣ್ಯಾಃ ಪ್ರೀತಿ-ವರ್ಧನಮ್ ।
 ಮಂಗಳೇವಾಸರೇ ಚೈವ ವರ್ಜಯೇತ್ ಸರ್ವಕರ್ಮಸು ॥''',
-    shastraRef: 'ಸಂಸ್ಕಾರ ಭಾಸ್ಕರ / ಮುಹೂರ್ತ ದರ್ಪಣ',
+    shastraRef: 'ಮುಹೂರ್ತ ಚಿಂತಾಮಣಿ (ಸಂಸ್ಕಾರ ಪ್ರಕರಣ)',
   ),
 
   // ── ಚೌಲ (Tonsure) ──
@@ -327,7 +327,7 @@ const Map<MuhurtaEvent, MuhurtaEventRules> muhurtaRules = {
 ೩. ಲಗ್ನ ಶುದ್ಧಿ:
 ಲಗ್ನ ಶುದ್ಧೇ ಅಷ್ಟಮ ಶುದ್ಧೇ ಚೌಲಕರ್ಮ ಭವೇತ್ ಶುಭಮ್ ।
 ಕೇಂದ್ರೇ ದೃಷ್ಟೇ ಶುಭೈರ್ಗೃಹೈರ್-ಬಾಲಾಯುರ್-ವೃದ್ಧಿದಾಯಕಮ್ ॥''',
-    shastraRef: 'ಮುಹೂರ್ತ ಮಾರ್ಥಾಂಡ (ಚೌಲ ಪ್ರಕರಣ)',
+    shastraRef: 'ಮುಹೂರ್ತ ಚಿಂತಾಮಣಿ (ಸಂಸ್ಕಾರ ಪ್ರಕರಣ)',
   ),
 
   // ── ವಾಸ್ತು ಶಿಲಾನ್ಯಾಸ (Foundation Laying) ──
@@ -351,7 +351,7 @@ const Map<MuhurtaEvent, MuhurtaEventRules> muhurtaRules = {
 ೩. ಲಗ್ನ ಶುದ್ಧಿ:
 ಸ್ಥಿರಲಗ್ನೇ ಶುಭೇ ದೃಷ್ಟೇ ಅಷ್ಟಮೇ ಪಾಪ ವರ್ಜಿತೇ ।
 ಕೇಂದ್ರ-ತ್ರಿಕೋಣೇ ಶುಭೈರ್ಯುಕ್ತೇ ಗೃಹಂ ಭವತಿ ಶಾಶ್ವತಮ್ ॥''',
-    shastraRef: 'ವಾಸ್ತು ರತ್ನಾಕರ / ವಾಸ್ತು ಮಂಡಲ',
+    shastraRef: 'ಮುಹೂರ್ತ ಚಿಂತಾಮಣಿ (ವಾಸ್ತು ಪ್ರಕರಣ)',
   ),
 
   // ── ಔಷಧ (Medical Treatment) ──
@@ -373,7 +373,7 @@ const Map<MuhurtaEvent, MuhurtaEventRules> muhurtaRules = {
 ೩. ಲಗ್ನ ಶುದ್ಧಿ:
 ಲಗ್ನೇ ಪಾಪ-ಗ್ರಹೇ ದೃಷ್ಟೇ ಷಷ್ಠೇ-ಅಷ್ಟಮೇ ವಿವರ್ಜಯೇತ್ ।
 ಔಷಧ-ಸೇವನಂ ಭಕ್ತ್ಯಾ ಸರ್ವವ್ಯಾಧಿ ವಿನಾಶನಮ್ ॥''',
-    shastraRef: 'ಮುಹೂರ್ತ ಪಾರಿಜಾತ',
+    shastraRef: 'ಮುಹೂರ್ತ ಚಿಂತಾಮಣಿ (ಚಿಕಿತ್ಸಾ-ವೈದ್ಯ ಪ್ರಕರಣ)',
   ),
 
   // ── ಕೃಷಿ (Agriculture) ──
@@ -395,7 +395,7 @@ const Map<MuhurtaEvent, MuhurtaEventRules> muhurtaRules = {
 ೩. ಲಗ್ನ ಶುದ್ಧಿ:
 ಲಗ್ನೇ ಕೇಂದ್ರೇ ಶುಭೇ ದೃಷ್ಟೇ ಪೃಥ್ವೀ ಸಸ್ಯಪ್ರದಾಯಿನೀ ।
 ಅಷ್ಟಮೇ ಶುದ್ಧಿ-ಯುಕ್ತೇ ತು ವ್ಯವಸಾಯಃ ಫಲಪ್ರದಃ ॥''',
-    shastraRef: 'ಕೃಷಿ ಪರಾಶರ',
+    shastraRef: 'ಮುಹೂರ್ತ ಚಿಂತಾಮಣಿ (ವ್ಯವಹಾರ-ಕೃಷಿ ಪ್ರಕರಣ)',
   ),
 
   // ── ವಾಹನ ಖರೀದಿ (Vehicle Purchase) ──
@@ -418,7 +418,7 @@ const Map<MuhurtaEvent, MuhurtaEventRules> muhurtaRules = {
 ೩. ಲಗ್ನ ಶುದ್ಧಿ:
 ಲಗ್ನೇ ಚತುರ್ಥೇ ಶುದ್ಧೇ ವಾ ಪಾಪ-ದೃಷ್ಟಿ ವಿವರ್ಜಿತೇ ।
 ವಾಹನಂ ಸುಖದಂ ನಿತ್ಯಂ ಅಪಮೃತ್ಯು ವಿನಾಶನಮ್ ॥''',
-    shastraRef: 'ಮುಹೂರ್ತ ದೀಪಿಕಾ',
+    shastraRef: 'ಮುಹೂರ್ತ ಚಿಂತಾಮಣಿ (ವ್ಯವಹಾರ ಪ್ರಕರಣ)',
   ),
 
   // ── ಆಸ್ತಿ ಖರೀದಿ (Property Purchase) ──
@@ -441,7 +441,7 @@ const Map<MuhurtaEvent, MuhurtaEventRules> muhurtaRules = {
 ೩. ಅಷ್ಟಮ-ಶುದ್ಧಿ:
 ಲಗ್ನಾತ್ ಅಷ್ಟಮ ಭಾವೇ ತು ಪಾಪ-ಗ್ರಹ ವಿವರ್ಜಿತೇ ।
 ಆಸ್ತಿ-ಭೂಮಿ-ಕ್ರಯೇ ನಿತ್ಯಂ ಶಾಶ್ವತಂ ಸುಖದಾಯಕಮ್ ॥''',
-    shastraRef: 'ವಾಸ್ತು ಚಿಂತಾಮಣಿ',
+    shastraRef: 'ಮುಹೂರ್ತ ಚಿಂತಾಮಣಿ (ವಾಸ್ತು-ವ್ಯವಹಾರ ಪ್ರಕರಣ)',
   ),
 
   // ── ಆಭರಣ ಖರೀದಿ (Gold Purchase) ──
@@ -464,7 +464,7 @@ const Map<MuhurtaEvent, MuhurtaEventRules> muhurtaRules = {
 ೩. ಲಗ್ನ-ಧನ ಶುದ್ಧಿ:
 ಲಗ್ನ-ವ್ಯಯ-ಧನ-ಭಾವೇ ಪಾಪದೃಷ್ಟಿ ವಿವರ್ಜಿತೇ ।
 ಮಹಾಲಕ್ಷ್ಮೀ-ಕೃಪಾಯುಕ್ತಂ ಸ್ವರ್ಣ-ಮಂಗಳ-ಕಾರಕಮ್ ॥''',
-    shastraRef: 'ಮಹಾಲಕ್ಷ್ಮೀ ತಂತ್ರ / ಮುಹೂರ್ತ ದರ್ಪಣ',
+    shastraRef: 'ಮುಹೂರ್ತ ಚಿಂತಾಮಣಿ (ವ್ಯವಹಾರ ಪ್ರಕರಣ)',
   ),
 
   // ── ಉದ್ಯೋಗ (Job Joining / Office) ──
@@ -487,7 +487,7 @@ const Map<MuhurtaEvent, MuhurtaEventRules> muhurtaRules = {
 ೩. ದಶಮ-ಲಗ್ನ-ಶುದ್ಧಿ:
 ದಶಮೇ ಪಾಪ-ರಹಿತೇ ಲಗ್ನೇ ಶುಭ-ನಿರೀಕ್ಷಿತೇ ।
 ಉದ್ಯೋಗ-ಸ್ಥೈರ್ಯ-ಲಾಭಾಯ ಸರ್ವ-ಕಾರ್ಯ-ಜಯಪ್ರದಮ್ ॥''',
-    shastraRef: 'ಕರ್ಮ-ಪ್ರಕಾಶಿಕಾ',
+    shastraRef: 'ಮುಹೂರ್ತ ಚಿಂತಾಮಣಿ (ವ್ಯವಹಾರ ಪ್ರಕರಣ)',
   ),
 
   // ── ಕರ್ಣವೇಧ (Ear Piercing) ──
