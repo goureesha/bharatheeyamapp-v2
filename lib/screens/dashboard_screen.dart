@@ -12,9 +12,6 @@ import '../widgets/planet_detail_sheet.dart';
 import '../widgets/dasha_widget.dart';
 import '../widgets/shadbala_widget.dart';
 import '../widgets/ashtakavarga_widget.dart';
-import '../core/yoga_calculator.dart';
-import '../core/varga_calculator.dart';
-import '../services/tester_service.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import '../services/storage_service.dart';
@@ -111,21 +108,14 @@ class _DashboardScreenState extends State<DashboardScreen>
 
 
 
-  static List<String> _buildTabs() {
-    final base = AppLocale.isHindi
-      ? ['कुंडली', 'स्फुट', 'आरूढ', 'दशा', 'पंचांग', 'भाव', 'षड्बल', 'अष्टक']
-      : ['ಕುಂಡಲಿ', 'ಸ್ಫುಟ', 'ಆರೂಢ', 'ದಶ', 'ಪಂಚಾಂಗ', 'ಭಾವ', 'ಷಡ್ಬಲ', 'ಅಷ್ಟಕ'];
-    if (TesterService.isTesterNotifier.value) {
-      base.add(AppLocale.isHindi ? 'योग' : 'ಯೋಗ');
-    }
-    base.add(AppLocale.isHindi ? 'टिप्पणी' : 'ಟಿಪ್ಪಣಿ');
-    return base;
-  }
+  static List<String> get _tabs => AppLocale.isHindi
+    ? ['कुंडली', 'स्फुट', 'आरूढ', 'दशा', 'पंचांग', 'भाव', 'षड्बल', 'अष्टक', 'टिप्पणी']
+    : ['ಕುಂಡಲಿ', 'ಸ್ಫುಟ', 'ಆರೂಢ', 'ದಶ', 'ಪಂಚಾಂಗ', 'ಭಾವ', 'ಷಡ್ಬಲ', 'ಅಷ್ಟಕ', 'ಟಿಪ್ಪಣಿ'];
 
   @override
   void initState() {
     super.initState();
-    _tabCtrl = TabController(length: _buildTabs().length, vsync: this);
+    _tabCtrl = TabController(length: _tabs.length, vsync: this);
     _notes = widget.initialNotes;
     _aroodhas = Map.from(widget.initialAroodhas);
     _janmaNakshatraIdx = widget.initialJanmaNakshatraIdx;
@@ -744,7 +734,7 @@ class _DashboardScreenState extends State<DashboardScreen>
               child: TabBar(
                 controller: _tabCtrl,
                 isScrollable: true,
-                tabs: _buildTabs().map((t) => Tab(text: t)).toList(),
+                tabs: _tabs.map((t) => Tab(text: t)).toList(),
               ),
             ),
 
@@ -761,7 +751,6 @@ class _DashboardScreenState extends State<DashboardScreen>
                   _buildBhavaTab(),
                   _buildShadbalaTab(),
                   _buildAshtakaTab(),
-                  if (TesterService.isTesterNotifier.value) _buildYogaTab(),
                   _buildNotesTab(),
                 ],
               ),
@@ -1771,131 +1760,6 @@ class _DashboardScreenState extends State<DashboardScreen>
 
 
 
-  // ─────────────────────────────────────────────
-  // TAB: YOGA (Classical Yoga Scanner)
-  // ─────────────────────────────────────────────
-  Widget _buildYogaTab() {
-    final r = widget.result;
-    final yogas = YogaCalculator.scanYogas(r);
-
-    Color yogaColor(String type) {
-      switch (type) {
-        case 'शुभ': return kGreen;
-        case 'अशुभ': return Colors.redAccent;
-        default: return kOrange;
-      }
-    }
-
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Header
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text('ಫಲಿತ ಯೋಗಗಳು (Results)', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 18, color: kPurple2)),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                decoration: BoxDecoration(color: kPurple1.withOpacity(0.1), borderRadius: BorderRadius.circular(12)),
-                child: Text('${yogas.length} Found', style: TextStyle(color: kPurple1, fontWeight: FontWeight.bold)),
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-
-          if (yogas.isEmpty)
-            AppCard(
-              child: Center(
-                child: Padding(
-                  padding: const EdgeInsets.all(32),
-                  child: Column(
-                    children: [
-                      Icon(Icons.search_off, size: 48, color: kMuted),
-                      const SizedBox(height: 12),
-                      Text('ಯಾವುದೇ ಯೋಗ ಕಂಡುಬಂದಿಲ್ಲ', style: TextStyle(color: kMuted, fontWeight: FontWeight.w700)),
-                    ],
-                  ),
-                ),
-              ),
-            )
-          else
-            ...yogas.map((yoga) {
-              final color = yogaColor(yoga.type);
-              return Container(
-                margin: const EdgeInsets.only(bottom: 12),
-                decoration: BoxDecoration(
-                  color: kCard,
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: color.withOpacity(0.3)),
-                  boxShadow: [BoxShadow(color: color.withOpacity(0.06), blurRadius: 8, offset: const Offset(0, 2))],
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Yoga header
-                    Container(
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: color.withOpacity(0.08),
-                        borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
-                      ),
-                      child: Row(
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.all(6),
-                            decoration: BoxDecoration(color: color.withOpacity(0.15), borderRadius: BorderRadius.circular(8)),
-                            child: Icon(yoga.type == 'शुभ' ? Icons.star : Icons.warning_amber, color: color, size: 20),
-                          ),
-                          const SizedBox(width: 10),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(yoga.name, style: TextStyle(fontSize: 15, fontWeight: FontWeight.w900, color: kText)),
-                                Text(yoga.type, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: color)),
-                              ],
-                            ),
-                          ),
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                            decoration: BoxDecoration(color: kTeal.withOpacity(0.1), borderRadius: BorderRadius.circular(8)),
-                            child: Text(yoga.chartReference, style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: kTeal)),
-                          ),
-                        ],
-                      ),
-                    ),
-                    // Rule + Effect
-                    Padding(
-                      padding: const EdgeInsets.all(12),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text('📐 ${yoga.rule}', style: TextStyle(fontSize: 13, color: kText, height: 1.4)),
-                          const SizedBox(height: 8),
-                          Container(
-                            padding: const EdgeInsets.all(10),
-                            decoration: BoxDecoration(color: color.withOpacity(0.05), borderRadius: BorderRadius.circular(8)),
-                            child: Row(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text('✨ ', style: TextStyle(fontSize: 13)),
-                                Expanded(child: Text(yoga.effect, style: TextStyle(fontSize: 13, fontStyle: FontStyle.italic, color: kMuted, height: 1.4))),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              );
-            }),
-        ],
-      ),
-    );
-  }
 
   // ─────────────────────────────────────────────
   // HELPERS

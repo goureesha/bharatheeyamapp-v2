@@ -1,0 +1,15 @@
+Recent Runs:
+- Run ID: 23887674788 - Name: Build AAB & Flutter Web - Status: completed - Conclusion: failure - Commit: fix: Resolve type inference issues in pada calculation
+  -> Job Failed: 🌐 Build Flutter Web
+  -> Job Failed: 🤖 Build Android AAB
+
+- Run ID: 23887674774 - Name: Deploy static content to Pages - Status: completed - Conclusion: success - Commit: fix: Resolve type inference issues in pada calculation
+
+- Run ID: 23887674771 - Name: Deploy Jekyll with GitHub Pages dependencies preinstalled - Status: completed - Conclusion: success - Commit: fix: Resolve type inference issues in pada calculation
+
+- Run ID: 23887242328 - Name: Deploy static content to Pages - Status: completed - Conclusion: success - Commit: fix: Add type getter to KundaliYoga to fix build error
+
+- Run ID: 23887242316 - Name: Build AAB & Flutter Web - Status: completed - Conclusion: failure - Commit: fix: Add type getter to KundaliYoga to fix build error
+  -> Job Failed: 🌐 Build Flutter Web
+  -> Job Failed: 🤖 Build Android AAB
+
