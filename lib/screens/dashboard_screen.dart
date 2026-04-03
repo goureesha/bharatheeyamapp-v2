@@ -772,13 +772,21 @@ class _DashboardScreenState extends State<DashboardScreen>
                         : Icon(Icons.save, color: kText),
                       tooltip: 'Save & Sync',
                       onPressed: _syncing ? null : () async {
-                            widget.onSave(_notes, _aroodhas, _janmaNakshatraIdx, isNew: false);
                             if (!mounted) return;
                             final cId = widget.extraInfo['clientId'] ?? '';
                             
-                            // Persist the group members list on the primary profile
+                            // Build the group members list
                             final groupNames = _extraPersons.map((p) => p.name).toList();
                             final dateStr = '${widget.dob.year}-${widget.dob.month.toString().padLeft(2, '0')}-${widget.dob.day.toString().padLeft(2, '0')}';
+
+                            // 1. Resolve Client ID
+                            String? resolvedCId = (cId is String && cId.isNotEmpty) ? cId : null;
+                            if (resolvedCId == null) {
+                              final client = await ClientService.getOrCreateClient(name: widget.name, phone: 'No Phone');
+                              if (client != null) resolvedCId = client.clientId;
+                            }
+
+                            // 2. Save primary profile WITH groupMembers
                             await StorageService.save(Profile(
                               name: widget.name,
                               date: dateStr,
@@ -788,11 +796,25 @@ class _DashboardScreenState extends State<DashboardScreen>
                               notes: _notes,
                               aroodhas: _aroodhas,
                               janmaNakshatraIdx: _janmaNakshatraIdx,
-                              clientId: (cId is String && cId.isNotEmpty) ? cId : null,
+                              clientId: resolvedCId,
                               groupMembers: groupNames,
                             ));
 
-                            // Also save each extra person individually
+                            // 3. Update primary person in ClientService
+                            if (resolvedCId != null && resolvedCId.isNotEmpty) {
+                              await ClientService.updateFamilyMember(FamilyMember(
+                                clientId: resolvedCId,
+                                memberName: widget.name,
+                                relation: 'Self',
+                                dob: dateStr,
+                                birthTime: '${widget.hour.toString().padLeft(2,'0')}:${widget.minute.toString().padLeft(2,'0')} ${widget.ampm}',
+                                birthPlace: widget.place,
+                                lat: widget.lat, lon: widget.lon,
+                                notes: _notes,
+                              ));
+                            }
+
+                            // 4. Save each extra person individually
                             for (final ep in _extraPersons) {
                               final epDateStr = '${ep.dob.year}-${ep.dob.month.toString().padLeft(2, '0')}-${ep.dob.day.toString().padLeft(2, '0')}';
                               await StorageService.save(Profile(
@@ -802,27 +824,38 @@ class _DashboardScreenState extends State<DashboardScreen>
                                 lat: ep.lat, lon: ep.lon, place: ep.place,
                                 tzOffset: LocationService.tzOffset,
                                 notes: ep.notes,
-                                clientId: (cId is String && cId.isNotEmpty) ? cId : null,
+                                clientId: resolvedCId,
                               ));
+                              // Also sync extra person to ClientService
+                              if (resolvedCId != null && resolvedCId.isNotEmpty) {
+                                await ClientService.updateFamilyMember(FamilyMember(
+                                  clientId: resolvedCId,
+                                  memberName: ep.name,
+                                  relation: 'Group Member',
+                                  dob: epDateStr,
+                                  birthTime: '${ep.hour.toString().padLeft(2,'0')}:${ep.minute.toString().padLeft(2,'0')} ${ep.ampm}',
+                                  birthPlace: ep.place,
+                                  lat: ep.lat, lon: ep.lon,
+                                  notes: ep.notes,
+                                ));
+                              }
                             }
 
                             final totalCount = 1 + groupNames.length;
                             if (!mounted) return;
                             ScaffoldMessenger.of(context).showSnackBar(
                               SnackBar(
-                                content: Text('✅ ಜಾತಕವನ್ನು ಉಳಿಸಲಾಗಿದೆ! ($totalCount ಕುಂಡಲಿ)\nClient ID: $cId'),
+                                content: Text('✅ ಜಾತಕವನ್ನು ಉಳಿಸಲಾಗಿದೆ! ($totalCount ಕುಂಡಲಿ)\nClient ID: ${resolvedCId ?? ''}'),
                                 backgroundColor: Colors.green,
                                 duration: const Duration(seconds: 4),
                               )
                             );
                             if (GoogleAuthService.isSignedIn) {
                               setState(() => _syncing = true);
-                              // Google APIs removed, just simulate success for UI consistency
                               final sheetOk = await SheetsService.syncProfile({}, isNew: false);
                               final docOk = await DocsService.syncNotes(widget.name, _notes);
                               if (mounted) {
                                 setState(() => _syncing = false);
-                                // Don't show confusing sync messages since we removed Google Drives
                               }
                             }
                       },
