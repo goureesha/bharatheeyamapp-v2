@@ -49,10 +49,70 @@ class _AppointmentScreenState extends State<AppointmentScreen> with SingleTicker
     // 1. Load from local cache FIRST (instant)
     await AppointmentService.loadFromCache();
     await ClientService.loadAll();
+
+    // 2. Sync: Ensure every StorageService profile appears in ClientService
+    await _syncKundaliToClients();
+
     if (mounted) setState(() => _isLoading = false);
 
-    // 2. Sync from Google Sheets in background
+    // 3. Sync from Google Sheets in background
     _syncInBackground();
+  }
+
+  /// Sync StorageService profiles → ClientService clients & members
+  Future<void> _syncKundaliToClients() async {
+    try {
+      final profiles = await StorageService.loadAll();
+      for (final entry in profiles.entries) {
+        final p = entry.value;
+        if (p.name.isEmpty || p.date.isEmpty || p.lat == 0) continue;
+        if (p.name.contains('Sample') || p.name.contains('ಮಾದರಿ')) continue;
+
+        // Check if client exists by name
+        final existing = ClientService.clients
+            .where((c) => c.name.toLowerCase() == p.name.toLowerCase())
+            .toList();
+        
+        String? cId;
+        if (existing.isNotEmpty) {
+          cId = existing.first.clientId;
+        } else {
+          // Create client for this Kundali profile
+          final newClient = await ClientService.getOrCreateClient(name: p.name, phone: 'No Phone');
+          if (newClient != null) cId = newClient.clientId;
+        }
+
+        // Ensure this person has a FamilyMember entry
+        if (cId != null && cId.isNotEmpty) {
+          final members = ClientService.getMembersForClient(cId);
+          if (!members.any((m) => m.memberName == p.name)) {
+            await ClientService.addFamilyMember(FamilyMember(
+              clientId: cId,
+              memberName: p.name,
+              relation: 'Self',
+              dob: p.date,
+              birthTime: '${p.hour.toString().padLeft(2,'0')}:${p.minute.toString().padLeft(2,'0')} ${p.ampm}',
+              birthPlace: p.place,
+              lat: p.lat, lon: p.lon,
+              notes: p.notes,
+            ));
+          }
+
+          // Also update the StorageService profile with the correct clientId if missing
+          if (p.clientId != cId) {
+            await StorageService.save(Profile(
+              name: p.name, date: p.date, hour: p.hour, minute: p.minute, ampm: p.ampm,
+              lat: p.lat, lon: p.lon, tzOffset: p.tzOffset, place: p.place,
+              notes: p.notes, aroodhas: p.aroodhas, janmaNakshatraIdx: p.janmaNakshatraIdx,
+              clientId: cId,
+              groupMembers: p.groupMembers,
+            ));
+          }
+        }
+      }
+    } catch (e) {
+      debugPrint('AppointmentScreen: sync error: $e');
+    }
   }
 
   Future<void> _syncInBackground() async {

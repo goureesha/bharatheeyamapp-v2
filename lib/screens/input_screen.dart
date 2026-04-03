@@ -86,33 +86,86 @@ class _InputScreenState extends State<InputScreen> {
   Future<void> _loadProfiles() async {
     final p = await StorageService.loadAll();
 
-    // Fix old data: correct any stale clientIds in StorageService
-    // by looking up the canonical client ID from ClientService by name
-    bool fixed = false;
-    for (final entry in p.entries) {
+    // ════════════════════════════════════════════════════════════
+    // Bi-directional Sync: StorageService ↔ ClientService
+    // ════════════════════════════════════════════════════════════
+
+    // Direction 1: Fix stale clientIds AND ensure every profile has a Client+Member entry
+    for (final entry in p.entries.toList()) {
       final profile = entry.value;
+      if (profile.name.isEmpty || profile.date.isEmpty) continue;
+      if (profile.name.contains('Sample') || profile.name.contains('ಮಾದರಿ')) continue;
+
       // Find the canonical client by name
       final matchingClient = ClientService.clients
           .where((c) => c.name.toLowerCase() == entry.key.toLowerCase())
           .toList();
+
+      String? canonicalId;
       if (matchingClient.isNotEmpty) {
-        final canonicalId = matchingClient.first.clientId;
-        if (profile.clientId != canonicalId) {
-          // Overwrite with correct ID and save permanently
-          p[entry.key] = Profile(
-            name: profile.name, date: profile.date, hour: profile.hour,
-            minute: profile.minute, ampm: profile.ampm, lat: profile.lat,
-            lon: profile.lon, tzOffset: profile.tzOffset, place: profile.place,
-            notes: profile.notes, aroodhas: profile.aroodhas,
-            janmaNakshatraIdx: profile.janmaNakshatraIdx,
+        canonicalId = matchingClient.first.clientId;
+      } else if (profile.lat != 0 && profile.date.isNotEmpty) {
+        // No client exists — create one so this profile appears in Appointments too
+        final newClient = await ClientService.getOrCreateClient(name: profile.name, phone: 'No Phone');
+        if (newClient != null) canonicalId = newClient.clientId;
+      }
+
+      // Sync clientId on the profile if it's wrong or missing
+      if (canonicalId != null && profile.clientId != canonicalId) {
+        p[entry.key] = Profile(
+          name: profile.name, date: profile.date, hour: profile.hour,
+          minute: profile.minute, ampm: profile.ampm, lat: profile.lat,
+          lon: profile.lon, tzOffset: profile.tzOffset, place: profile.place,
+          notes: profile.notes, aroodhas: profile.aroodhas,
+          janmaNakshatraIdx: profile.janmaNakshatraIdx,
+          clientId: canonicalId,
+          groupMembers: profile.groupMembers,
+        );
+        await StorageService.save(p[entry.key]!);
+      }
+
+      // Ensure this person exists as a FamilyMember under that client
+      if (canonicalId != null && canonicalId.isNotEmpty && profile.lat != 0) {
+        final members = ClientService.getMembersForClient(canonicalId);
+        if (!members.any((m) => m.memberName == profile.name)) {
+          await ClientService.addFamilyMember(FamilyMember(
             clientId: canonicalId,
-          );
-          await StorageService.save(p[entry.key]!);
-          fixed = true;
+            memberName: profile.name,
+            relation: 'Self',
+            dob: profile.date,
+            birthTime: '${profile.hour.toString().padLeft(2,'0')}:${profile.minute.toString().padLeft(2,'0')} ${profile.ampm}',
+            birthPlace: profile.place,
+            lat: profile.lat, lon: profile.lon,
+            notes: profile.notes,
+          ));
         }
       }
     }
-    if (fixed) debugPrint('InputScreen: Fixed stale clientIds in StorageService');
+
+    // Direction 2: ClientService → StorageService
+    // Ensure every FamilyMember with birth data has a corresponding StorageService profile
+    for (final client in ClientService.clients) {
+      final members = ClientService.getMembersForClient(client.clientId);
+      for (final m in members) {
+        if (m.memberName.isEmpty || m.dob.isEmpty || m.lat == 0) continue;
+        if (!p.containsKey(m.memberName)) {
+          final newProfile = Profile(
+            name: m.memberName,
+            date: m.dob,
+            hour: m.hour12,
+            minute: m.minute,
+            ampm: m.ampm,
+            lat: m.lat, lon: m.lon,
+            place: m.birthPlace,
+            notes: m.notes,
+            clientId: client.clientId,
+            tzOffset: LocationService.tzOffset,
+          );
+          await StorageService.save(newProfile);
+          p[m.memberName] = newProfile;
+        }
+      }
+    }
 
     if (mounted) setState(() => _savedProfiles = p);
   }
