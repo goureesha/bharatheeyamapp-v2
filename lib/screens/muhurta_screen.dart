@@ -264,6 +264,36 @@ class _MuhurtaScreenState extends State<MuhurtaScreen> {
           final godhuliEnd = ssMins + 24;
           final godhuliTimeStr = '${_minutesToTimeStr(godhuliStart)} - ${_minutesToTimeStr(godhuliEnd)}';
 
+          // ── BLOCK ADHIKA MASA, GURU ASTA, SHUKRA ASTA ──
+          final isAdhika = p.chandraMasaRaw.contains('ಅಧಿಕ') || p.chandraMasa.contains('ಅಧಿಕ');
+          final isGuruAsta = result.planets['ಗುರು']?.isCombust == true;
+          final isShukraAsta = result.planets['ಶುಕ್ರ']?.isCombust == true;
+
+          if (isAdhika || isGuruAsta || isShukraAsta) {
+            String reason = '';
+            if (isAdhika) reason = 'ಅಧಿಕ ಮಾಸ: ಮುಹೂರ್ತ ನಿಷಿದ್ಧ';
+            else if (isGuruAsta && isShukraAsta) reason = 'ಗುರು ಮತ್ತು ಶುಕ್ರ ಅಸ್ತ: ಶುಭಕಾರ್ಯ ನಿಷಿದ್ಧ';
+            else if (isGuruAsta) reason = 'ಗುರು ಅಸ್ತ (ಮೂಢ) ದೋಷ: ಶುಭಕಾರ್ಯ ನಿಷಿದ್ಧ';
+            else if (isShukraAsta) reason = 'ಶುಕ್ರ ಅಸ್ತ (ಮೂಢ) ದೋಷ: ಶುಭಕಾರ್ಯ ನಿಷಿದ್ಧ';
+
+            final blockedResult = MuhurtaDayResult(
+              score: 0,
+              verdict: 'ಅಶುಭ (ಮೂಢ/ಅಧಿಕ)',
+              checks: [
+                MuhurtaCheckItem(label: 'ದೋಷ', value: reason, passed: false)
+              ],
+              personResults: [],
+              doshas: [reason],
+              doshaBhangas: [],
+            );
+            
+            final dateKey = DateTime(year, month, day);
+            _results[dateKey] = blockedResult;
+            _panchangCache[dateKey] = p;
+            _srssCache[dateKey] = srSs;
+            continue;
+          }
+
           final dayResult = evaluateMuhurta(
             event: _selectedEvent,
             tithiIndex: p.tithiIndex,
