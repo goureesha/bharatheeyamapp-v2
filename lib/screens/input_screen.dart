@@ -49,6 +49,7 @@ class _InputScreenState extends State<InputScreen> {
   String? _loadedClientId;
   Map<String, int> _loadedAroodhas = {};
   int? _loadedJanmaNakshatraIdx;
+  List<String> _loadedGroupMembers = [];
 
 
 
@@ -131,6 +132,7 @@ class _InputScreenState extends State<InputScreen> {
       _loadedClientId = p.clientId;
       _loadedAroodhas = Map.from(p.aroodhas);
       _loadedJanmaNakshatraIdx = p.janmaNakshatraIdx;
+      _loadedGroupMembers = List.from(p.groupMembers);
       try {
         final parts = p.date.split('-');
         if (parts.length == 3) {
@@ -301,6 +303,7 @@ class _InputScreenState extends State<InputScreen> {
             initialNotes: uiNotes,
             initialAroodhas: _loadedAroodhas,
             initialJanmaNakshatraIdx: _loadedJanmaNakshatraIdx,
+            initialGroupMembers: _loadedGroupMembers,
             onSave: (notes, aroodhas, janmaIdx, {bool isNew = true}) =>
                 _saveProfile(activeClientId, notes: notes, aroodhas: aroodhas, janmaNakshatraIdx: janmaIdx, isNew: !_loadedFromSaved),
           ),
@@ -325,6 +328,7 @@ class _InputScreenState extends State<InputScreen> {
               _loadedClientId = null;
               _loadedAroodhas = {};
               _loadedJanmaNakshatraIdx = null;
+              _loadedGroupMembers = [];
             });
           }
         });
@@ -360,6 +364,7 @@ class _InputScreenState extends State<InputScreen> {
       aroodhas: aroodhas,
       janmaNakshatraIdx: janmaNakshatraIdx,
       clientId: cId,
+      groupMembers: existing?.groupMembers ?? _loadedGroupMembers,
     );
     
     // 2. Add or Update this profile as a member of the Client
@@ -541,8 +546,32 @@ class _InputScreenState extends State<InputScreen> {
                     itemBuilder: (ctx, i) {
                       final name = filteredEntries[i].key;
                       final profile = filteredEntries[i].value;
+                      final totalKundalis = 1 + profile.groupMembers.length;
+                      final hasGroup = profile.groupMembers.isNotEmpty;
                       return ListTile(
-                        leading: CircleAvatar(backgroundColor: kBorder, child: Icon(Icons.person, color: kPurple2)),
+                        leading: Stack(
+                          clipBehavior: Clip.none,
+                          children: [
+                            CircleAvatar(
+                              backgroundColor: hasGroup ? kPurple2.withOpacity(0.15) : kBorder,
+                              child: Icon(hasGroup ? Icons.group : Icons.person, color: kPurple2),
+                            ),
+                            if (hasGroup)
+                              Positioned(
+                                right: -4,
+                                top: -4,
+                                child: Container(
+                                  padding: const EdgeInsets.all(4),
+                                  decoration: BoxDecoration(
+                                    color: kTeal,
+                                    shape: BoxShape.circle,
+                                    border: Border.all(color: kBg, width: 1.5),
+                                  ),
+                                  child: Text('$totalKundalis', style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.w900)),
+                                ),
+                              ),
+                          ],
+                        ),
                         title: RichText(
                           text: TextSpan(
                             children: [
@@ -552,7 +581,22 @@ class _InputScreenState extends State<InputScreen> {
                             ],
                           ),
                         ),
-                        subtitle: Text('${profile.date} | ${profile.place}', style: TextStyle(color: kMuted)),
+                        subtitle: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text('${profile.date} | ${profile.place}', style: TextStyle(color: kMuted)),
+                            if (hasGroup)
+                              Padding(
+                                padding: const EdgeInsets.only(top: 2),
+                                child: Text(
+                                  '👥 $totalKundalis ಕುಂಡಲಿ: ${profile.groupMembers.join(', ')}',
+                                  style: TextStyle(color: kTeal, fontSize: 11, fontWeight: FontWeight.w600),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                          ],
+                        ),
                         trailing: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [

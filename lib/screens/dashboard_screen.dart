@@ -39,6 +39,7 @@ class DashboardScreen extends StatefulWidget {
   final Map<String, int> initialAroodhas;
   final int? initialJanmaNakshatraIdx;
   final Map<String, String> extraInfo;
+  final List<String> initialGroupMembers;
   final void Function(String notes, Map<String, int> aroodhas, int? janmaNakshatraIdx, {bool isNew}) onSave;
 
   const DashboardScreen({
@@ -56,6 +57,7 @@ class DashboardScreen extends StatefulWidget {
     this.initialAroodhas = const {},
     this.initialJanmaNakshatraIdx,
     this.extraInfo = const {},
+    this.initialGroupMembers = const [],
     required this.onSave,
   });
 
@@ -127,6 +129,10 @@ class _DashboardScreenState extends State<DashboardScreen>
 
     _loadJanmaNakshatra();
 
+    // Auto-load group members if saved previously
+    if (widget.initialGroupMembers.isNotEmpty) {
+      _loadGroupMembers();
+    }
 
   }
 
@@ -596,6 +602,44 @@ class _DashboardScreenState extends State<DashboardScreen>
     }
   }
 
+  /// Load all group members from saved profiles and calculate their kundalis
+  Future<void> _loadGroupMembers() async {
+    final profiles = await StorageService.loadAll();
+    for (final memberName in widget.initialGroupMembers) {
+      // Skip if already loaded or if it's the primary person
+      if (memberName == widget.name) continue;
+      if (_extraPersons.any((ep) => ep.name == memberName)) continue;
+
+      final p = profiles[memberName];
+      if (p == null) continue;
+
+      try {
+        final dateParts = p.date.split('-');
+        final dob = DateTime(int.parse(dateParts[0]), int.parse(dateParts[1]), int.parse(dateParts[2]));
+        int h24 = p.hour;
+        if (p.ampm == 'PM' && h24 != 12) h24 += 12;
+        if (p.ampm == 'AM' && h24 == 12) h24 = 0;
+        final localHour = h24 + p.minute / 60.0;
+        final result = await AstroCalculator.calculate(
+          year: dob.year, month: dob.month, day: dob.day,
+          hourUtcOffset: p.tzOffset, hour24: localHour,
+          lat: p.lat, lon: p.lon, ayanamsaMode: 'lahiri', trueNode: true,
+        );
+        if (result != null && mounted) {
+          setState(() {
+            _extraPersons.add(_PersonEntry(
+              name: p.name, result: result, dob: dob,
+              hour: p.hour, minute: p.minute, ampm: p.ampm,
+              lat: p.lat, lon: p.lon, place: p.place, notes: p.notes,
+            ));
+          });
+        }
+      } catch (e) {
+        debugPrint('Failed to load group member $memberName: $e');
+      }
+    }
+  }
+
   Future<void> _saveSelectedJanmaNakshatra(int? idx) async {
     if (idx != null) {
       final prefs = await SharedPreferences.getInstance();
@@ -731,9 +775,42 @@ class _DashboardScreenState extends State<DashboardScreen>
                             widget.onSave(_notes, _aroodhas, _janmaNakshatraIdx, isNew: false);
                             if (!mounted) return;
                             final cId = widget.extraInfo['clientId'] ?? '';
+                            
+                            // Persist the group members list on the primary profile
+                            final groupNames = _extraPersons.map((p) => p.name).toList();
+                            final dateStr = '${widget.dob.year}-${widget.dob.month.toString().padLeft(2, '0')}-${widget.dob.day.toString().padLeft(2, '0')}';
+                            await StorageService.save(Profile(
+                              name: widget.name,
+                              date: dateStr,
+                              hour: widget.hour, minute: widget.minute, ampm: widget.ampm,
+                              lat: widget.lat, lon: widget.lon, place: widget.place,
+                              tzOffset: LocationService.tzOffset,
+                              notes: _notes,
+                              aroodhas: _aroodhas,
+                              janmaNakshatraIdx: _janmaNakshatraIdx,
+                              clientId: (cId is String && cId.isNotEmpty) ? cId : null,
+                              groupMembers: groupNames,
+                            ));
+
+                            // Also save each extra person individually
+                            for (final ep in _extraPersons) {
+                              final epDateStr = '${ep.dob.year}-${ep.dob.month.toString().padLeft(2, '0')}-${ep.dob.day.toString().padLeft(2, '0')}';
+                              await StorageService.save(Profile(
+                                name: ep.name,
+                                date: epDateStr,
+                                hour: ep.hour, minute: ep.minute, ampm: ep.ampm,
+                                lat: ep.lat, lon: ep.lon, place: ep.place,
+                                tzOffset: LocationService.tzOffset,
+                                notes: ep.notes,
+                                clientId: (cId is String && cId.isNotEmpty) ? cId : null,
+                              ));
+                            }
+
+                            final totalCount = 1 + groupNames.length;
+                            if (!mounted) return;
                             ScaffoldMessenger.of(context).showSnackBar(
                               SnackBar(
-                                content: Text('✅ ಜಾತಕವನ್ನು ಉಳಿಸಲಾಗಿದೆ! (Saved)\nClient ID: $cId'),
+                                content: Text('✅ ಜಾತಕವನ್ನು ಉಳಿಸಲಾಗಿದೆ! ($totalCount ಕುಂಡಲಿ)\nClient ID: $cId'),
                                 backgroundColor: Colors.green,
                                 duration: const Duration(seconds: 4),
                               )

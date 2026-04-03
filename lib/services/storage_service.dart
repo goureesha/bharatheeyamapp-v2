@@ -82,6 +82,7 @@ class Profile {
   final Map<String, int> aroodhas;
   final int? janmaNakshatraIdx;
   final String? clientId;
+  final List<String> groupMembers;
 
   Profile({
     required this.name,
@@ -97,6 +98,7 @@ class Profile {
     this.aroodhas = const {},
     this.janmaNakshatraIdx,
     this.clientId,
+    this.groupMembers = const [],
   });
 
   Map<String, dynamic> toJson() => {
@@ -112,6 +114,7 @@ class Profile {
     'aroodhas': aroodhas,
     'janmaNakshatraIdx': janmaNakshatraIdx,
     'clientId': clientId,
+    'groupMembers': groupMembers,
   };
 
   factory Profile.fromJson(String name, Map<String, dynamic> j) => Profile(
@@ -130,5 +133,8 @@ class Profile {
         : {},
     janmaNakshatraIdx: j['janmaNakshatraIdx'] as int?,
     clientId: j['clientId'] as String?,
+    groupMembers: j['groupMembers'] != null
+        ? List<String>.from(j['groupMembers'] as List)
+        : [],
   );
 }
