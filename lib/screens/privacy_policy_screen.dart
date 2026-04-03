@@ -37,38 +37,29 @@ class PrivacyPolicyScreen extends StatelessWidget {
             _body('ಅಪ್ ಈ ಕೆಳಗಿನ ಮಾಹಿತಿಯನ್ನು ಮಾತ್ರ ಸಂಗ್ರಹಿಸುತ್ತದೆ:'),
             _bullet('ಜಾತಕ ದತ್ತಾಂಶ: ಹೆಸರು, ಜನ್ಮ ದಿನಾಂಕ, ಸಮಯ ಮತ್ತು ಸ್ಥಳ — ಇವು ನಿಮ್ಮ ಸಾಧನದಲ್ಲೇ ಸಂಗ್ರಹವಾಗುತ್ತವೆ.'),
             _bullet('Google ಖಾತೆ ಮಾಹಿತಿ: ನೀವು Google ಸೈನ್ ಇನ್ ಮಾಡಿದರೆ, ನಿಮ್ಮ ಹೆಸರು ಮತ್ತು ಇಮೇಲ್ ಮಾತ್ರ ಬಳಕೆಯಾಗುತ್ತದೆ.'),
-            _bullet('ಜ್ಯೋತಿಷ್ಯ ಫಲಿತಾಂಶಗಳು: ಸ್ಥಳೀಯ ಸಂಗ್ರಹ ಮಾಡಲ್ಪಡುತ್ತವೆ. Google ಸಿಂಕ್ ಆಯ್ಕೆಮಾಡಿದರೆ ನಿಮ್ಮ Google ​​ Sheets/Docs ಗೆ ಮಾತ್ರ ಹೋಗುತ್ತದೆ.'),
+            _bullet('ಜ್ಯೋತಿಷ್ಯ ಫಲಿತಾಂಶಗಳು: ಸ್ಥಳೀಯ ಸಂಗ್ರಹ ಮಾಡಲ್ಪಡುತ್ತವೆ. Google ಸಿಂಕ್ ಆಯ್ಕೆಮಾಡಿದರೆ ನಿಮ್ಮ ಕ್ಲೌಡ್ ಬ್ಯಾಕಪ್‌ಗೆ ಮಾತ್ರ ಹೋಗುತ್ತದೆ.'),
             const SizedBox(height: 12),
 
             _section('3. ಮಾಹಿತಿ ಬಳಕೆ'),
             _body('ನಿಮ್ಮ ಮಾಹಿತಿ ಹೇಗೆ ಬಳಸಲಾಗುತ್ತದೆ:'),
             _bullet('ಜಾತಕ ಲೆಕ್ಕಾಚಾರ ಮತ್ತು ಪ್ರದರ್ಶನಕ್ಕೆ'),
-            _bullet('ಐಚ್ಛಿಕ Google Sheets, Docs ಮತ್ತು Calendar ಸಿಂಕ್‌ಗೆ'),
+            _bullet('ಐಚ್ಛಿಕ ಡೇಟಾ ಬ್ಯಾಕಪ್ ಸಿಂಕ್‌ಗೆ'),
             _bullet('ಅಪ್ ಕಾರ್ಯಕ್ಷಮತೆ ಸುಧಾರಿಸಲು'),
             const SizedBox(height: 12),
 
             _section('4. ಮಾಹಿತಿ ಹಂಚಿಕೆ'),
-            _body(
-              'ನಾವು ನಿಮ್ಮ ಯಾವುದೇ ವ್ಯಕ್ತಿಗತ ಮಾಹಿತಿಯನ್ನು ತೃತೀಯ ಪಕ್ಷಕ್ಕೆ ಮಾರಾಟ ಮಾಡುವುದಿಲ್ಲ ಅಥವಾ ಹಂಚಿಕೊಳ್ಳುವುದಿಲ್ಲ. '
-              'Google AdMob ತನ್ನ ಸ್ವಂತ ಗೌಪ್ಯತಾ ನೀತಿ ಅನ್ವಯ ಜಾಹೀರಾತು ಸೇವೆ ನೀಡಬಹುದು.',
-            ),
+            _body('ನಾವು ನಿಮ್ಮ ಯಾವುದೇ ವ್ಯಕ್ತಿಗತ ಮಾಹಿತಿಯನ್ನು ತೃತೀಯ ಪಕ್ಷಕ್ಕೆ ಮಾರಾಟ ಮಾಡುವುದಿಲ್ಲ ಅಥವಾ ಹಂಚಿಕೊಳ್ಳುವುದಿಲ್ಲ.'),
             const SizedBox(height: 12),
 
             _section('5. Google ಸೇವೆಗಳು'),
             _body(
-              'ಆಯ್ಕೆ ಮಾಡಿದರೆ, ಅಪ್ ಇವುಗಳನ್ನು ಬಳಸಬಹುದು: Google Sign-In, Google Sheets, Google Docs, Google Calendar. '
+              'ಆಯ್ಕೆ ಮಾಡಿದರೆ, ಅಪ್ ಇವುಗಳನ್ನು ಬಳಸಬಹುದು: Google Sign-In ಮತ್ತು ಕ್ಲೌಡ್ ಬ್ಯಾಕಪ್. '
               'ಈ ಸೇವೆಗಳಿಗೆ Google ನ ಗೌಪ್ಯತಾ ನೀತಿ ಅನ್ವಯಿಸುತ್ತದೆ: '
               'https://policies.google.com/privacy',
             ),
             const SizedBox(height: 12),
 
-            _section('6. ಜಾಹೀರಾತು'),
-            _body(
-              'ಈ ಅಪ್ Google AdMob ಮೂಲಕ ಜಾಹೀರಾತುಗಳನ್ನು ತೋರಿಸುತ್ತದೆ. '
-              'AdMob ಸಾಧನ ಮಾಹಿತಿ ಬಳಸಿ ಸಂಬಂಧಿತ ಜಾಹೀರಾತುಗಳನ್ನು ತೋರಿಸಬಹುದು. '
-              'ಪ್ರೀಮಿಯಂ ಖರೀದಿಸಿದರೆ ಜಾಹೀರಾತುಗಳು ತೆಗೆದು ಹಾಕಲ್ಪಡುತ್ತವೆ.',
-            ),
-            const SizedBox(height: 12),
+
 
             _section('7. ಡೇಟಾ ಸುರಕ್ಷತೆ'),
             _body(
@@ -101,35 +92,27 @@ class PrivacyPolicyScreen extends StatelessWidget {
             _section('2. Information We Collect'),
             _bullet('Kundali Data: Name, date of birth, time, and place — stored LOCALLY on your device only.'),
             _bullet('Google Account: If you use Google Sign-In, only your name and email are accessed.'),
-            _bullet('Astrological Results: Stored locally. If Google Sync is enabled, data goes only to YOUR Google Sheets/Docs.'),
+            _bullet('Astrological Results: Stored locally. If Google Sync is enabled, data goes only to your private Cloud Backup.'),
             const SizedBox(height: 12),
 
             _section('3. How We Use Information'),
             _bullet('To calculate and display astrological charts'),
-            _bullet('Optional sync to your Google Sheets, Docs, and Calendar'),
+            _bullet('Optional data backup sync'),
             _bullet('To improve app performance'),
             const SizedBox(height: 12),
 
             _section('4. Data Sharing'),
-            _body(
-              'We do NOT sell or share your personal information with any third party. '
-              'Google AdMob may serve ads using device identifiers per its own privacy policy.',
-            ),
+            _body('We do NOT sell or share your personal information with any third party.'),
             const SizedBox(height: 12),
 
             _section('5. Google Services'),
             _body(
-              'If enabled, the app uses: Google Sign-In, Google Sheets, Google Docs, and Google Calendar. '
+              'If enabled, the app uses Google Sign-In and cloud backup. '
               'Google\'s Privacy Policy applies: https://policies.google.com/privacy',
             ),
             const SizedBox(height: 12),
 
-            _section('6. Advertisements'),
-            _body(
-              'This app shows ads via Google AdMob. AdMob may use device information to show relevant ads. '
-              'Purchasing a Premium subscription removes all ads.',
-            ),
-            const SizedBox(height: 12),
+
 
             _section('7. Data Security'),
             _body(

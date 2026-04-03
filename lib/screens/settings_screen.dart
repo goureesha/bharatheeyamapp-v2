@@ -340,7 +340,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                               )),
                             ]),
                             const SizedBox(height: 12),
-                            Text('Sheets, Docs, Calendar ಸಿಂಕ್ ಸಕ್ರಿಯವಾಗಿದೆ', style: TextStyle(fontSize: 13, color: Colors.green)),
+                            Text('Google ಸಿಂಕ್ ಸಕ್ರಿಯವಾಗಿದೆ', style: TextStyle(fontSize: 13, color: Colors.green)),
                             const SizedBox(height: 12),
                             OutlinedButton(
                               onPressed: () async {
@@ -379,7 +379,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                             Row(children: [
                               Icon(Icons.account_circle, color: kPurple2, size: 28),
                               const SizedBox(width: 12),
-                              Expanded(child: Text('Google ಗೆ ಸೈನ್ ಇನ್ ಮಾಡಿ Sheets, Docs ಮತ್ತು Calendar ಸಿಂಕ್ ಬಳಸಿ',
+                              Expanded(child: Text('ಕ್ಲೌಡ್ ಬ್ಯಾಕಪ್‌ಗಾಗಿ Google ಗೆ ಸೈನ್ ಇನ್ ಮಾಡಿ',
                                 style: TextStyle(fontSize: 14, color: kText))),
                             ]),
                             const SizedBox(height: 12),
@@ -515,9 +515,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     Container(
                       padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
-                        color: SubscriptionService.hasAdFree ? Colors.green.shade50 : kPurple1.withOpacity(0.05),
+                        color: SubscriptionService.hasSubscription ? Colors.green.shade50 : kPurple1.withOpacity(0.05),
                         borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: SubscriptionService.hasAdFree ? Colors.green.shade200 : kPurple2.withOpacity(0.2)),
+                        border: Border.all(color: SubscriptionService.hasSubscription ? Colors.green.shade200 : kPurple2.withOpacity(0.2)),
                       ),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -525,35 +525,35 @@ class _SettingsScreenState extends State<SettingsScreen> {
                            Row(
                              children: [
                                Icon(
-                                 SubscriptionService.hasAdFree ? Icons.check_circle : Icons.star, 
-                                 color: SubscriptionService.hasAdFree ? Colors.green.shade700 : kOrange,
+                                 SubscriptionService.hasSubscription ? Icons.check_circle : Icons.star, 
+                                 color: SubscriptionService.hasSubscription ? Colors.green.shade700 : kOrange,
                                  size: 28,
                                ),
                                const SizedBox(width: 12),
                                Expanded(
                                  child: Text(
-                                   SubscriptionService.hasAdFree 
-                                      ? 'ನೀವು ಪ್ರೀಮಿಯಂ ಸದಸ್ಯರು! (Ad-Free Active)' 
-                                      : 'ಜಾಹೀರಾತು ಮುಕ್ತ ಅನುಭವ ಪಡೆಯಿರಿ',
+                                   SubscriptionService.hasSubscription 
+                                      ? 'ನೀವು ಪ್ರೀಮಿಯಂ ಸದಸ್ಯರು! (Premium Active)' 
+                                      : 'ಪ್ರೀಮಿಯಂ ಲಭ್ಯತೆ ಪಡೆಯಿರಿ',
                                    style: TextStyle(
-                                     fontSize: SubscriptionService.hasAdFree ? 16 : 18, 
+                                     fontSize: SubscriptionService.hasSubscription ? 16 : 18, 
                                      fontWeight: FontWeight.bold,
-                                     color: SubscriptionService.hasAdFree ? Colors.green.shade800 : kPurple1
+                                     color: SubscriptionService.hasSubscription ? Colors.green.shade800 : kPurple1
                                    ),
                                  ),
                                ),
                              ],
                            ),
-                           if (!SubscriptionService.hasAdFree) ...[
+                           if (!SubscriptionService.hasSubscription) ...[
                              const SizedBox(height: 12),
                              Text(
-                               'ವರ್ಷಕ್ಕೆ ಕೇವಲ ₹೭೦೦ ಪಾವತಿಸಿ ಮತ್ತು ಅಪ್ಲಿಕೇಶನ್ ಅನ್ನು ಯಾವುದೇ ಜಾಹೀರಾತುಗಳಿಲ್ಲದೆ ಬಳಸಿ.',
+                               'ವರ್ಷಕ್ಕೆ ಕೇವಲ ₹೭೦೦ ಪಾವತಿಸಿ ಮತ್ತು ಎಲ್ಲಾ ಕುಂಡಲಿ ಹಾಗೂ ಪಂಚಾಂಗ ವೈಶಿಷ್ಟ್ಯಗಳನ್ನು ಬಳಸಿ.',
                                style: TextStyle(fontSize: 14, color: kText, height: 1.4),
                              ),
                              const SizedBox(height: 20),
                              ElevatedButton(
                                onPressed: () async {
-                                 final success = await SubscriptionService.buyAdFreeSubscription();
+                                 final success = await SubscriptionService.buySubscription();
                                  if (!success && mounted) {
                                     ScaffoldMessenger.of(context).showSnackBar(
                                       const SnackBar(content: Text('ಚಂದಾದಾರಿಕೆ ಪ್ರಕ್ರಿಯೆ ವಿಫಲವಾಗಿದೆ ಅಥವಾ ನೀವು ವೆಬ್ ಬಳಸುತ್ತಿದ್ದೀರಿ.'))
