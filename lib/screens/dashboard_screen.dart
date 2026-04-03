@@ -542,10 +542,37 @@ class _DashboardScreenState extends State<DashboardScreen>
                   }
                   
                   if (mounted) {
+                    final cId = widget.extraInfo['clientId'] ?? '';
+                    final dateStr = '${dob.year}-${dob.month.toString().padLeft(2, '0')}-${dob.day.toString().padLeft(2, '0')}';
+                    
+                    final p = Profile(
+                      name: name,
+                      date: dateStr,
+                      hour: hour, minute: minute, ampm: ampm,
+                      lat: lat, lon: lon,
+                      tzOffset: tz,
+                      place: placeCtrl.text,
+                      clientId: cId.isNotEmpty ? cId.toString() : null,
+                    );
+                    StorageService.save(p);
+                    
+                    if (cId is String && cId.isNotEmpty) {
+                      final member = FamilyMember(
+                         clientId: cId,
+                         memberName: name,
+                         relation: 'Group Member',
+                         dob: dateStr,
+                         birthTime: '${hour.toString().padLeft(2,'0')}:${minute.toString().padLeft(2,'0')} $ampm',
+                         birthPlace: placeCtrl.text,
+                         lat: lat, lon: lon,
+                      );
+                      ClientService.addFamilyMember(member);
+                    }
+
                     setState(() {
                       _extraPersons.add(_PersonEntry(name: name, result: result, dob: dob, hour: hour, minute: minute, ampm: ampm, lat: lat, lon: lon, place: placeCtrl.text));
                     });
-                    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('✅ $name ${tr('ಕುಂಡಲಿ ಯಶಸ್ವಿಯಾಗಿ ರಚಿಸಲಾಗಿದೆ')}'), backgroundColor: Colors.green));
+                    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('✅ $name ${tr('ಕುಂಡಲಿ ಯಶಸ್ವಿಯಾಗಿ ರಚಿಸಲಾಗಿದೆ ಮತ್ತು ಉಳಿಸಲಾಗಿದೆ')}'), backgroundColor: Colors.green));
                   }
                 } catch (e) {
                   if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('❌ ${tr('ದೋಷ')}: $e'), backgroundColor: Colors.red));
