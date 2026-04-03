@@ -86,6 +86,9 @@ class _InputScreenState extends State<InputScreen> {
   Future<void> _loadProfiles() async {
     final p = await StorageService.loadAll();
 
+    // CRITICAL: Load ClientService data first so the sync can find existing clients/members
+    await ClientService.loadAll();
+
     // ════════════════════════════════════════════════════════════
     // Bi-directional Sync: StorageService ↔ ClientService
     // ════════════════════════════════════════════════════════════
