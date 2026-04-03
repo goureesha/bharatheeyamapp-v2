@@ -183,22 +183,24 @@ class NorthIndianChart extends StatelessWidget {
       }
     }
 
-    return AspectRatio(
-      aspectRatio: 1.0,
-      child: Container(
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: const Color(0xFFCBD5E0), width: 1.5),
-        ),
-        child: LayoutBuilder(
-          builder: (context, constraints) {
-            final size = constraints.maxWidth;
-            return CustomPaint(
-              painter: _NorthIndianPainter(houseRashi: houseRashi),
-              child: Stack(children: _buildHouseWidgets(size, houses, houseRashi)),
-            );
-          },
+    return Center(
+      child: AspectRatio(
+        aspectRatio: 1.0,
+        child: Container(
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: const Color(0xFFCBD5E0), width: 1.5),
+          ),
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              final size = constraints.maxWidth;
+              return CustomPaint(
+                painter: _NorthIndianPainter(houseRashi: houseRashi),
+                child: Stack(children: _buildHouseWidgets(size, houses, houseRashi)),
+              );
+            },
+          ),
         ),
       ),
     );
