@@ -213,6 +213,7 @@ class _DashboardScreenState extends State<DashboardScreen>
                lat: op.lat, lon: op.lon, tzOffset: op.tzOffset, place: op.place, notes: op.notes,
                aroodhas: op.aroodhas, janmaNakshatraIdx: op.janmaNakshatraIdx,
                clientId: m.clientId, // Force exact sync with Appointment Database
+               groupMembers: op.groupMembers, // Preserve multi-person group!
             );
           }
         }
