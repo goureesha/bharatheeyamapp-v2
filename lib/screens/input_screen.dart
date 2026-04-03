@@ -304,7 +304,8 @@ class _InputScreenState extends State<InputScreen> {
             onSave: (notes, aroodhas, janmaIdx, {bool isNew = true}) =>
                 _saveProfile(activeClientId, notes: notes, aroodhas: aroodhas, janmaNakshatraIdx: janmaIdx, isNew: !_loadedFromSaved),
           ),
-        )).then((_) {
+        )).then((_) async {
+          await _loadProfiles();
           // Reset the form back to current time/empty strings when returning FROM dashboard
           if (mounted) {
             final now = DateTime.now();
