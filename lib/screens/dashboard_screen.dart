@@ -1651,15 +1651,13 @@ class _DashboardScreenState extends State<DashboardScreen>
       return '';
     }
 
-    const headerColor = Color(0xFF973B1B);
-    const cellColor = Color(0xFF1E3A8A);
-
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
       child: Column(
         children: allPersons.map((person) {
           final r = person['result'] as KundaliResult;
           final pName = person['name'] as String;
+          int rowIdx = 0;
 
           return Column(
             children: [
@@ -1668,62 +1666,103 @@ class _DashboardScreenState extends State<DashboardScreen>
                   padding: const EdgeInsets.only(bottom: 8),
                   child: Text(pName, style: TextStyle(fontSize: 15, fontWeight: FontWeight.w900, color: kTeal)),
                 ),
-              Text(AppLocale.isHindi ? 'षड्वर्ग' : 'ಷಡ್ವರ್ಗ', style: TextStyle(
-                fontWeight: FontWeight.w800, fontSize: 16,
-                color: kPurple2)),
-              const SizedBox(height: 12),
+              // Title with gradient accent
+              Container(
+                padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 16),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(colors: [kPurple1.withOpacity(0.12), kPurple2.withOpacity(0.06)]),
+                  borderRadius: const BorderRadius.only(
+                    topLeft: Radius.circular(14), topRight: Radius.circular(14),
+                  ),
+                  border: Border(bottom: BorderSide(color: kPurple2.withOpacity(0.3), width: 2)),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(Icons.grid_view_rounded, size: 18, color: kPurple2),
+                    const SizedBox(width: 8),
+                    Text(AppLocale.isHindi ? 'षड्वर्ग' : 'ಷಡ್ವರ್ಗ', style: TextStyle(
+                      fontWeight: FontWeight.w900, fontSize: 16, color: kPurple2,
+                    )),
+                  ],
+                ),
+              ),
               
+              // Table
               Container(
                 decoration: BoxDecoration(
-                  color: const Color(0xFFEFD29F),
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: const Color(0xFFD6B986)),
-                ),
-                child: Table(
-                  border: const TableBorder.symmetric(
-                    inside: BorderSide(color: Color(0x33000000), width: 0.5),
+                  color: kCard,
+                  borderRadius: const BorderRadius.only(
+                    bottomLeft: Radius.circular(14), bottomRight: Radius.circular(14),
                   ),
-                  columnWidths: const {
-                    0: FlexColumnWidth(1.2),
-                    1: FlexColumnWidth(1),
-                    2: FlexColumnWidth(1),
-                    3: FlexColumnWidth(1),
-                    4: FlexColumnWidth(1),
-                    5: FlexColumnWidth(1),
-                    6: FlexColumnWidth(1),
-                  },
-                  children: [
-                    TableRow(
-                      children: [
-                        Padding(padding: const EdgeInsets.symmetric(vertical: 16), child: Text(hGraha, textAlign: TextAlign.center, style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 14, color: headerColor))),
-                        Padding(padding: const EdgeInsets.symmetric(vertical: 16), child: Text(hD3, textAlign: TextAlign.center, style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 14, color: headerColor))),
-                        Padding(padding: const EdgeInsets.symmetric(vertical: 16), child: Text(hD2, textAlign: TextAlign.center, style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 14, color: headerColor))),
-                        Padding(padding: const EdgeInsets.symmetric(vertical: 16), child: Text(hD9, textAlign: TextAlign.center, style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 14, color: headerColor))),
-                        Padding(padding: const EdgeInsets.symmetric(vertical: 16), child: Text(hD30, textAlign: TextAlign.center, style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 14, color: headerColor))),
-                        Padding(padding: const EdgeInsets.symmetric(vertical: 16), child: Text(hD12, textAlign: TextAlign.center, style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 14, color: headerColor))),
-                        Padding(padding: const EdgeInsets.symmetric(vertical: 16), child: Text(hKshetra, textAlign: TextAlign.center, style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 14, color: headerColor))),
-                      ],
-                    ),
-                    ...planetOrder.map((pNameKey) {
-                      final pInfo = r.planets[pNameKey];
-                      if (pInfo == null) return const TableRow(children: [SizedBox(), SizedBox(), SizedBox(), SizedBox(), SizedBox(), SizedBox(), SizedBox()]);
-                      
-                      final details = AstroCalculator.getPlanetDetail(pNameKey, pInfo.longitude, pInfo.speed, r.planets['ರವಿ']?.longitude ?? 0.0);
-                      final displayName = appPlanetNames[pNameKey] ?? tr(pNameKey);
-
-                      return TableRow(
-                        children: [
-                          Padding(padding: const EdgeInsets.symmetric(vertical: 14), child: Text(displayName, textAlign: TextAlign.center, style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 14, color: cellColor))),
-                          Padding(padding: const EdgeInsets.symmetric(vertical: 14), child: Text(getRashiLord(details['d3'] as String), textAlign: TextAlign.center, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w800, color: cellColor))),
-                          Padding(padding: const EdgeInsets.symmetric(vertical: 14), child: Text(getRashiLord(details['d2'] as String), textAlign: TextAlign.center, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w800, color: cellColor))),
-                          Padding(padding: const EdgeInsets.symmetric(vertical: 14), child: Text(getRashiLord(details['d9'] as String), textAlign: TextAlign.center, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w800, color: cellColor))),
-                          Padding(padding: const EdgeInsets.symmetric(vertical: 14), child: Text(getRashiLord(details['d30'] as String), textAlign: TextAlign.center, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w800, color: cellColor))),
-                          Padding(padding: const EdgeInsets.symmetric(vertical: 14), child: Text(getRashiLord(details['d12'] as String), textAlign: TextAlign.center, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w800, color: cellColor))),
-                          Padding(padding: const EdgeInsets.symmetric(vertical: 14), child: Text(getRashiLord(details['d1'] as String), textAlign: TextAlign.center, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w800, color: cellColor))),
-                        ],
-                      );
-                    }).toList(),
+                  border: Border.all(color: kBorder),
+                  boxShadow: [
+                    BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 10, offset: const Offset(0, 4)),
                   ],
+                ),
+                child: ClipRRect(
+                  borderRadius: const BorderRadius.only(
+                    bottomLeft: Radius.circular(14), bottomRight: Radius.circular(14),
+                  ),
+                  child: Table(
+                    border: TableBorder.symmetric(
+                      inside: BorderSide(color: kBorder.withOpacity(0.6), width: 0.5),
+                    ),
+                    columnWidths: const {
+                      0: FlexColumnWidth(1.3),
+                      1: FlexColumnWidth(1),
+                      2: FlexColumnWidth(1),
+                      3: FlexColumnWidth(1),
+                      4: FlexColumnWidth(1),
+                      5: FlexColumnWidth(1),
+                      6: FlexColumnWidth(1),
+                    },
+                    children: [
+                      // Header row
+                      TableRow(
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(colors: [kPurple1.withOpacity(0.15), kPurple2.withOpacity(0.08)]),
+                        ),
+                        children: [hGraha, hD3, hD2, hD9, hD30, hD12, hKshetra].map((h) =>
+                          Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 14),
+                            child: Text(h, textAlign: TextAlign.center, style: TextStyle(
+                              fontWeight: FontWeight.w900, fontSize: 14, color: kPurple2,
+                            )),
+                          ),
+                        ).toList(),
+                      ),
+                      // Data rows with alternating shading
+                      ...planetOrder.map((pNameKey) {
+                        final pInfo = r.planets[pNameKey];
+                        if (pInfo == null) return const TableRow(children: [SizedBox(), SizedBox(), SizedBox(), SizedBox(), SizedBox(), SizedBox(), SizedBox()]);
+                        
+                        final details = AstroCalculator.getPlanetDetail(pNameKey, pInfo.longitude, pInfo.speed, r.planets['ರವಿ']?.longitude ?? 0.0);
+                        final displayName = appPlanetNames[pNameKey] ?? tr(pNameKey);
+                        final isEvenRow = rowIdx++ % 2 == 0;
+
+                        return TableRow(
+                          decoration: BoxDecoration(
+                            color: isEvenRow ? kBg.withOpacity(0.5) : kCard,
+                          ),
+                          children: [
+                            // Planet name column
+                            Padding(padding: const EdgeInsets.symmetric(vertical: 12), child: Text(
+                              displayName, textAlign: TextAlign.center,
+                              style: TextStyle(fontWeight: FontWeight.w900, fontSize: 14, color: kTeal),
+                            )),
+                            // Varga lord columns
+                            ...[details['d3'], details['d2'], details['d9'], details['d30'], details['d12'], details['d1']].map((v) =>
+                              Padding(padding: const EdgeInsets.symmetric(vertical: 12), child: Text(
+                                getRashiLord(v as String), textAlign: TextAlign.center,
+                                style: TextStyle(fontSize: 14, fontWeight: FontWeight.w800, color: kText),
+                              )),
+                            ),
+                          ],
+                        );
+                      }).toList(),
+                    ],
+                  ),
                 ),
               ),
               if (allPersons.length > 1) const SizedBox(height: 24),
