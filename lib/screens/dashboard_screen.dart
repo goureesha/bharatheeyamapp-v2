@@ -109,8 +109,8 @@ class _DashboardScreenState extends State<DashboardScreen>
 
 
   static List<String> get _tabs => AppLocale.isHindi
-    ? ['कुंडली', 'स्फुट', 'आरूढ', 'दशा', 'पंचांग', 'भाव', 'भाव द्रेष्काण', 'षड्बल', 'अष्टक', 'टिप्पणी']
-    : ['ಕುಂಡಲಿ', 'ಸ್ಫುಟ', 'ಆರೂಢ', 'ದಶ', 'ಪಂಚಾಂಗ', 'ಭಾವ', 'ಭಾವ ದ್ರೇಕ್ಕಾಣ', 'ಷಡ್ಬಲ', 'ಅಷ್ಟಕ', 'ಟಿಪ್ಪಣಿ'];
+    ? ['कुंडली', 'स्फुट', 'आरूढ', 'दशा', 'पंचांग', 'भाव', 'भाव द्रेष्काण', 'ग्रह षड्वर्ग', 'षड्बल', 'अष्टक', 'टिप्पणी']
+    : ['ಕುಂಡಲಿ', 'ಸ್ಫುಟ', 'ಆರೂಢ', 'ದಶ', 'ಪಂಚಾಂಗ', 'ಭಾವ', 'ಭಾವ ದ್ರೇಕ್ಕಾಣ', 'ಗ್ರಹ ಷಡ್ವರ್ಗ', 'ಷಡ್ಬಲ', 'ಅಷ್ಟಕ', 'ಟಿಪ್ಪಣಿ'];
 
   @override
   void initState() {
@@ -750,6 +750,7 @@ class _DashboardScreenState extends State<DashboardScreen>
                   _buildPanchangTab(),
                   _buildBhavaTab(),
                   _buildBhavaDrekkaanaTab(),
+                  _buildGrahaShadvargaTab(),
                   _buildShadbalaTab(),
                   _buildAshtakaTab(),
                   _buildNotesTab(),
@@ -1469,6 +1470,128 @@ class _DashboardScreenState extends State<DashboardScreen>
             );
           }),
         ],
+      ),
+    );
+  }
+
+  // ─────────────────────────────────────────────
+  // TAB 7.6: GRAHA SHADVARGA
+  // ─────────────────────────────────────────────
+  Widget _buildGrahaShadvargaTab() {
+    final allPersons = <Map<String, dynamic>>[
+      {'name': widget.name, 'result': widget.result},
+      ..._extraPersons.map((p) => {'name': p.name, 'result': p.result}),
+    ];
+
+    final hGraha = AppLocale.isHindi ? 'ग्रह' : 'ಗ್ರಹ';
+    final hD3 = AppLocale.isHindi ? 'द्रे' : 'ದ್ರೇ';
+    final hD2 = AppLocale.isHindi ? 'हो' : 'ಹೋ';
+    final hD9 = AppLocale.isHindi ? 'न' : 'ನ';
+    final hD30 = AppLocale.isHindi ? 'त्रिं' : 'ತ್ರಿಂ';
+    final hD12 = AppLocale.isHindi ? 'द्वा' : 'ದ್ವಾ';
+    final hKshetra = AppLocale.isHindi ? 'क्षे' : 'ಕ್ಷೇ';
+
+    String getRashiLord(String rashiNameKn) {
+      int idx = knRashi.indexOf(rashiNameKn);
+      if (idx < 0) return rashiNameKn; 
+      
+      final isHi = AppLocale.isHindi;
+      switch (idx) {
+        case 0: return isHi ? 'मं' : 'ಕು'; 
+        case 1: return isHi ? 'शु' : 'ಶು'; 
+        case 2: return isHi ? 'बु' : 'ಬು'; 
+        case 3: return isHi ? 'चं' : 'ಚ'; 
+        case 4: return isHi ? 'सू' : 'ರ'; 
+        case 5: return isHi ? 'बु' : 'ಬು'; 
+        case 6: return isHi ? 'शु' : 'ಶು'; 
+        case 7: return isHi ? 'मं' : 'ಕು'; 
+        case 8: return isHi ? 'गु' : 'ಗು'; 
+        case 9: return isHi ? 'श' : 'ಶ'; 
+        case 10: return isHi ? 'श' : 'ಶ'; 
+        case 11: return isHi ? 'गु' : 'ಗು'; 
+      }
+      return '';
+    }
+
+    const headerColor = Color(0xFF973B1B);
+    const cellColor = Color(0xFF1E3A8A);
+
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        children: allPersons.map((person) {
+          final r = person['result'] as KundaliResult;
+          final pName = person['name'] as String;
+
+          return Column(
+            children: [
+              if (allPersons.length > 1)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 8),
+                  child: Text(pName, style: TextStyle(fontSize: 15, fontWeight: FontWeight.w900, color: kTeal)),
+                ),
+              Text(AppLocale.isHindi ? 'षड्वर्ग' : 'ಷಡ್ವರ್ಗ', style: TextStyle(
+                fontWeight: FontWeight.w800, fontSize: 16,
+                color: kPurple2)),
+              const SizedBox(height: 12),
+              
+              Container(
+                decoration: BoxDecoration(
+                  color: const Color(0xFFEFD29F),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: const Color(0xFFD6B986)),
+                ),
+                child: Table(
+                  border: const TableBorder.symmetric(
+                    inside: BorderSide(color: Color(0x33000000), width: 0.5),
+                  ),
+                  columnWidths: const {
+                    0: FlexColumnWidth(1.2),
+                    1: FlexColumnWidth(1),
+                    2: FlexColumnWidth(1),
+                    3: FlexColumnWidth(1),
+                    4: FlexColumnWidth(1),
+                    5: FlexColumnWidth(1),
+                    6: FlexColumnWidth(1),
+                  },
+                  children: [
+                    TableRow(
+                      children: [
+                        Padding(padding: const EdgeInsets.symmetric(vertical: 16), child: Text(hGraha, textAlign: TextAlign.center, style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 14, color: headerColor))),
+                        Padding(padding: const EdgeInsets.symmetric(vertical: 16), child: Text(hD3, textAlign: TextAlign.center, style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 14, color: headerColor))),
+                        Padding(padding: const EdgeInsets.symmetric(vertical: 16), child: Text(hD2, textAlign: TextAlign.center, style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 14, color: headerColor))),
+                        Padding(padding: const EdgeInsets.symmetric(vertical: 16), child: Text(hD9, textAlign: TextAlign.center, style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 14, color: headerColor))),
+                        Padding(padding: const EdgeInsets.symmetric(vertical: 16), child: Text(hD30, textAlign: TextAlign.center, style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 14, color: headerColor))),
+                        Padding(padding: const EdgeInsets.symmetric(vertical: 16), child: Text(hD12, textAlign: TextAlign.center, style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 14, color: headerColor))),
+                        Padding(padding: const EdgeInsets.symmetric(vertical: 16), child: Text(hKshetra, textAlign: TextAlign.center, style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 14, color: headerColor))),
+                      ],
+                    ),
+                    ...planetOrder.map((pNameKey) {
+                      final pInfo = r.planets[pNameKey];
+                      if (pInfo == null) return const TableRow(children: [SizedBox(), SizedBox(), SizedBox(), SizedBox(), SizedBox(), SizedBox(), SizedBox()]);
+                      
+                      final details = AstroCalculator.getPlanetDetail(pNameKey, pInfo.longitude, pInfo.speed, r.planets['ರವಿ']?.longitude ?? 0.0);
+                      final displayName = appPlanetNames[pNameKey] ?? tr(pNameKey);
+
+                      return TableRow(
+                        children: [
+                          Padding(padding: const EdgeInsets.symmetric(vertical: 14), child: Text(displayName, textAlign: TextAlign.center, style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 14, color: cellColor))),
+                          Padding(padding: const EdgeInsets.symmetric(vertical: 14), child: Text(getRashiLord(details['d3'] as String), textAlign: TextAlign.center, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w800, color: cellColor))),
+                          Padding(padding: const EdgeInsets.symmetric(vertical: 14), child: Text(getRashiLord(details['d2'] as String), textAlign: TextAlign.center, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w800, color: cellColor))),
+                          Padding(padding: const EdgeInsets.symmetric(vertical: 14), child: Text(getRashiLord(details['d9'] as String), textAlign: TextAlign.center, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w800, color: cellColor))),
+                          Padding(padding: const EdgeInsets.symmetric(vertical: 14), child: Text(getRashiLord(details['d30'] as String), textAlign: TextAlign.center, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w800, color: cellColor))),
+                          Padding(padding: const EdgeInsets.symmetric(vertical: 14), child: Text(getRashiLord(details['d12'] as String), textAlign: TextAlign.center, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w800, color: cellColor))),
+                          Padding(padding: const EdgeInsets.symmetric(vertical: 14), child: Text(getRashiLord(details['d1'] as String), textAlign: TextAlign.center, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w800, color: cellColor))),
+                        ],
+                      );
+                    }).toList(),
+                  ],
+                ),
+              ),
+              if (allPersons.length > 1) const SizedBox(height: 24),
+            ]
+          );
+        }).toList(),
       ),
     );
   }
