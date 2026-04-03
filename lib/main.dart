@@ -100,6 +100,27 @@ class _BharatheeyamAppState extends State<BharatheeyamApp> {
           key: ValueKey('theme_$themeIndex'), // Forces full rebuild on theme change
           title: 'ಭಾರತೀಯಮ್',
           debugShowCheckedModeBanner: false,
+          builder: (context, child) {
+            final data = MediaQuery.of(context);
+            final shortestSide = data.size.shortestSide;
+            
+            double scale = 1.0;
+            if (shortestSide >= 800) {
+              scale = 1.4;
+            } else if (shortestSide >= 600) {
+              scale = 1.2;
+            }
+
+            // Combine OS text scaling with our screen-size based scaling
+            final finalScale = data.textScaler.scale(scale);
+
+            return MediaQuery(
+              data: data.copyWith(
+                textScaler: TextScaler.linear(finalScale),
+              ),
+              child: child!,
+            );
+          },
           theme: ThemeData(
             useMaterial3: true,
             scaffoldBackgroundColor: kBg,
