@@ -68,21 +68,40 @@ class _AppointmentScreenState extends State<AppointmentScreen> with SingleTicker
         if (p.name.isEmpty || p.date.isEmpty || p.lat == 0) continue;
         if (p.name.contains('Sample') || p.name.contains('ಮಾದರಿ')) continue;
 
-        // Check if client exists by name
+        // Step 1: Find the canonical clientId for this person
+        String? cId;
+
+        // a) Check if a Client with this name already exists
         final existing = ClientService.clients
             .where((c) => c.name.toLowerCase() == p.name.toLowerCase())
             .toList();
-        
-        String? cId;
         if (existing.isNotEmpty) {
           cId = existing.first.clientId;
-        } else {
-          // Create client for this Kundali profile
+        }
+
+        // b) If no Client by name, check if already a FamilyMember under any Client
+        if (cId == null) {
+          for (final c in ClientService.clients) {
+            final members = ClientService.getMembersForClient(c.clientId);
+            if (members.any((m) => m.memberName == p.name)) {
+              cId = c.clientId;
+              break;
+            }
+          }
+        }
+
+        // c) If the profile already has a valid clientId from a previous save, use it
+        if (cId == null && p.clientId != null && p.clientId!.isNotEmpty) {
+          cId = p.clientId;
+        }
+
+        // d) Only create a brand new Client if truly not in the system
+        if (cId == null) {
           final newClient = await ClientService.getOrCreateClient(name: p.name, phone: 'No Phone');
           if (newClient != null) cId = newClient.clientId;
         }
 
-        // Ensure this person has a FamilyMember entry
+        // Step 2: Ensure this person has a FamilyMember entry
         if (cId != null && cId.isNotEmpty) {
           final members = ClientService.getMembersForClient(cId);
           if (!members.any((m) => m.memberName == p.name)) {
@@ -98,7 +117,7 @@ class _AppointmentScreenState extends State<AppointmentScreen> with SingleTicker
             ));
           }
 
-          // Also update the StorageService profile with the correct clientId if missing
+          // Step 3: Update the StorageService profile with the correct clientId if missing
           if (p.clientId != cId) {
             await StorageService.save(Profile(
               name: p.name, date: p.date, hour: p.hour, minute: p.minute, ampm: p.ampm,

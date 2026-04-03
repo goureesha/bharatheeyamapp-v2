@@ -96,21 +96,40 @@ class _InputScreenState extends State<InputScreen> {
       if (profile.name.isEmpty || profile.date.isEmpty) continue;
       if (profile.name.contains('Sample') || profile.name.contains('ಮಾದರಿ')) continue;
 
-      // Find the canonical client by name
+      // Step 1: Find the canonical clientId for this person
+      String? canonicalId;
+
+      // a) Check if a Client with this name already exists
       final matchingClient = ClientService.clients
           .where((c) => c.name.toLowerCase() == entry.key.toLowerCase())
           .toList();
-
-      String? canonicalId;
       if (matchingClient.isNotEmpty) {
         canonicalId = matchingClient.first.clientId;
-      } else if (profile.lat != 0 && profile.date.isNotEmpty) {
-        // No client exists — create one so this profile appears in Appointments too
+      }
+
+      // b) If no Client by name, check if this person is already a FamilyMember under any Client
+      if (canonicalId == null) {
+        for (final c in ClientService.clients) {
+          final members = ClientService.getMembersForClient(c.clientId);
+          if (members.any((m) => m.memberName == profile.name)) {
+            canonicalId = c.clientId;
+            break;
+          }
+        }
+      }
+
+      // c) If the profile already has a valid clientId from a previous save, use it
+      if (canonicalId == null && profile.clientId != null && profile.clientId!.isNotEmpty) {
+        canonicalId = profile.clientId;
+      }
+
+      // d) Only create a brand new Client if the person is truly not in the system at all
+      if (canonicalId == null && profile.lat != 0 && profile.date.isNotEmpty) {
         final newClient = await ClientService.getOrCreateClient(name: profile.name, phone: 'No Phone');
         if (newClient != null) canonicalId = newClient.clientId;
       }
 
-      // Sync clientId on the profile if it's wrong or missing
+      // Step 2: Sync clientId on the profile if it's wrong or missing
       if (canonicalId != null && profile.clientId != canonicalId) {
         p[entry.key] = Profile(
           name: profile.name, date: profile.date, hour: profile.hour,
@@ -124,7 +143,7 @@ class _InputScreenState extends State<InputScreen> {
         await StorageService.save(p[entry.key]!);
       }
 
-      // Ensure this person exists as a FamilyMember under that client
+      // Step 3: Ensure this person exists as a FamilyMember under that client
       if (canonicalId != null && canonicalId.isNotEmpty && profile.lat != 0) {
         final members = ClientService.getMembersForClient(canonicalId);
         if (!members.any((m) => m.memberName == profile.name)) {
