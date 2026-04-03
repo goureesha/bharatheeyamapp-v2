@@ -1694,159 +1694,112 @@ class _DashboardScreenState extends State<DashboardScreen>
   // ─────────────────────────────────────────────
   // TAB 10: NOTES
   // ─────────────────────────────────────────────
-  Widget _buildNotesTab() {
-    // For multi-person: show primary person's notes section
-    // Extra persons' notes are shown below
-    final entries = _parseNoteEntries(_notes);
+  final Map<String, TextEditingController> _noteControllers = {};
 
-    // Build formatted text for share/print
-    String _buildShareText() {
-      final clientId = widget.extraInfo['clientId'] ?? '';
-      final dobStr = '${widget.dob.day.toString().padLeft(2, '0')}-${widget.dob.month.toString().padLeft(2, '0')}-${widget.dob.year}';
-      final timeStr = '${widget.hour.toString().padLeft(2, '0')}:${widget.minute.toString().padLeft(2, '0')} ${widget.ampm}';
+  TextEditingController _getNoteController(String name) {
+    if (!_noteControllers.containsKey(name)) {
+      _noteControllers[name] = TextEditingController();
+    }
+    return _noteControllers[name]!;
+  }
+  
+  void _saveIndividualNote(String name, bool isPrimary, _PersonEntry? entry, String newNotes) {
+    final cId = widget.extraInfo['clientId'] ?? '';
+    
+    if (isPrimary) {
+      StorageService.save(Profile(
+        name: widget.name, date: '${widget.dob.year}-${widget.dob.month.toString().padLeft(2, '0')}-${widget.dob.day.toString().padLeft(2, '0')}',
+        hour: widget.hour, minute: widget.minute, ampm: widget.ampm, lat: widget.lat, lon: widget.lon, place: widget.place,
+        tzOffset: LocationService.tzOffset, notes: newNotes, aroodhas: _aroodhas, janmaNakshatraIdx: _janmaNakshatraIdx, clientId: (cId is String && cId.isNotEmpty) ? cId : null,
+      ));
+      if (cId is String && cId.isNotEmpty) {
+        ClientService.updateFamilyMember(FamilyMember(clientId: cId, memberName: widget.name, relation: 'Self', dob: '${widget.dob.year}-${widget.dob.month.toString().padLeft(2, '0')}-${widget.dob.day.toString().padLeft(2, '0')}', birthTime: '${widget.hour.toString().padLeft(2,'0')}:${widget.minute.toString().padLeft(2,'0')} ${widget.ampm}', birthPlace: widget.place, lat: widget.lat, lon: widget.lon, notes: newNotes));
+      }
+    } else if (entry != null) {
+       final dateStr = '${entry.dob.year}-${entry.dob.month.toString().padLeft(2, '0')}-${entry.dob.day.toString().padLeft(2, '0')}';
+       StorageService.save(Profile(
+         name: entry.name, date: dateStr, hour: entry.hour, minute: entry.minute, ampm: entry.ampm, lat: entry.lat, lon: entry.lon, place: entry.place,
+         tzOffset: LocationService.tzOffset, notes: newNotes, clientId: (cId is String && cId.isNotEmpty) ? cId : null,
+       ));
+       if (cId is String && cId.isNotEmpty) {
+         ClientService.updateFamilyMember(FamilyMember(clientId: cId, memberName: entry.name, relation: 'Group Member', dob: dateStr, birthTime: '${entry.hour.toString().padLeft(2,'0')}:${entry.minute.toString().padLeft(2,'0')} ${entry.ampm}', birthPlace: entry.place, lat: entry.lat, lon: entry.lon, notes: newNotes));
+       }
+    }
+  }
 
+  Widget _buildIndividualNoteSection({required String name, required bool isPrimary, required _PersonEntry? entry}) {
+    final currentNotes = isPrimary ? _notes : (entry?.notes ?? '');
+    final entries = _parseNoteEntries(currentNotes);
+    final ctrl = _getNoteController(name);
+    
+    void shareNotes() {
+      final dobDate = isPrimary ? widget.dob : entry!.dob;
+      final dobStr = '${dobDate.day.toString().padLeft(2, '0')}-${dobDate.month.toString().padLeft(2, '0')}-${dobDate.year}';
       final buf = StringBuffer();
       buf.writeln('═══════════════════════════');
       buf.writeln('   ✨ ${tr('ಭಾರತೀಯಮ್')} ✨');
-      buf.writeln('═══════════════════════════');
-      buf.writeln();
-      buf.writeln('👤 ${tr('ಹೆಸರು')}: ${widget.name}');
-      if (clientId.isNotEmpty) buf.writeln('🆔 ${tr('ಗ್ರಾಹಕ ID')}: $clientId');
-      buf.writeln('📅 ${tr('ಜನ್ಮ ದಿನಾಂಕ')}: $dobStr');
-      buf.writeln('⏰ ${tr('ಜನ್ಮ ಸಮಯ')}: $timeStr');
-      buf.writeln('📍 ${tr('ಜನ್ಮ ಸ್ಥಳ')}: ${widget.place}');
-      buf.writeln('🌐 ${tr('ಅಕ್ಷಾಂಶ')}/${tr('ರೇಖಾಂಶ')}: ${widget.lat.toStringAsFixed(4)}, ${widget.lon.toStringAsFixed(4)}');
-      buf.writeln();
+      buf.writeln('═══════════════════════════\n');
+      buf.writeln('👤 ${tr('ಹೆಸರು')}: $name');
+      buf.writeln('📅 ${tr('ಜನ್ಮ ದಿನಾಂಕ')}: $dobStr\n');
       buf.writeln('───────────────────────────');
       buf.writeln('   📝 ${tr('ಟಿಪ್ಪಣಿಗಳು')}');
-      buf.writeln('───────────────────────────');
-      buf.writeln();
+      buf.writeln('───────────────────────────\n');
       if (entries.isEmpty) {
         buf.writeln(tr('ಯಾವುದೇ ಟಿಪ್ಪಣಿಗಳಿಲ್ಲ'));
       } else {
         for (int i = 0; i < entries.length; i++) {
-          buf.writeln('🕐 ${entries[i]['date']}');
-          buf.writeln('   ${entries[i]['text']}');
+          buf.writeln('🕐 ${entries[i]['date']}\n   ${entries[i]['text']}');
           if (i < entries.length - 1) buf.writeln();
         }
       }
-      buf.writeln();
-      buf.writeln('═══════════════════════════');
-      return buf.toString();
+      buf.writeln('\n═══════════════════════════');
+      final text = buf.toString();
+      Clipboard.setData(ClipboardData(text: text));
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(tr('ಕ್ಲಿಪ್‌ಬೋರ್ಡ್‌ಗೆ ನಕಲಿಸಲಾಗಿದೆ! ✅'))));
+      final encoded = Uri.encodeComponent(text);
+      launchUrl(Uri.parse('https://wa.me/?text=$encoded'), mode: LaunchMode.externalApplication);
     }
-
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+    
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      child: ExpansionTile(
+        initiallyExpanded: isPrimary,
+        backgroundColor: kCard,
+        collapsedBackgroundColor: kCard,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12), side: BorderSide(color: kBorder)),
+        collapsedShape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12), side: BorderSide(color: kBorder)),
+        title: Text(name, style: TextStyle(fontWeight: FontWeight.w900, color: kTeal)),
+        subtitle: Text(isPrimary ? tr('ಮುಖ್ಯ ವ್ಯಕ್ತಿ ಟಿಪ್ಪಣಿಗಳು') : tr('ಗುಂಪು ಸದಸ್ಯರ ಟಿಪ್ಪಣಿಗಳು'), style: TextStyle(fontSize: 12, color: kMuted)),
+        childrenPadding: const EdgeInsets.all(12),
         children: [
-          // Action buttons removed based on user request
-          const SizedBox(height: 8),
-
-          // Action buttons row 2: Share + Print
           Row(
             children: [
               Expanded(
                 child: ElevatedButton.icon(
-                  onPressed: () {
-                    final text = _buildShareText();
-                    Clipboard.setData(ClipboardData(text: text));
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text(tr('ಕ್ಲಿಪ್‌ಬೋರ್ಡ್‌ಗೆ ನಕಲಿಸಲಾಗಿದೆ! ✅'))),
-                    );
-                    // Also try to open WhatsApp share
-                    final encoded = Uri.encodeComponent(text);
-                    launchUrl(Uri.parse('https://wa.me/?text=$encoded'), mode: LaunchMode.externalApplication);
-                  },
+                  onPressed: shareNotes,
                   icon: Icon(Icons.share, size: 18),
                   label: Text(tr('ಹಂಚಿಕೊಳ್ಳಿ'), style: TextStyle(fontSize: 13)),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.green,
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(vertical: 10),
-                  ),
-                ),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: ElevatedButton.icon(
-                  onPressed: () {
-                    final text = _buildShareText();
-                    _showPrintPreview(text);
-                  },
-                  icon: Icon(Icons.print, size: 18),
-                  label: Text(tr('ಪ್ರಿಂಟ್'), style: TextStyle(fontSize: 13)),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: kOrange,
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(vertical: 10),
+                    backgroundColor: Colors.green, foregroundColor: Colors.white, padding: const EdgeInsets.symmetric(vertical: 8),
                   ),
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 14),
-
-          // Client info header card
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: kPurple2.withOpacity(0.08),
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: kPurple2.withOpacity(0.2)),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Icon(Icons.person, size: 18, color: kPurple2),
-                    const SizedBox(width: 6),
-                    Expanded(child: Text(widget.name, style: TextStyle(fontSize: 16, fontWeight: FontWeight.w900, color: kPurple2))),
-                    if (widget.extraInfo['clientId'] != null && widget.extraInfo['clientId']!.isNotEmpty)
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                        decoration: BoxDecoration(
-                          color: kTeal.withOpacity(0.15),
-                          borderRadius: BorderRadius.circular(6),
-                        ),
-                        child: Text(widget.extraInfo['clientId']!, style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: kTeal)),
-                      ),
-                  ],
-                ),
-                const SizedBox(height: 6),
-                Text(
-                  '📅 ${widget.dob.day.toString().padLeft(2, '0')}-${widget.dob.month.toString().padLeft(2, '0')}-${widget.dob.year} | ⏰ ${widget.hour.toString().padLeft(2, '0')}:${widget.minute.toString().padLeft(2, '0')} ${widget.ampm} | 📍 ${widget.place}'
-                  '${(widget.extraInfo['clientId'] ?? '').isNotEmpty ? ' | 🆔 ${widget.extraInfo['clientId']}' : ''}',
-                  style: TextStyle(fontSize: 12, color: kMuted),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 14),
-
-          // New note input — bigger
+          const SizedBox(height: 12),
           Row(
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
               Expanded(
                 child: TextField(
-                  controller: _newNoteController,
-                  maxLines: 20,
-                  minLines: 10,
+                  controller: ctrl,
+                  maxLines: 8,
+                  minLines: 3,
                   decoration: InputDecoration(
                     hintText: tr('ಹೊಸ ಟಿಪ್ಪಣಿ ಸೇರಿಸಿ...'),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide(color: kBorder),
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide(color: kBorder),
-                    ),
-                    fillColor: kCard,
-                    filled: true,
-                    contentPadding: const EdgeInsets.all(14),
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: kBorder)),
+                    enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: kBorder)),
+                    fillColor: kBg, filled: true, contentPadding: const EdgeInsets.all(12),
                   ),
                   style: TextStyle(fontSize: 14, height: 1.5, color: kText),
                 ),
@@ -1854,125 +1807,77 @@ class _DashboardScreenState extends State<DashboardScreen>
               const SizedBox(width: 8),
               GestureDetector(
                 onTap: () {
-                  final text = _newNoteController.text.trim();
+                  final text = ctrl.text.trim();
                   if (text.isEmpty) return;
                   final now = DateTime.now();
                   final stamp = '${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')} ${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}';
-                  final entry = '[$stamp] $text';
+                  final newEntry = '[$stamp] $text';
                   setState(() {
-                    _notes = _notes.isEmpty ? entry : '$entry\n---\n$_notes';
-                    _newNoteController.clear();
+                    String updatedNotes = currentNotes.isEmpty ? newEntry : '$newEntry\n---\n$currentNotes';
+                    if (isPrimary) {
+                      _notes = updatedNotes;
+                    } else if (entry != null) {
+                      entry.notes = updatedNotes;
+                    }
+                    ctrl.clear();
+                    _saveIndividualNote(name, isPrimary, entry, updatedNotes);
                   });
+                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('✅ ${tr('ಟಿಪ್ಪಣಿ ಉಳಿಸಲಾಗಿದೆ')}'), backgroundColor: Colors.green));
                 },
                 child: Container(
                   padding: const EdgeInsets.all(14),
-                  decoration: BoxDecoration(
-                    color: kTeal,
-                    borderRadius: BorderRadius.circular(12),
-                  ),
+                  decoration: BoxDecoration(color: kTeal, borderRadius: BorderRadius.circular(12)),
                   child: const Icon(Icons.send, color: Colors.white, size: 24),
                 ),
               ),
             ],
           ),
           const SizedBox(height: 14),
-
-          // Section title
-          Text('📋 ${tr('ಟಿಪ್ಪಣಿ ಇತಿಹಾಸ')} (${entries.length})', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w900, color: kText)),
-          const SizedBox(height: 8),
-
-          // Notes history — inline (parent handles scroll)
           if (entries.isEmpty)
-            Center(
-              child: Padding(
-                padding: const EdgeInsets.only(top: 30),
-                child: Column(
-                  children: [
-                    Icon(Icons.note_alt_outlined, size: 48, color: kMuted.withOpacity(0.3)),
-                    const SizedBox(height: 8),
-                    Text(tr('ಇನ್ನೂ ಟಿಪ್ಪಣಿಗಳಿಲ್ಲ'), style: TextStyle(color: kMuted)),
-                  ],
-                ),
-              ),
-            )
+            Center(child: Padding(padding: const EdgeInsets.symmetric(vertical: 20), child: Text(tr('ಇನ್ನೂ ಟಿಪ್ಪಣಿಗಳಿಲ್ಲ'), style: TextStyle(color: kMuted))))
           else
-            ...entries.asMap().entries.map((entry) {
-              final i = entry.key;
-              final e = entry.value;
+            ...entries.asMap().entries.map((en) {
+              final i = en.key;
+              final e = en.value;
               return Container(
                 margin: const EdgeInsets.only(bottom: 8),
                 padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: kCard,
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: kBorder),
-                ),
+                decoration: BoxDecoration(color: kBg, borderRadius: BorderRadius.circular(12), border: Border.all(color: kBorder)),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Row(
                       children: [
-                        Icon(Icons.access_time, size: 14, color: kTeal),
-                        const SizedBox(width: 6),
+                        Icon(Icons.access_time, size: 14, color: kTeal), const SizedBox(width: 6),
                         Text(e['date'] ?? '', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: kTeal)),
                         const Spacer(),
-                        // Edit button
                         GestureDetector(
                           onTap: () {
-                            // Pre-fill the text input with this note's text for editing
-                            _newNoteController.text = e['text'] ?? '';
-                            // Remove this entry from notes
+                            ctrl.text = e['text'] ?? '';
                             final updatedEntries = List<Map<String, String>>.from(entries);
                             updatedEntries.removeAt(i);
                             setState(() {
-                              _notes = updatedEntries.map((en) => '[${en['date']}] ${en['text']}').join('\n---\n');
+                              String updatedNotes = updatedEntries.map((enx) => '[${enx['date']}] ${enx['text']}').join('\n---\n');
+                              if (isPrimary) _notes = updatedNotes;
+                              else if (entry != null) entry.notes = updatedNotes;
                             });
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(content: Text(tr('✈️ ಟಿಪ್ಪಣಿ ಸಂಪಾದನೆಗೆ ಲೋಡ್ ಆಗಿದೆ')), duration: Duration(seconds: 2)),
-                            );
                           },
-                          child: Padding(
-                            padding: const EdgeInsets.all(4),
-                            child: Icon(Icons.edit, size: 18, color: kPurple2),
-                          ),
+                          child: Padding(padding: const EdgeInsets.all(4), child: Icon(Icons.edit, size: 18, color: kPurple2)),
                         ),
                         const SizedBox(width: 4),
-                        // Delete button
                         GestureDetector(
                           onTap: () {
-                            showDialog(
-                              context: context,
-                              builder: (ctx) => AlertDialog(
-                                backgroundColor: kBg,
-                                title: Text(tr('ಟಿಪ್ಪಣಿ ಅಳಿಸಿ?'), style: TextStyle(color: kText, fontWeight: FontWeight.w900)),
-                                content: Text(tr('ಈ ಟಿಪ್ಪಣಿಯನ್ನು ಶಾಶ್ವತವಾಗಿ ಅಳಿಸಲಾಗುವುದು.'), style: TextStyle(color: kMuted)),
-                                actions: [
-                                  TextButton(onPressed: () => Navigator.pop(ctx), child: Text(tr('ಬೇಡ'), style: TextStyle(color: kMuted))),
-                                  TextButton(
-                                    onPressed: () {
-                                      Navigator.pop(ctx);
-                                      final updatedEntries = List<Map<String, String>>.from(entries);
-                                      updatedEntries.removeAt(i);
-                                      setState(() {
-                                        _notes = updatedEntries.map((en) => '[${en['date']}] ${en['text']}').join('\n---\n');
-                                      });
-                                      ScaffoldMessenger.of(context).showSnackBar(
-                                        SnackBar(content: Text(tr('🗑️ ಟಿಪ್ಪಣಿ ಅಳಿಸಲಾಗಿದೆ')), backgroundColor: Colors.red),
-                                      );
-                                    },
-                                    child: Text(tr('ಅಳಿಸಿ'), style: TextStyle(color: Colors.red, fontWeight: FontWeight.w900)),
-                                  ),
-                                ],
-                              ),
-                            );
+                            final updatedEntries = List<Map<String, String>>.from(entries);
+                            updatedEntries.removeAt(i);
+                            setState(() {
+                              String updatedNotes = updatedEntries.map((enx) => '[${enx['date']}] ${enx['text']}').join('\n---\n');
+                              if (isPrimary) _notes = updatedNotes;
+                              else if (entry != null) entry.notes = updatedNotes;
+                              _saveIndividualNote(name, isPrimary, entry, updatedNotes);
+                            });
                           },
-                          child: Padding(
-                            padding: const EdgeInsets.all(4),
-                            child: Icon(Icons.delete_outline, size: 18, color: Colors.redAccent),
-                          ),
+                          child: Padding(padding: const EdgeInsets.all(4), child: Icon(Icons.delete_outline, size: 18, color: Colors.redAccent)),
                         ),
-                        const SizedBox(width: 4),
-                        Text('#${entries.length - i}', style: TextStyle(fontSize: 11, color: kMuted)),
                       ],
                     ),
                     const SizedBox(height: 6),
@@ -1981,9 +1886,28 @@ class _DashboardScreenState extends State<DashboardScreen>
                 ),
               );
             }),
-          const SizedBox(height: 40),
         ],
       ),
+    );
+  }
+
+  Widget _buildNotesTab() {
+    final allPersons = <Map<String, dynamic>>[
+      {'name': widget.name, 'isPrimary': true, 'entry': null},
+      ..._extraPersons.map((p) => {'name': p.name, 'isPrimary': false, 'entry': p}),
+    ];
+
+    return ListView.builder(
+      itemCount: allPersons.length,
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      itemBuilder: (ctx, i) {
+        final pData = allPersons[i];
+        return _buildIndividualNoteSection(
+           name: pData['name'] as String,
+           isPrimary: pData['isPrimary'] as bool,
+           entry: pData['entry'] as _PersonEntry?,
+        );
+      },
     );
   }
 
