@@ -402,6 +402,7 @@ class _PanchangaScreenState extends State<PanchangaScreen> {
                         _tableRow([tr('ಚಂದ್ರ ನಕ್ಷತ್ರ'), _formatEnd('${tr(_panchang!.nakshatra)} - ${tr('ಪಾದ')} ${_chandraPada()}', _panchang!.nakEndTime, _panchang!.nakEndsNextDay)]),
                         _tableRow([tr('ಯೋಗ'), _formatEnd(tr(_panchang!.yoga), _panchang!.yogaEndTime, _panchang!.yogaEndsNextDay)]),
                         _tableRow([tr('ಕರಣ'), _formatEnd(tr(_panchang!.karana), _panchang!.karanaEndTime, _panchang!.karanaEndsNextDay)]),
+                        _tableRow([tr('ಅಗ್ನಿ ವಾಸ'), _panchang!.agniVasa]),
                         _tableRow([tr('ಚಂದ್ರ ರಾಶಿ'), tr(_panchang!.chandraRashi)]),
                         _tableRow([tr('ಚಂದ್ರ ಮಾಸ'), tr(_panchang!.chandraMasa)]),
                         _tableRow([tr('ಸೂರ್ಯ ನಕ್ಷತ್ರ'), '${tr(_panchang!.suryaNakshatra)} - ${tr('ಪಾದ')} ${_panchang!.suryaPada}']),

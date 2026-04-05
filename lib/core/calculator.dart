@@ -79,6 +79,7 @@ class PanchangData {
   final String divamana;
   final String ratrimana;
   final String rutu;
+  final String agniVasa;
 
   PanchangData({
     required this.vara,
@@ -118,6 +119,7 @@ class PanchangData {
     this.divamana = '',
     this.ratrimana = '',
     this.rutu = '',
+    this.agniVasa = '',
   });
 }
 
@@ -834,6 +836,14 @@ class AstroCalculator {
         return (jdTarget + offset).floor() > (jdBase + offset).floor();
       }
 
+      // Agni Vasa
+      // (Tithi + Vara + 1) % 3
+      // Tithi index (tIdx) is 0 for Pratipada. Vara index (wIdx) is 0 for Sunday.
+      // So Tithi = tIdx + 1, Vara = wIdx + 1
+      // Formula: ((tIdx + 1) + (wIdx + 1) + 1) % 3 = (tIdx + wIdx + 3) % 3 = (tIdx + wIdx) % 3
+      final agniVal = (tIdx + wIdx) % 3;
+      final agniVasaStr = agniVal == 0 ? 'ಭೂಮಿ (ಶುಭ)' : (agniVal == 1 ? 'ಆಕಾಶ (ಅಶುಭ)' : 'ಪಾತಾಳ (ಅಶುಭ)');
+
       // End Times
       final jdTEnd = findTithiLimit(jdBirth, (tIdx + 1) * 12.0, ayanamsaMode);
       final jdKEnd = findKaranaLimit(jdBirth, (kIdx + 1) * 6.0, ayanamsaMode);
@@ -877,6 +887,7 @@ class AstroCalculator {
         divamana: divamanaStr,
         ratrimana: ratrimanaStr,
         rutu: rutuStr,
+        agniVasa: agniVasaStr,
       );
 
       // Dashas
