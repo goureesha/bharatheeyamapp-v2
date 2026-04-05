@@ -1323,7 +1323,6 @@ class _DashboardScreenState extends State<DashboardScreen>
                   _tableRow([tr('ಚಂದ್ರ ನಕ್ಷತ್ರ'), () { final moonPada = r.planets['ಚಂದ್ರ']?.pada; final fallback = (pan.nakPercent * 4).floor() + 1; final p = moonPada ?? (fallback < 1 ? 1 : fallback > 4 ? 4 : fallback); return '${tr(pan.nakshatra)} - ${tr('ಪಾದ')} $p'; }()]),
                   _tableRow([tr('ಯೋಗ'), tr(pan.yoga)]),
                   _tableRow([tr('ಕರಣ'), tr(pan.karana)]),
-                  _tableRow([tr('ಅಗ್ನಿ ವಾಸ'), pan.agniVasa]),
                   _tableRow([tr('ಚಂದ್ರ ರಾಶಿ'), tr(pan.chandraRashi)]),
                   _tableRow([tr('ಚಂದ್ರ ಮಾಸ'), tr(pan.chandraMasa)]),
                   _tableRow([tr('ಸೂರ್ಯ ನಕ್ಷತ್ರ'), '${tr(pan.suryaNakshatra)} - ${tr('ಪಾದ')} ${pan.suryaPada}']),
