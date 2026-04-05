@@ -1884,12 +1884,21 @@ class _DashboardScreenState extends State<DashboardScreen>
     void shareNotes() {
       final dobDate = isPrimary ? widget.dob : entry!.dob;
       final dobStr = '${dobDate.day.toString().padLeft(2, '0')}-${dobDate.month.toString().padLeft(2, '0')}-${dobDate.year}';
+      final birthHour = isPrimary ? widget.hour : entry!.hour;
+      final birthMin = isPrimary ? widget.minute : entry!.minute;
+      final birthAmpm = isPrimary ? widget.ampm : entry!.ampm;
+      final birthPlace = isPrimary ? widget.place : entry!.place;
+      final timeStr = '${birthHour.toString().padLeft(2, '0')}:${birthMin.toString().padLeft(2, '0')} $birthAmpm';
+      final clientId = widget.extraInfo['clientId'] ?? '';
       final buf = StringBuffer();
       buf.writeln('═══════════════════════════');
       buf.writeln('   ✨ ${tr('ಭಾರತೀಯಮ್')} ✨');
       buf.writeln('═══════════════════════════\n');
+      if (clientId.isNotEmpty) buf.writeln('🪪 ${tr('ಐಡಿ')}: $clientId');
       buf.writeln('👤 ${tr('ಹೆಸರು')}: $name');
-      buf.writeln('📅 ${tr('ಜನ್ಮ ದಿನಾಂಕ')}: $dobStr\n');
+      buf.writeln('📅 ${tr('ಜನ್ಮ ದಿನಾಂಕ')}: $dobStr');
+      buf.writeln('🕰️ ${tr('ಜನ್ಮ ಸಮಯ')}: $timeStr');
+      buf.writeln('📍 ${tr('ಜನ್ಮ ಸ್ಥಳ')}: $birthPlace\n');
       buf.writeln('───────────────────────────');
       buf.writeln('   📝 ${tr('ಟಿಪ್ಪಣಿಗಳು')}');
       buf.writeln('───────────────────────────\n');
@@ -1939,12 +1948,21 @@ class _DashboardScreenState extends State<DashboardScreen>
                   onPressed: () {
                     final dobDate = isPrimary ? widget.dob : entry!.dob;
                     final dobStr = '${dobDate.day.toString().padLeft(2, '0')}-${dobDate.month.toString().padLeft(2, '0')}-${dobDate.year}';
+                    final birthHour = isPrimary ? widget.hour : entry!.hour;
+                    final birthMin = isPrimary ? widget.minute : entry!.minute;
+                    final birthAmpm = isPrimary ? widget.ampm : entry!.ampm;
+                    final birthPlace = isPrimary ? widget.place : entry!.place;
+                    final timeStr = '${birthHour.toString().padLeft(2, '0')}:${birthMin.toString().padLeft(2, '0')} $birthAmpm';
+                    final clientId = widget.extraInfo['clientId'] ?? '';
                     final buf = StringBuffer();
                     buf.writeln('═══════════════════════════');
                     buf.writeln('   ✨ ${tr('ಭಾರತೀಯಮ್')} ✨');
                     buf.writeln('═══════════════════════════\n');
+                    if (clientId.isNotEmpty) buf.writeln('🪪 ${tr('ಐಡಿ')}: $clientId');
                     buf.writeln('👤 ${tr('ಹೆಸರು')}: $name');
-                    buf.writeln('📅 ${tr('ಜನ್ಮ ದಿನಾಂಕ')}: $dobStr\n');
+                    buf.writeln('📅 ${tr('ಜನ್ಮ ದಿನಾಂಕ')}: $dobStr');
+                    buf.writeln('🕰️ ${tr('ಜನ್ಮ ಸಮಯ')}: $timeStr');
+                    buf.writeln('📍 ${tr('ಜನ್ಮ ಸ್ಥಳ')}: $birthPlace\n');
                     buf.writeln('───────────────────────────');
                     buf.writeln('   📝 ${tr('ಟಿಪ್ಪಣಿಗಳು')}');
                     buf.writeln('───────────────────────────\n');
