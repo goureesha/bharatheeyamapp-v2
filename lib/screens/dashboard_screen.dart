@@ -1934,6 +1934,39 @@ class _DashboardScreenState extends State<DashboardScreen>
                   ),
                 ),
               ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: ElevatedButton.icon(
+                  onPressed: () {
+                    final dobDate = isPrimary ? widget.dob : entry!.dob;
+                    final dobStr = '${dobDate.day.toString().padLeft(2, '0')}-${dobDate.month.toString().padLeft(2, '0')}-${dobDate.year}';
+                    final buf = StringBuffer();
+                    buf.writeln('═══════════════════════════');
+                    buf.writeln('   ✨ ${tr('ಭಾರತೀಯಮ್')} ✨');
+                    buf.writeln('═══════════════════════════\n');
+                    buf.writeln('👤 ${tr('ಹೆಸರು')}: $name');
+                    buf.writeln('📅 ${tr('ಜನ್ಮ ದಿನಾಂಕ')}: $dobStr\n');
+                    buf.writeln('───────────────────────────');
+                    buf.writeln('   📝 ${tr('ಟಿಪ್ಪಣಿಗಳು')}');
+                    buf.writeln('───────────────────────────\n');
+                    if (entries.isEmpty) {
+                      buf.writeln(tr('ಯಾವುದೇ ಟಿಪ್ಪಣಿಗಳಿಲ್ಲ'));
+                    } else {
+                      for (int i = 0; i < entries.length; i++) {
+                        buf.writeln('🕐 ${entries[i]['date']}\n   ${entries[i]['text']}');
+                        if (i < entries.length - 1) buf.writeln();
+                      }
+                    }
+                    buf.writeln('\n═══════════════════════════');
+                    _showPrintPreview(buf.toString());
+                  },
+                  icon: Icon(Icons.print, size: 18),
+                  label: Text(tr('ಪ್ರಿಂಟ್'), style: TextStyle(fontSize: 13)),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: kPurple2, foregroundColor: Colors.white, padding: const EdgeInsets.symmetric(vertical: 8),
+                  ),
+                ),
+              ),
             ],
           ),
           const SizedBox(height: 12),
