@@ -1,9 +1,11 @@
+import 'dart:typed_data';
+import 'package:flutter/material.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
+import 'package:screenshot/screenshot.dart';
 import '../core/calculator.dart';
 import '../constants/strings.dart';
-
 
 class UserDetails {
   final String name;
@@ -100,104 +102,48 @@ class JanmaPatrikeService {
   }
 
   static Future<void> generateAndPrint(UserDetails user, KundaliResult result) async {
-    final fontRegular = await PdfGoogleFonts.notoSansKannadaRegular();
-    final fontBold = await PdfGoogleFonts.notoSansKannadaBold();
+    final controller = ScreenshotController();
 
+    // A4 Dimensions at standard 72 DPI
+    const double pageWidth = 595.0;
+    const double pageHeight = 842.0;
+
+    // Build standard offscreen Flutter widgets representing the pages
+    final page1Widget = _buildPageWrapper(
+      width: pageWidth,
+      height: pageHeight,
+      child: _buildPage1Content(user, result),
+    );
+
+    final page2Widget = _buildPageWrapper(
+      width: pageWidth,
+      height: pageHeight,
+      child: _buildPage2Content(user, result),
+    );
+
+    // Capture to high-res images (pixelRatio: 3.0 provides excellent print clarity)
+    final Uint8List page1Bytes = await controller.captureFromWidget(page1Widget, pixelRatio: 3.0, delay: const Duration(milliseconds: 100));
+    final Uint8List page2Bytes = await controller.captureFromWidget(page2Widget, pixelRatio: 3.0, delay: const Duration(milliseconds: 100));
+
+    // Compile into PDF
     final doc = pw.Document();
 
-    final p = result.panchang;
-    final lagnaInfo = result.planets['ಲಗ್ನ'];
-    final lagnaRashi = lagnaInfo != null ? lagnaInfo.rashi : '-';
-
-    // Page 1
     doc.addPage(
-      pw.MultiPage(
+      pw.Page(
         pageFormat: PdfPageFormat.a4,
-        margin: const pw.EdgeInsets.all(30),
+        margin: pw.EdgeInsets.zero,
         build: (pw.Context context) {
-          return [
-            _buildHeader('ಜನ್ಮ ಪತ್ರಿಕೆ', 'ಭಾರತೀಯಂ ಜ್ಯೋತಿಷ ಅಪ್ಲಿಕೇಶನ್', fontBold, fontRegular),
-            pw.SizedBox(height: 10),
-            
-            _buildSectionTitle('ವೈಯಕ್ತಿಕ ವಿವರ', fontBold),
-            _buildDetailBox([
-              ['ಜಾತಕರ ಹೆಸರು:', user.name, 'ಜನ್ಮ ಊರು:', user.place],
-              ['ಜನನ ದಿನಾಂಕ:', user.dateStr, 'ಜನ್ಮ ಸಮಯ:', user.timeStr],
-              ['ತಂದೆ ಹೆಸರು:', user.fatherName, 'ತಾಯಿ ಹೆಸರು:', user.motherName],
-              ['ಗೋತ್ರ:', user.gotra, 'ಲಗ್ನ ರಾಶಿ:', lagnaRashi],
-            ], fontRegular, fontBold),
-            pw.SizedBox(height: 10),
-
-            _buildSectionTitle('ಪಂಚಾಂಗ ವಿವರ', fontBold),
-            _buildDetailBox([
-              ['ಸಂವತ್ಸರ:', p.samvatsara, 'ಚಂದ್ರ ಮಾಸ:', p.chandraMasa],
-              ['ರವಿ ಮಾಸ:', p.souraMasa, 'ಋತು:', p.rutu],
-              ['ತಿಥಿ:', p.tithi, 'ವಾರ:', p.vara],
-              ['ನಕ್ಷತ್ರ:', p.nakshatra, 'ಕರಣ:', p.karana],
-              ['ಯೋಗ:', p.yoga, 'ಚಂದ್ರ ರಾಶಿ:', p.chandraRashi],
-              ['ಗತ ಘಟಿ:', p.gataGhati, 'ಪರಮ ಘಟಿ:', p.paramaGhati],
-              ['ಸೂರ್ಯೋದಯ:', p.sunrise, 'ಸೂರ್ಯಾಸ್ತ:', p.sunset],
-            ], fontRegular, fontBold),
-            pw.SizedBox(height: 10),
-
-            _buildSectionTitle('ತತ್ಕಾಲ ಗ್ರಹಸ್ಥಿತಿ', fontBold),
-            _buildGrahaTable(result, fontRegular, fontBold),
-            pw.SizedBox(height: 10),
-
-            pw.Row(
-              mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
-              children: [
-                pw.Expanded(child: _buildChart('ರಾಶಿ ಕುಂಡಲಿ', _rashiChart(result), fontRegular, fontBold)),
-                pw.SizedBox(width: 10),
-                pw.Expanded(child: _buildChart('ನವಾಂಶ ಕುಂಡಲಿ', _navamshaChart(result), fontRegular, fontBold)),
-                pw.SizedBox(width: 10),
-                pw.Expanded(child: _buildChart('ಭಾವ ಕುಂಡಲಿ', _bhavaChart(result), fontRegular, fontBold)),
-              ],
-            ),
-          ];
-        },
-        footer: (pw.Context context) {
-          return _buildFooter(user.jyotishiName, user.jyotishiPhone, fontRegular, fontBold);
+          return pw.FullPage(ignoreMargins: true, child: pw.Image(pw.MemoryImage(page1Bytes), fit: pw.BoxFit.contain));
         },
       ),
     );
 
-    // Page 2: Dasha
     doc.addPage(
-      pw.MultiPage(
+      pw.Page(
         pageFormat: PdfPageFormat.a4,
-        margin: const pw.EdgeInsets.all(30),
+        margin: pw.EdgeInsets.zero,
         build: (pw.Context context) {
-          return [
-            _buildHeader('ಜನ್ಮ ಪತ್ರಿಕೆ — ದಶಾ ವಿವರ', '${user.name} — ${user.dateStr}', fontBold, fontRegular),
-            pw.SizedBox(height: 10),
-
-            _buildSectionTitle('ನಕ್ಷತ್ರ ಮತ್ತು ದಶಾ ವಿವರ', fontBold),
-            _buildDetailBox([
-              ['ಜನ್ಮ ನಕ್ಷತ್ರ:', p.nakshatra, 'ಚಂದ್ರ ರಾಶಿ:', p.chandraRashi],
-              ['ನಕ್ಷತ್ರ ಪರಮ ಘಟಿ:', p.paramaGhati, 'ಗತ ಘಟಿ:', p.gataGhati],
-              ['ಶಿಷ್ಟ ದಶಾ ನಾಥ:', p.dashaLord, 'ಶಿಷ್ಟ ದಶಾ ಶೇಷ:', p.dashaBalance],
-            ], fontRegular, fontBold),
-            pw.SizedBox(height: 10),
-
-            _buildSectionTitle('ವಿಂಶೋತ್ತರೀ ಮಹಾ ದಶಾ', fontBold),
-            _buildDashaTable(result, fontRegular, fontBold),
-            pw.SizedBox(height: 10),
-
-            pw.Container(
-              alignment: pw.Alignment.center,
-              padding: const pw.EdgeInsets.all(8),
-              decoration: pw.BoxDecoration(
-                color: PdfColor.fromHex('#FFF8E1'),
-                border: pw.Border.all(color: PdfColor.fromHex('#FFD54F')),
-                borderRadius: const pw.BorderRadius.all(pw.Radius.circular(4)),
-              ),
-              child: pw.Text('ಶಿಷ್ಟ ದಶೆ: ${p.dashaLord} — ಶೇಷ: ${p.dashaBalance}', style: pw.TextStyle(font: fontBold, fontSize: 10, color: PdfColor.fromHex('#C62828'))),
-            ),
-          ];
-        },
-        footer: (pw.Context context) {
-          return _buildFooter(user.jyotishiName, user.jyotishiPhone, fontRegular, fontBold);
+          return pw.FullPage(ignoreMargins: true, child: pw.Image(pw.MemoryImage(page2Bytes), fit: pw.BoxFit.contain));
         },
       ),
     );
@@ -208,66 +154,186 @@ class JanmaPatrikeService {
     );
   }
 
-  static pw.Widget _buildHeader(String mainTitle, String subTitle, pw.Font fontBold, pw.Font fontRegular) {
-    return pw.Container(
-      padding: const pw.EdgeInsets.symmetric(vertical: 8, horizontal: 10),
-      decoration: pw.BoxDecoration(
-        color: PdfColor.fromHex('#F5F0E8'),
-        border: pw.Border.all(color: PdfColor.fromHex('#2E1A47'), width: 1.5),
-        borderRadius: const pw.BorderRadius.all(pw.Radius.circular(6)),
+  static Widget _buildPageWrapper({required double width, required double height, required Widget child}) {
+    return Directionality(
+      textDirection: TextDirection.ltr,
+      child: MediaQuery(
+        data: const MediaQueryData(),
+        child: Theme(
+          data: ThemeData(
+            // Specify default fonts for flutter widget tree so Kannada renders perfectly
+            fontFamily: 'Noto Sans Kannada', // ensure it falls back to system font if unavailable
+          ),
+          child: DefaultTextStyle(
+            style: const TextStyle(color: Colors.black, fontSize: 10),
+            child: Material(
+              color: Colors.white,
+              child: Container(
+                width: width,
+                height: height,
+                color: const Color(0xFFFFFFF8), // Match old background
+                padding: const EdgeInsets.all(30),
+                child: child,
+              ),
+            ),
+          ),
+        ),
       ),
-      alignment: pw.Alignment.center,
-      child: pw.Column(
+    );
+  }
+
+  static Widget _buildPage1Content(UserDetails user, KundaliResult result) {
+    final p = result.panchang;
+    final lagnaInfo = result.planets['ಲಗ್ನ'];
+    final lagnaRashi = lagnaInfo != null ? lagnaInfo.rashi : '-';
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        _buildHeader('ಜನ್ಮ ಪತ್ರಿಕೆ', 'ಭಾರತೀಯಂ ಜ್ಯೋತಿಷ ಅಪ್ಲಿಕೇಶನ್'),
+        const SizedBox(height: 10),
+        
+        _buildSectionTitle('ವೈಯಕ್ತಿಕ ವಿವರ'),
+        _buildDetailBox([
+          ['ಜಾತಕರ ಹೆಸರು:', user.name, 'ಜನ್ಮ ಊರು:', user.place],
+          ['ಜನನ ದಿನಾಂಕ:', user.dateStr, 'ಜನ್ಮ ಸಮಯ:', user.timeStr],
+          ['ತಂದೆ ಹೆಸರು:', user.fatherName, 'ತಾಯಿ ಹೆಸರು:', user.motherName],
+          ['ಗೋತ್ರ:', user.gotra, 'ಲಗ್ನ ರಾಶಿ:', lagnaRashi],
+        ]),
+        const SizedBox(height: 10),
+
+        _buildSectionTitle('ಪಂಚಾಂಗ ವಿವರ'),
+        _buildDetailBox([
+          ['ಸಂವತ್ಸರ:', p.samvatsara, 'ಚಂದ್ರ ಮಾಸ:', p.chandraMasa],
+          ['ರವಿ ಮಾಸ:', p.souraMasa, 'ಋತು:', p.rutu],
+          ['ತಿಥಿ:', p.tithi, 'ವಾರ:', p.vara],
+          ['ನಕ್ಷತ್ರ:', p.nakshatra, 'ಕರಣ:', p.karana],
+          ['ಯೋಗ:', p.yoga, 'ಚಂದ್ರ ರಾಶಿ:', p.chandraRashi],
+          ['ಗತ ಘಟಿ:', p.gataGhati, 'ಪರಮ ಘಟಿ:', p.paramaGhati],
+          ['ಸೂರ್ಯೋದಯ:', p.sunrise, 'ಸೂರ್ಯಾಸ್ತ:', p.sunset],
+        ]),
+        const SizedBox(height: 10),
+
+        _buildSectionTitle('ತತ್ಕಾಲ ಗ್ರಹಸ್ಥಿತಿ'),
+        _buildGrahaTable(result),
+        const SizedBox(height: 10),
+
+        Expanded(
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Expanded(child: _buildChartWidget('ರಾಶಿ ಕುಂಡಲಿ', _rashiChart(result))),
+              const SizedBox(width: 8),
+              Expanded(child: _buildChartWidget('ನವಾಂಶ ಕುಂಡಲಿ', _navamshaChart(result))),
+              const SizedBox(width: 8),
+              Expanded(child: _buildChartWidget('ಭಾವ ಕುಂಡಲಿ', _bhavaChart(result))),
+            ],
+          ),
+        ),
+
+        _buildFooter(user.jyotishiName, user.jyotishiPhone),
+      ],
+    );
+  }
+
+  static Widget _buildPage2Content(UserDetails user, KundaliResult result) {
+    final p = result.panchang;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        _buildHeader('ಜನ್ಮ ಪತ್ರಿಕೆ — ದಶಾ ವಿವರ', '${user.name} — ${user.dateStr}'),
+        const SizedBox(height: 15),
+
+        _buildSectionTitle('ನಕ್ಷತ್ರ ಮತ್ತು ದಶಾ ವಿವರ'),
+        _buildDetailBox([
+          ['ಜನ್ಮ ನಕ್ಷತ್ರ:', p.nakshatra, 'ಚಂದ್ರ ರಾಶಿ:', p.chandraRashi],
+          ['ನಕ್ಷತ್ರ ಪರಮ ಘಟಿ:', p.paramaGhati, 'ಗತ ಘಟಿ:', p.gataGhati],
+          ['ಶಿಷ್ಟ ದಶಾ ನಾಥ:', p.dashaLord, 'ಶಿಷ್ಟ ದಶಾ ಶೇಷ:', p.dashaBalance],
+        ]),
+        const SizedBox(height: 15),
+
+        _buildSectionTitle('ವಿಂಶೋತ್ತರೀ ಮಹಾ ದಶಾ'),
+        Expanded(child: _buildDashaTable(result)),
+        const SizedBox(height: 15),
+
+        Container(
+          alignment: Alignment.center,
+          padding: const EdgeInsets.all(10),
+          decoration: BoxDecoration(
+            color: const Color(0xFFFFF8E1),
+            border: Border.all(color: const Color(0xFFFFD54F)),
+            borderRadius: BorderRadius.circular(6),
+          ),
+          child: Text('ಶಿಷ್ಟ ದಶೆ: ${p.dashaLord} — ಶೇಷ: ${p.dashaBalance}', 
+            style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13, color: Color(0xFFC62828))
+          ),
+        ),
+
+        const SizedBox(height: 15),
+        _buildFooter(user.jyotishiName, user.jyotishiPhone),
+      ],
+    );
+  }
+
+  static Widget _buildHeader(String mainTitle, String subTitle) {
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 10),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF5F0E8),
+        border: Border.all(color: const Color(0xFF2E1A47), width: 1.5),
+        borderRadius: BorderRadius.circular(6),
+      ),
+      child: Column(
         children: [
-          pw.Text('ಶ್ರೀ ಗಣೇಶಾಯ ನಮಃ ।। ಶ್ರೀ ಗುರುಭ್ಯೋ ನಮಃ ।।', style: pw.TextStyle(font: fontBold, fontSize: 10, color: PdfColor.fromHex('#C62828'))),
-          pw.SizedBox(height: 4),
-          pw.Text(mainTitle, style: pw.TextStyle(font: fontBold, fontSize: 18, color: PdfColor.fromHex('#2E1A47'))),
-          pw.SizedBox(height: 2),
-          pw.Text(subTitle, style: pw.TextStyle(font: fontRegular, fontSize: 8, color: PdfColor.fromHex('#757575'))),
+          const Text('ಶ್ರೀ ಗಣೇಶಾಯ ನಮಃ ।। ಶ್ರೀ ಗುರುಭ್ಯೋ ನಮಃ ।।', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 11, color: Color(0xFFC62828))),
+          const SizedBox(height: 4),
+          Text(mainTitle, style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 20, color: Color(0xFF2E1A47))),
+          const SizedBox(height: 2),
+          Text(subTitle, style: const TextStyle(fontWeight: FontWeight.w500, fontSize: 10, color: Color(0xFF757575))),
         ],
       ),
     );
   }
 
-  static pw.Widget _buildSectionTitle(String title, pw.Font fontBold) {
-    return pw.Container(
-      alignment: pw.Alignment.center,
-      margin: const pw.EdgeInsets.only(bottom: 6),
-      padding: const pw.EdgeInsets.only(bottom: 2),
-      decoration: pw.BoxDecoration(
-        border: pw.Border(bottom: pw.BorderSide(color: PdfColor.fromHex('#E1BEE7'), width: 1)),
+  static Widget _buildSectionTitle(String title) {
+    return Container(
+      alignment: Alignment.center,
+      margin: const EdgeInsets.only(bottom: 8),
+      padding: const EdgeInsets.only(bottom: 4),
+      decoration: const BoxDecoration(
+        border: Border(bottom: BorderSide(color: Color(0xFFE1BEE7), width: 1.5)),
       ),
-      child: pw.Text(title, style: pw.TextStyle(font: fontBold, fontSize: 11, color: PdfColor.fromHex('#6A1B9A'))),
+      child: Text(title, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 13, color: Color(0xFF6A1B9A))),
     );
   }
 
-  static pw.Widget _buildDetailBox(List<List<String>> rows, pw.Font fontRegular, pw.Font fontBold) {
-    return pw.Container(
-      padding: const pw.EdgeInsets.all(6),
-      decoration: pw.BoxDecoration(
-        border: pw.Border.all(color: PdfColor.fromHex('#BDBDBD')),
-        borderRadius: const pw.BorderRadius.all(pw.Radius.circular(4)),
-        color: PdfColor.fromHex('#F9FBE7'), // Light tint like panchang-box
+  static Widget _buildDetailBox(List<List<String>> rows) {
+    return Container(
+      padding: const EdgeInsets.all(8),
+      decoration: BoxDecoration(
+        border: Border.all(color: const Color(0xFFBDBDBD)),
+        borderRadius: BorderRadius.circular(6),
+        color: const Color(0xFFF9FBE7),
       ),
-      child: pw.Table(
-        columnWidths: {
-          0: const pw.FlexColumnWidth(1),
-          1: const pw.FlexColumnWidth(1.5),
-          2: const pw.FlexColumnWidth(1),
-          3: const pw.FlexColumnWidth(1.5),
+      child: Table(
+        columnWidths: const {
+          0: FlexColumnWidth(1),
+          1: FlexColumnWidth(1.5),
+          2: FlexColumnWidth(1),
+          3: FlexColumnWidth(1.5),
         },
         children: rows.map((row) {
-          return pw.TableRow(
+          return TableRow(
             children: row.asMap().entries.map((e) {
               final isLabel = e.key % 2 == 0;
-              return pw.Padding(
-                padding: const pw.EdgeInsets.symmetric(vertical: 2, horizontal: 4),
-                child: pw.Text(
+              return Padding(
+                padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 4),
+                child: Text(
                   e.value,
-                  style: pw.TextStyle(
-                    font: isLabel ? fontBold : fontRegular,
-                    fontSize: 9,
-                    color: isLabel ? PdfColor.fromHex('#37474F') : PdfColor.fromHex('#212121'),
+                  style: TextStyle(
+                    fontWeight: isLabel ? FontWeight.bold : FontWeight.normal,
+                    fontSize: 11,
+                    color: isLabel ? const Color(0xFF37474F) : const Color(0xFF212121),
                   ),
                 ),
               );
@@ -278,7 +344,7 @@ class JanmaPatrikeService {
     );
   }
 
-  static pw.Widget _buildGrahaTable(KundaliResult result, pw.Font fontRegular, pw.Font fontBold) {
+  static Widget _buildGrahaTable(KundaliResult result) {
     final headers = ['ಗ್ರಹ', 'ರಾಶಿ', 'ಅಂಶ', 'ನಕ್ಷತ್ರ', 'ಪಾದ', 'ವಕ್ರ/ಅಸ್ತ'];
     
     final rows = <List<String>>[];
@@ -299,85 +365,126 @@ class JanmaPatrikeService {
       ]);
     }
 
-    return pw.Container(
-      decoration: pw.BoxDecoration(
-        border: pw.Border.all(color: PdfColor.fromHex('#BDBDBD')),
-        borderRadius: const pw.BorderRadius.all(pw.Radius.circular(4)),
+    return Container(
+      decoration: BoxDecoration(
+        border: Border.all(color: const Color(0xFFBDBDBD)),
+        borderRadius: BorderRadius.circular(6),
       ),
-      child: pw.TableHelper.fromTextArray(
-        headers: headers,
-        data: rows,
-        border: pw.TableBorder.symmetric(inside: pw.BorderSide(color: PdfColor.fromHex('#E0E0E0'), width: 0.5)),
-        headerStyle: pw.TextStyle(font: fontBold, fontSize: 8, color: PdfColors.white),
-        headerDecoration: pw.BoxDecoration(color: PdfColor.fromHex('#4A148C')),
-        cellStyle: pw.TextStyle(font: fontRegular, fontSize: 8, color: PdfColors.black),
-        cellAlignment: pw.Alignment.center,
-        headerAlignment: pw.Alignment.center,
-        cellPadding: const pw.EdgeInsets.symmetric(vertical: 4, horizontal: 2),
+      child: Table(
+        border: const TableBorder(
+          horizontalInside: BorderSide(color: Color(0xFFE0E0E0), width: 0.5),
+          verticalInside: BorderSide(color: Color(0xFFE0E0E0), width: 0.5),
+        ),
+        children: [
+          // Header
+          TableRow(
+            decoration: const BoxDecoration(color: Color(0xFF4A148C), borderRadius: BorderRadius.vertical(top: Radius.circular(5))),
+            children: headers.map((h) => Padding(
+              padding: const EdgeInsets.all(6),
+              child: Text(h, textAlign: TextAlign.center, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 10, color: Colors.white)),
+            )).toList(),
+          ),
+          // Data
+          ...rows.asMap().entries.map((entry) {
+            final isEven = entry.key % 2 == 0;
+            return TableRow(
+              decoration: BoxDecoration(color: isEven ? Colors.white : const Color(0xFFF5F0E8)),
+              children: entry.value.map((cell) => Padding(
+                padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 2),
+                child: Text(cell, textAlign: TextAlign.center, style: const TextStyle(fontSize: 10, color: Colors.black)),
+              )).toList(),
+            );
+          }),
+        ],
       ),
     );
   }
 
-  static pw.Widget _buildChart(String title, List<List<String>> chart, pw.Font fontRegular, pw.Font fontBold) {
+  static Widget _buildChartWidget(String title, List<List<String>> chart) {
     if (chart.isEmpty) chart = List.generate(12, (_) => []);
-    String p(int idx) => chart[idx].join(' ');
+    String p(int idx) => chart[idx].join('\n'); // use newlines to separate planets cleanly
 
-    const double boxW = 42.0;
-
-    pw.Widget box(String text) {
-      return pw.Container(
-        width: boxW,
-        height: boxW,
-        alignment: pw.Alignment.center,
-        decoration: pw.BoxDecoration(
-          border: pw.Border.all(color: PdfColor.fromHex('#666666'), width: 0.5),
-        ),
-        padding: const pw.EdgeInsets.all(1),
-        child: pw.Text(
-          text,
-          textAlign: pw.TextAlign.center,
-          style: pw.TextStyle(font: fontBold, fontSize: 8, color: PdfColor.fromHex('#1A1A1A')),
+    Widget box(String text) {
+      return Expanded(
+        child: Container(
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            border: Border.all(color: const Color(0xFF666666), width: 0.5),
+            color: Colors.white,
+          ),
+          child: Text(
+            text,
+            textAlign: TextAlign.center,
+            style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 9.5, color: Color(0xFF1A1A1A), height: 1.1),
+          ),
         ),
       );
     }
 
-    return pw.Column(
+    Widget rowBoxes(List<int> idxs) {
+      return Expanded(
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: idxs.map((i) => box(p(i))).toList(),
+        ),
+      );
+    }
+
+    return Column(
       children: [
-        pw.Container(
-          decoration: pw.BoxDecoration(border: pw.Border.all(color: PdfColor.fromHex('#333333'), width: 1.5)),
-          child: pw.Column(
-            children: [
-              pw.Row(children: [box(p(11)), box(p(0)), box(p(1)), box(p(2))]),
-              pw.Row(
-                children: [
-                  pw.Column(children: [box(p(10)), box(p(9))]),
-                  pw.Container(
-                    width: boxW * 2,
-                    height: boxW * 2,
-                    alignment: pw.Alignment.center,
-                    decoration: pw.BoxDecoration(
-                      border: pw.Border.all(color: PdfColor.fromHex('#666666'), width: 0.5),
-                      color: PdfColor.fromHex('#F5F0E8'),
-                    ),
-                    child: pw.Text(
-                      title.split(' ')[0],
-                      style: pw.TextStyle(font: fontBold, fontSize: 10, color: PdfColor.fromHex('#2E1A47')),
-                    ),
+        Expanded(
+          child: Container(
+            decoration: BoxDecoration(border: Border.all(color: const Color(0xFF333333), width: 1.5)),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                rowBoxes([11, 0, 1, 2]),
+                Expanded(
+                  flex: 2,
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Expanded(
+                        child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+                          box(p(10)),
+                          box(p(9)),
+                        ]),
+                      ),
+                      Expanded(
+                        flex: 2,
+                        child: Container(
+                          alignment: Alignment.center,
+                          decoration: BoxDecoration(
+                            border: Border.all(color: const Color(0xFF666666), width: 0.5),
+                            color: const Color(0xFFF5F0E8),
+                          ),
+                          child: Text(
+                            title.split(' ')[0], // ರಾಶಿ / ನವಾಂಶ / ಭಾವ
+                            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Color(0xFF2E1A47)),
+                          ),
+                        ),
+                      ),
+                      Expanded(
+                        child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+                          box(p(3)),
+                          box(p(4)),
+                        ]),
+                      ),
+                    ],
                   ),
-                  pw.Column(children: [box(p(3)), box(p(4))]),
-                ]
-              ),
-              pw.Row(children: [box(p(8)), box(p(7)), box(p(6)), box(p(5))]),
-            ],
+                ),
+                rowBoxes([8, 7, 6, 5]),
+              ],
+            ),
           ),
         ),
-        pw.SizedBox(height: 4),
-        pw.Text(title, style: pw.TextStyle(font: fontBold, fontSize: 9, color: PdfColor.fromHex('#2E1A47'))),
+        const SizedBox(height: 6),
+        Text(title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 11, color: Color(0xFF2E1A47))),
       ],
     );
   }
 
-  static pw.Widget _buildDashaTable(KundaliResult result, pw.Font fontRegular, pw.Font fontBold) {
+  static Widget _buildDashaTable(KundaliResult result) {
     final headers = ['ಕ್ರ.', 'ದಶಾ ನಾಥ', 'ವರ್ಷ', 'ಆರಂಭ ದಿನಾಂಕ', 'ಅಂತ್ಯ ದಿನಾಂಕ'];
     
     final rows = <List<String>>[];
@@ -396,38 +503,52 @@ class JanmaPatrikeService {
       ]);
     }
 
-    return pw.Container(
-      decoration: pw.BoxDecoration(
-        border: pw.Border.all(color: PdfColor.fromHex('#BDBDBD')),
-        borderRadius: const pw.BorderRadius.all(pw.Radius.circular(4)),
+    return Container(
+      decoration: BoxDecoration(
+        border: Border.all(color: const Color(0xFFBDBDBD)),
+        borderRadius: BorderRadius.circular(6),
       ),
-      child: pw.TableHelper.fromTextArray(
-        headers: headers,
-        data: rows,
-        border: pw.TableBorder.symmetric(inside: pw.BorderSide(color: PdfColor.fromHex('#E0E0E0'), width: 0.5)),
-        headerStyle: pw.TextStyle(font: fontBold, fontSize: 9, color: PdfColors.white),
-        headerDecoration: pw.BoxDecoration(color: PdfColor.fromHex('#4A148C')),
-        cellStyle: pw.TextStyle(font: fontRegular, fontSize: 9, color: PdfColors.black),
-        cellAlignment: pw.Alignment.center,
-        headerAlignment: pw.Alignment.center,
-        cellPadding: const pw.EdgeInsets.symmetric(vertical: 5, horizontal: 4),
+      child: Table(
+        border: const TableBorder(
+          horizontalInside: BorderSide(color: Color(0xFFE0E0E0), width: 0.5),
+          verticalInside: BorderSide(color: Color(0xFFE0E0E0), width: 0.5),
+        ),
+        children: [
+          TableRow(
+            decoration: const BoxDecoration(color: Color(0xFF4A148C), borderRadius: BorderRadius.vertical(top: Radius.circular(5))),
+            children: headers.map((h) => Padding(
+              padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
+              child: Text(h, textAlign: TextAlign.center, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: Colors.white)),
+            )).toList(),
+          ),
+          ...rows.asMap().entries.map((entry) {
+            final isEven = entry.key % 2 == 0;
+            return TableRow(
+              decoration: BoxDecoration(color: isEven ? Colors.white : const Color(0xFFE8EAF6)),
+              children: entry.value.map((cell) => Padding(
+                padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 4),
+                child: Text(cell, textAlign: TextAlign.center, style: const TextStyle(fontSize: 11, color: Colors.black)),
+              )).toList(),
+            );
+          }),
+        ],
       ),
     );
   }
 
-  static pw.Widget _buildFooter(String jyotishiName, String jyotishiPhone, pw.Font fontRegular, pw.Font fontBold) {
-    return pw.Container(
-      margin: const pw.EdgeInsets.only(top: 10),
-      padding: const pw.EdgeInsets.only(top: 4),
-      decoration: pw.BoxDecoration(
-        border: pw.Border(top: pw.BorderSide(color: PdfColor.fromHex('#BDBDBD'), width: 1)),
+  static Widget _buildFooter(String jyotishiName, String jyotishiPhone) {
+    return Container(
+      margin: const EdgeInsets.only(top: 10),
+      padding: const EdgeInsets.only(top: 8),
+      decoration: const BoxDecoration(
+        border: Border(top: BorderSide(color: Color(0xFFBDBDBD), width: 1)),
       ),
-      child: pw.Row(
-        mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          pw.Text(jyotishiName, style: pw.TextStyle(font: fontBold, fontSize: 8, color: PdfColor.fromHex('#2E1A47'))),
-          pw.Text('ಭಾರತೀಯಂ', style: pw.TextStyle(font: fontRegular, fontSize: 8, color: PdfColor.fromHex('#9E9E9E'))),
-          pw.Text(jyotishiPhone, style: pw.TextStyle(font: fontBold, fontSize: 8, color: PdfColor.fromHex('#2E1A47'))),
+          Text(jyotishiName, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 10, color: Color(0xFF2E1A47))),
+          const Text('ಭಾರತೀಯಂ', style: TextStyle(fontWeight: FontWeight.normal, fontSize: 10, color: Color(0xFF9E9E9E))),
+          Text(jyotishiPhone, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 10, color: Color(0xFF2E1A47))),
         ],
       ),
     );
