@@ -104,9 +104,9 @@ class JanmaPatrikeService {
   static Future<void> generateAndPrint(UserDetails user, KundaliResult result) async {
     final controller = ScreenshotController();
 
-    // A4 Dimensions at standard 72 DPI
-    const double pageWidth = 595.0;
-    const double pageHeight = 842.0;
+    // A4 Dimensions at 96 DPI (provides more layout breathing room than 72 DPI without changing aspect ratio)
+    const double pageWidth = 793.0; // 595 * 1.33
+    const double pageHeight = 1122.0; // 842 * 1.33
 
     // Build standard offscreen Flutter widgets representing the pages
     final page1Widget = _buildPageWrapper(
@@ -165,14 +165,14 @@ class JanmaPatrikeService {
             fontFamily: 'Noto Sans Kannada', // ensure it falls back to system font if unavailable
           ),
           child: DefaultTextStyle(
-            style: const TextStyle(color: Colors.black, fontSize: 10),
+            style: const TextStyle(color: Colors.black, fontSize: 13),
             child: Material(
               color: Colors.white,
               child: Container(
                 width: width,
                 height: height,
                 color: const Color(0xFFFFFFF8), // Match old background
-                padding: const EdgeInsets.all(30),
+                padding: const EdgeInsets.symmetric(vertical: 35, horizontal: 40),
                 child: child,
               ),
             ),
@@ -191,7 +191,7 @@ class JanmaPatrikeService {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         _buildHeader('ಜನ್ಮ ಪತ್ರಿಕೆ', 'ಭಾರತೀಯಂ ಜ್ಯೋತಿಷ ಅಪ್ಲಿಕೇಶನ್'),
-        const SizedBox(height: 10),
+        const SizedBox(height: 5),
         
         _buildSectionTitle('ವೈಯಕ್ತಿಕ ವಿವರ'),
         _buildDetailBox([
@@ -200,7 +200,7 @@ class JanmaPatrikeService {
           ['ತಂದೆ ಹೆಸರು:', user.fatherName, 'ತಾಯಿ ಹೆಸರು:', user.motherName],
           ['ಗೋತ್ರ:', user.gotra, 'ಲಗ್ನ ರಾಶಿ:', lagnaRashi],
         ]),
-        const SizedBox(height: 10),
+        const SizedBox(height: 5),
 
         _buildSectionTitle('ಪಂಚಾಂಗ ವಿವರ'),
         _buildDetailBox([
@@ -212,13 +212,14 @@ class JanmaPatrikeService {
           ['ಗತ ಘಟಿ:', p.gataGhati, 'ಪರಮ ಘಟಿ:', p.paramaGhati],
           ['ಸೂರ್ಯೋದಯ:', p.sunrise, 'ಸೂರ್ಯಾಸ್ತ:', p.sunset],
         ]),
-        const SizedBox(height: 10),
+        const SizedBox(height: 5),
 
         _buildSectionTitle('ತತ್ಕಾಲ ಗ್ರಹಸ್ಥಿತಿ'),
         _buildGrahaTable(result),
-        const SizedBox(height: 10),
+        const SizedBox(height: 5),
 
         Expanded(
+          flex: 4,
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -285,11 +286,11 @@ class JanmaPatrikeService {
       ),
       child: Column(
         children: [
-          const Text('ಶ್ರೀ ಗಣೇಶಾಯ ನಮಃ ।। ಶ್ರೀ ಗುರುಭ್ಯೋ ನಮಃ ।।', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 11, color: Color(0xFFC62828))),
+          const Text('ಶ್ರೀ ಗಣೇಶಾಯ ನಮಃ ।। ಶ್ರೀ ಗುರುಭ್ಯೋ ನಮಃ ।।', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13.5, color: Color(0xFFC62828))),
           const SizedBox(height: 4),
-          Text(mainTitle, style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 20, color: Color(0xFF2E1A47))),
+          Text(mainTitle, style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 24, color: Color(0xFF2E1A47))),
           const SizedBox(height: 2),
-          Text(subTitle, style: const TextStyle(fontWeight: FontWeight.w500, fontSize: 10, color: Color(0xFF757575))),
+          Text(subTitle, style: const TextStyle(fontWeight: FontWeight.w500, fontSize: 13, color: Color(0xFF757575))),
         ],
       ),
     );
@@ -298,12 +299,12 @@ class JanmaPatrikeService {
   static Widget _buildSectionTitle(String title) {
     return Container(
       alignment: Alignment.center,
-      margin: const EdgeInsets.only(bottom: 8),
-      padding: const EdgeInsets.only(bottom: 4),
+      margin: const EdgeInsets.only(bottom: 5),
+      padding: const EdgeInsets.only(bottom: 2),
       decoration: const BoxDecoration(
         border: Border(bottom: BorderSide(color: Color(0xFFE1BEE7), width: 1.5)),
       ),
-      child: Text(title, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 13, color: Color(0xFF6A1B9A))),
+      child: Text(title, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 15, color: Color(0xFF6A1B9A))),
     );
   }
 
@@ -332,7 +333,7 @@ class JanmaPatrikeService {
                   e.value,
                   style: TextStyle(
                     fontWeight: isLabel ? FontWeight.bold : FontWeight.normal,
-                    fontSize: 11,
+                    fontSize: 13,
                     color: isLabel ? const Color(0xFF37474F) : const Color(0xFF212121),
                   ),
                 ),
@@ -381,7 +382,7 @@ class JanmaPatrikeService {
             decoration: const BoxDecoration(color: Color(0xFF4A148C), borderRadius: BorderRadius.vertical(top: Radius.circular(5))),
             children: headers.map((h) => Padding(
               padding: const EdgeInsets.all(6),
-              child: Text(h, textAlign: TextAlign.center, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 10, color: Colors.white)),
+              child: Text(h, textAlign: TextAlign.center, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Colors.white)),
             )).toList(),
           ),
           // Data
@@ -391,7 +392,7 @@ class JanmaPatrikeService {
               decoration: BoxDecoration(color: isEven ? Colors.white : const Color(0xFFF5F0E8)),
               children: entry.value.map((cell) => Padding(
                 padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 2),
-                child: Text(cell, textAlign: TextAlign.center, style: const TextStyle(fontSize: 10, color: Colors.black)),
+                child: Text(cell, textAlign: TextAlign.center, style: const TextStyle(fontSize: 13, color: Colors.black)),
               )).toList(),
             );
           }),
@@ -415,7 +416,7 @@ class JanmaPatrikeService {
           child: Text(
             text,
             textAlign: TextAlign.center,
-            style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 9.5, color: Color(0xFF1A1A1A), height: 1.1),
+            style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 11.5, color: Color(0xFF1A1A1A), height: 1.1),
           ),
         ),
       );
@@ -460,7 +461,7 @@ class JanmaPatrikeService {
                           ),
                           child: Text(
                             title.split(' ')[0], // ರಾಶಿ / ನವಾಂಶ / ಭಾವ
-                            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Color(0xFF2E1A47)),
+                            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Color(0xFF2E1A47)),
                           ),
                         ),
                       ),
@@ -479,7 +480,7 @@ class JanmaPatrikeService {
           ),
         ),
         const SizedBox(height: 6),
-        Text(title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 11, color: Color(0xFF2E1A47))),
+        Text(title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Color(0xFF2E1A47))),
       ],
     );
   }
@@ -518,7 +519,7 @@ class JanmaPatrikeService {
             decoration: const BoxDecoration(color: Color(0xFF4A148C), borderRadius: BorderRadius.vertical(top: Radius.circular(5))),
             children: headers.map((h) => Padding(
               padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
-              child: Text(h, textAlign: TextAlign.center, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: Colors.white)),
+              child: Text(h, textAlign: TextAlign.center, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: Colors.white)),
             )).toList(),
           ),
           ...rows.asMap().entries.map((entry) {
@@ -527,7 +528,7 @@ class JanmaPatrikeService {
               decoration: BoxDecoration(color: isEven ? Colors.white : const Color(0xFFE8EAF6)),
               children: entry.value.map((cell) => Padding(
                 padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 4),
-                child: Text(cell, textAlign: TextAlign.center, style: const TextStyle(fontSize: 11, color: Colors.black)),
+                child: Text(cell, textAlign: TextAlign.center, style: const TextStyle(fontSize: 14, color: Colors.black)),
               )).toList(),
             );
           }),
@@ -546,11 +547,12 @@ class JanmaPatrikeService {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(jyotishiName, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 10, color: Color(0xFF2E1A47))),
-          const Text('ಭಾರತೀಯಂ', style: TextStyle(fontWeight: FontWeight.normal, fontSize: 10, color: Color(0xFF9E9E9E))),
-          Text(jyotishiPhone, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 10, color: Color(0xFF2E1A47))),
+          Text(jyotishiName, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Color(0xFF2E1A47))),
+          const Text('ಭಾರತೀಯಂ', style: TextStyle(fontWeight: FontWeight.normal, fontSize: 13, color: Color(0xFF9E9E9E))),
+          Text(jyotishiPhone, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Color(0xFF2E1A47))),
         ],
       ),
     );
   }
 }
+
