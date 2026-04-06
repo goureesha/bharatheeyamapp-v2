@@ -46,16 +46,16 @@ class JanmaPatrikeService {
 
     // 2. Setup Panchanga
     final p = result.panchang;
-    html = html.replaceAll('{{SAMVATSARA}}', _escapeHtml(tr(p.samvatsara)));
-    html = html.replaceAll('{{CHANDRA_MASA}}', _escapeHtml(tr(p.chandraMasa)));
-    html = html.replaceAll('{{RAVI_MASA}}', _escapeHtml(tr(p.souraMasa)));
-    html = html.replaceAll('{{TITHI}}', _escapeHtml(tr(p.tithi)));
-    html = html.replaceAll('{{VARA}}', _escapeHtml(tr(p.vara)));
-    html = html.replaceAll('{{NAKSHATRA}}', _escapeHtml(tr(p.nakshatra)));
-    html = html.replaceAll('{{KARANA}}', _escapeHtml(tr(p.karana)));
-    html = html.replaceAll('{{YOGA}}', _escapeHtml(tr(p.yoga)));
-    html = html.replaceAll('{{RUTU}}', _escapeHtml(tr(p.rutu)));
-    html = html.replaceAll('{{CHANDRA_RASHI}}', _escapeHtml(tr(p.chandraRashi)));
+    html = html.replaceAll('{{SAMVATSARA}}', _escapeHtml(p.samvatsara));
+    html = html.replaceAll('{{CHANDRA_MASA}}', _escapeHtml(p.chandraMasa));
+    html = html.replaceAll('{{RAVI_MASA}}', _escapeHtml(p.souraMasa));
+    html = html.replaceAll('{{TITHI}}', _escapeHtml(p.tithi));
+    html = html.replaceAll('{{VARA}}', _escapeHtml(p.vara));
+    html = html.replaceAll('{{NAKSHATRA}}', _escapeHtml(p.nakshatra));
+    html = html.replaceAll('{{KARANA}}', _escapeHtml(p.karana));
+    html = html.replaceAll('{{YOGA}}', _escapeHtml(p.yoga));
+    html = html.replaceAll('{{RUTU}}', _escapeHtml(p.rutu));
+    html = html.replaceAll('{{CHANDRA_RASHI}}', _escapeHtml(p.chandraRashi));
     html = html.replaceAll('{{SUNRISE}}', _escapeHtml(p.sunrise));
     html = html.replaceAll('{{SUNSET}}', _escapeHtml(p.sunset));
     
@@ -64,12 +64,12 @@ class JanmaPatrikeService {
     html = html.replaceAll('{{PARAMA_GHATI}}', _escapeHtml(p.paramaGhati));
     
     // Remaining dasha
-    html = html.replaceAll('{{REMAINING_DASHA_LORD}}', _escapeHtml(tr(p.dashaLord)));
+    html = html.replaceAll('{{REMAINING_DASHA_LORD}}', _escapeHtml(p.dashaLord));
     html = html.replaceAll('{{REMAINING_DASHA_GOTS}}', _escapeHtml(p.dashaBalance));
     
     // Lagna
     final lagnaInfo = result.planets['Lagna'];
-    html = html.replaceAll('{{LAGNA_RASHI}}', _escapeHtml(lagnaInfo != null ? tr(lagnaInfo.rashi) : '-'));
+    html = html.replaceAll('{{LAGNA_RASHI}}', _escapeHtml(lagnaInfo != null ? lagnaInfo.rashi : '-'));
 
     // 3. Build Graha Sthiti Table
     final StringBuffer grahaRows = StringBuffer();
@@ -81,10 +81,10 @@ class JanmaPatrikeService {
       if (info.isCombust) vakrast = vakrast == 'ವ' ? 'ವ / ಅ' : 'ಅ';
       
       grahaRows.writeln('<tr>');
-      grahaRows.writeln('  <td>${_escapeHtml(tr(planetKey))}</td>');
-      grahaRows.writeln('  <td>${_escapeHtml(tr(info.rashi))}</td>');
+      grahaRows.writeln('  <td>${_escapeHtml(planetKey)}</td>');
+      grahaRows.writeln('  <td>${_escapeHtml(info.rashi)}</td>');
       grahaRows.writeln('  <td>${_escapeHtml(formatDeg(info.longitude))}</td>');
-      grahaRows.writeln('  <td>${_escapeHtml(tr(info.nakshatra))}</td>');
+      grahaRows.writeln('  <td>${_escapeHtml(info.nakshatra)}</td>');
       grahaRows.writeln('  <td>${info.pada}</td>');
       grahaRows.writeln('  <td>$vakrast</td>');
       grahaRows.writeln('</tr>');
@@ -106,7 +106,7 @@ class JanmaPatrikeService {
       
       dashaRows.writeln('<tr>');
       dashaRows.writeln('  <td>${i + 1}</td>');
-      dashaRows.writeln('  <td>${_escapeHtml(tr(d.lord))}</td>');
+      dashaRows.writeln('  <td>${_escapeHtml(d.lord)}</td>');
       dashaRows.writeln('  <td>$years</td>');
       dashaRows.writeln('  <td>$startStr</td>');
       dashaRows.writeln('  <td>$endStr</td>');
@@ -153,8 +153,13 @@ class JanmaPatrikeService {
     ''';
   }
 
+  static const _shortPlanetNames = {
+    'Lagna': 'ಲ', 'Sun': 'ರ', 'Moon': 'ಚಂ', 'Mars': 'ಕು', 'Mercury': 'ಬು',
+    'Jupiter': 'ಗು', 'Venus': 'ಶು', 'Saturn': 'ಶ', 'Rahu': 'ರಾ', 'Ketu': 'ಕೇ', 'Mandi': 'ಮಾ'
+  };
+
   static String _p(List<String> planets) {
-    return _escapeHtml(planets.map((p) => shortPlanetNames[p] ?? tr(p).substring(0, 2)).join(' '));
+    return _escapeHtml(planets.map((p) => _shortPlanetNames[p] ?? p.substring(0, 2)).join(' '));
   }
 
   static String _escapeHtml(String text) {
