@@ -1,8 +1,9 @@
 import 'package:pdf/pdf.dart';
+import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
 import '../core/calculator.dart';
 import '../constants/strings.dart';
-import '../widgets/common.dart';
+
 
 class UserDetails {
   final String name;
@@ -29,14 +30,11 @@ class UserDetails {
 }
 
 class JanmaPatrikeService {
-  // Short planet names for chart grid display
   static const _shortNames = <String, String>{
     'ಲಗ್ನ': 'ಲ', 'ರವಿ': 'ರ', 'ಚಂದ್ರ': 'ಚಂ', 'ಕುಜ': 'ಕು', 'ಬುಧ': 'ಬು',
     'ಗುರು': 'ಗು', 'ಶುಕ್ರ': 'ಶು', 'ಶನಿ': 'ಶ', 'ರಾಹು': 'ರಾ', 'ಕೇತು': 'ಕೇ', 'ಮಾಂದಿ': 'ಮಾ',
   };
 
-  /// Build a 12-element list where each element is a list of short planet names in that rashi.
-  /// [rashiResolver] maps a planet's longitude to a rashi index (0–11).
   static List<List<String>> _computeChart(KundaliResult result, int Function(double deg) rashiResolver) {
     final List<List<String>> chart = List.generate(12, (_) => []);
     for (final pName in planetOrder) {
@@ -50,12 +48,10 @@ class JanmaPatrikeService {
     return chart;
   }
 
-  /// Rashi (D1) chart: simple rashi = floor(longitude / 30)
   static List<List<String>> _rashiChart(KundaliResult result) {
     return _computeChart(result, (deg) => (deg / 30).floor() % 12);
   }
 
-  /// Navamsha (D9) chart
   static List<List<String>> _navamshaChart(KundaliResult result) {
     return _computeChart(result, (deg) {
       final block = (deg / 30).floor() % 4;
@@ -65,13 +61,11 @@ class JanmaPatrikeService {
     });
   }
 
-  /// Bhava chart using Sripathi house cusps
   static List<List<String>> _bhavaChart(KundaliResult result) {
     final lagnaLong = result.planets['ಲಗ್ನ']?.longitude ?? 0;
     final lagnaIdx = (lagnaLong / 30).floor() % 12;
     final madhyas = result.bhavas;
 
-    // Calculate bhava sandhi (boundaries) from midpoints
     List<double> boundaries = List.filled(12, 0.0);
     for (int i = 0; i < 12; i++) {
       final m1 = madhyas[i];
@@ -86,7 +80,6 @@ class JanmaPatrikeService {
       if (info == null) continue;
       final d = info.longitude;
 
-      // Find which bhava this planet falls in
       int bhavaIdx = 0;
       for (int i = 0; i < 12; i++) {
         final startBoundary = boundaries[(i + 11) % 12];
@@ -107,48 +100,188 @@ class JanmaPatrikeService {
   }
 
   static Future<void> generateAndPrint(UserDetails user, KundaliResult result) async {
-    String html = _htmlTemplate;
+    final fontRegular = await PdfGoogleFonts.notoSansKannadaRegular();
+    final fontBold = await PdfGoogleFonts.notoSansKannadaBold();
 
-    // 1. Setup Basic Info
-    html = html.replaceAll('{{JATAKAR_NAME}}', _escapeHtml(user.name));
-    html = html.replaceAll('{{JANMA_OORU}}', _escapeHtml(user.place));
-    html = html.replaceAll('{{JANMA_DATE}}', _escapeHtml(user.dateStr));
-    html = html.replaceAll('{{JANMA_TIME}}', _escapeHtml(user.timeStr));
-    html = html.replaceAll('{{FATHER_NAME}}', _escapeHtml(user.fatherName));
-    html = html.replaceAll('{{MOTHER_NAME}}', _escapeHtml(user.motherName));
-    html = html.replaceAll('{{GOTRA}}', _escapeHtml(user.gotra));
-    html = html.replaceAll('{{JYOTISHI_NAME}}', _escapeHtml(user.jyotishiName));
-    html = html.replaceAll('{{JYOTISHI_PHONE}}', _escapeHtml(user.jyotishiPhone));
+    final doc = pw.Document();
 
-    // 2. Setup Panchanga
     final p = result.panchang;
-    html = html.replaceAll('{{SAMVATSARA}}', _escapeHtml(p.samvatsara));
-    html = html.replaceAll('{{CHANDRA_MASA}}', _escapeHtml(p.chandraMasa));
-    html = html.replaceAll('{{RAVI_MASA}}', _escapeHtml(p.souraMasa));
-    html = html.replaceAll('{{TITHI}}', _escapeHtml(p.tithi));
-    html = html.replaceAll('{{VARA}}', _escapeHtml(p.vara));
-    html = html.replaceAll('{{NAKSHATRA}}', _escapeHtml(p.nakshatra));
-    html = html.replaceAll('{{KARANA}}', _escapeHtml(p.karana));
-    html = html.replaceAll('{{YOGA}}', _escapeHtml(p.yoga));
-    html = html.replaceAll('{{RUTU}}', _escapeHtml(p.rutu));
-    html = html.replaceAll('{{CHANDRA_RASHI}}', _escapeHtml(p.chandraRashi));
-    html = html.replaceAll('{{SUNRISE}}', _escapeHtml(p.sunrise));
-    html = html.replaceAll('{{SUNSET}}', _escapeHtml(p.sunset));
-    
-    // Ghati
-    html = html.replaceAll('{{GATA_GHATI}}', _escapeHtml(p.gataGhati));
-    html = html.replaceAll('{{PARAMA_GHATI}}', _escapeHtml(p.paramaGhati));
-    
-    // Remaining dasha
-    html = html.replaceAll('{{REMAINING_DASHA_LORD}}', _escapeHtml(p.dashaLord));
-    html = html.replaceAll('{{REMAINING_DASHA_GOTS}}', _escapeHtml(p.dashaBalance));
-    
-    // Lagna — planet keys are Kannada
     final lagnaInfo = result.planets['ಲಗ್ನ'];
-    html = html.replaceAll('{{LAGNA_RASHI}}', _escapeHtml(lagnaInfo != null ? lagnaInfo.rashi : '-'));
+    final lagnaRashi = lagnaInfo != null ? lagnaInfo.rashi : '-';
 
-    // 3. Build Graha Sthiti Table
-    final StringBuffer grahaRows = StringBuffer();
+    // Page 1
+    doc.addPage(
+      pw.MultiPage(
+        pageFormat: PdfPageFormat.a4,
+        margin: const pw.EdgeInsets.all(30),
+        build: (pw.Context context) {
+          return [
+            _buildHeader('ಜನ್ಮ ಪತ್ರಿಕೆ', 'ಭಾರತೀಯಂ ಜ್ಯೋತಿಷ ಅಪ್ಲಿಕೇಶನ್', fontBold, fontRegular),
+            pw.SizedBox(height: 10),
+            
+            _buildSectionTitle('ವೈಯಕ್ತಿಕ ವಿವರ', fontBold),
+            _buildDetailBox([
+              ['ಜಾತಕರ ಹೆಸರು:', user.name, 'ಜನ್ಮ ಊರು:', user.place],
+              ['ಜನನ ದಿನಾಂಕ:', user.dateStr, 'ಜನ್ಮ ಸಮಯ:', user.timeStr],
+              ['ತಂದೆ ಹೆಸರು:', user.fatherName, 'ತಾಯಿ ಹೆಸರು:', user.motherName],
+              ['ಗೋತ್ರ:', user.gotra, 'ಲಗ್ನ ರಾಶಿ:', lagnaRashi],
+            ], fontRegular, fontBold),
+            pw.SizedBox(height: 10),
+
+            _buildSectionTitle('ಪಂಚಾಂಗ ವಿವರ', fontBold),
+            _buildDetailBox([
+              ['ಸಂವತ್ಸರ:', p.samvatsara, 'ಚಂದ್ರ ಮಾಸ:', p.chandraMasa],
+              ['ರವಿ ಮಾಸ:', p.souraMasa, 'ಋತು:', p.rutu],
+              ['ತಿಥಿ:', p.tithi, 'ವಾರ:', p.vara],
+              ['ನಕ್ಷತ್ರ:', p.nakshatra, 'ಕರಣ:', p.karana],
+              ['ಯೋಗ:', p.yoga, 'ಚಂದ್ರ ರಾಶಿ:', p.chandraRashi],
+              ['ಗತ ಘಟಿ:', p.gataGhati, 'ಪರಮ ಘಟಿ:', p.paramaGhati],
+              ['ಸೂರ್ಯೋದಯ:', p.sunrise, 'ಸೂರ್ಯಾಸ್ತ:', p.sunset],
+            ], fontRegular, fontBold),
+            pw.SizedBox(height: 10),
+
+            _buildSectionTitle('ತತ್ಕಾಲ ಗ್ರಹಸ್ಥಿತಿ', fontBold),
+            _buildGrahaTable(result, fontRegular, fontBold),
+            pw.SizedBox(height: 10),
+
+            pw.Row(
+              mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+              children: [
+                pw.Expanded(child: _buildChart('ರಾಶಿ ಕುಂಡಲಿ', _rashiChart(result), fontRegular, fontBold)),
+                pw.SizedBox(width: 10),
+                pw.Expanded(child: _buildChart('ನವಾಂಶ ಕುಂಡಲಿ', _navamshaChart(result), fontRegular, fontBold)),
+                pw.SizedBox(width: 10),
+                pw.Expanded(child: _buildChart('ಭಾವ ಕುಂಡಲಿ', _bhavaChart(result), fontRegular, fontBold)),
+              ],
+            ),
+          ];
+        },
+        footer: (pw.Context context) {
+          return _buildFooter(user.jyotishiName, user.jyotishiPhone, fontRegular, fontBold);
+        },
+      ),
+    );
+
+    // Page 2: Dasha
+    doc.addPage(
+      pw.MultiPage(
+        pageFormat: PdfPageFormat.a4,
+        margin: const pw.EdgeInsets.all(30),
+        build: (pw.Context context) {
+          return [
+            _buildHeader('ಜನ್ಮ ಪತ್ರಿಕೆ — ದಶಾ ವಿವರ', '${user.name} — ${user.dateStr}', fontBold, fontRegular),
+            pw.SizedBox(height: 10),
+
+            _buildSectionTitle('ನಕ್ಷತ್ರ ಮತ್ತು ದಶಾ ವಿವರ', fontBold),
+            _buildDetailBox([
+              ['ಜನ್ಮ ನಕ್ಷತ್ರ:', p.nakshatra, 'ಚಂದ್ರ ರಾಶಿ:', p.chandraRashi],
+              ['ನಕ್ಷತ್ರ ಪರಮ ಘಟಿ:', p.paramaGhati, 'ಗತ ಘಟಿ:', p.gataGhati],
+              ['ಶಿಷ್ಟ ದಶಾ ನಾಥ:', p.dashaLord, 'ಶಿಷ್ಟ ದಶಾ ಶೇಷ:', p.dashaBalance],
+            ], fontRegular, fontBold),
+            pw.SizedBox(height: 10),
+
+            _buildSectionTitle('ವಿಂಶೋತ್ತರೀ ಮಹಾ ದಶಾ', fontBold),
+            _buildDashaTable(result, fontRegular, fontBold),
+            pw.SizedBox(height: 10),
+
+            pw.Container(
+              alignment: pw.Alignment.center,
+              padding: const pw.EdgeInsets.all(8),
+              decoration: pw.BoxDecoration(
+                color: PdfColor.fromHex('#FFF8E1'),
+                border: pw.Border.all(color: PdfColor.fromHex('#FFD54F')),
+                borderRadius: const pw.BorderRadius.all(pw.Radius.circular(4)),
+              ),
+              child: pw.Text('ಶಿಷ್ಟ ದಶೆ: ${p.dashaLord} — ಶೇಷ: ${p.dashaBalance}', style: pw.TextStyle(font: fontBold, fontSize: 10, color: PdfColor.fromHex('#C62828'))),
+            ),
+          ];
+        },
+        footer: (pw.Context context) {
+          return _buildFooter(user.jyotishiName, user.jyotishiPhone, fontRegular, fontBold);
+        },
+      ),
+    );
+
+    await Printing.layoutPdf(
+      onLayout: (PdfPageFormat format) async => doc.save(),
+      name: '${user.name}_janmapatrike',
+    );
+  }
+
+  static pw.Widget _buildHeader(String mainTitle, String subTitle, pw.Font fontBold, pw.Font fontRegular) {
+    return pw.Container(
+      padding: const pw.EdgeInsets.symmetric(vertical: 8, horizontal: 10),
+      decoration: pw.BoxDecoration(
+        color: PdfColor.fromHex('#F5F0E8'),
+        border: pw.Border.all(color: PdfColor.fromHex('#2E1A47'), width: 1.5),
+        borderRadius: const pw.BorderRadius.all(pw.Radius.circular(6)),
+      ),
+      alignment: pw.Alignment.center,
+      child: pw.Column(
+        children: [
+          pw.Text('ಶ್ರೀ ಗಣೇಶಾಯ ನಮಃ ।। ಶ್ರೀ ಗುರುಭ್ಯೋ ನಮಃ ।।', style: pw.TextStyle(font: fontBold, fontSize: 10, color: PdfColor.fromHex('#C62828'))),
+          pw.SizedBox(height: 4),
+          pw.Text(mainTitle, style: pw.TextStyle(font: fontBold, fontSize: 18, color: PdfColor.fromHex('#2E1A47'))),
+          pw.SizedBox(height: 2),
+          pw.Text(subTitle, style: pw.TextStyle(font: fontRegular, fontSize: 8, color: PdfColor.fromHex('#757575'))),
+        ],
+      ),
+    );
+  }
+
+  static pw.Widget _buildSectionTitle(String title, pw.Font fontBold) {
+    return pw.Container(
+      alignment: pw.Alignment.center,
+      margin: const pw.EdgeInsets.only(bottom: 6),
+      padding: const pw.EdgeInsets.only(bottom: 2),
+      decoration: pw.BoxDecoration(
+        border: pw.Border(bottom: pw.BorderSide(color: PdfColor.fromHex('#E1BEE7'), width: 1)),
+      ),
+      child: pw.Text(title, style: pw.TextStyle(font: fontBold, fontSize: 11, color: PdfColor.fromHex('#6A1B9A'))),
+    );
+  }
+
+  static pw.Widget _buildDetailBox(List<List<String>> rows, pw.Font fontRegular, pw.Font fontBold) {
+    return pw.Container(
+      padding: const pw.EdgeInsets.all(6),
+      decoration: pw.BoxDecoration(
+        border: pw.Border.all(color: PdfColor.fromHex('#BDBDBD')),
+        borderRadius: const pw.BorderRadius.all(pw.Radius.circular(4)),
+        color: PdfColor.fromHex('#F9FBE7'), // Light tint like panchang-box
+      ),
+      child: pw.Table(
+        columnWidths: {
+          0: const pw.FlexColumnWidth(1),
+          1: const pw.FlexColumnWidth(1.5),
+          2: const pw.FlexColumnWidth(1),
+          3: const pw.FlexColumnWidth(1.5),
+        },
+        children: rows.map((row) {
+          return pw.TableRow(
+            children: row.asMap().entries.map((e) {
+              final isLabel = e.key % 2 == 0;
+              return pw.Padding(
+                padding: const pw.EdgeInsets.symmetric(vertical: 2, horizontal: 4),
+                child: pw.Text(
+                  e.value,
+                  style: pw.TextStyle(
+                    font: isLabel ? fontBold : fontRegular,
+                    fontSize: 9,
+                    color: isLabel ? PdfColor.fromHex('#37474F') : PdfColor.fromHex('#212121'),
+                  ),
+                ),
+              );
+            }).toList(),
+          );
+        }).toList(),
+      ),
+    );
+  }
+
+  static pw.Widget _buildGrahaTable(KundaliResult result, pw.Font fontRegular, pw.Font fontBold) {
+    final headers = ['ಗ್ರಹ', 'ರಾಶಿ', 'ಅಂಶ', 'ನಕ್ಷತ್ರ', 'ಪಾದ', 'ವಕ್ರ/ಅಸ್ತ'];
+    
+    final rows = <List<String>>[];
     for (final planetKey in planetOrder) {
       final info = result.planets[planetKey];
       if (info == null) continue;
@@ -156,502 +289,147 @@ class JanmaPatrikeService {
       if (info.speed < 0) vakrast = 'ವ';
       if (info.isCombust) vakrast = vakrast == 'ವ' ? 'ವ / ಅ' : 'ಅ';
       
-      grahaRows.writeln('<tr>');
-      grahaRows.writeln('  <td>${_escapeHtml(planetKey)}</td>');
-      grahaRows.writeln('  <td>${_escapeHtml(info.rashi)}</td>');
-      grahaRows.writeln('  <td>${_escapeHtml(formatDeg(info.longitude))}</td>');
-      grahaRows.writeln('  <td>${_escapeHtml(info.nakshatra)}</td>');
-      grahaRows.writeln('  <td>${info.pada}</td>');
-      grahaRows.writeln('  <td>$vakrast</td>');
-      grahaRows.writeln('</tr>');
+      rows.add([
+        planetKey,
+        info.rashi,
+        formatDeg(info.longitude),
+        info.nakshatra,
+        info.pada.toString(),
+        vakrast,
+      ]);
     }
-    html = html.replaceAll('{{GRAHA_ROWS}}', grahaRows.toString());
 
-    // 4. Build Charts — computed from planet data
-    final rashi = _rashiChart(result);
-    final navamsha = _navamshaChart(result);
-    final bhava = _bhavaChart(result);
-    html = html.replaceAll('{{RASHI_GRID}}', _buildGrid(rashi));
-    html = html.replaceAll('{{NAVAMSHA_GRID}}', _buildGrid(navamsha));
-    html = html.replaceAll('{{BHAVA_GRID}}', _buildGrid(bhava));
+    return pw.Container(
+      decoration: pw.BoxDecoration(
+        border: pw.Border.all(color: PdfColor.fromHex('#BDBDBD')),
+        borderRadius: const pw.BorderRadius.all(pw.Radius.circular(4)),
+      ),
+      child: pw.TableHelper.fromTextArray(
+        headers: headers,
+        data: rows,
+        border: pw.TableBorder.symmetric(inside: pw.BorderSide(color: PdfColor.fromHex('#E0E0E0'), width: 0.5)),
+        headerStyle: pw.TextStyle(font: fontBold, fontSize: 8, color: PdfColors.white),
+        headerDecoration: pw.BoxDecoration(color: PdfColor.fromHex('#4A148C')),
+        cellStyle: pw.TextStyle(font: fontRegular, fontSize: 8, color: PdfColors.black),
+        cellAlignment: pw.Alignment.center,
+        headerAlignment: pw.Alignment.center,
+        cellPadding: const pw.EdgeInsets.symmetric(vertical: 4, horizontal: 2),
+      ),
+    );
+  }
 
-    // 5. Build Dasha Table
-    final StringBuffer dashaRows = StringBuffer();
+  static pw.Widget _buildChart(String title, List<List<String>> chart, pw.Font fontRegular, pw.Font fontBold) {
+    if (chart.isEmpty) chart = List.generate(12, (_) => []);
+    String p(int idx) => chart[idx].join(' ');
+
+    const double boxW = 42.0;
+
+    pw.Widget box(String text) {
+      return pw.Container(
+        width: boxW,
+        height: boxW,
+        alignment: pw.Alignment.center,
+        decoration: pw.BoxDecoration(
+          border: pw.Border.all(color: PdfColor.fromHex('#666666'), width: 0.5),
+        ),
+        padding: const pw.EdgeInsets.all(1),
+        child: pw.Text(
+          text,
+          textAlign: pw.TextAlign.center,
+          style: pw.TextStyle(font: fontBold, fontSize: 8, color: PdfColor.fromHex('#1A1A1A')),
+        ),
+      );
+    }
+
+    return pw.Column(
+      children: [
+        pw.Container(
+          decoration: pw.BoxDecoration(border: pw.Border.all(color: PdfColor.fromHex('#333333'), width: 1.5)),
+          child: pw.Column(
+            children: [
+              pw.Row(children: [box(p(11)), box(p(0)), box(p(1)), box(p(2))]),
+              pw.Row(
+                children: [
+                  pw.Column(children: [box(p(10)), box(p(9))]),
+                  pw.Container(
+                    width: boxW * 2,
+                    height: boxW * 2,
+                    alignment: pw.Alignment.center,
+                    decoration: pw.BoxDecoration(
+                      border: pw.Border.all(color: PdfColor.fromHex('#666666'), width: 0.5),
+                      color: PdfColor.fromHex('#F5F0E8'),
+                    ),
+                    child: pw.Text(
+                      title.split(' ')[0],
+                      style: pw.TextStyle(font: fontBold, fontSize: 10, color: PdfColor.fromHex('#2E1A47')),
+                    ),
+                  ),
+                  pw.Column(children: [box(p(3)), box(p(4))]),
+                ]
+              ),
+              pw.Row(children: [box(p(8)), box(p(7)), box(p(6)), box(p(5))]),
+            ],
+          ),
+        ),
+        pw.SizedBox(height: 4),
+        pw.Text(title, style: pw.TextStyle(font: fontBold, fontSize: 9, color: PdfColor.fromHex('#2E1A47'))),
+      ],
+    );
+  }
+
+  static pw.Widget _buildDashaTable(KundaliResult result, pw.Font fontRegular, pw.Font fontBold) {
+    final headers = ['ಕ್ರ.', 'ದಶಾ ನಾಥ', 'ವರ್ಷ', 'ಆರಂಭ ದಿನಾಂಕ', 'ಅಂತ್ಯ ದಿನಾಂಕ'];
+    
+    final rows = <List<String>>[];
     for (int i = 0; i < result.dashas.length; i++) {
       final d = result.dashas[i];
       final startStr = '${d.start.day.toString().padLeft(2,'0')}-${d.start.month.toString().padLeft(2,'0')}-${d.start.year}';
       final endStr = '${d.end.day.toString().padLeft(2,'0')}-${d.end.month.toString().padLeft(2,'0')}-${d.end.year}';
       int years = d.end.year - d.start.year;
       
-      dashaRows.writeln('<tr>');
-      dashaRows.writeln('  <td>${i + 1}</td>');
-      dashaRows.writeln('  <td>${_escapeHtml(d.lord)}</td>');
-      dashaRows.writeln('  <td>$years</td>');
-      dashaRows.writeln('  <td>$startStr</td>');
-      dashaRows.writeln('  <td>$endStr</td>');
-      dashaRows.writeln('</tr>');
+      rows.add([
+        (i + 1).toString(),
+        d.lord,
+        years.toString(),
+        startStr,
+        endStr,
+      ]);
     }
-    html = html.replaceAll('{{DASHA_ROWS}}', dashaRows.toString());
 
-    // Print
-    await Printing.layoutPdf(
-      onLayout: (PdfPageFormat format) async {
-        return await Printing.convertHtml(
-          format: PdfPageFormat.a4,
-          html: html,
-        );
-      },
-      name: '${user.name}_janmapatrike',
+    return pw.Container(
+      decoration: pw.BoxDecoration(
+        border: pw.Border.all(color: PdfColor.fromHex('#BDBDBD')),
+        borderRadius: const pw.BorderRadius.all(pw.Radius.circular(4)),
+      ),
+      child: pw.TableHelper.fromTextArray(
+        headers: headers,
+        data: rows,
+        border: pw.TableBorder.symmetric(inside: pw.BorderSide(color: PdfColor.fromHex('#E0E0E0'), width: 0.5)),
+        headerStyle: pw.TextStyle(font: fontBold, fontSize: 9, color: PdfColors.white),
+        headerDecoration: pw.BoxDecoration(color: PdfColor.fromHex('#4A148C')),
+        cellStyle: pw.TextStyle(font: fontRegular, fontSize: 9, color: PdfColors.black),
+        cellAlignment: pw.Alignment.center,
+        headerAlignment: pw.Alignment.center,
+        cellPadding: const pw.EdgeInsets.symmetric(vertical: 5, horizontal: 4),
+      ),
     );
   }
 
-  /// Build South Indian style 4×4 grid HTML from a 12-element chart
-  static String _buildGrid(List<List<String>> chart) {
-    if (chart.isEmpty) return '';
-    return '''
-      <tr>
-        <td>${_p(chart[11])}</td>
-        <td>${_p(chart[0])}</td>
-        <td>${_p(chart[1])}</td>
-        <td>${_p(chart[2])}</td>
-      </tr>
-      <tr>
-        <td>${_p(chart[10])}</td>
-        <td colspan="2" rowspan="2" class="center">{{CHART_NAME}}</td>
-        <td>${_p(chart[3])}</td>
-      </tr>
-      <tr>
-        <td>${_p(chart[9])}</td>
-        <td>${_p(chart[4])}</td>
-      </tr>
-      <tr>
-        <td>${_p(chart[8])}</td>
-        <td>${_p(chart[7])}</td>
-        <td>${_p(chart[6])}</td>
-        <td>${_p(chart[5])}</td>
-      </tr>
-    ''';
+  static pw.Widget _buildFooter(String jyotishiName, String jyotishiPhone, pw.Font fontRegular, pw.Font fontBold) {
+    return pw.Container(
+      margin: const pw.EdgeInsets.only(top: 10),
+      padding: const pw.EdgeInsets.only(top: 4),
+      decoration: pw.BoxDecoration(
+        border: pw.Border(top: pw.BorderSide(color: PdfColor.fromHex('#BDBDBD'), width: 1)),
+      ),
+      child: pw.Row(
+        mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+        children: [
+          pw.Text(jyotishiName, style: pw.TextStyle(font: fontBold, fontSize: 8, color: PdfColor.fromHex('#2E1A47'))),
+          pw.Text('ಭಾರತೀಯಂ', style: pw.TextStyle(font: fontRegular, fontSize: 8, color: PdfColor.fromHex('#9E9E9E'))),
+          pw.Text(jyotishiPhone, style: pw.TextStyle(font: fontBold, fontSize: 8, color: PdfColor.fromHex('#2E1A47'))),
+        ],
+      ),
+    );
   }
-
-  static String _p(List<String> planets) {
-    return _escapeHtml(planets.join(' '));
-  }
-
-  static String _escapeHtml(String text) {
-    return text.replaceAll('&', '&amp;')
-               .replaceAll('<', '&lt;')
-               .replaceAll('>', '&gt;')
-               .replaceAll('"', '&quot;')
-               .replaceAll("'", '&#39;');
-  }
-
-  static const String _htmlTemplate = r'''
-<!DOCTYPE html>
-<html lang="kn">
-<head>
-<meta charset="UTF-8">
-<style>
-  @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Kannada:wght@400;600;700;900&display=swap');
-
-  @page {
-    size: A4;
-    margin: 10mm 14mm 10mm 14mm;
-  }
-
-  * { margin: 0; padding: 0; box-sizing: border-box; }
-
-  body {
-    font-family: 'Noto Sans Kannada', sans-serif;
-    font-size: 9pt;
-    color: #212121;
-    background: #FFFFF8;
-    line-height: 1.35;
-    -webkit-print-color-adjust: exact;
-    print-color-adjust: exact;
-  }
-
-  /* ═══════════ HEADER ═══════════ */
-  .header {
-    background: linear-gradient(135deg, #F5F0E8 0%, #EDE7D9 100%);
-    border: 2pt solid #2E1A47;
-    border-radius: 4pt;
-    padding: 6pt 10pt 4pt;
-    text-align: center;
-    margin-bottom: 4pt;
-  }
-  .invocation {
-    font-size: 9pt;
-    font-weight: 700;
-    color: #C62828;
-    letter-spacing: 0.5pt;
-  }
-  .main-title {
-    font-size: 16pt;
-    font-weight: 900;
-    color: #2E1A47;
-    margin: 2pt 0 1pt;
-  }
-  .branding {
-    font-size: 7pt;
-    color: #757575;
-    font-weight: 400;
-  }
-
-  /* ═══════════ SECTION TITLES ═══════════ */
-  .section-title {
-    font-size: 9pt;
-    font-weight: 700;
-    color: #6A1B9A;
-    text-align: center;
-    margin: 3pt 0 2pt;
-    padding-bottom: 1pt;
-    border-bottom: 1pt solid #E1BEE7;
-  }
-
-  /* ═══════════ DETAIL BOXES ═══════════ */
-  .detail-box {
-    border: 1pt solid #BDBDBD;
-    border-radius: 3pt;
-    padding: 3pt 8pt;
-    margin-bottom: 3pt;
-  }
-  .detail-table {
-    width: 100%;
-    border-collapse: collapse;
-  }
-  .detail-table td {
-    padding: 1.5pt 3pt;
-    font-size: 7.5pt;
-    vertical-align: top;
-  }
-  .detail-table .lbl {
-    font-weight: 700;
-    color: #37474F;
-    white-space: nowrap;
-    width: 20%;
-  }
-  .detail-table .val {
-    color: #212121;
-    width: 30%;
-  }
-
-  /* ═══════════ PANCHANGA BOX ═══════════ */
-  .panchang-box {
-    border: 1pt solid #A5D6A7;
-    border-radius: 3pt;
-    padding: 3pt 8pt;
-    margin-bottom: 3pt;
-    background: #F1F8E9;
-  }
-
-  /* ═══════════ PLANET TABLE ═══════════ */
-  .graha-table {
-    width: 100%;
-    border-collapse: collapse;
-    border: 1pt solid #BDBDBD;
-    border-radius: 3pt;
-    overflow: hidden;
-    margin-bottom: 3pt;
-  }
-  .graha-table thead th {
-    background: #4A148C;
-    color: #FFFFFF;
-    font-size: 7pt;
-    font-weight: 700;
-    padding: 3pt 3pt;
-    text-align: center;
-    border-right: 1pt solid #6A1B9A;
-  }
-  .graha-table thead th:last-child { border-right: none; }
-  .graha-table tbody td {
-    font-size: 7pt;
-    padding: 2pt 3pt;
-    text-align: center;
-    border-bottom: 0.5pt solid #E0E0E0;
-  }
-  .graha-table tbody tr:nth-child(even) { background: #F5F0E8; }
-  .graha-table tbody tr:nth-child(odd) { background: #FFFFFF; }
-  .graha-table tbody td:first-child {
-    font-weight: 700;
-    text-align: left;
-    padding-left: 8pt;
-    color: #2E1A47;
-  }
-
-  /* ═══════════ KUNDALI CHARTS ═══════════ */
-  .charts-container {
-    display: flex;
-    justify-content: space-between;
-    gap: 4pt;
-    margin-top: 3pt;
-  }
-  .chart-block {
-    flex: 1;
-    text-align: center;
-  }
-  .chart-label {
-    font-size: 7pt;
-    font-weight: 700;
-    color: #2E1A47;
-    margin-top: 1pt;
-  }
-  .kundali-grid {
-    width: 100%;
-    border-collapse: collapse;
-    border: 1.5pt solid #333;
-  }
-  .kundali-grid td {
-    border: 0.7pt solid #666;
-    width: 25%;
-    height: 38pt;
-    font-size: 7pt;
-    font-weight: 700;
-    color: #1A1A1A;
-    text-align: center;
-    vertical-align: middle;
-    padding: 1pt;
-  }
-  .kundali-grid .center {
-    background: #F5F0E8;
-    font-size: 10pt;
-    font-weight: 900;
-    color: #2E1A47;
-    border: 1pt solid #444;
-  }
-
-  /* ═══════════ DASHA TABLES ═══════════ */
-  .dasha-table {
-    width: 100%;
-    border-collapse: collapse;
-    border: 1pt solid #BDBDBD;
-    margin-bottom: 5pt;
-  }
-  .dasha-table thead th {
-    background: #4A148C;
-    color: #FFFFFF;
-    font-size: 8pt;
-    font-weight: 700;
-    padding: 5pt 4pt;
-    text-align: center;
-    border-right: 1pt solid #6A1B9A;
-  }
-  .dasha-table thead th:last-child { border-right: none; }
-  .dasha-table tbody td {
-    font-size: 8pt;
-    padding: 4pt;
-    text-align: center;
-    border-bottom: 0.5pt solid #E0E0E0;
-  }
-  .dasha-table tbody tr:nth-child(even) { background: #E8EAF6; }
-  .dasha-table tbody tr:nth-child(odd) { background: #FFFFFF; }
-  .dasha-table tbody td:nth-child(2) { font-weight: 700; color: #2E1A47; }
-
-  .dasha-balance {
-    text-align: center;
-    font-size: 9pt;
-    font-weight: 700;
-    color: #C62828;
-    margin: 5pt 0;
-    padding: 3pt;
-    background: #FFF8E1;
-    border: 1pt solid #FFD54F;
-    border-radius: 3pt;
-  }
-
-  /* ═══════════ FOOTER ═══════════ */
-  .footer {
-    border-top: 1pt solid #BDBDBD;
-    padding-top: 3pt;
-    margin-top: 4pt;
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-    font-size: 7.5pt;
-  }
-  .footer-left { text-align: left; }
-  .footer-center { text-align: center; color: #9E9E9E; flex: 1; }
-  .footer-right { text-align: right; }
-  .footer-bold { font-weight: 700; color: #2E1A47; }
-  .footer-sub { font-size: 6.5pt; color: #9E9E9E; }
-
-  .page-break { page-break-before: always; }
-  .header-p2 .main-title { font-size: 16pt; }
-  .person-info {
-    font-size: 9pt;
-    font-weight: 700;
-    color: #37474F;
-    margin-top: 2pt;
-  }
-</style>
-</head>
-<body>
-
-<div class="header">
-  <div class="invocation">ಶ್ರೀ ಗಣೇಶಾಯ ನಮಃ ।। ಶ್ರೀ ಗುರುಭ್ಯೋ ನಮಃ ।।</div>
-  <div class="main-title">ಜನ್ಮ ಪತ್ರಿಕೆ</div>
-  <div class="branding">ಭಾರತೀಯಂ ಜ್ಯೋತಿಷ ಅಪ್ಲಿಕೇಶನ್</div>
-</div>
-
-<div class="detail-box">
-  <table class="detail-table">
-    <tr>
-      <td class="lbl">ಜಾತಕರ ಹೆಸರು:</td><td class="val">{{JATAKAR_NAME}}</td>
-      <td class="lbl">ಜನ್ಮ ಊರು:</td><td class="val">{{JANMA_OORU}}</td>
-    </tr>
-    <tr>
-      <td class="lbl">ಜನನ ದಿನಾಂಕ:</td><td class="val">{{JANMA_DATE}}</td>
-      <td class="lbl">ಜನ್ಮ ಸಮಯ:</td><td class="val">{{JANMA_TIME}}</td>
-    </tr>
-    <tr>
-      <td class="lbl">ತಂದೆ ಹೆಸರು:</td><td class="val">{{FATHER_NAME}}</td>
-      <td class="lbl">ತಾಯಿ ಹೆಸರು:</td><td class="val">{{MOTHER_NAME}}</td>
-    </tr>
-    <tr>
-      <td class="lbl">ಗೋತ್ರ:</td><td class="val">{{GOTRA}}</td>
-      <td class="lbl">ಲಗ್ನ ರಾಶಿ:</td><td class="val">{{LAGNA_RASHI}}</td>
-    </tr>
-  </table>
-</div>
-
-<div class="section-title">ಪಂಚಾಂಗ ವಿವರ</div>
-<div class="panchang-box">
-  <table class="detail-table">
-    <tr>
-      <td class="lbl">ಸಂವತ್ಸರ:</td><td class="val">{{SAMVATSARA}}</td>
-      <td class="lbl">ಚಂದ್ರ ಮಾಸ:</td><td class="val">{{CHANDRA_MASA}}</td>
-    </tr>
-    <tr>
-      <td class="lbl">ರವಿ ಮಾಸ:</td><td class="val">{{RAVI_MASA}}</td>
-      <td class="lbl">ಋತು:</td><td class="val">{{RUTU}}</td>
-    </tr>
-    <tr>
-      <td class="lbl">ತಿಥಿ:</td><td class="val">{{TITHI}}</td>
-      <td class="lbl">ವಾರ:</td><td class="val">{{VARA}}</td>
-    </tr>
-    <tr>
-      <td class="lbl">ನಕ್ಷತ್ರ:</td><td class="val">{{NAKSHATRA}}</td>
-      <td class="lbl">ಕರಣ:</td><td class="val">{{KARANA}}</td>
-    </tr>
-    <tr>
-      <td class="lbl">ಯೋಗ:</td><td class="val">{{YOGA}}</td>
-      <td class="lbl">ಚಂದ್ರ ರಾಶಿ:</td><td class="val">{{CHANDRA_RASHI}}</td>
-    </tr>
-    <tr>
-      <td class="lbl">ಗತ ಘಟಿ:</td><td class="val">{{GATA_GHATI}}</td>
-      <td class="lbl">ಪರಮ ಘಟಿ:</td><td class="val">{{PARAMA_GHATI}}</td>
-    </tr>
-    <tr>
-      <td class="lbl">ಸೂರ್ಯೋದಯ:</td><td class="val">{{SUNRISE}}</td>
-      <td class="lbl">ಸೂರ್ಯಾಸ್ತ:</td><td class="val">{{SUNSET}}</td>
-    </tr>
-  </table>
-</div>
-
-<div class="section-title">ತತ್ಕಾಲ ಗ್ರಹಸ್ಥಿತಿ</div>
-<table class="graha-table">
-  <thead>
-    <tr>
-      <th>ಗ್ರಹ</th><th>ರಾಶಿ</th><th>ಅಂಶ</th>
-      <th>ನಕ್ಷತ್ರ</th><th>ಪಾದ</th><th>ವಕ್ರ/ಅಸ್ತ</th>
-    </tr>
-  </thead>
-  <tbody>
-    {{GRAHA_ROWS}}
-  </tbody>
-</table>
-
-<div class="charts-container">
-  <div class="chart-block">
-    <table class="kundali-grid">
-      {{RASHI_GRID}}
-    </table>
-    <div class="chart-label">ರಾಶಿ ಕುಂಡಲಿ</div>
-  </div>
-  <div class="chart-block">
-    <table class="kundali-grid">
-      {{NAVAMSHA_GRID}}
-    </table>
-    <div class="chart-label">ನವಾಂಶ ಕುಂಡಲಿ</div>
-  </div>
-  <div class="chart-block">
-    <table class="kundali-grid">
-      {{BHAVA_GRID}}
-    </table>
-    <div class="chart-label">ಭಾವ ಕುಂಡಲಿ</div>
-  </div>
-</div>
-
-<div class="footer">
-  <div class="footer-left">
-    <div class="footer-bold">{{JYOTISHI_NAME}}</div>
-  </div>
-  <div class="footer-center">ಭಾರತೀಯಂ</div>
-  <div class="footer-right">
-    <div class="footer-bold">{{JYOTISHI_PHONE}}</div>
-  </div>
-</div>
-
-
-<div class="page-break"></div>
-
-<div class="header header-p2">
-  <div class="invocation">ಶ್ರೀ ಗಣೇಶಾಯ ನಮಃ ।। ಶ್ರೀ ಗುರುಭ್ಯೋ ನಮಃ ।।</div>
-  <div class="main-title">ಜನ್ಮ ಪತ್ರಿಕೆ — ದಶಾ ವಿವರ</div>
-  <div class="person-info">{{JATAKAR_NAME}} — {{JANMA_DATE}}</div>
-</div>
-
-<div class="section-title">ನಕ್ಷತ್ರ ಮತ್ತು ದಶಾ ವಿವರ</div>
-<div class="detail-box">
-  <table class="detail-table">
-    <tr>
-      <td class="lbl">ಜನ್ಮ ನಕ್ಷತ್ರ:</td><td class="val">{{NAKSHATRA}}</td>
-      <td class="lbl">ಚಂದ್ರ ರಾಶಿ:</td><td class="val">{{CHANDRA_RASHI}}</td>
-    </tr>
-    <tr>
-      <td class="lbl">ನಕ್ಷತ್ರ ಪರಮ ಘಟಿ:</td><td class="val">{{PARAMA_GHATI}}</td>
-      <td class="lbl">ಗತ ಘಟಿ:</td><td class="val">{{GATA_GHATI}}</td>
-    </tr>
-    <tr>
-      <td class="lbl">ಶಿಷ್ಟ ದಶಾ ನಾಥ:</td><td class="val">{{REMAINING_DASHA_LORD}}</td>
-      <td class="lbl">ಶಿಷ್ಟ ದಶಾ ಶೇಷ:</td><td class="val">{{REMAINING_DASHA_GOTS}}</td>
-    </tr>
-  </table>
-</div>
-
-<div class="section-title">ವಿಂಶೋತ್ತರೀ ಮಹಾ ದಶಾ</div>
-<table class="dasha-table">
-  <thead>
-    <tr>
-      <th>ಕ್ರ.</th>
-      <th>ದಶಾ ನಾಥ</th>
-      <th>ವರ್ಷ</th>
-      <th>ಆರಂಭ ದಿನಾಂಕ</th>
-      <th>ಅಂತ್ಯ ದಿನಾಂಕ</th>
-    </tr>
-  </thead>
-  <tbody>
-    {{DASHA_ROWS}}
-  </tbody>
-</table>
-
-<div class="dasha-balance">ಶಿಷ್ಟ ದಶೆ: {{REMAINING_DASHA_LORD}} — ಶೇಷ: {{REMAINING_DASHA_GOTS}}</div>
-
-<div class="footer">
-  <div class="footer-left">
-    <div class="footer-bold">{{JYOTISHI_NAME}}</div>
-  </div>
-  <div class="footer-center">ಭಾರತೀಯಂ</div>
-  <div class="footer-right">
-    <div class="footer-bold">{{JYOTISHI_PHONE}}</div>
-  </div>
-</div>
-
-<script>
-  // Inject chart names into center cells
-  document.body.innerHTML = document.body.innerHTML.replace('{{CHART_NAME}}', 'ರಾಶಿ').replace('{{CHART_NAME}}', 'ನವಾಂಶ').replace('{{CHART_NAME}}', 'ಭಾವ');
-</script>
-
-</body>
-</html>
-''';
 }
