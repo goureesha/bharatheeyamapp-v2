@@ -1,9 +1,8 @@
-import 'dart:convert';
 import 'package:pdf/pdf.dart';
 import 'package:printing/printing.dart';
 import '../core/calculator.dart';
 import '../constants/strings.dart';
-import '../constants/places.dart';
+import '../widgets/common.dart';
 
 class UserDetails {
   final String name;
@@ -30,6 +29,83 @@ class UserDetails {
 }
 
 class JanmaPatrikeService {
+  // Short planet names for chart grid display
+  static const _shortNames = <String, String>{
+    'ಲಗ್ನ': 'ಲ', 'ರವಿ': 'ರ', 'ಚಂದ್ರ': 'ಚಂ', 'ಕುಜ': 'ಕು', 'ಬುಧ': 'ಬು',
+    'ಗುರು': 'ಗು', 'ಶುಕ್ರ': 'ಶು', 'ಶನಿ': 'ಶ', 'ರಾಹು': 'ರಾ', 'ಕೇತು': 'ಕೇ', 'ಮಾಂದಿ': 'ಮಾ',
+  };
+
+  /// Build a 12-element list where each element is a list of short planet names in that rashi.
+  /// [rashiResolver] maps a planet's longitude to a rashi index (0–11).
+  static List<List<String>> _computeChart(KundaliResult result, int Function(double deg) rashiResolver) {
+    final List<List<String>> chart = List.generate(12, (_) => []);
+    for (final pName in planetOrder) {
+      final info = result.planets[pName];
+      if (info == null) continue;
+      final ri = rashiResolver(info.longitude);
+      if (ri >= 0 && ri < 12) {
+        chart[ri].add(_shortNames[pName] ?? pName);
+      }
+    }
+    return chart;
+  }
+
+  /// Rashi (D1) chart: simple rashi = floor(longitude / 30)
+  static List<List<String>> _rashiChart(KundaliResult result) {
+    return _computeChart(result, (deg) => (deg / 30).floor() % 12);
+  }
+
+  /// Navamsha (D9) chart
+  static List<List<String>> _navamshaChart(KundaliResult result) {
+    return _computeChart(result, (deg) {
+      final block = (deg / 30).floor() % 4;
+      final start = [0, 9, 6, 3][block];
+      final steps = ((deg % 30) / 3.33333).floor();
+      return (start + steps) % 12;
+    });
+  }
+
+  /// Bhava chart using Sripathi house cusps
+  static List<List<String>> _bhavaChart(KundaliResult result) {
+    final lagnaLong = result.planets['ಲಗ್ನ']?.longitude ?? 0;
+    final lagnaIdx = (lagnaLong / 30).floor() % 12;
+    final madhyas = result.bhavas;
+
+    // Calculate bhava sandhi (boundaries) from midpoints
+    List<double> boundaries = List.filled(12, 0.0);
+    for (int i = 0; i < 12; i++) {
+      final m1 = madhyas[i];
+      final m2 = madhyas[(i + 1) % 12];
+      double diff = (m2 - m1 + 360.0) % 360.0;
+      boundaries[i] = (m1 + (diff / 2.0)) % 360.0;
+    }
+
+    final List<List<String>> chart = List.generate(12, (_) => []);
+    for (final pName in planetOrder) {
+      final info = result.planets[pName];
+      if (info == null) continue;
+      final d = info.longitude;
+
+      // Find which bhava this planet falls in
+      int bhavaIdx = 0;
+      for (int i = 0; i < 12; i++) {
+        final startBoundary = boundaries[(i + 11) % 12];
+        final endBoundary = boundaries[i];
+        if (startBoundary < endBoundary) {
+          if (d >= startBoundary && d < endBoundary) { bhavaIdx = i; break; }
+        } else {
+          if (d >= startBoundary || d < endBoundary) { bhavaIdx = i; break; }
+        }
+      }
+
+      final ri = (lagnaIdx + bhavaIdx) % 12;
+      if (ri >= 0 && ri < 12) {
+        chart[ri].add(_shortNames[pName] ?? pName);
+      }
+    }
+    return chart;
+  }
+
   static Future<void> generateAndPrint(UserDetails user, KundaliResult result) async {
     String html = _htmlTemplate;
 
@@ -59,7 +135,7 @@ class JanmaPatrikeService {
     html = html.replaceAll('{{SUNRISE}}', _escapeHtml(p.sunrise));
     html = html.replaceAll('{{SUNSET}}', _escapeHtml(p.sunset));
     
-    // Ghati conversion helpers (simplified)
+    // Ghati
     html = html.replaceAll('{{GATA_GHATI}}', _escapeHtml(p.gataGhati));
     html = html.replaceAll('{{PARAMA_GHATI}}', _escapeHtml(p.paramaGhati));
     
@@ -67,8 +143,8 @@ class JanmaPatrikeService {
     html = html.replaceAll('{{REMAINING_DASHA_LORD}}', _escapeHtml(p.dashaLord));
     html = html.replaceAll('{{REMAINING_DASHA_GOTS}}', _escapeHtml(p.dashaBalance));
     
-    // Lagna
-    final lagnaInfo = result.planets['Lagna'];
+    // Lagna — planet keys are Kannada
+    final lagnaInfo = result.planets['ಲಗ್ನ'];
     html = html.replaceAll('{{LAGNA_RASHI}}', _escapeHtml(lagnaInfo != null ? lagnaInfo.rashi : '-'));
 
     // 3. Build Graha Sthiti Table
@@ -91,10 +167,13 @@ class JanmaPatrikeService {
     }
     html = html.replaceAll('{{GRAHA_ROWS}}', grahaRows.toString());
 
-    // 4. Build Charts
-    html = html.replaceAll('{{RASHI_GRID}}', _buildGrid(result.rashiChart));
-    html = html.replaceAll('{{NAVAMSHA_GRID}}', _buildGrid(result.navamshaChart));
-    html = html.replaceAll('{{BHAVA_GRID}}', _buildGrid(result.bhavaChart ?? result.rashiChart));
+    // 4. Build Charts — computed from planet data
+    final rashi = _rashiChart(result);
+    final navamsha = _navamshaChart(result);
+    final bhava = _bhavaChart(result);
+    html = html.replaceAll('{{RASHI_GRID}}', _buildGrid(rashi));
+    html = html.replaceAll('{{NAVAMSHA_GRID}}', _buildGrid(navamsha));
+    html = html.replaceAll('{{BHAVA_GRID}}', _buildGrid(bhava));
 
     // 5. Build Dasha Table
     final StringBuffer dashaRows = StringBuffer();
@@ -126,40 +205,36 @@ class JanmaPatrikeService {
     );
   }
 
+  /// Build South Indian style 4×4 grid HTML from a 12-element chart
   static String _buildGrid(List<List<String>> chart) {
     if (chart.isEmpty) return '';
     return '''
       <tr>
-        <td class="shri">ಶ್ರೀ:</td>
         <td>${_p(chart[11])}</td>
         <td>${_p(chart[0])}</td>
         <td>${_p(chart[1])}</td>
-      </tr>
-      <tr>
-        <td class="shri">ಶ್ರೀ:</td>
-        <td colspan="2" rowspan="2" class="center">{{CHART_NAME}}</td>
         <td>${_p(chart[2])}</td>
       </tr>
       <tr>
         <td>${_p(chart[10])}</td>
-        <td class="shri">ಶ್ರೀ:</td>
+        <td colspan="2" rowspan="2" class="center">{{CHART_NAME}}</td>
+        <td>${_p(chart[3])}</td>
       </tr>
       <tr>
-        <td class="shri">ಶ್ರೀ:</td>
-        <td class="shri">ಶ್ರೀ:</td>
         <td>${_p(chart[9])}</td>
-        <td class="shri">ಶ್ರೀ:</td>
+        <td>${_p(chart[4])}</td>
+      </tr>
+      <tr>
+        <td>${_p(chart[8])}</td>
+        <td>${_p(chart[7])}</td>
+        <td>${_p(chart[6])}</td>
+        <td>${_p(chart[5])}</td>
       </tr>
     ''';
   }
 
-  static const _shortPlanetNames = {
-    'Lagna': 'ಲ', 'Sun': 'ರ', 'Moon': 'ಚಂ', 'Mars': 'ಕು', 'Mercury': 'ಬು',
-    'Jupiter': 'ಗು', 'Venus': 'ಶು', 'Saturn': 'ಶ', 'Rahu': 'ರಾ', 'Ketu': 'ಕೇ', 'Mandi': 'ಮಾ'
-  };
-
   static String _p(List<String> planets) {
-    return _escapeHtml(planets.map((p) => _shortPlanetNames[p] ?? p.substring(0, 2)).join(' '));
+    return _escapeHtml(planets.join(' '));
   }
 
   static String _escapeHtml(String text) {
@@ -342,11 +417,6 @@ class JanmaPatrikeService {
     font-weight: 900;
     color: #2E1A47;
     border: 1pt solid #444;
-  }
-  .shri {
-    color: #C62828;
-    font-weight: 700;
-    font-size: 6.5pt;
   }
 
   /* ═══════════ DASHA TABLES ═══════════ */
@@ -577,8 +647,7 @@ class JanmaPatrikeService {
 </div>
 
 <script>
-  // Simple script to inject actual chart names when dynamically parsing the HTML 
-  // since `{{CHART_NAME}}` inside {{RASHI_GRID}} is generated.
+  // Inject chart names into center cells
   document.body.innerHTML = document.body.innerHTML.replace('{{CHART_NAME}}', 'ರಾಶಿ').replace('{{CHART_NAME}}', 'ನವಾಂಶ').replace('{{CHART_NAME}}', 'ಭಾವ');
 </script>
 
