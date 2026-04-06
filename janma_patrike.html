@@ -1,0 +1,545 @@
+<!DOCTYPE html>
+<html lang="kn">
+<head>
+<meta charset="UTF-8">
+<title>ಜನ್ಮ ಪತ್ರಿಕೆ - ರಾಮಕೃಷ್ಣ</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Kannada:wght@400;600;700;900&display=swap');
+
+  @page {
+    size: A4;
+    margin: 10mm 14mm 10mm 14mm;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Noto Sans Kannada', sans-serif;
+    font-size: 9pt;
+    color: #212121;
+    background: #FFFFF8;
+    line-height: 1.35;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  /* ═══════════ HEADER ═══════════ */
+  .header {
+    background: linear-gradient(135deg, #F5F0E8 0%, #EDE7D9 100%);
+    border: 2pt solid #2E1A47;
+    border-radius: 4pt;
+    padding: 6pt 10pt 4pt;
+    text-align: center;
+    margin-bottom: 4pt;
+  }
+  .invocation {
+    font-size: 9pt;
+    font-weight: 700;
+    color: #C62828;
+    letter-spacing: 0.5pt;
+  }
+  .main-title {
+    font-size: 16pt;
+    font-weight: 900;
+    color: #2E1A47;
+    margin: 2pt 0 1pt;
+  }
+  .branding {
+    font-size: 7pt;
+    color: #757575;
+    font-weight: 400;
+  }
+
+  /* ═══════════ SECTION TITLES ═══════════ */
+  .section-title {
+    font-size: 9pt;
+    font-weight: 700;
+    color: #6A1B9A;
+    text-align: center;
+    margin: 3pt 0 2pt;
+    padding-bottom: 1pt;
+    border-bottom: 1pt solid #E1BEE7;
+  }
+
+  /* ═══════════ DETAIL BOXES ═══════════ */
+  .detail-box {
+    border: 1pt solid #BDBDBD;
+    border-radius: 3pt;
+    padding: 3pt 8pt;
+    margin-bottom: 3pt;
+  }
+  .detail-table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+  .detail-table td {
+    padding: 1.5pt 3pt;
+    font-size: 7.5pt;
+    vertical-align: top;
+  }
+  .detail-table .lbl {
+    font-weight: 700;
+    color: #37474F;
+    white-space: nowrap;
+    width: 22%;
+  }
+  .detail-table .val {
+    color: #212121;
+    width: 28%;
+  }
+
+  /* ═══════════ PANCHANGA BOX ═══════════ */
+  .panchang-box {
+    border: 1pt solid #A5D6A7;
+    border-radius: 3pt;
+    padding: 3pt 8pt;
+    margin-bottom: 3pt;
+    background: #F1F8E9;
+  }
+
+  /* ═══════════ PLANET TABLE ═══════════ */
+  .graha-table {
+    width: 100%;
+    border-collapse: collapse;
+    border: 1pt solid #BDBDBD;
+    border-radius: 3pt;
+    overflow: hidden;
+    margin-bottom: 3pt;
+  }
+  .graha-table thead th {
+    background: #4A148C;
+    color: #FFFFFF;
+    font-size: 7pt;
+    font-weight: 700;
+    padding: 3pt 3pt;
+    text-align: center;
+    border-right: 1pt solid #6A1B9A;
+  }
+  .graha-table thead th:last-child { border-right: none; }
+  .graha-table tbody td {
+    font-size: 7pt;
+    padding: 2pt 3pt;
+    text-align: center;
+    border-bottom: 0.5pt solid #E0E0E0;
+  }
+  .graha-table tbody tr:nth-child(even) { background: #F5F0E8; }
+  .graha-table tbody tr:nth-child(odd) { background: #FFFFFF; }
+  .graha-table tbody td:first-child {
+    font-weight: 700;
+    text-align: left;
+    padding-left: 8pt;
+    color: #2E1A47;
+  }
+
+  /* ═══════════ KUNDALI CHARTS ═══════════ */
+  .charts-container {
+    display: flex;
+    justify-content: space-between;
+    gap: 4pt;
+    margin-top: 3pt;
+  }
+  .chart-block {
+    flex: 1;
+    text-align: center;
+  }
+  .chart-label {
+    font-size: 7pt;
+    font-weight: 700;
+    color: #2E1A47;
+    margin-top: 1pt;
+  }
+  .kundali-grid {
+    width: 100%;
+    border-collapse: collapse;
+    border: 1.5pt solid #333;
+  }
+  .kundali-grid td {
+    border: 0.7pt solid #666;
+    width: 25%;
+    height: 38pt;
+    font-size: 7pt;
+    font-weight: 700;
+    color: #1A1A1A;
+    text-align: center;
+    vertical-align: middle;
+    padding: 1pt;
+  }
+  .kundali-grid .center {
+    background: #F5F0E8;
+    font-size: 10pt;
+    font-weight: 900;
+    color: #2E1A47;
+    border: 1pt solid #444;
+  }
+  .shri {
+    color: #C62828;
+    font-weight: 700;
+    font-size: 6.5pt;
+  }
+
+  /* ═══════════ DASHA TABLES ═══════════ */
+  .dasha-table {
+    width: 100%;
+    border-collapse: collapse;
+    border: 1pt solid #BDBDBD;
+    margin-bottom: 5pt;
+  }
+  .dasha-table thead th {
+    background: #4A148C;
+    color: #FFFFFF;
+    font-size: 8pt;
+    font-weight: 700;
+    padding: 5pt 4pt;
+    text-align: center;
+    border-right: 1pt solid #6A1B9A;
+  }
+  .dasha-table thead th:last-child { border-right: none; }
+  .dasha-table tbody td {
+    font-size: 8pt;
+    padding: 4pt;
+    text-align: center;
+    border-bottom: 0.5pt solid #E0E0E0;
+  }
+  .dasha-table tbody tr:nth-child(even) { background: #E8EAF6; }
+  .dasha-table tbody tr:nth-child(odd) { background: #FFFFFF; }
+  .dasha-table tbody td:nth-child(2) { font-weight: 700; color: #2E1A47; }
+
+  .antar-table {
+    width: 100%;
+    border-collapse: collapse;
+    border: 1pt solid #BDBDBD;
+  }
+  .antar-table thead th {
+    background: #6A1B9A;
+    color: #FFFFFF;
+    font-size: 8pt;
+    font-weight: 700;
+    padding: 5pt 4pt;
+    text-align: center;
+    border-right: 1pt solid #7B1FA2;
+  }
+  .antar-table thead th:last-child { border-right: none; }
+  .antar-table tbody td {
+    font-size: 8pt;
+    padding: 3.5pt 4pt;
+    text-align: center;
+    border-bottom: 0.5pt solid #E0E0E0;
+  }
+  .antar-table tbody tr:nth-child(even) { background: #F5F0E8; }
+  .antar-table tbody tr:nth-child(odd) { background: #FFFFFF; }
+  .antar-table tbody td:first-child { font-weight: 700; color: #2E1A47; }
+
+  .dasha-balance {
+    text-align: center;
+    font-size: 9pt;
+    font-weight: 700;
+    color: #C62828;
+    margin: 5pt 0;
+    padding: 3pt;
+    background: #FFF8E1;
+    border: 1pt solid #FFD54F;
+    border-radius: 3pt;
+  }
+
+  /* ═══════════ FOOTER ═══════════ */
+  .footer {
+    border-top: 1pt solid #BDBDBD;
+    padding-top: 3pt;
+    margin-top: 4pt;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    font-size: 7.5pt;
+  }
+  .footer-left { text-align: left; }
+  .footer-center { text-align: center; color: #9E9E9E; flex: 1; }
+  .footer-right { text-align: right; }
+  .footer-bold { font-weight: 700; color: #2E1A47; }
+  .footer-sub { font-size: 6.5pt; color: #9E9E9E; }
+
+  /* ═══════════ PAGE BREAK ═══════════ */
+  .page-break {
+    page-break-before: always;
+  }
+
+  /* ═══════════ PAGE 2 HEADER ═══════════ */
+  .header-p2 .main-title { font-size: 16pt; }
+  .person-info {
+    font-size: 9pt;
+    font-weight: 700;
+    color: #37474F;
+    margin-top: 2pt;
+  }
+</style>
+</head>
+<body>
+
+<!-- ╔══════════════════════════════════════════════╗ -->
+<!-- ║           PAGE 1: FRONT (ಮುಂಭಾಗ)             ║ -->
+<!-- ╚══════════════════════════════════════════════╝ -->
+
+<div class="header">
+  <div class="invocation">ಶ್ರೀ ಗಣೇಶಾಯ ನಮಃ ।। ಶ್ರೀ ಗುರುಭ್ಯೋ ನಮಃ ।।</div>
+  <div class="main-title">ಜನ್ಮ ಪತ್ರಿಕೆ</div>
+  <div class="branding">ಭಾರತೀಯಂ ಜ್ಯೋತಿಷ ಅಪ್ಲಿಕೇಶನ್</div>
+</div>
+
+<!-- Personal Details -->
+<div class="detail-box">
+  <table class="detail-table">
+    <tr>
+      <td class="lbl">ಜಾತಕರ ಹೆಸರು:</td><td class="val">ರಾಮಕೃಷ್ಣ</td>
+      <td class="lbl">ಜನ್ಮ ಊರು:</td><td class="val">ಬೆಂಗಳೂರು</td>
+    </tr>
+    <tr>
+      <td class="lbl">ಜನನ ದಿನಾಂಕ:</td><td class="val">12-06-1997</td>
+      <td class="lbl">ಜನ್ಮ ಸಮಯ:</td><td class="val">08:00 AM</td>
+    </tr>
+    <tr>
+      <td class="lbl">ತಂದೆ ಹೆಸರು:</td><td class="val">ಶಂಕರ</td>
+      <td class="lbl">ತಾಯಿ ಹೆಸರು:</td><td class="val">ಲಕ್ಷ್ಮಿ</td>
+    </tr>
+    <tr>
+      <td class="lbl">ಗೋತ್ರ:</td><td class="val">ಭಾರದ್ವಾಜ</td>
+      <td class="lbl">ಲಗ್ನ ರಾಶಿ:</td><td class="val">ಕರ್ಕಾಟಕ</td>
+    </tr>
+  </table>
+</div>
+
+<!-- Panchanga -->
+<div class="section-title">ಪಂಚಾಂಗ ವಿವರ</div>
+<div class="panchang-box">
+  <table class="detail-table">
+    <tr>
+      <td class="lbl">ಸಂವತ್ಸರ:</td><td class="val">ಪ್ಲವ</td>
+      <td class="lbl">ಚಂದ್ರ ಮಾಸ:</td><td class="val">ಜ್ಯೇಷ್ಠ</td>
+    </tr>
+    <tr>
+      <td class="lbl">ರವಿ ಮಾಸ:</td><td class="val">ಮಿಥುನ</td>
+      <td class="lbl">ಗತ ದಿನ:</td><td class="val">28</td>
+    </tr>
+    <tr>
+      <td class="lbl">ತಿಥಿ:</td><td class="val">ಶು. ಸಪ್ತಮಿ</td>
+      <td class="lbl">ವಾರ:</td><td class="val">ಗುರುವಾರ</td>
+    </tr>
+    <tr>
+      <td class="lbl">ನಕ್ಷತ್ರ:</td><td class="val">ಅಶ್ವಿನಿ - 1</td>
+      <td class="lbl">ಕರಣ:</td><td class="val">ವಣಿಜ</td>
+    </tr>
+    <tr>
+      <td class="lbl">ಯೋಗ:</td><td class="val">ಶೋಭನ</td>
+      <td class="lbl">ಋತು:</td><td class="val">ಗ್ರೀಷ್ಮ</td>
+    </tr>
+    <tr>
+      <td class="lbl">ವಿಷ ಘಟಿ:</td><td class="val">12-34</td>
+      <td class="lbl">ಅಮೃತ ಘಟಿ:</td><td class="val">45-23</td>
+    </tr>
+    <tr>
+      <td class="lbl">ಉದಯಾದಿ ಘಟಿ:</td><td class="val">18-19</td>
+      <td class="lbl">ಚಂದ್ರ ರಾಶಿ:</td><td class="val">ಮೇಷ</td>
+    </tr>
+    <tr>
+      <td class="lbl">ಸೂರ್ಯೋದಯ:</td><td class="val">05:56</td>
+      <td class="lbl">ಸೂರ್ಯಾಸ್ತ:</td><td class="val">18:42</td>
+    </tr>
+  </table>
+</div>
+
+<!-- Graha Sthiti -->
+<div class="section-title">ತತ್ಕಾಲ ಗ್ರಹಸ್ಥಿತಿ</div>
+<table class="graha-table">
+  <thead>
+    <tr>
+      <th>ಗ್ರಹ</th><th>ರಾಶಿ</th><th>ಅಂಶ</th>
+      <th>ನಕ್ಷತ್ರ</th><th>ಪಾದ</th><th>ವಕ್ರ</th><th>ಅಸ್ತ</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr><td>ಲಗ್ನ</td><td>ಕರ್ಕಾ</td><td>15°23'</td><td>ಪುಷ್ಯ</td><td>2</td><td>-</td><td>-</td></tr>
+    <tr><td>ರವಿ</td><td>ವೃಷಭ</td><td>27°45'</td><td>ಮೃಗಶಿರ</td><td>3</td><td>-</td><td>-</td></tr>
+    <tr><td>ಚಂದ್ರ</td><td>ಮೇಷ</td><td>10°12'</td><td>ಅಶ್ವಿನಿ</td><td>1</td><td>-</td><td>-</td></tr>
+    <tr><td>ಕುಜ</td><td>ಕನ್ಯಾ</td><td>21°33'</td><td>ಹಸ್ತ</td><td>4</td><td>-</td><td>-</td></tr>
+    <tr><td>ಬುಧ</td><td>ಮಿಥುನ</td><td>03°18'</td><td>ಮೃಗಶಿರ</td><td>1</td><td>-</td><td>ಅ</td></tr>
+    <tr><td>ಗುರು</td><td>ಮಕರ</td><td>25°06'</td><td>ಧನಿಷ್ಠ</td><td>3</td><td>ವ</td><td>-</td></tr>
+    <tr><td>ಶುಕ್ರ</td><td>ಕರ್ಕಾ</td><td>11°51'</td><td>ಪುಷ್ಯ</td><td>1</td><td>-</td><td>-</td></tr>
+    <tr><td>ಶನಿ</td><td>ಮೇಷ</td><td>09°22'</td><td>ಅಶ್ವಿನಿ</td><td>3</td><td>-</td><td>-</td></tr>
+    <tr><td>ರಾಹು</td><td>ಕನ್ಯಾ</td><td>28°15'</td><td>ಚಿತ್ರ</td><td>2</td><td>-</td><td>-</td></tr>
+    <tr><td>ಕೇತು</td><td>ಮೀನ</td><td>28°15'</td><td>ರೇವತಿ</td><td>4</td><td>-</td><td>-</td></tr>
+  </tbody>
+</table>
+
+<!-- 3 Kundali Charts -->
+<div class="charts-container">
+  <!-- Rashi Kundali -->
+  <div class="chart-block">
+    <table class="kundali-grid">
+      <tr>
+        <td class="shri">ಶ್ರೀ:</td>
+        <td>ಚಂ ಶ</td>
+        <td>ರ</td>
+        <td>ಬು</td>
+      </tr>
+      <tr>
+        <td class="shri">ಶ್ರೀ:</td>
+        <td colspan="2" rowspan="2" class="center">ರಾಶಿ</td>
+        <td>ಲ ಶು</td>
+      </tr>
+      <tr>
+        <td>ಗು</td>
+        <td class="shri">ಶ್ರೀ:</td>
+      </tr>
+      <tr>
+        <td class="shri">ಶ್ರೀ:</td>
+        <td class="shri">ಶ್ರೀ:</td>
+        <td>ಕು ರಾ</td>
+        <td class="shri">ಶ್ರೀ:</td>
+      </tr>
+    </table>
+    <div class="chart-label">ರಾಶಿ ಕುಂಡಲಿ</div>
+  </div>
+
+  <!-- Navamsha Kundali -->
+  <div class="chart-block">
+    <table class="kundali-grid">
+      <tr>
+        <td>ಕೇ</td>
+        <td>ಗು</td>
+        <td>ರ</td>
+        <td>ಬು ಕು</td>
+      </tr>
+      <tr>
+        <td class="shri">ಶ್ರೀ:</td>
+        <td colspan="2" rowspan="2" class="center">ನವಾಂಶ</td>
+        <td>ಲ</td>
+      </tr>
+      <tr>
+        <td class="shri">ಶ್ರೀ:</td>
+        <td>ಶು</td>
+      </tr>
+      <tr>
+        <td>ರಾ</td>
+        <td>ಶ</td>
+        <td>ಚಂ</td>
+        <td class="shri">ಶ್ರೀ:</td>
+      </tr>
+    </table>
+    <div class="chart-label">ನವಾಂಶ ಕುಂಡಲಿ</div>
+  </div>
+
+  <!-- Bhava Kundali -->
+  <div class="chart-block">
+    <table class="kundali-grid">
+      <tr>
+        <td class="shri">ಶ್ರೀ:</td>
+        <td>ಚಂ ಶ</td>
+        <td>ರ</td>
+        <td>ಬು</td>
+      </tr>
+      <tr>
+        <td class="shri">ಶ್ರೀ:</td>
+        <td colspan="2" rowspan="2" class="center">ಭಾವ</td>
+        <td>ಲ ಶು</td>
+      </tr>
+      <tr>
+        <td>ಗು</td>
+        <td class="shri">ಶ್ರೀ:</td>
+      </tr>
+      <tr>
+        <td class="shri">ಶ್ರೀ:</td>
+        <td class="shri">ಶ್ರೀ:</td>
+        <td>ಕು ರಾ</td>
+        <td class="shri">ಶ್ರೀ:</td>
+      </tr>
+    </table>
+    <div class="chart-label">ಭಾವ ಕುಂಡಲಿ</div>
+  </div>
+</div>
+
+<!-- Footer -->
+<div class="footer">
+  <div class="footer-left">
+    <div class="footer-bold">ಶ್ರೀ ರಾಮಚಂದ್ರ ಜ್ಯೋತಿಷ</div>
+    <div class="footer-sub">ಬೆಂಗಳೂರು</div>
+  </div>
+  <div class="footer-center">ಭಾರತೀಯಂ</div>
+  <div class="footer-right">
+    <div class="footer-bold">9480603273</div>
+  </div>
+</div>
+
+
+<!-- ╔══════════════════════════════════════════════╗ -->
+<!-- ║           PAGE 2: BACK (ಹಿಂಭಾಗ)              ║ -->
+<!-- ╚══════════════════════════════════════════════╝ -->
+<div class="page-break"></div>
+
+<div class="header header-p2">
+  <div class="invocation">ಶ್ರೀ ಗಣೇಶಾಯ ನಮಃ ।। ಶ್ರೀ ಗುರುಭ್ಯೋ ನಮಃ ।।</div>
+  <div class="main-title">ಜನ್ಮ ಪತ್ರಿಕೆ — ದಶಾ ವಿವರ</div>
+  <div class="person-info">ರಾಮಕೃಷ್ಣ — 12-06-1997</div>
+</div>
+
+<!-- Nakshatra & Dasha Details -->
+<div class="section-title">ನಕ್ಷತ್ರ ಮತ್ತು ದಶಾ ವಿವರ</div>
+<div class="detail-box">
+  <table class="detail-table">
+    <tr>
+      <td class="lbl">ಜನ್ಮ ನಕ್ಷತ್ರ:</td><td class="val">ಅಶ್ವಿನಿ</td>
+      <td class="lbl">ನಕ್ಷತ್ರ ಪಾದ:</td><td class="val">1</td>
+    </tr>
+    <tr>
+      <td class="lbl">ನಕ್ಷತ್ರ ಪರಮ ಘಟಿ:</td><td class="val">53-20</td>
+      <td class="lbl">ಗತ ಘಟಿ:</td><td class="val">18-19</td>
+    </tr>
+    <tr>
+      <td class="lbl">ಅಶ್ಯ ಘಟಿ:</td><td class="val">34-41</td>
+      <td class="lbl">ಉದಯಾದಿ ಘಟಿ:</td><td class="val">18-19</td>
+    </tr>
+    <tr>
+      <td class="lbl">ಶಿಷ್ಟ ದಶಾ ನಾಥ:</td><td class="val">ಕೇತು</td>
+      <td class="lbl">ಶಿಷ್ಟ ದಶಾ ಶೇಷ:</td><td class="val">4ವ 7ತಿ 12ದಿ</td>
+    </tr>
+  </table>
+</div>
+
+<!-- Mahadasha Table -->
+<div class="section-title">ವಿಂಶೋತ್ತರೀ ಮಹಾ ದಶಾ</div>
+<table class="dasha-table">
+  <thead>
+    <tr>
+      <th>ಕ್ರ.</th>
+      <th>ದಶಾ ನಾಥ</th>
+      <th>ವರ್ಷ</th>
+      <th>ಆರಂಭ ದಿನಾಂಕ</th>
+      <th>ಅಂತ್ಯ ದಿನಾಂಕ</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr><td>1</td><td>ಕೇತು</td><td>7</td><td>12-06-1997</td><td>12-06-2004</td></tr>
+    <tr><td>2</td><td>ಶುಕ್ರ</td><td>20</td><td>12-06-2004</td><td>12-06-2024</td></tr>
+    <tr><td>3</td><td>ರವಿ</td><td>6</td><td>12-06-2024</td><td>12-06-2030</td></tr>
+    <tr><td>4</td><td>ಚಂದ್ರ</td><td>10</td><td>12-06-2030</td><td>12-06-2040</td></tr>
+    <tr><td>5</td><td>ಕುಜ</td><td>7</td><td>12-06-2040</td><td>12-06-2047</td></tr>
+    <tr><td>6</td><td>ರಾಹು</td><td>18</td><td>12-06-2047</td><td>12-06-2065</td></tr>
+    <tr><td>7</td><td>ಗುರು</td><td>16</td><td>12-06-2065</td><td>12-06-2081</td></tr>
+    <tr><td>8</td><td>ಶನಿ</td><td>19</td><td>12-06-2081</td><td>12-06-2100</td></tr>
+    <tr><td>9</td><td>ಬುಧ</td><td>17</td><td>12-06-2100</td><td>12-06-2117</td></tr>
+  </tbody>
+</table>
+
+<div class="dasha-balance">ಶಿಷ್ಟ ದಶೆ: ಕೇತು — ಶೇಷ: 4ವ 7ತಿ 12ದಿ</div>
+
+<!-- Footer -->
+<div class="footer">
+  <div class="footer-left">
+    <div class="footer-bold">ಶ್ರೀ ರಾಮಚಂದ್ರ ಜ್ಯೋತಿಷ</div>
+    <div class="footer-sub">ಬೆಂಗಳೂರು</div>
+  </div>
+  <div class="footer-center">ಭಾರತೀಯಂ</div>
+  <div class="footer-right">
+    <div class="footer-bold">9480603273</div>
+  </div>
+</div>
+
+</body>
+</html>

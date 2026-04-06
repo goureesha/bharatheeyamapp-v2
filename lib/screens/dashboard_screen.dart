@@ -22,6 +22,7 @@ import '../services/sheets_service.dart';
 import '../services/docs_service.dart';
 import '../services/calendar_service.dart';
 import '../services/location_service.dart';
+import '../services/janma_patrike_service.dart'; // NEW
 import '../constants/places.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -101,6 +102,13 @@ class _DashboardScreenState extends State<DashboardScreen>
   int? _dinaNakshatraIdx;
   String? _bhavaPlanet; // planet selected for bhava recalculation
   KundaliResult? _prastutaResult; // For Aroodha tab's Prastuta button
+  
+  // Janma Patrike states
+  final _fatherNameCtrl = TextEditingController();
+  final _motherNameCtrl = TextEditingController();
+  final _gotraCtrl = TextEditingController();
+  final _jyotishiNameCtrl = TextEditingController();
+  final _jyotishiPhoneCtrl = TextEditingController();
 
 
   // Multi-person support
@@ -111,13 +119,13 @@ class _DashboardScreenState extends State<DashboardScreen>
 
 
   static List<String> get _tabs => AppLocale.isHindi
-    ? ['कुंडली', 'स्फुट', 'आरूढ', 'दशा', 'पंचांग', 'भाव', 'ग्रह षड्वर्ग', 'षड्बल', 'अष्टक', 'टिप्पणी']
-    : ['ಕುಂಡಲಿ', 'ಸ್ಫುಟ', 'ಆರೂಢ', 'ದಶ', 'ಪಂಚಾಂಗ', 'ಭಾವ', 'ಗ್ರಹ ಷಡ್ವರ್ಗ', 'ಷಡ್ಬಲ', 'ಅಷ್ಟಕ', 'ಟಿಪ್ಪಣಿ'];
+    ? ['कुंडली', 'स्फुट', 'आरूढ', 'दशा', 'पंचांग', 'भाव', 'ग्रह षड्वर्ग', 'षड्बल', 'अष्टक', 'टिप्पणी', 'पत्रिका']
+    : ['ಕುಂಡಲಿ', 'ಸ್ಫುಟ', 'ಆರೂಢ', 'ದಶ', 'ಪಂಚಾಂಗ', 'ಭಾವ', 'ಗ್ರಹ ಷಡ್ವರ್ಗ', 'ಷಡ್ಬಲ', 'ಅಷ್ಟಕ', 'ಟಿಪ್ಪಣಿ', 'ಪತ್ರಿಕೆ'];
 
   @override
   void initState() {
     super.initState();
-    _tabCtrl = TabController(length: _tabs.length, vsync: this); // 10 tabs
+    _tabCtrl = TabController(length: _tabs.length, vsync: this); // 11 tabs
     _notes = widget.initialNotes;
     _aroodhas = Map.from(widget.initialAroodhas);
     _janmaNakshatraIdx = widget.initialJanmaNakshatraIdx;
@@ -134,6 +142,23 @@ class _DashboardScreenState extends State<DashboardScreen>
       _loadGroupMembers();
     }
 
+    _loadJyotishiDetails();
+  }
+
+  Future<void> _loadJyotishiDetails() async {
+    final prefs = await SharedPreferences.getInstance();
+    if (mounted) {
+      setState(() {
+        _jyotishiNameCtrl.text = prefs.getString('jyotishi_name') ?? 'ಶ್ರೀ ರಾಮಚಂದ್ರ ಜ್ಯೋತಿಷ';
+        _jyotishiPhoneCtrl.text = prefs.getString('jyotishi_phone') ?? '9480603273';
+      });
+    }
+  }
+
+  Future<void> _saveJyotishiDetails() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('jyotishi_name', _jyotishiNameCtrl.text.trim());
+    await prefs.setString('jyotishi_phone', _jyotishiPhoneCtrl.text.trim());
   }
 
   /// Show simple 2-option dialog to add a person
@@ -736,6 +761,11 @@ class _DashboardScreenState extends State<DashboardScreen>
   @override
   void dispose() {
     _tabCtrl.dispose();
+    _fatherNameCtrl.dispose();
+    _motherNameCtrl.dispose();
+    _gotraCtrl.dispose();
+    _jyotishiNameCtrl.dispose();
+    _jyotishiPhoneCtrl.dispose();
     super.dispose();
   }
 
@@ -891,6 +921,7 @@ class _DashboardScreenState extends State<DashboardScreen>
                   _buildShadbalaTab(),
                   _buildAshtakaTab(),
                   _buildNotesTab(),
+                  _buildJanmaPatrikeTab(),
                 ],
               ),
             ),
@@ -2430,6 +2461,125 @@ class _DashboardScreenState extends State<DashboardScreen>
 
 
 
+
+  // ─────────────────────────────────────────────
+  // TAB 11: JANMA PATRIKE (PDF GENERATION)
+  // ─────────────────────────────────────────────
+  Widget _buildJanmaPatrikeTab() {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: kCard,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: kPurple2.withOpacity(0.3)),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Icon(Icons.picture_as_pdf, color: kPurple2),
+                    const SizedBox(width: 8),
+                    Text(tr('ಜನ್ಮ ಪತ್ರಿಕೆ ರಚಿಸಿ'), style: TextStyle(fontSize: 16, fontWeight: FontWeight.w900, color: kText)),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  tr('ಸಾಂಪ್ರದಾಯಿಕ ಶೈಲಿಯ ಜನ್ಮ ಪತ್ರಿಕೆಯನ್ನು PDF ರೂಪದಲ್ಲಿ ಪ್ರಿಂಟ್ ಮಾಡಲು ಈ ಕೆಳಗಿನ ವಿವರಗಳನ್ನು ತುಂಬಿ.'),
+                  style: TextStyle(fontSize: 12, color: kMuted),
+                ),
+                const SizedBox(height: 16),
+
+                // Family Details
+                Text(tr('ಕುಟುಂಬದ ವಿವರ'), style: TextStyle(fontWeight: FontWeight.w800, color: kTeal)),
+                const SizedBox(height: 8),
+                TextField(
+                  controller: _fatherNameCtrl,
+                  decoration: InputDecoration(labelText: tr('ತಂದೆಯ ಹೆಸರು'), prefixIcon: Icon(Icons.person_outline, size: 18), isDense: true),
+                ),
+                const SizedBox(height: 10),
+                TextField(
+                  controller: _motherNameCtrl,
+                  decoration: InputDecoration(labelText: tr('ತಾಯಿಯ ಹೆಸರು'), prefixIcon: Icon(Icons.person_3_outlined, size: 18), isDense: true),
+                ),
+                const SizedBox(height: 10),
+                TextField(
+                  controller: _gotraCtrl,
+                  decoration: InputDecoration(labelText: tr('ಗೋತ್ರ'), prefixIcon: Icon(Icons.hub_outlined, size: 18), isDense: true),
+                ),
+                const SizedBox(height: 20),
+
+                // Jyotishi Details
+                Text(tr('ಜ್ಯೋತಿಷಿಗಳ ವಿವರ (ಪ್ರಿಂಟ್ ಮಾಡಲು)'), style: TextStyle(fontWeight: FontWeight.w800, color: kTeal)),
+                const SizedBox(height: 8),
+                TextField(
+                  controller: _jyotishiNameCtrl,
+                  decoration: InputDecoration(labelText: tr('ಜ್ಯೋತಿಷಿಗಳ ಹೆಸರು / ಸಂಸ್ಥೆ'), prefixIcon: Icon(Icons.storefront, size: 18), isDense: true),
+                  onChanged: (_) => _saveJyotishiDetails(),
+                ),
+                const SizedBox(height: 10),
+                TextField(
+                  controller: _jyotishiPhoneCtrl,
+                  decoration: InputDecoration(labelText: tr('ಸಂಪರ್ಕ ಸಂಖ್ಯೆ'), prefixIcon: Icon(Icons.phone, size: 18), isDense: true),
+                  keyboardType: TextInputType.phone,
+                  onChanged: (_) => _saveJyotishiDetails(),
+                ),
+                const SizedBox(height: 24),
+
+                // Generate Button
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton.icon(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: kPurple2,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                    ),
+                    icon: const Icon(Icons.print),
+                    label: Text(tr('PDF ಪ್ರಿಂಟ್ ಮಾಡಿ'), style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16)),
+                    onPressed: () async {
+                      final dateStr = '${widget.dob.day.toString().padLeft(2,'0')}-${widget.dob.month.toString().padLeft(2,'0')}-${widget.dob.year}';
+                      final timeStr = '${widget.hour.toString().padLeft(2,'0')}:${widget.minute.toString().padLeft(2,'0')} ${widget.ampm}';
+                      
+                      final ud = UserDetails(
+                        name: widget.name,
+                        dateStr: dateStr,
+                        timeStr: timeStr,
+                        place: widget.place,
+                        fatherName: _fatherNameCtrl.text.trim(),
+                        motherName: _motherNameCtrl.text.trim(),
+                        gotra: _gotraCtrl.text.trim(),
+                        jyotishiName: _jyotishiNameCtrl.text.trim(),
+                        jyotishiPhone: _jyotishiPhoneCtrl.text.trim(),
+                      );
+                      
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text('⏳ ${tr('PDF ಸೃಷ್ಟಿಸಲಾಗುತ್ತಿದೆ...')}'))
+                      );
+                      
+                      try {
+                        await JanmaPatrikeService.generateAndPrint(ud, widget.result);
+                      } catch (e) {
+                         ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text('❌ ${tr('ದೋಷ')}: $e'), backgroundColor: Colors.red)
+                        );
+                      }
+                    },
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 
   // ─────────────────────────────────────────────
   // HELPERS

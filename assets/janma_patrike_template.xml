@@ -1,0 +1,435 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  ╔════════════════════════════════════════════════════════════╗
+  ║         ಭಾರತೀಯಂ — ಜನ್ಮ ಪತ್ರಿಕೆ PDF Template               ║
+  ║         South Indian Kundali Style                        ║
+  ║         Version: 2.0                                      ║
+  ║         2-Page Layout (Front + Back)                      ║
+  ╚════════════════════════════════════════════════════════════╝
+-->
+<janma_patrike version="2.0" chartStyle="south_indian" pages="2">
+
+  <!-- ═══════════════════════════════════════════════ -->
+  <!-- PAGE SETUP                                      -->
+  <!-- ═══════════════════════════════════════════════ -->
+  <page format="A4" orientation="portrait">
+    <margin top="22" bottom="18" left="24" right="24" />
+    <background color="#FFFFF8" />
+  </page>
+
+  <!-- ═══════════════════════════════════════════════ -->
+  <!-- FONTS & COLORS                                  -->
+  <!-- ═══════════════════════════════════════════════ -->
+  <styles>
+    <!-- Color palette -->
+    <color name="primary"       hex="#2E1A47" />
+    <color name="secondary"     hex="#6A1B9A" />
+    <color name="accent"        hex="#C62828" />
+    <color name="headerBg"      hex="#F5F0E8" />
+    <color name="sectionBg"     hex="#F3E5F5" />
+    <color name="tableBg"       hex="#FAFAFA" />
+    <color name="tableAltRow"   hex="#F5F0E8" />
+    <color name="tableHeader"   hex="#4A148C" />
+    <color name="border"        hex="#9E9E9E" />
+    <color name="text"          hex="#212121" />
+    <color name="textLight"     hex="#616161" />
+    <color name="chartBg"       hex="#FFFFFF" />
+    <color name="chartBorder"   hex="#333333" />
+    <color name="chartText"     hex="#1A1A1A" />
+    <color name="chartCenter"   hex="#F5F0E8" />
+    <color name="dashaBg"       hex="#E8EAF6" />
+    <color name="panchangBg"    hex="#E8F5E9" />
+
+    <!-- Font sizes -->
+    <font name="invocation"     size="10" weight="bold" />
+    <font name="title"          size="15" weight="bold" />
+    <font name="subtitle"       size="8"  weight="normal" />
+    <font name="sectionHead"    size="10" weight="bold" />
+    <font name="fieldLabel"     size="7.5" weight="bold" />
+    <font name="fieldValue"     size="7.5" weight="normal" />
+    <font name="tableHeader"    size="7"  weight="bold" />
+    <font name="tableCell"      size="7"  weight="normal" />
+    <font name="tableCellBold"  size="7"  weight="bold" />
+    <font name="chartPlanet"    size="6.5" weight="bold" />
+    <font name="chartCenter"    size="8"  weight="bold" />
+    <font name="chartLabel"     size="7.5" weight="bold" />
+    <font name="dashaText"      size="7"  weight="normal" />
+    <font name="footer"         size="6.5" weight="normal" />
+    <font name="footerBold"     size="7"  weight="bold" />
+    <font name="shriSymbol"     size="8"  weight="bold" />
+  </styles>
+
+  <!-- ═══════════════════════════════════════════════ -->
+  <!-- USER INPUT FIELDS (collected before PDF gen)    -->
+  <!-- ═══════════════════════════════════════════════ -->
+  <user_inputs>
+    <input id="jyotishi_name"   label="ಜ್ಯೋತಿಷಿ ಹೆಸರು"    labelHi="ज्योतिषी का नाम"   type="text"   required="true"  placeholder="ಹೆಸರು ನಮೂದಿಸಿ" />
+    <input id="jyotishi_phone"  label="ದೂರವಾಣಿ ಸಂಖ್ಯೆ"    labelHi="फ़ोन नंबर"         type="phone"  required="false" placeholder="9XXXXXXXXX" />
+    <input id="jyotishi_place"  label="ಸ್ಥಳ"              labelHi="स्थान"              type="text"   required="false" placeholder="ಊರು" />
+    <input id="father_name"     label="ತಂದೆ ಹೆಸರು"        labelHi="पिता का नाम"        type="text"   required="false" placeholder="ತಂದೆ ಹೆಸರು" />
+    <input id="mother_name"     label="ತಾಯಿ ಹೆಸರು"        labelHi="माता का नाम"        type="text"   required="false" placeholder="ತಾಯಿ ಹೆಸರು" />
+    <input id="gotra"           label="ಗೋತ್ರ"             labelHi="गोत्र"               type="text"   required="false" placeholder="ಗೋತ್ರ" />
+  </user_inputs>
+
+  <!-- ══════════════════════════════════════════════════════ -->
+  <!--                    PAGE 1 (FRONT)                     -->
+  <!-- ══════════════════════════════════════════════════════ -->
+
+  <!-- ─── HEADER (Invocation + Title) ─── -->
+  <section id="header" page="1" align="center">
+    <border sides="all" width="1.5" color="primary" />
+    <padding top="8" bottom="5" left="10" right="10" />
+    <background color="headerBg" />
+
+    <line id="invocation" font="invocation" color="accent" align="center">
+      <text kn="ಶ್ರೀ ಗಣೇಶಾಯ ನಮಃ ।। ಶ್ರೀ ಗುರುಭ್ಯೋ ನಮಃ ।।" hi="श्री गणेशाय नमः ।। श्री गुरुभ्यो नमः ।।" />
+    </line>
+    <spacer height="3" />
+    <line id="title" font="title" color="primary" align="center">
+      <text kn="ಜನ್ಮ ಪತ್ರಿಕೆ" hi="जन्म पत्रिका" />
+    </line>
+    <spacer height="2" />
+    <line id="branding" font="subtitle" color="textLight" align="center">
+      <text kn="ಭಾರತೀಯಂ ಜ್ಯೋತಿಷ ಅಪ್ಲಿಕೇಶನ್" hi="भारतीयम् ज्योतिष एप्लिकेशन" />
+    </line>
+  </section>
+
+  <!-- ─── PERSONAL DETAILS ─── -->
+  <section id="personal_details" page="1">
+    <spacer height="5" />
+    <border sides="all" width="0.5" color="border" />
+    <padding top="5" bottom="5" left="8" right="8" />
+
+    <grid columns="2" columnGap="10" rowGap="2.5">
+      <!-- Row 1 -->
+      <field col="1" labelKn="ಜಾತಕರ ಹೆಸರು"  labelHi="जातक का नाम"   source="name" />
+      <field col="2" labelKn="ಜನ್ಮ ಊರು"     labelHi="जन्म स्थान"     source="place" />
+
+      <!-- Row 2 -->
+      <field col="1" labelKn="ಜನನ ದಿನಾಂಕ"   labelHi="जन्म तिथि"     source="dob" format="dd-MM-yyyy" />
+      <field col="2" labelKn="ಜನ್ಮ ಸಮಯ"    labelHi="जन्म समय"      source="time" format="hh:mm a" />
+
+      <!-- Row 3 -->
+      <field col="1" labelKn="ತಂದೆ ಹೆಸರು"   labelHi="पिता का नाम"    source="user_input.father_name" />
+      <field col="2" labelKn="ತಾಯಿ ಹೆಸರು"   labelHi="माता का नाम"    source="user_input.mother_name" />
+
+      <!-- Row 4 -->
+      <field col="1" labelKn="ಗೋತ್ರ"        labelHi="गोत्र"           source="user_input.gotra" />
+      <field col="2" labelKn="ಲಗ್ನ ರಾಶಿ"    labelHi="लग्न राशि"      source="lagna_rashi" />
+    </grid>
+  </section>
+
+  <!-- ─── PANCHANGA DETAILS ─── -->
+  <section id="panchanga" page="1">
+    <spacer height="5" />
+    <line font="sectionHead" color="secondary" align="center">
+      <text kn="ಪಂಚಾಂಗ ವಿವರ" hi="पंचांग विवरण" />
+    </line>
+    <spacer height="3" />
+    <border sides="all" width="0.5" color="border" />
+    <padding top="4" bottom="4" left="8" right="8" />
+    <background color="panchangBg" opacity="0.3" />
+
+    <grid columns="2" columnGap="10" rowGap="2">
+      <!-- Row 1 -->
+      <field col="1" labelKn="ಸಂವತ್ಸರ"     labelHi="संवत्सर"        source="panchang.samvatsara" />
+      <field col="2" labelKn="ಚಂದ್ರ ಮಾಸ"   labelHi="चंद्र मास"      source="panchang.chandraMasa" />
+
+      <!-- Row 2 -->
+      <field col="1" labelKn="ರವಿ ಮಾಸ"     labelHi="सौर मास"       source="panchang.souraMasa" />
+      <field col="2" labelKn="ಗತ ದಿನ"      labelHi="गत दिन"        source="panchang.gataDina" />
+
+      <!-- Row 3 -->
+      <field col="1" labelKn="ತಿಥಿ"        labelHi="तिथि"          source="panchang.tithi" />
+      <field col="2" labelKn="ವಾರ"         labelHi="वार"           source="panchang.vara" />
+
+      <!-- Row 4 -->
+      <field col="1" labelKn="ನಕ್ಷತ್ರ"     labelHi="नक्षत्र"        source="panchang.nakshatra" />
+      <field col="2" labelKn="ಕರಣ"        labelHi="करण"           source="panchang.karana" />
+
+      <!-- Row 5 -->
+      <field col="1" labelKn="ಯೋಗ"        labelHi="योग"           source="panchang.yoga" />
+      <field col="2" labelKn="ಜನ್ಮ ಋತು"   labelHi="ऋतु"           source="panchang.rutu" />
+
+      <!-- Row 6 -->
+      <field col="1" labelKn="ವಿಷ ಘಟಿ"    labelHi="विष घटी"       source="panchang.vishaGhati" />
+      <field col="2" labelKn="ಅಮೃತ ಘಟಿ"   labelHi="अमृत घटी"      source="panchang.amrutaGhati" />
+
+      <!-- Row 7 -->
+      <field col="1" labelKn="ಉದಯಾದಿ ಘಟಿ" labelHi="उदयादि घटी"    source="panchang.udayadiGhati" />
+      <field col="2" labelKn="ಚಂದ್ರ ರಾಶಿ"  labelHi="चंद्र राशि"     source="panchang.chandraRashi" />
+
+      <!-- Row 8 -->
+      <field col="1" labelKn="ಸೂರ್ಯೋದಯ"   labelHi="सूर्योदय"       source="panchang.sunrise" />
+      <field col="2" labelKn="ಸೂರ್ಯಾಸ್ತ"   labelHi="सूर्यास्त"      source="panchang.sunset" />
+    </grid>
+  </section>
+
+  <!-- ─── GRAHA STHITI (Planet Positions) ─── -->
+  <section id="graha_sthiti" page="1">
+    <spacer height="5" />
+    <line font="sectionHead" color="secondary" align="center">
+      <text kn="ತತ್ಕಾಲ ಗ್ರಹಸ್ಥಿತಿ" hi="तत्काल ग्रहस्थिति" />
+    </line>
+    <spacer height="3" />
+
+    <table id="graha_table" border="0.5" borderColor="border">
+      <headerRow bgColor="tableHeader" textColor="#FFFFFF" font="tableHeader">
+        <col width="1.0" labelKn="ಗ್ರಹ"     labelHi="ग्रह" />
+        <col width="0.7" labelKn="ರಾಶಿ"     labelHi="राशि" />
+        <col width="0.9" labelKn="ಅಂಶ"      labelHi="अंश" />
+        <col width="1.1" labelKn="ನಕ್ಷತ್ರ"  labelHi="नक्षत्र" />
+        <col width="0.4" labelKn="ಪಾದ"     labelHi="पाद" />
+        <col width="0.5" labelKn="ವಕ್ರ"     labelHi="वक्र" />
+        <col width="0.5" labelKn="ಅಸ್ತ"     labelHi="अस्त" />
+      </headerRow>
+
+      <dataRows source="planets" order="ಲಗ್ನ,ರವಿ,ಚಂದ್ರ,ಕುಜ,ಬುಧ,ಗುರು,ಶುಕ್ರ,ಶನಿ,ರಾಹು,ಕೇತು">
+        <cell source="name"      font="tableCellBold" />
+        <cell source="rashi"     font="tableCell" />
+        <cell source="degree"    font="tableCell" />
+        <cell source="nakshatra" font="tableCell" />
+        <cell source="pada"      font="tableCell" />
+        <cell source="vakri"     font="tableCell" marker="ವ" emptyMarker="-" />
+        <cell source="combust"   font="tableCell" marker="ಅ" emptyMarker="-" />
+      </dataRows>
+
+      <altRowColor color="tableAltRow" />
+    </table>
+  </section>
+
+  <!-- ─── 3 KUNDALI CHARTS (Rashi + Navamsha + Bhava) ─── -->
+  <section id="kundali_charts" page="1">
+    <spacer height="6" />
+
+    <!-- 3 charts in a row -->
+    <chartRow columns="3" gap="6">
+
+      <!-- 1. Rashi Kundali -->
+      <chart id="rashi_chart" type="south_indian" source="varga_1">
+        <size width="165" height="165" />
+        <border width="1.2" color="chartBorder" />
+        <background color="chartBg" />
+        <center>
+          <background color="chartCenter" />
+          <text kn="ರಾಶಿ" hi="राशि" font="chartCenter" color="primary" />
+        </center>
+        <planets font="chartPlanet" color="chartText" />
+        <shriSymbol text="ಶ್ರೀ:" font="shriSymbol" color="accent" position="empty_cells" />
+        <label kn="ರಾಶಿ ಕುಂಡಲಿ" hi="राशि कुंडली" font="chartLabel" color="primary" />
+      </chart>
+
+      <!-- 2. Navamsha Kundali -->
+      <chart id="navamsha_chart" type="south_indian" source="varga_9">
+        <size width="165" height="165" />
+        <border width="1.2" color="chartBorder" />
+        <background color="chartBg" />
+        <center>
+          <background color="chartCenter" />
+          <text kn="ನವಾಂಶ" hi="नवांश" font="chartCenter" color="primary" />
+        </center>
+        <planets font="chartPlanet" color="chartText" />
+        <shriSymbol text="ಶ್ರೀ:" font="shriSymbol" color="accent" position="empty_cells" />
+        <label kn="ನವಾಂಶ ಕುಂಡಲಿ" hi="नवांश कुंडली" font="chartLabel" color="primary" />
+      </chart>
+
+      <!-- 3. Bhava Kundali -->
+      <chart id="bhava_chart" type="south_indian" source="varga_1_bhava">
+        <size width="165" height="165" />
+        <border width="1.2" color="chartBorder" />
+        <background color="chartBg" />
+        <center>
+          <background color="chartCenter" />
+          <text kn="ಭಾವ" hi="भाव" font="chartCenter" color="primary" />
+        </center>
+        <planets font="chartPlanet" color="chartText" />
+        <shriSymbol text="ಶ್ರೀ:" font="shriSymbol" color="accent" position="empty_cells" />
+        <label kn="ಭಾವ ಕುಂಡಲಿ" hi="भाव कुंडली" font="chartLabel" color="primary" />
+      </chart>
+    </chartRow>
+  </section>
+
+  <!-- ══════════════════════════════════════════════════════ -->
+  <!--                    PAGE 2 (BACK)                      -->
+  <!-- ══════════════════════════════════════════════════════ -->
+
+  <!-- ─── HEADER (Repeated on back page) ─── -->
+  <section id="header_page2" page="2" align="center">
+    <border sides="all" width="1.5" color="primary" />
+    <padding top="8" bottom="5" left="10" right="10" />
+    <background color="headerBg" />
+
+    <line font="invocation" color="accent" align="center">
+      <text kn="ಶ್ರೀ ಗಣೇಶಾಯ ನಮಃ ।। ಶ್ರೀ ಗುರುಭ್ಯೋ ನಮಃ ।।" hi="श्री गणेशाय नमः ।। श्री गुरुभ्यो नमः ।।" />
+    </line>
+    <spacer height="3" />
+    <line font="title" color="primary" align="center">
+      <text kn="ಜನ್ಮ ಪತ್ರಿಕೆ — ದಶಾ ವಿವರ" hi="जन्म पत्रिका — दशा विवरण" />
+    </line>
+    <spacer height="2" />
+    <!-- Person name and date on back page header -->
+    <line font="fieldLabel" color="text" align="center">
+      <value source="name" /> <text kn=" — " /> <value source="dob" format="dd-MM-yyyy" />
+    </line>
+  </section>
+
+  <!-- ─── NAKSHATRA & DASHA DETAILS ─── -->
+  <section id="dasha_details" page="2">
+    <spacer height="6" />
+    <line font="sectionHead" color="secondary" align="center">
+      <text kn="ನಕ್ಷತ್ರ ಮತ್ತು ದಶಾ ವಿವರ" hi="नक्षत्र एवं दशा विवरण" />
+    </line>
+    <spacer height="4" />
+    <border sides="all" width="0.5" color="border" />
+    <padding top="5" bottom="5" left="8" right="8" />
+
+    <grid columns="2" columnGap="10" rowGap="3">
+      <!-- Row 1 -->
+      <field col="1" labelKn="ಜನ್ಮ ನಕ್ಷತ್ರ"       labelHi="जन्म नक्षत्र"       source="panchang.nakshatra" />
+      <field col="2" labelKn="ನಕ್ಷತ್ರ ಪಾದ"        labelHi="नक्षत्र पाद"        source="panchang.nakshatraPada" />
+
+      <!-- Row 2 -->
+      <field col="1" labelKn="ನಕ್ಷತ್ರ ಪರಮ ಘಟಿ"   labelHi="नक्षत्र परम घटी"    source="panchang.paramaGhati" />
+      <field col="2" labelKn="ಗತ ಘಟಿ"            labelHi="गत घटी"             source="panchang.gataGhati" />
+
+      <!-- Row 3 -->
+      <field col="1" labelKn="ಅಶ್ಯ ಘಟಿ"          labelHi="शेष घटी"            source="panchang.ashyaGhati" />
+      <field col="2" labelKn="ಉದಯಾದಿ ಘಟಿ"       labelHi="उदयादि घटी"         source="panchang.udayadiGhati" />
+
+      <!-- Row 4 -->
+      <field col="1" labelKn="ಶಿಷ್ಟ ದಶಾ ನಾಥ"     labelHi="शिष्ट दशा नाथ"      source="panchang.dashaLord" />
+      <field col="2" labelKn="ಶಿಷ್ಟ ದಶಾ ಶೇಷ"     labelHi="शिष्ट दशा शेष"      source="panchang.dashaBalance" />
+    </grid>
+  </section>
+
+  <!-- ─── VIMSHOTTARI DASHA TABLE ─── -->
+  <section id="dasha_table" page="2">
+    <spacer height="6" />
+    <line font="sectionHead" color="secondary" align="center">
+      <text kn="ವಿಂಶೋತ್ತರೀ ಮಹಾ ದಶಾ" hi="विंशोत्तरी महा दशा" />
+    </line>
+    <spacer height="4" />
+
+    <table id="maha_dasha_table" border="0.5" borderColor="border">
+      <headerRow bgColor="tableHeader" textColor="#FFFFFF" font="tableHeader">
+        <col width="0.4" labelKn="ಕ್ರ."       labelHi="क्र." />
+        <col width="1.2" labelKn="ದಶಾ ನಾಥ"   labelHi="दशा नाथ" />
+        <col width="0.6" labelKn="ವರ್ಷ"      labelHi="वर्ष" />
+        <col width="1.2" labelKn="ಆರಂಭ ದಿನಾಂಕ" labelHi="आरंभ तिथि" />
+        <col width="1.2" labelKn="ಅಂತ್ಯ ದಿನಾಂಕ" labelHi="अंत्य तिथि" />
+      </headerRow>
+
+      <dataRows source="dashas">
+        <cell source="index"     font="tableCell" startFrom="1" />
+        <cell source="lord"      font="tableCellBold" />
+        <cell source="years"     font="tableCell" />
+        <cell source="startDate" font="dashaText" format="dd-MM-yyyy" />
+        <cell source="endDate"   font="dashaText" format="dd-MM-yyyy" />
+      </dataRows>
+
+      <altRowColor color="dashaBg" />
+    </table>
+
+    <spacer height="4" />
+
+    <!-- Dasha balance summary line -->
+    <line font="fieldLabel" color="accent" align="center">
+      <text kn="ಶಿಷ್ಟ ದಶೆ: " hi="शिष्ट दशा: " />
+      <value source="panchang.dashaLord" font="fieldValue" />
+      <text kn=" — ಶೇಷ: " hi=" — शेष: " />
+      <value source="panchang.dashaBalance" font="fieldValue" />
+    </line>
+  </section>
+
+  <!-- ─── ANTARDASHA TABLE (Sub-periods of current Mahadasha) ─── -->
+  <section id="antardasha_table" page="2" optional="true">
+    <spacer height="6" />
+    <line font="sectionHead" color="secondary" align="center">
+      <text kn="ಅಂತರ್ ದಶಾ ವಿವರ" hi="अंतर दशा विवरण" />
+      <text kn=" (ಪ್ರಸ್ತುತ ಮಹಾ ದಶೆ)" hi=" (वर्तमान महा दशा)" font="subtitle" color="textLight" />
+    </line>
+    <spacer height="4" />
+
+    <table id="antar_dasha_table" border="0.5" borderColor="border">
+      <headerRow bgColor="secondary" textColor="#FFFFFF" font="tableHeader">
+        <col width="1.2" labelKn="ಅಂತರ್ ದಶಾ"    labelHi="अंतर दशा" />
+        <col width="1.2" labelKn="ಆರಂಭ ದಿನಾಂಕ"  labelHi="आरंभ तिथि" />
+        <col width="1.2" labelKn="ಅಂತ್ಯ ದಿನಾಂಕ"  labelHi="अंत्य तिथि" />
+      </headerRow>
+
+      <dataRows source="antarDashas">
+        <cell source="lord"      font="tableCellBold" />
+        <cell source="startDate" font="dashaText" format="dd-MM-yyyy" />
+        <cell source="endDate"   font="dashaText" format="dd-MM-yyyy" />
+      </dataRows>
+
+      <altRowColor color="tableAltRow" />
+    </table>
+  </section>
+
+  <!-- ═══════════════════════════════════════════════ -->
+  <!-- FOOTER (appears on every page)                  -->
+  <!-- ═══════════════════════════════════════════════ -->
+  <footer>
+    <border sides="top" width="0.5" color="border" />
+    <padding top="5" bottom="3" />
+
+    <row>
+      <!-- Left: Jyotishi name & place -->
+      <column width="50%" align="left">
+        <line font="footerBold" color="text">
+          <value source="user_input.jyotishi_name" />
+        </line>
+        <line font="footer" color="textLight">
+          <value source="user_input.jyotishi_place" fallback="" />
+        </line>
+      </column>
+
+      <!-- Center: App branding -->
+      <column width="25%" align="center">
+        <line font="footer" color="textLight">
+          <text kn="ಭಾರತೀಯಂ" hi="भारतीयम्" />
+        </line>
+      </column>
+
+      <!-- Right: Phone -->
+      <column width="25%" align="right">
+        <line font="footerBold" color="text">
+          <value source="user_input.jyotishi_phone" fallback="" />
+        </line>
+      </column>
+    </row>
+  </footer>
+
+  <!-- ═══════════════════════════════════════════════ -->
+  <!-- SOUTH INDIAN CHART LAYOUT                       -->
+  <!-- ═══════════════════════════════════════════════ -->
+  <!--
+    4x4 grid with fixed rashi positions:
+    ┌────┬────┬────┬────┐
+    │ 12 │  1 │  2 │  3 │   Meena | Mesha | Vrishabha | Mithuna
+    ├────┼────┴────┼────┤
+    │ 11 │         │  4 │   Kumbha | CENTER | Karkataka
+    ├────┤  CENTER ├────┤
+    │ 10 │         │  5 │   Makara | CENTER | Simha
+    ├────┼────┬────┼────┤
+    │  9 │  8 │  7 │  6 │   Dhanus | Vrischika | Tula | Kanya
+    └────┴────┴────┴────┘
+  -->
+  <chartLayout type="south_indian">
+    <cell rashiIndex="0"  row="0" col="1" />
+    <cell rashiIndex="1"  row="0" col="2" />
+    <cell rashiIndex="2"  row="0" col="3" />
+    <cell rashiIndex="3"  row="1" col="3" />
+    <cell rashiIndex="4"  row="2" col="3" />
+    <cell rashiIndex="5"  row="3" col="3" />
+    <cell rashiIndex="6"  row="3" col="2" />
+    <cell rashiIndex="7"  row="3" col="1" />
+    <cell rashiIndex="8"  row="3" col="0" />
+    <cell rashiIndex="9"  row="2" col="0" />
+    <cell rashiIndex="10" row="1" col="0" />
+    <cell rashiIndex="11" row="0" col="0" />
+    <center startRow="1" startCol="1" endRow="2" endCol="2" />
+  </chartLayout>
+
+</janma_patrike>
