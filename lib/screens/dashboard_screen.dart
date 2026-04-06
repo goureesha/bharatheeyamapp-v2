@@ -2515,7 +2515,7 @@ class _DashboardScreenState extends State<DashboardScreen>
                 const SizedBox(height: 20),
 
                 // Jyotishi Details
-                Text('ಜ್ಯೋತಿಷಿಗಳ ವಿವರ (ಪ್ರಿಂಟ್ ಮಾಡಲು'), style: TextStyle(fontWeight: FontWeight.w800, color: kTeal)),
+                Text('ಜ್ಯೋತಿಷಿಗಳ ವಿವರ (ಪ್ರಿಂಟ್ ಮಾಡಲು)', style: TextStyle(fontWeight: FontWeight.w800, color: kTeal)),
                 const SizedBox(height: 8),
                 TextField(
                   controller: _jyotishiNameCtrl,
