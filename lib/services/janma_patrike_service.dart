@@ -231,8 +231,7 @@ class JanmaPatrikeService {
         _buildGrahaTable(result),
         const SizedBox(height: 5),
 
-        SizedBox(
-          height: 350,
+        Expanded(
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
