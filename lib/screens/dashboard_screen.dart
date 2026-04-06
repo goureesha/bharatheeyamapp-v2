@@ -1163,9 +1163,59 @@ class _DashboardScreenState extends State<DashboardScreen>
     String _selAro = 'ಆರೂಢ';
     int _selRashiIdx = 0;
     return StatefulBuilder(builder: (ctx, setS) {
+      final activeResult = _prastutaResult ?? widget.result;
+
+      // Varga charts for horizontal scrolling
+      final charts = AppLocale.isHindi ? [
+        {'label': 'राशि कुण्डली', 'varga': 1, 'isBhava': false},
+        {'label': 'नवांश कुण्डली', 'varga': 9, 'isBhava': false},
+        {'label': 'भाव कुण्डली', 'varga': 1, 'isBhava': true},
+        {'label': 'होरा कुण्डली', 'varga': 2, 'isBhava': false},
+        {'label': 'द्रेष्काण कुण्डली', 'varga': 3, 'isBhava': false},
+        {'label': 'द्वादशांश कुण्डली', 'varga': 12, 'isBhava': false},
+        {'label': 'त्रिंशांश कुण्डली', 'varga': 30, 'isBhava': false},
+      ] : [
+        {'label': tr('ರಾಶಿ ಕುಂಡಲಿ'), 'varga': 1, 'isBhava': false},
+        {'label': tr('ನವಾಂಶ ಕುಂಡಲಿ'), 'varga': 9, 'isBhava': false},
+        {'label': tr('ಭಾವ ಕುಂಡಲಿ'), 'varga': 1, 'isBhava': true},
+        {'label': tr('ಹೋರಾ ಕುಂಡಲಿ'), 'varga': 2, 'isBhava': false},
+        {'label': tr('ದ್ರೇಕ್ಕಾಣ ಕುಂಡಲಿ'), 'varga': 3, 'isBhava': false},
+        {'label': tr('ದ್ವಾದಶಾಂಶ ಕುಂಡಲಿ'), 'varga': 12, 'isBhava': false},
+        {'label': tr('ತ್ರಿಂಶಾಂಶ ಕುಂಡಲಿ'), 'varga': 30, 'isBhava': false},
+      ];
+
+      final screenWidth = MediaQuery.of(context).size.width;
+      final isLandscape = MediaQuery.of(context).orientation == Orientation.landscape;
+      final isLargeScreen = screenWidth > 600 || isLandscape;
+      final chartSize = isLargeScreen ? (screenWidth * 0.45).clamp(350.0, 550.0) : screenWidth * 0.85;
+      final textScale = isLargeScreen ? (chartSize / 350.0).clamp(1.1, 1.4) : 1.0;
+
+      // Shadvarga helper
+      String getRashiLord(String rashiNameKn) {
+        int idx = knRashi.indexOf(rashiNameKn);
+        if (idx < 0) return rashiNameKn;
+        final isHi = AppLocale.isHindi;
+        switch (idx) {
+          case 0: return isHi ? 'मं' : 'ಕು';
+          case 1: return isHi ? 'शु' : 'ಶು';
+          case 2: return isHi ? 'बु' : 'ಬು';
+          case 3: return isHi ? 'चं' : 'ಚ';
+          case 4: return isHi ? 'सू' : 'ರ';
+          case 5: return isHi ? 'बु' : 'ಬು';
+          case 6: return isHi ? 'शु' : 'ಶು';
+          case 7: return isHi ? 'मं' : 'ಕು';
+          case 8: return isHi ? 'गु' : 'ಗು';
+          case 9: return isHi ? 'श' : 'ಶ';
+          case 10: return isHi ? 'श' : 'ಶ';
+          case 11: return isHi ? 'गु' : 'ಗು';
+        }
+        return '';
+      }
+
       return SingleChildScrollView(
         child: Column(
           children: [
+            // ── Aroodha controls ──
             AppCard(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -1224,16 +1274,214 @@ class _DashboardScreenState extends State<DashboardScreen>
                 ],
               ),
             ),
+
+            // ── All varga charts (horizontal scroll) ──
+            SizedBox(
+              height: chartSize + (40 * textScale),
+              child: ScrollConfiguration(
+                behavior: ScrollConfiguration.of(context).copyWith(
+                  dragDevices: {
+                    PointerDeviceKind.touch,
+                    PointerDeviceKind.mouse,
+                  },
+                ),
+                child: ListView.builder(
+                  scrollDirection: Axis.horizontal,
+                  padding: const EdgeInsets.symmetric(horizontal: 8),
+                  itemCount: charts.length,
+                  itemBuilder: (context, i) {
+                    final chart = charts[i];
+                    final isBhavaChart = chart['isBhava'] as bool;
+                    final label = chart['label'] as String;
+                    return SizedBox(
+                      width: chartSize,
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 4),
+                        child: Column(
+                          children: [
+                            Text(label, style: TextStyle(fontSize: 15 * textScale, fontWeight: FontWeight.w800, color: kPurple2)),
+                            SizedBox(height: 4 * textScale),
+                            Expanded(
+                              child: KundaliChart(
+                                result: activeResult,
+                                varga: chart['varga'] as int,
+                                isBhava: isBhavaChart,
+                                textScale: textScale,
+                                showSphutas: false,
+                                aroodhas: _aroodhas,
+                                centerLabel: _prastutaResult != null ? '${tr('ಪ್ರಸ್ತುತ')}\n$label' : label,
+                                onPlanetTap: _showPlanetDetail,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ),
+            ),
+            const SizedBox(height: 16),
+
+            // ── Graha Sputa Table ──
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: KundaliChart(
-                result: _prastutaResult ?? widget.result,
-                varga: 1,
-                isBhava: false,
-                showSphutas: false,
-                aroodhas: _aroodhas,
-                centerLabel: _prastutaResult != null ? '${tr('ಪ್ರಸ್ತುತ')}\n${tr('ಆರೂಢ')}' : '${tr('ಆರೂಢ')}\n${tr('ಚಕ್ರ')}',
-                onPlanetTap: _showPlanetDetail,
+              child: Column(
+                children: [
+                  Text(AppLocale.isHindi ? 'ग्रह स्फुट' : 'ಗ್ರಹ ಸ್ಫುಟ', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 15, color: kPurple2)),
+                  const SizedBox(height: 8),
+                  AppCard(
+                    padding: EdgeInsets.zero,
+                    child: Column(
+                      children: [
+                        _tableHeader(AppLocale.isHindi ? ['ग्रह', 'राशि', 'स्फुट', 'नक्षत्र - पाद'] : ['ಗ್ರಹ', 'ರಾಶಿ', 'ಸ್ಫುಟ', 'ನಕ್ಷತ್ರ - ಪಾದ']),
+                        ...planetOrder.map((p) {
+                          final info = activeResult.planets[p];
+                          if (info == null) return const SizedBox.shrink();
+                          final ri = (info.longitude / 30).floor() % 12;
+                          return _tableRow([
+                            appPlanetNames[p] ?? tr(p),
+                            appRashi[ri],
+                            formatDeg(info.longitude),
+                            '${tr(info.nakshatra)} - ${info.pada}'
+                          ], bold0: true);
+                        }),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+
+                  // Upagraha Sputa
+                  Text(AppLocale.isHindi ? 'उपग्रह स्फुट' : 'ಉಪಗ್ರಹ ಸ್ಫುಟ', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 15, color: kPurple2)),
+                  const SizedBox(height: 8),
+                  AppCard(
+                    padding: EdgeInsets.zero,
+                    child: Column(
+                      children: [
+                        _tableHeader(AppLocale.isHindi ? ['उपग्रह', 'राशि', 'अंश', 'नक्षत्र'] : ['ಉಪಗ್ರಹ', 'ರಾಶಿ', 'ಅಂಶ', 'ನಕ್ಷತ್ರ']),
+                        ...sphutas16Order.map((sp) {
+                          final deg = activeResult.advSphutas[sp];
+                          if (deg == null) return const SizedBox.shrink();
+                          final ri = (deg / 30).floor() % 12;
+                          final nakIdx = (deg / 13.333333).floor() % 27;
+                          final pada = ((deg % 13.333333) / 3.333333).floor() + 1;
+                          return _tableRow([sp, appRashi[ri], formatDeg(deg), '${appNak[nakIdx]}-$pada'],
+                            bold0: true);
+                        }),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 16),
+
+            // ── Graha Shadvarga Table ──
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Column(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 16),
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(colors: [kPurple1.withOpacity(0.12), kPurple2.withOpacity(0.06)]),
+                      borderRadius: const BorderRadius.only(
+                        topLeft: Radius.circular(14), topRight: Radius.circular(14),
+                      ),
+                      border: Border(bottom: BorderSide(color: kPurple2.withOpacity(0.3), width: 2)),
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(Icons.grid_view_rounded, size: 18, color: kPurple2),
+                        const SizedBox(width: 8),
+                        Text(AppLocale.isHindi ? 'षड्वर्ग' : 'ಷಡ್ವರ್ಗ', style: TextStyle(
+                          fontWeight: FontWeight.w900, fontSize: 16, color: kPurple2,
+                        )),
+                      ],
+                    ),
+                  ),
+                  Builder(builder: (_) {
+                    final hGraha = AppLocale.isHindi ? 'ग्रह' : 'ಗ್ರಹ';
+                    final hD3 = AppLocale.isHindi ? 'द्रे' : 'ದ್ರೇ';
+                    final hD2 = AppLocale.isHindi ? 'हो' : 'ಹೋ';
+                    final hD9 = AppLocale.isHindi ? 'न' : 'ನ';
+                    final hD30 = AppLocale.isHindi ? 'त्रिं' : 'ತ್ರಿಂ';
+                    final hD12 = AppLocale.isHindi ? 'द्वा' : 'ದ್ವಾ';
+                    final hKshetra = AppLocale.isHindi ? 'क्षे' : 'ಕ್ಷೇ';
+                    int rowIdx = 0;
+                    return Container(
+                      decoration: BoxDecoration(
+                        color: kCard,
+                        borderRadius: const BorderRadius.only(
+                          bottomLeft: Radius.circular(14), bottomRight: Radius.circular(14),
+                        ),
+                        border: Border.all(color: kBorder),
+                        boxShadow: [
+                          BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 10, offset: const Offset(0, 4)),
+                        ],
+                      ),
+                      child: ClipRRect(
+                        borderRadius: const BorderRadius.only(
+                          bottomLeft: Radius.circular(14), bottomRight: Radius.circular(14),
+                        ),
+                        child: Table(
+                          border: TableBorder.symmetric(
+                            inside: BorderSide(color: kBorder.withOpacity(0.6), width: 0.5),
+                          ),
+                          columnWidths: const {
+                            0: FlexColumnWidth(1.3),
+                            1: FlexColumnWidth(1),
+                            2: FlexColumnWidth(1),
+                            3: FlexColumnWidth(1),
+                            4: FlexColumnWidth(1),
+                            5: FlexColumnWidth(1),
+                            6: FlexColumnWidth(1),
+                          },
+                          children: [
+                            TableRow(
+                              decoration: BoxDecoration(
+                                gradient: LinearGradient(colors: [kPurple1.withOpacity(0.15), kPurple2.withOpacity(0.08)]),
+                              ),
+                              children: [hGraha, hD3, hD2, hD9, hD30, hD12, hKshetra].map((h) =>
+                                Padding(
+                                  padding: const EdgeInsets.symmetric(vertical: 14),
+                                  child: Text(h, textAlign: TextAlign.center, style: TextStyle(
+                                    fontWeight: FontWeight.w900, fontSize: 14, color: kPurple2,
+                                  )),
+                                ),
+                              ).toList(),
+                            ),
+                            ...planetOrder.map((pNameKey) {
+                              final pInfo = activeResult.planets[pNameKey];
+                              if (pInfo == null) return const TableRow(children: [SizedBox(), SizedBox(), SizedBox(), SizedBox(), SizedBox(), SizedBox(), SizedBox()]);
+                              final details = AstroCalculator.getPlanetDetail(pNameKey, pInfo.longitude, pInfo.speed, activeResult.planets['ರವಿ']?.longitude ?? 0.0);
+                              final displayName = appPlanetNames[pNameKey] ?? tr(pNameKey);
+                              final isEvenRow = rowIdx++ % 2 == 0;
+                              return TableRow(
+                                decoration: BoxDecoration(
+                                  color: isEvenRow ? kBg.withOpacity(0.5) : kCard,
+                                ),
+                                children: [
+                                  Padding(padding: const EdgeInsets.symmetric(vertical: 12), child: Text(
+                                    displayName, textAlign: TextAlign.center,
+                                    style: TextStyle(fontWeight: FontWeight.w900, fontSize: 14, color: kTeal),
+                                  )),
+                                  ...[details['d3'], details['d2'], details['d9'], details['d30'], details['d12'], details['d1']].map((v) =>
+                                    Padding(padding: const EdgeInsets.symmetric(vertical: 12), child: Text(
+                                      getRashiLord(v as String), textAlign: TextAlign.center,
+                                      style: TextStyle(fontSize: 14, fontWeight: FontWeight.w800, color: kText),
+                                    )),
+                                  ),
+                                ],
+                              );
+                            }).toList(),
+                          ],
+                        ),
+                      ),
+                    );
+                  }),
+                ],
               ),
             ),
             const SizedBox(height: 24),
