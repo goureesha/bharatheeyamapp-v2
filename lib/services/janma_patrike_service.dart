@@ -235,11 +235,11 @@ class JanmaPatrikeService {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Expanded(child: _buildChartWidget('ರಾಶಿ ಕುಂಡಲಿ', _rashiChart(result))),
+              Expanded(child: AspectRatio(aspectRatio: 1.0, child: _buildChartWidget('ರಾಶಿ ಕುಂಡಲಿ', _rashiChart(result)))),
               const SizedBox(width: 8),
-              Expanded(child: _buildChartWidget('ನವಾಂಶ ಕುಂಡಲಿ', _navamshaChart(result))),
+              Expanded(child: AspectRatio(aspectRatio: 1.0, child: _buildChartWidget('ನವಾಂಶ ಕುಂಡಲಿ', _navamshaChart(result)))),
               const SizedBox(width: 8),
-              Expanded(child: _buildChartWidget('ಭಾವ ಕುಂಡಲಿ', _bhavaChart(result))),
+              Expanded(child: AspectRatio(aspectRatio: 1.0, child: _buildChartWidget('ಭಾವ ಕುಂಡಲಿ', _bhavaChart(result)))),
             ],
           ),
         ),
