@@ -122,8 +122,21 @@ class JanmaPatrikeService {
     );
 
     // Capture to high-res images (pixelRatio: 3.0 provides excellent print clarity)
-    final Uint8List page1Bytes = await controller.captureFromWidget(page1Widget, pixelRatio: 3.0, delay: const Duration(milliseconds: 100));
-    final Uint8List page2Bytes = await controller.captureFromWidget(page2Widget, pixelRatio: 3.0, delay: const Duration(milliseconds: 100));
+    // We strictly enforce targetSize to prevent the offscreen engine from auto-centering or expanding unpredictably
+    final targetSize = const Size(pageWidth, pageHeight);
+    
+    final Uint8List page1Bytes = await controller.captureFromWidget(
+      page1Widget,
+      targetSize: targetSize,
+      pixelRatio: 3.0, 
+      delay: const Duration(milliseconds: 100)
+    );
+    final Uint8List page2Bytes = await controller.captureFromWidget(
+      page2Widget,
+      targetSize: targetSize,
+      pixelRatio: 3.0, 
+      delay: const Duration(milliseconds: 100)
+    );
 
     // Compile into PDF
     final doc = pw.Document();
@@ -218,8 +231,8 @@ class JanmaPatrikeService {
         _buildGrahaTable(result),
         const SizedBox(height: 5),
 
-        Expanded(
-          flex: 4,
+        SizedBox(
+          height: 350,
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -254,7 +267,7 @@ class JanmaPatrikeService {
         const SizedBox(height: 15),
 
         _buildSectionTitle('ವಿಂಶೋತ್ತರೀ ಮಹಾ ದಶಾ'),
-        Expanded(child: _buildDashaTable(result)),
+        _buildDashaTable(result),
         const SizedBox(height: 15),
 
         Container(
