@@ -222,7 +222,9 @@ class JanmaPatrikeService {
           ['ತಿಥಿ:', p.tithi, 'ವಾರ:', p.vara],
           ['ನಕ್ಷತ್ರ:', p.nakshatra, 'ಕರಣ:', p.karana],
           ['ಯೋಗ:', p.yoga, 'ಚಂದ್ರ ರಾಶಿ:', p.chandraRashi],
-          ['ಗತ ಘಟಿ:', p.gataGhati, 'ಪರಮ ಘಟಿ:', p.paramaGhati],
+          ['ಉದಯಾದಿ ಘಟಿ:', p.udayadiGhati, 'ಗತ ಘಟಿ:', p.gataGhati],
+          ['ಪರಮ ಘಟಿ:', p.paramaGhati, 'ಶೇಷ ಘಟಿ:', p.shesha],
+          ['ವಿಷ ಪ್ರಘಟಿ:', p.vishaPraghati, 'ಅಮೃತ ಪ್ರಘಟಿ:', p.amrutaPraghati],
           ['ಸೂರ್ಯೋದಯ:', p.sunrise, 'ಸೂರ್ಯಾಸ್ತ:', p.sunset],
         ]),
         const SizedBox(height: 2),
@@ -290,7 +292,7 @@ class JanmaPatrikeService {
 
   static Widget _buildHeader(String mainTitle, String subTitle) {
     return Container(
-      padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 10),
+      padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 10),
       decoration: BoxDecoration(
         color: const Color(0xFFF5F0E8),
         border: Border.all(color: const Color(0xFF2E1A47), width: 1.5),
@@ -298,11 +300,29 @@ class JanmaPatrikeService {
       ),
       child: Column(
         children: [
-          const Text('ಶ್ರೀ ಗಣೇಶಾಯ ನಮಃ ।। ಶ್ರೀ ಗುರುಭ್ಯೋ ನಮಃ ।।', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13.5, color: Color(0xFFC62828))),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              // Ganapati icon — top left
+              Image.asset('assets/images/ganapati.png', width: 48, height: 48),
+              const Spacer(),
+              // App logo + shloka — center
+              Column(
+                children: [
+                  Image.asset('assets/images/logo.png', width: 42, height: 42),
+                  const SizedBox(height: 3),
+                  const Text('ಶ್ರೀ ಗಣೇಶಾಯ ನಮಃ ।। ಶ್ರೀ ಗುರುಭ್ಯೋ ನಮಃ ।।', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: Color(0xFFC62828))),
+                ],
+              ),
+              const Spacer(),
+              // Shiva icon — top right
+              Image.asset('assets/images/shiva.png', width: 48, height: 48),
+            ],
+          ),
           const SizedBox(height: 4),
-          Text(mainTitle, style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 24, color: Color(0xFF2E1A47))),
+          Text(mainTitle, style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 22, color: Color(0xFF2E1A47))),
           const SizedBox(height: 2),
-          Text(subTitle, style: const TextStyle(fontWeight: FontWeight.w500, fontSize: 13, color: Color(0xFF757575))),
+          Text(subTitle, style: const TextStyle(fontWeight: FontWeight.w500, fontSize: 12, color: Color(0xFF757575))),
         ],
       ),
     );

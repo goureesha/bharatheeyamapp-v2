@@ -85,8 +85,11 @@ class PdfService {
             ['ಸೌರ ಮಾಸ', panchang.souraMasa],
             ['ಸೂರ್ಯೋದಯ', panchang.sunrise],
             ['ಸೂರ್ಯಾಸ್ತ', panchang.sunset],
+            ['ಉದಯಾದಿ ಘಟಿ', panchang.udayadiGhati],
             ['ಗತ ಘಟಿ', panchang.gataGhati],
             ['ಪರಮ ಘಟಿ', panchang.paramaGhati],
+            ['ವಿಷ ಪ್ರಘಟಿ', panchang.vishaPraghati],
+            ['ಅಮೃತ ಪ್ರಘಟಿ', panchang.amrutaPraghati],
           ],
         ),
 
