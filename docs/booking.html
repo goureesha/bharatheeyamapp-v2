@@ -154,6 +154,9 @@ window.bookNow = async function() {
       timeoutPromise
     ]);
 
+    // Mark this link as used so it can't be reused
+    try { localStorage.setItem('booked_' + location.hash, 'true'); } catch(e) {}
+
     // Show success state
     document.getElementById('bookingForm').style.display = 'none';
     const successMsg = document.getElementById('successMsg');
@@ -174,6 +177,17 @@ window.bookNow = async function() {
 function render() {
   const data = parseData();
   const app = document.getElementById('app');
+
+  // Check if this link was already used for booking
+  try {
+    if (localStorage.getItem('booked_' + location.hash) === 'true') {
+      app.innerHTML = '<div class="success show">' +
+        '<h2>✅ ಈ ಲಿಂಕ್ ಈಗಾಗಲೇ ಬಳಸಲಾಗಿದೆ</h2>' +
+        '<p>ನೀವು ಈಗಾಗಲೇ ಈ ಲಿಂಕ್ ಮೂಲಕ ಅಪಾಯಿಂಟ್‌ಮೆಂಟ್ ಬುಕ್ ಮಾಡಿದ್ದೀರಿ.<br><br>' +
+        'This link has already been used for a booking.</p></div>';
+      return;
+    }
+  } catch(e) {}
 
   if (!data || !data.slots || Object.keys(data.slots).length === 0) {
     app.innerHTML = '<div class="empty">❌ ಯಾವುದೇ ಲಭ್ಯ ಸ್ಲಾಟ್ ಕಂಡುಬಂದಿಲ್ಲ.<br><br>ದಯವಿಟ್ಟು ಮಾಲೀಕರ ಲಿಂಕ್ ಪರಿಶೀಲಿಸಿ.</div>';
