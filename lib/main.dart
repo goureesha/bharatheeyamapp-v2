@@ -208,7 +208,9 @@ class _BharatheeyamAppState extends State<BharatheeyamApp> {
             ? const _SideloadBlockedScreen()
             : !DeviceBindingService.isDeviceBound
               ? const _DeviceMismatchScreen()
-              : SubscriptionService.hasAccess ? const HomeScreen() : const PaywallScreen(),
+              : SubscriptionService.needsInternetVerification
+                ? const _InternetRequiredScreen()
+                : SubscriptionService.hasAccess ? const HomeScreen() : const PaywallScreen(),
         );
       },
     );
@@ -324,6 +326,84 @@ class _DeviceMismatchScreenState extends State<_DeviceMismatchScreen> {
             child: Text('ಬೇರೆ ಖಾತೆಯಿಂದ ಲಾಗಿನ್ / Sign in with different account',
               style: TextStyle(color: kMuted, fontSize: 13)),
           ),
+        ]),
+      )),
+    );
+  }
+}
+
+/// Shown when subscription needs internet verification (offline > 2 days)
+class _InternetRequiredScreen extends StatefulWidget {
+  const _InternetRequiredScreen();
+  @override
+  State<_InternetRequiredScreen> createState() => _InternetRequiredScreenState();
+}
+
+class _InternetRequiredScreenState extends State<_InternetRequiredScreen> {
+  bool _checking = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: kBg,
+      body: Center(child: Padding(
+        padding: const EdgeInsets.all(32),
+        child: Column(mainAxisSize: MainAxisSize.min, children: [
+          Icon(Icons.wifi_off_rounded, size: 80, color: Colors.orange[400]),
+          const SizedBox(height: 24),
+          Text('ಇಂಟರ್ನೆಟ್ ಅಗತ್ಯವಿದೆ', style: TextStyle(fontSize: 22, fontWeight: FontWeight.w800, color: kText)),
+          const SizedBox(height: 8),
+          Text('Internet Connection Required', style: TextStyle(fontSize: 16, color: kMuted)),
+          const SizedBox(height: 24),
+          Text(
+            'ನಿಮ್ಮ ಚಂದಾದಾರಿಕೆ ಸ್ಥಿತಿಯನ್ನು ಪರಿಶೀಲಿಸಲು ಇಂಟರ್ನೆಟ್ ಸಂಪರ್ಕ ಅಗತ್ಯವಿದೆ.\nPlay Store ನೊಂದಿಗೆ ಪರಿಶೀಲಿಸಲು ಇಂಟರ್ನೆಟ್ ಸಂಪರ್ಕಿಸಿ ಮತ್ತು ಕೆಳಗಿನ ಬಟನ್ ಒತ್ತಿ.',
+            textAlign: TextAlign.center,
+            style: TextStyle(fontSize: 14, color: kText, height: 1.6),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Please connect to the internet to verify your subscription status with Google Play.',
+            textAlign: TextAlign.center,
+            style: TextStyle(fontSize: 12, color: kMuted, height: 1.5),
+          ),
+          const SizedBox(height: 32),
+          if (_checking)
+            CircularProgressIndicator(color: kPurple2)
+          else
+            ElevatedButton.icon(
+              icon: const Icon(Icons.refresh, color: Colors.white),
+              label: const Text('ಪರಿಶೀಲಿಸಿ / Verify Now'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: kPurple2,
+                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+              ),
+              onPressed: () async {
+                setState(() => _checking = true);
+                await SubscriptionService.reVerify();
+                if (mounted) {
+                  if (SubscriptionService.hasAccess) {
+                    Navigator.of(context).pushAndRemoveUntil(
+                      MaterialPageRoute(builder: (_) => const HomeScreen()),
+                      (_) => false,
+                    );
+                  } else if (!SubscriptionService.needsInternetVerification) {
+                    // Verified but no subscription — show paywall
+                    Navigator.of(context).pushAndRemoveUntil(
+                      MaterialPageRoute(builder: (_) => const PaywallScreen()),
+                      (_) => false,
+                    );
+                  } else {
+                    setState(() => _checking = false);
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text('ಇಂಟರ್ನೆಟ್ ಸಂಪರ್ಕ ಸಾಧ್ಯವಾಗಲಿಲ್ಲ. ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ.'),
+                        backgroundColor: Colors.red,
+                      ),
+                    );
+                  }
+                }
+              },
+            ),
         ]),
       )),
     );
