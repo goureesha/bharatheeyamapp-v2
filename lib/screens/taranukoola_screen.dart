@@ -4,6 +4,8 @@ import 'package:table_calendar/table_calendar.dart';
 import 'package:sweph/sweph.dart';
 import '../widgets/common.dart';
 import '../constants/strings.dart';
+import '../core/calculator.dart';
+import '../services/location_service.dart';
 
 class TaranukoolaScreen extends StatefulWidget {
   const TaranukoolaScreen({super.key});
@@ -21,6 +23,9 @@ class _TaranukoolaScreenState extends State<TaranukoolaScreen> {
   DateTime _focusedDay = DateTime.utc(DateTime.now().year, DateTime.now().month, DateTime.now().day);
   DateTime? _selectedDay;
   Map<DateTime, int> _dailyNakshatraCache = {};
+  KundaliResult? _selectedDayResult;
+  bool _isLoadingPanchang = false;
+  bool _showTaraCharts = false;
 
   final _taras = [
     'ಜನ್ಮ ತಾರೆ (ಅಶುಭ)',
@@ -39,6 +44,29 @@ class _TaranukoolaScreenState extends State<TaranukoolaScreen> {
     super.initState();
     _selectedDay = _focusedDay;
     _loadNakshatra();
+    _calculatePanchangForSelectedDay();
+  }
+
+  Future<void> _calculatePanchangForSelectedDay() async {
+    if (_selectedDay == null) return;
+    if (mounted) setState(() => _isLoadingPanchang = true);
+    try {
+      final result = await AstroCalculator.calculate(
+        year: _selectedDay!.year, month: _selectedDay!.month, day: _selectedDay!.day,
+        hourUtcOffset: LocationService.tzOffset, 
+        hour24: 6.0, 
+        lat: LocationService.lat, 
+        lon: LocationService.lon,
+        ayanamsaMode: 'lahiri',
+        trueNode: true,
+      );
+      if (mounted) setState(() {
+        _selectedDayResult = result;
+        _isLoadingPanchang = false;
+      });
+    } catch (_) {
+      if (mounted) setState(() => _isLoadingPanchang = false);
+    }
   }
 
   Future<void> _loadNakshatra() async {
@@ -137,6 +165,41 @@ class _TaranukoolaScreenState extends State<TaranukoolaScreen> {
         ),
       );
     }
+  }
+
+  Widget _tableRow(List<String> cols, {bool bold0 = false}) {
+    return Container(
+      decoration: BoxDecoration(
+        border: Border(bottom: BorderSide(color: kBorder.withValues(alpha: 0.5))),
+      ),
+      child: IntrinsicHeight(
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: List.generate(cols.length, (i) {
+            final isFirst = i == 0;
+            return Expanded(
+              flex: isFirst ? 3 : 4,
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                decoration: BoxDecoration(
+                  border: i < cols.length - 1 ? Border(right: BorderSide(color: kBorder.withValues(alpha: 0.5))) : null,
+                  color: isFirst ? kPurple2.withValues(alpha: 0.05) : kCard,
+                ),
+                alignment: isFirst ? Alignment.centerRight : Alignment.centerLeft,
+                child: Text(
+                  cols[i],
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: (isFirst && bold0) ? FontWeight.bold : (isFirst ? FontWeight.w600 : FontWeight.w500),
+                    color: isFirst ? kPurple2 : kText,
+                  ),
+                ),
+              ),
+            );
+          }),
+        ),
+      ),
+    );
   }
 
   Widget _buildTaraChart(int janmaIdx, String title) {
@@ -369,6 +432,7 @@ class _TaranukoolaScreenState extends State<TaranukoolaScreen> {
                             _selectedDay = selectedDay;
                             _focusedDay = focusedDay;
                           });
+                          _calculatePanchangForSelectedDay();
                         },
                         onPageChanged: (focusedDay) {
                           _focusedDay = focusedDay;
@@ -515,11 +579,76 @@ class _TaranukoolaScreenState extends State<TaranukoolaScreen> {
                        )
                     ],
 
-                    if (_janmaNakshatraIdx1 != null)
-                      _buildTaraChart(_janmaNakshatraIdx1!, _isTwoPersonMode ? 'ವ್ಯಕ್ತಿ 1ರ ತಾರಾನುಕೂಲ ಚಾರ್ಟ್' : 'ನಿಮ್ಮ ತಾರಾನುಕೂಲ ಚಾರ್ಟ್'),
-                    
-                    if (_isTwoPersonMode && _janmaNakshatraIdx2 != null)
-                      _buildTaraChart(_janmaNakshatraIdx2!, 'ವ್ಯಕ್ತಿ 2ರ ತಾರಾನುಕೂಲ ಚಾರ್ಟ್'),
+                    const SizedBox(height: 16),
+                    Theme(
+                      data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
+                      child: ExpansionTile(
+                        title: Text('ತಾರಾನುಕೂಲ ಚಾರ್ಟ್', style: TextStyle(fontWeight: FontWeight.bold, color: kPurple2)),
+                        initiallyExpanded: _showTaraCharts,
+                        onExpansionChanged: (val) => setState(() => _showTaraCharts = val),
+                        backgroundColor: kCard,
+                        collapsedBackgroundColor: kCard,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12), side: BorderSide(color: kBorder)),
+                        collapsedShape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12), side: BorderSide(color: kBorder)),
+                        children: [
+                          Padding(
+                            padding: const EdgeInsets.all(16.0),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.stretch,
+                              children: [
+                                if (_janmaNakshatraIdx1 != null)
+                                  _buildTaraChart(_janmaNakshatraIdx1!, _isTwoPersonMode ? 'ವ್ಯಕ್ತಿ 1ರ ತಾರಾನುಕೂಲ ಚಾರ್ಟ್' : 'ನಿಮ್ಮ ತಾರಾನುಕೂಲ ಚಾರ್ಟ್'),
+                                if (_isTwoPersonMode && _janmaNakshatraIdx2 != null)
+                                  _buildTaraChart(_janmaNakshatraIdx2!, 'ವ್ಯಕ್ತಿ 2ರ ತಾರಾನುಕೂಲ ಚಾರ್ಟ್'),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    if (_isLoadingPanchang)
+                       const Padding(padding: EdgeInsets.all(32), child: Center(child: CircularProgressIndicator()))
+                    else if (_selectedDayResult != null) ...[
+                      Text('ದಿನದ ಪಂಚಾಂಗ', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: kPurple1)),
+                      const SizedBox(height: 12),
+                      Builder(builder: (context) {
+                        final r = _selectedDayResult!;
+                        final pan = r.panchang;
+                        return AppCard(
+                          padding: EdgeInsets.zero,
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                                decoration: BoxDecoration(
+                                  color: kPurple2.withValues(alpha: 0.1),
+                                  borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
+                                ),
+                                child: Text(
+                                  '${_selectedDay!.day.toString().padLeft(2, '0')}-${_selectedDay!.month.toString().padLeft(2, '0')}-${_selectedDay!.year}',
+                                  style: TextStyle(fontWeight: FontWeight.bold, color: kPurple2),
+                                  textAlign: TextAlign.center,
+                                ),
+                              ),
+                              _tableRow(['ಸಂವತ್ಸರ', pan.samvatsara]),
+                              _tableRow(['ವಾರ', pan.vara]),
+                              _tableRow(['ತಿಥಿ', pan.tithi]),
+                              _tableRow(['ಚಂದ್ರ ನಕ್ಷತ್ರ', () { final moonPada = r.planets['ಚಂದ್ರ']?.pada; final fallback = (pan.nakPercent * 4).floor() + 1; final p = moonPada ?? (fallback < 1 ? 1 : fallback > 4 ? 4 : fallback); return '${pan.nakshatra} - ${'ಪಾದ'} $p'; }()]),
+                              _tableRow(['ಯೋಗ', pan.yoga]),
+                              _tableRow(['ಕರಣ', pan.karana]),
+                              _tableRow(['ಚಂದ್ರ ರಾಶಿ', pan.chandraRashi]),
+                              _tableRow(['ಚಂದ್ರ ಮಾಸ', pan.chandraMasa]),
+                              _tableRow(['ಸೂರ್ಯ ನಕ್ಷತ್ರ', '${pan.suryaNakshatra} - ${'ಪಾದ'} ${pan.suryaPada}']),
+                              _tableRow(['ಸೌರ ಮಾಸ', pan.souraMasa]),
+                              _tableRow(['ಸೂರ್ಯೋದಯ', pan.sunrise]),
+                              _tableRow(['ಸೂರ್ಯಾಸ್ತ', pan.sunset]),
+                            ],
+                          ),
+                        );
+                      }),
+                    ]
 
                   ],
                 ),
