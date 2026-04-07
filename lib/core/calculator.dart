@@ -779,14 +779,13 @@ class AstroCalculator {
         'ಪಿಂಗಳ','ಕಾಳಯುಕ್ತಿ','ಸಿದ್ಧಾರ್ಥಿ','ರೌದ್ರಿ','ದುರ್ಮತಿ','ದುಂದುಭಿ','ರುಧಿರೋದ್ಗಾರಿ','ರಕ್ತಾಕ್ಷಿ','ಕ್ರೋಧನ','ಅಕ್ಷಯ',
       ];
       int shakaYear = year - 78;
-      bool beforeUgadi;
-      if (sunRashiIdx == 9 || sunRashiIdx == 10) {
-        beforeUgadi = true;
-      } else if (sunRashiIdx == 11 && tIdx >= 15) {
-        beforeUgadi = true;
-      } else {
-        beforeUgadi = false;
-      }
+      
+      // A Gregorian year increments in January, but Shaka year increments at Ugadi (Chaitra).
+      // So if the lunar month is logically before Chaitra (Margashira to Phalguna) 
+      // AND we are in the early part of the Gregorian year (Jan-May), it belongs to the previous Shaka year.
+      final oldYearMonths = ['ಮಾರ್ಗಶಿರ', 'ಪುಷ್ಯ', 'ಮಾಘ', 'ಫಾಲ್ಗುಣ'];
+      bool beforeUgadi = month <= 5 && oldYearMonths.contains(chandraMasaRaw);
+      
       if (beforeUgadi) shakaYear -= 1;
       final samvatsaraIdx = ((shakaYear + 11) % 60);
       final samvatsara = '${knSamvatsara[samvatsaraIdx]} (ಶಕ $shakaYear)';
