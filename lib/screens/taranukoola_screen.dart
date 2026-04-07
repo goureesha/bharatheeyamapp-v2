@@ -202,6 +202,11 @@ class _TaranukoolaScreenState extends State<TaranukoolaScreen> {
     );
   }
 
+  String _formatEnd(String base, String endTime, bool nextDay) {
+    if (endTime.isEmpty) return base;
+    return '$base (ಅಂತ್ಯ: $endTime${nextDay ? ' ಮುಂದಿನ ದಿನ' : ''})';
+  }
+
   Widget _buildTaraChart(int janmaIdx, String title) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -634,10 +639,10 @@ class _TaranukoolaScreenState extends State<TaranukoolaScreen> {
                               ),
                               _tableRow(['ಸಂವತ್ಸರ', pan.samvatsara]),
                               _tableRow(['ವಾರ', pan.vara]),
-                              _tableRow(['ತಿಥಿ', pan.tithi]),
-                              _tableRow(['ಚಂದ್ರ ನಕ್ಷತ್ರ', () { final moonPada = r.planets['ಚಂದ್ರ']?.pada; final fallback = (pan.nakPercent * 4).floor() + 1; final p = moonPada ?? (fallback < 1 ? 1 : fallback > 4 ? 4 : fallback); return '${pan.nakshatra} - ${'ಪಾದ'} $p'; }()]),
-                              _tableRow(['ಯೋಗ', pan.yoga]),
-                              _tableRow(['ಕರಣ', pan.karana]),
+                              _tableRow(['ತಿಥಿ', _formatEnd(pan.tithi, pan.tithiEndTime, pan.tithiEndsNextDay)]),
+                              _tableRow(['ಚಂದ್ರ ನಕ್ಷತ್ರ', _formatEnd(() { final moonPada = r.planets['ಚಂದ್ರ']?.pada; final fallback = (pan.nakPercent * 4).floor() + 1; final p = moonPada ?? (fallback < 1 ? 1 : fallback > 4 ? 4 : fallback); return '${pan.nakshatra} - ${'ಪಾದ'} $p'; }(), pan.nakEndTime, pan.nakEndsNextDay)]),
+                              _tableRow(['ಯೋಗ', _formatEnd(pan.yoga, pan.yogaEndTime, pan.yogaEndsNextDay)]),
+                              _tableRow(['ಕರಣ', _formatEnd(pan.karana, pan.karanaEndTime, pan.karanaEndsNextDay)]),
                               _tableRow(['ಚಂದ್ರ ರಾಶಿ', pan.chandraRashi]),
                               _tableRow(['ಚಂದ್ರ ಮಾಸ', pan.chandraMasa]),
                               _tableRow(['ಸೂರ್ಯ ನಕ್ಷತ್ರ', '${pan.suryaNakshatra} - ${'ಪಾದ'} ${pan.suryaPada}']),
