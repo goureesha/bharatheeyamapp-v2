@@ -16,6 +16,7 @@ class SubscriptionService {
   static const String _graceYearKey = 'grace_period_year';
   static const String _graceStartKey = 'grace_start_timestamp';
   static const String _graceActiveKey = 'grace_active';
+  static const String _lastPlayCheckKey = 'last_play_check_date';
 
   // ── Constants ──
   static const int _trialDays = 3;
@@ -185,8 +186,12 @@ class SubscriptionService {
       onError: (e) => debugPrint('Purchase stream error: $e'),
     );
 
-    // Verify subscription with Play Store
-    await _verifyWithPlayStore();
+    // Verify subscription with Play Store — only once per day
+    if (_shouldCheckToday()) {
+      await _verifyWithPlayStore();
+    } else {
+      debugPrint('📋 Subscription already verified today — skipping Play Store check');
+    }
   }
 
   static void dispose() {
@@ -224,6 +229,7 @@ class SubscriptionService {
 
       // Record that we successfully talked to Play Store
       await _updateLastVerified();
+      await _recordCheckDate();
       needsInternetVerification = false;
 
       // Deactivate grace period since we successfully verified
@@ -345,6 +351,13 @@ class SubscriptionService {
     if (isGracePeriodActive || needsInternetVerification) {
       debugPrint('🔄 Internet detected during grace/lock — re-verifying with Play Store');
       await _verifyWithPlayStore();
+      return;
+    }
+
+    // Normal resume: only re-check if not already verified today
+    if (_shouldCheckToday()) {
+      debugPrint('🔄 New day — re-verifying subscription on resume');
+      await _verifyWithPlayStore();
     }
   }
 
@@ -401,8 +414,31 @@ class SubscriptionService {
   }
 
   /// Re-verify subscription (can be called from settings or periodically)
+  /// This always calls Play Store regardless of daily check (user-triggered).
   static Future<void> reVerify() async {
     await _verifyWithPlayStore();
+  }
+
+  // ════════════════════════════════════════════════
+  // DAILY CHECK THROTTLE
+  // ════════════════════════════════════════════════
+
+  /// Returns true if we should check Play Store today (haven't checked yet today)
+  static bool _shouldCheckToday() {
+    if (!hasSubscription && !isTrialActive) return false; // No sub to check
+    if (lastVerifiedDate == null) return true; // Never verified
+    final now = TrustedTimeService.now();
+    final lastCheck = lastVerifiedDate!;
+    // Different calendar day → should check
+    return now.year != lastCheck.year ||
+           now.month != lastCheck.month ||
+           now.day != lastCheck.day;
+  }
+
+  /// Record today's date as the last Play Store check date
+  static Future<void> _recordCheckDate() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_lastPlayCheckKey, TrustedTimeService.now().toIso8601String());
   }
 
   // ════════════════════════════════════════════════
