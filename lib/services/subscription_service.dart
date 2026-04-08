@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:in_app_purchase/in_app_purchase.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'trusted_time_service.dart';
 
 class SubscriptionService {
   static const String _subscriptionProductId = 'ad_free_yearly_500';
@@ -54,7 +55,7 @@ class SubscriptionService {
   /// True if the free trial is still active
   static bool get isTrialActive {
     if (trialStartDate == null) return false;
-    final now = lastVerifiedDate ?? DateTime.now();
+    final now = lastVerifiedDate ?? TrustedTimeService.now();
     final elapsed = now.difference(trialStartDate!);
     return elapsed.inDays < _trialDays;
   }
@@ -62,7 +63,7 @@ class SubscriptionService {
   /// Days remaining in trial (0 if expired)
   static int get trialDaysRemaining {
     if (trialStartDate == null) return 0;
-    final now = lastVerifiedDate ?? DateTime.now();
+    final now = lastVerifiedDate ?? TrustedTimeService.now();
     final elapsed = now.difference(trialStartDate!);
     final remaining = _trialDays - elapsed.inDays;
     return remaining > 0 ? remaining : 0;
@@ -72,14 +73,14 @@ class SubscriptionService {
   static int get subscriptionDaysRemaining {
     if (!hasSubscription || purchaseDate == null) return 0;
     final expiryDate = purchaseDate!.add(const Duration(days: _subscriptionDurationDays));
-    final remaining = expiryDate.difference(DateTime.now()).inDays;
+    final remaining = expiryDate.difference(TrustedTimeService.now()).inDays;
     return remaining > 0 ? remaining : 0;
   }
 
   /// Hours remaining in current grace period (0 if not active)
   static int get gracePeriodRemainingHours {
     if (!isGracePeriodActive || graceStartDate == null) return 0;
-    final elapsed = DateTime.now().difference(graceStartDate!);
+    final elapsed = TrustedTimeService.now().difference(graceStartDate!);
     final remainingHours = (_offlineGraceDays * 24) - elapsed.inHours;
     return remainingHours > 0 ? remainingHours : 0;
   }
@@ -133,7 +134,7 @@ class SubscriptionService {
       trialStartDate = DateTime.fromMillisecondsSinceEpoch(trialTs);
     } else {
       // First install — start trial
-      trialStartDate = DateTime.now();
+      trialStartDate = TrustedTimeService.now();
       await prefs.setInt(_trialStartKey, trialStartDate!.millisecondsSinceEpoch);
     }
 
@@ -148,7 +149,7 @@ class SubscriptionService {
     }
 
     // Load grace period state
-    _graceYear = prefs.getInt(_graceYearKey) ?? DateTime.now().year;
+    _graceYear = prefs.getInt(_graceYearKey) ?? TrustedTimeService.now().year;
     gracePeriodsUsedThisYear = prefs.getInt(_graceCountKey) ?? 0;
     isGracePeriodActive = prefs.getBool(_graceActiveKey) ?? false;
     final graceStartTs = prefs.getInt(_graceStartKey);
@@ -157,8 +158,8 @@ class SubscriptionService {
     }
 
     // Reset grace count if new year
-    if (_graceYear != DateTime.now().year) {
-      _graceYear = DateTime.now().year;
+    if (_graceYear != TrustedTimeService.now().year) {
+      _graceYear = TrustedTimeService.now().year;
       gracePeriodsUsedThisYear = 0;
       await prefs.setInt(_graceYearKey, _graceYear);
       await prefs.setInt(_graceCountKey, 0);
@@ -166,7 +167,7 @@ class SubscriptionService {
 
     // Check if existing grace period has expired
     if (isGracePeriodActive && graceStartDate != null) {
-      final elapsed = DateTime.now().difference(graceStartDate!);
+      final elapsed = TrustedTimeService.now().difference(graceStartDate!);
       if (elapsed.inDays >= _offlineGraceDays) {
         // Grace period expired
         isGracePeriodActive = false;
@@ -264,7 +265,7 @@ class SubscriptionService {
 
     // If already in an active grace period, check if it's still valid
     if (isGracePeriodActive && graceStartDate != null) {
-      final elapsed = DateTime.now().difference(graceStartDate!);
+      final elapsed = TrustedTimeService.now().difference(graceStartDate!);
       if (elapsed.inDays < _offlineGraceDays) {
         // Still within active grace period — allow access, don't count again
         needsInternetVerification = false;
@@ -277,7 +278,7 @@ class SubscriptionService {
     }
 
     // Reset year counter if needed
-    final currentYear = DateTime.now().year;
+    final currentYear = TrustedTimeService.now().year;
     if (_graceYear != currentYear) {
       _graceYear = currentYear;
       gracePeriodsUsedThisYear = 0;
@@ -295,7 +296,7 @@ class SubscriptionService {
 
     // Activate a NEW grace period
     isGracePeriodActive = true;
-    graceStartDate = DateTime.now();
+    graceStartDate = TrustedTimeService.now();
     gracePeriodsUsedThisYear++;
     needsInternetVerification = false;
     debugPrint('🛡️ Grace period #$gracePeriodsUsedThisYear activated (${_offlineGraceDays} days). Access allowed.');
@@ -326,7 +327,7 @@ class SubscriptionService {
 
   /// Record the timestamp of successful Play Store communication
   static Future<void> _updateLastVerified() async {
-    lastVerifiedDate = DateTime.now();
+    lastVerifiedDate = TrustedTimeService.now();
     final prefs = await SharedPreferences.getInstance();
     await prefs.setInt(_lastVerifiedKey, lastVerifiedDate!.millisecondsSinceEpoch);
   }

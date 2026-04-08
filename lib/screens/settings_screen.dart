@@ -4,6 +4,7 @@ import 'package:http/http.dart' as http;
 import '../widgets/common.dart';
 
 import '../services/subscription_service.dart';
+import '../services/trusted_time_service.dart';
 import '../services/backup_service.dart';
 import '../services/google_auth_service.dart';
 import '../services/device_binding_service.dart';
@@ -649,6 +650,87 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                child: Text('ಹಿಂದಿನ ಖರೀದಿಯನ್ನು ಮರುಸ್ಥಾಪಿಸಿ (Restore)', style: TextStyle(color: kPurple2, fontWeight: FontWeight.w600)),
                              )
                            ]
+                        ],
+                      ),
+                    ),
+
+                    const SizedBox(height: 24),
+                    Divider(color: kBorder),
+                    const SizedBox(height: 24),
+
+                    // Clock / NTP Status
+                    SectionTitle('ಸಮಯ ಪರಿಶೀಲನೆ / Clock Verification'),
+                    const SizedBox(height: 12),
+                    Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: TrustedTimeService.isClockTampered
+                            ? Colors.red.withOpacity(0.08)
+                            : TrustedTimeService.hasTrustedTime
+                                ? Colors.green.withOpacity(0.08)
+                                : kBorder.withOpacity(0.15),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: TrustedTimeService.isClockTampered
+                              ? Colors.red.withOpacity(0.3)
+                              : TrustedTimeService.hasTrustedTime
+                                  ? Colors.green.withOpacity(0.3)
+                                  : kBorder.withOpacity(0.3),
+                        ),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(children: [
+                            Icon(
+                              TrustedTimeService.isClockTampered
+                                  ? Icons.warning_amber_rounded
+                                  : TrustedTimeService.hasTrustedTime
+                                      ? Icons.access_time_filled
+                                      : Icons.access_time,
+                              color: TrustedTimeService.isClockTampered
+                                  ? Colors.red
+                                  : TrustedTimeService.hasTrustedTime
+                                      ? Colors.green
+                                      : kMuted,
+                              size: 24,
+                            ),
+                            const SizedBox(width: 10),
+                            Expanded(child: Text(
+                              TrustedTimeService.statusText,
+                              style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w700,
+                                color: TrustedTimeService.isClockTampered ? Colors.red : kText,
+                              ),
+                            )),
+                          ]),
+                          if (TrustedTimeService.isClockTampered) ...[
+                            const SizedBox(height: 8),
+                            Text(
+                              'ನಿಮ್ಮ ಫೋನ್ ಗಡಿಯಾರ ಬದಲಾಗಿದೆ. ಸರಿಯಾದ ಸಮಯಕ್ಕೆ ಹೊಂದಿಸಿ.',
+                              style: TextStyle(fontSize: 12, color: Colors.red.shade800),
+                            ),
+                            Text(
+                              'Your phone clock appears modified. Set to automatic time.',
+                              style: TextStyle(fontSize: 11, color: kMuted),
+                            ),
+                          ],
+                          const SizedBox(height: 10),
+                          OutlinedButton.icon(
+                            icon: Icon(Icons.sync, size: 18, color: kPurple2),
+                            label: Text('NTP ಮರುಸಿಂಕ್ / Re-sync Clock', style: TextStyle(color: kPurple2, fontSize: 13)),
+                            onPressed: () async {
+                              final ok = await TrustedTimeService.syncWithNtp();
+                              if (mounted) {
+                                setState(() {});
+                                ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                                  content: Text(ok ? 'NTP ಸಿಂಕ್ ಯಶಸ್ವಿ!' : 'NTP ಸಿಂಕ್ ವಿಫಲ — ಇಂಟರ್ನೆಟ್ ಪರಿಶೀಲಿಸಿ'),
+                                  backgroundColor: ok ? Colors.green : Colors.red,
+                                ));
+                              }
+                            },
+                          ),
                         ],
                       ),
                     ),

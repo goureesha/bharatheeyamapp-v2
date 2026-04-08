@@ -4,6 +4,7 @@ import 'screens/home_screen.dart';
 import 'screens/paywall_screen.dart';
 import 'widgets/common.dart';
 import 'services/subscription_service.dart';
+import 'services/trusted_time_service.dart';
 import 'services/google_auth_service.dart';
 import 'services/install_checker.dart';
 import 'services/device_binding_service.dart';
@@ -30,6 +31,9 @@ Future<void> main() async {
   //   1. Ephemeris engine (for calculations)
   //   2. Subscription status (to decide paywall vs home)
   //   3. Theme (to render with correct colors)
+  // NTP must init BEFORE SubscriptionService so trusted time is available
+  await TrustedTimeService.init();
+
   await Future.wait([
     _initEphemeris(),
     SubscriptionService.initialize(),
@@ -100,8 +104,9 @@ class _BharatheeyamAppState extends State<BharatheeyamApp> with WidgetsBindingOb
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed) {
+      // Re-sync NTP clock on resume (updates offset if internet is now available)
+      TrustedTimeService.syncWithNtp();
       // Re-verify subscription when app comes back to foreground
-      // This handles: internet reconnects during grace period
       SubscriptionService.checkOnReconnect();
     }
   }
