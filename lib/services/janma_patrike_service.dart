@@ -6,6 +6,7 @@ import 'package:printing/printing.dart';
 import 'package:screenshot/screenshot.dart';
 import '../core/calculator.dart';
 import '../constants/strings.dart';
+import 'pdf_theme.dart';
 
 class UserDetails {
   final String name;
@@ -101,44 +102,44 @@ class JanmaPatrikeService {
     return chart;
   }
 
-  static Future<void> generateAndPrint(UserDetails user, KundaliResult result) async {
+  static Future<void> generateAndPrint(UserDetails user, KundaliResult result, {PdfThemeConfig? theme}) async {
+    theme ??= PdfThemes.traditional;
     final controller = ScreenshotController();
 
-    // A4 Dimensions at 96 DPI (provides more layout breathing room than 72 DPI without changing aspect ratio)
-    const double pageWidth = 793.0; // 595 * 1.33
-    const double pageHeight = 1122.0; // 842 * 1.33
+    // A4 Dimensions at 96 DPI
+    const double pageWidth = 793.0;
+    const double pageHeight = 1122.0;
 
-    // Build standard offscreen Flutter widgets representing the pages
+    // Build themed pages
     final page1Widget = _buildPageWrapper(
       width: pageWidth,
       height: pageHeight,
-      child: _buildPage1Content(user, result),
+      theme: theme,
+      child: _buildPage1Content(user, result, theme),
     );
 
     final page2Widget = _buildPageWrapper(
       width: pageWidth,
       height: pageHeight,
-      child: _buildPage2Content(user, result),
+      theme: theme,
+      child: _buildPage2Content(user, result, theme),
     );
 
-    // Capture to high-res images (pixelRatio: 3.0 provides excellent print clarity)
-    // We strictly enforce targetSize to prevent the offscreen engine from auto-centering or expanding unpredictably
     final targetSize = const Size(pageWidth, pageHeight);
-    
+
     final Uint8List page1Bytes = await controller.captureFromWidget(
       page1Widget,
       targetSize: targetSize,
-      pixelRatio: 3.0, 
+      pixelRatio: 3.0,
       delay: const Duration(milliseconds: 100)
     );
     final Uint8List page2Bytes = await controller.captureFromWidget(
       page2Widget,
       targetSize: targetSize,
-      pixelRatio: 3.0, 
+      pixelRatio: 3.0,
       delay: const Duration(milliseconds: 100)
     );
 
-    // Compile into PDF
     final doc = pw.Document();
 
     doc.addPage(
@@ -167,25 +168,25 @@ class JanmaPatrikeService {
     );
   }
 
-  static Widget _buildPageWrapper({required double width, required double height, required Widget child}) {
+  static Widget _buildPageWrapper({
+    required double width,
+    required double height,
+    required PdfThemeConfig theme,
+    required Widget child,
+  }) {
     return Directionality(
       textDirection: TextDirection.ltr,
       child: MediaQuery(
         data: const MediaQueryData(),
         child: Theme(
-          data: ThemeData(
-            // Specify default fonts for flutter widget tree so Kannada renders perfectly
-            fontFamily: 'Noto Sans Kannada', // ensure it falls back to system font if unavailable
-          ),
+          data: ThemeData(fontFamily: 'Noto Sans Kannada'),
           child: DefaultTextStyle(
             style: const TextStyle(color: Colors.black, fontSize: 13),
             child: Material(
               color: Colors.white,
-              child: Container(
+              child: theme.buildPageBorder(
                 width: width,
                 height: height,
-                color: const Color(0xFFFFFFF8), // Match old background
-                padding: const EdgeInsets.symmetric(vertical: 25, horizontal: 30),
                 child: child,
               ),
             ),
@@ -195,7 +196,10 @@ class JanmaPatrikeService {
     );
   }
 
-  static Widget _buildPage1Content(UserDetails user, KundaliResult result) {
+  // ════════════════════════════════════════════════════════
+  // PAGE 1: Birth Details + Panchanga + Charts
+  // ════════════════════════════════════════════════════════
+  static Widget _buildPage1Content(UserDetails user, KundaliResult result, PdfThemeConfig t) {
     final p = result.panchang;
     final lagnaInfo = result.planets['ಲಗ್ನ'];
     final lagnaRashi = lagnaInfo != null ? lagnaInfo.rashi : '-';
@@ -203,19 +207,19 @@ class JanmaPatrikeService {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        _buildHeader('ಜನ್ಮ ಪತ್ರಿಕೆ', 'ಭಾರತೀಯಂ ಜ್ಯೋತಿಷ ಅಪ್ಲಿಕೇಶನ್'),
+        _buildHeader('ಜನ್ಮ ಪತ್ರಿಕೆ', 'ಭಾರತೀಯಂ ಜ್ಯೋತಿಷ ಅಪ್ಲಿಕೇಶನ್', t),
         const SizedBox(height: 5),
-        
-        _buildSectionTitle('ವೈಯಕ್ತಿಕ ವಿವರ'),
+
+        _buildSectionTitle('ವೈಯಕ್ತಿಕ ವಿವರ', t),
         _buildDetailBox([
           ['ಜಾತಕರ ಹೆಸರು:', user.name, 'ಜನ್ಮ ಊರು:', user.place],
           ['ಜನನ ದಿನಾಂಕ:', user.dateStr, 'ಜನ್ಮ ಸಮಯ:', user.timeStr],
           ['ತಂದೆ ಹೆಸರು:', user.fatherName, 'ತಾಯಿ ಹೆಸರು:', user.motherName],
           ['ಗೋತ್ರ:', user.gotra, 'ಲಗ್ನ ರಾಶಿ:', lagnaRashi],
-        ]),
+        ], t),
         const SizedBox(height: 2),
 
-        _buildSectionTitle('ಪಂಚಾಂಗ ವಿವರ'),
+        _buildSectionTitle('ಪಂಚಾಂಗ ವಿವರ', t),
         _buildDetailBox([
           ['ಸಂವತ್ಸರ:', p.samvatsara, 'ಚಂದ್ರ ಮಾಸ:', p.chandraMasa],
           ['ರವಿ ಮಾಸ:', p.souraMasa, 'ಋತು:', p.rutu],
@@ -226,76 +230,88 @@ class JanmaPatrikeService {
           ['ಪರಮ ಘಟಿ:', p.paramaGhati, 'ಶೇಷ ಘಟಿ:', p.shesha],
           ['ವಿಷ ಪ್ರಘಟಿ:', p.vishaPraghati, 'ಅಮೃತ ಪ್ರಘಟಿ:', p.amrutaPraghati],
           ['ಸೂರ್ಯೋದಯ:', p.sunrise, 'ಸೂರ್ಯಾಸ್ತ:', p.sunset],
-        ]),
+        ], t),
         const SizedBox(height: 2),
 
-        _buildSectionTitle('ತತ್ಕಾಲ ಗ್ರಹಸ್ಥಿತಿ'),
-        _buildGrahaTable(result),
+        _buildSectionTitle('ತತ್ಕಾಲ ಗ್ರಹಸ್ಥಿತಿ', t),
+        _buildGrahaTable(result, t),
         const SizedBox(height: 2),
 
         Expanded(
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Expanded(child: AspectRatio(aspectRatio: 1.0, child: _buildChartWidget('ರಾಶಿ ಕುಂಡಲಿ', _rashiChart(result)))),
+              Expanded(child: AspectRatio(aspectRatio: 1.0, child: _buildChartWidget('ರಾಶಿ ಕುಂಡಲಿ', _rashiChart(result), t))),
               const SizedBox(width: 8),
-              Expanded(child: AspectRatio(aspectRatio: 1.0, child: _buildChartWidget('ನವಾಂಶ ಕುಂಡಲಿ', _navamshaChart(result)))),
+              Expanded(child: AspectRatio(aspectRatio: 1.0, child: _buildChartWidget('ನವಾಂಶ ಕುಂಡಲಿ', _navamshaChart(result), t))),
               const SizedBox(width: 8),
-              Expanded(child: AspectRatio(aspectRatio: 1.0, child: _buildChartWidget('ಭಾವ ಕುಂಡಲಿ', _bhavaChart(result)))),
+              Expanded(child: AspectRatio(aspectRatio: 1.0, child: _buildChartWidget('ಭಾವ ಕುಂಡಲಿ', _bhavaChart(result), t))),
             ],
           ),
         ),
 
-        _buildFooter(user.jyotishiName, user.jyotishiPhone),
+        _buildFooter(user.jyotishiName, user.jyotishiPhone, t),
       ],
     );
   }
 
-  static Widget _buildPage2Content(UserDetails user, KundaliResult result) {
+  // ════════════════════════════════════════════════════════
+  // PAGE 2: Dasha Details
+  // ════════════════════════════════════════════════════════
+  static Widget _buildPage2Content(UserDetails user, KundaliResult result, PdfThemeConfig t) {
     final p = result.panchang;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        _buildHeader('ಜನ್ಮ ಪತ್ರಿಕೆ — ದಶಾ ವಿವರ', '${user.name} — ${user.dateStr}'),
+        _buildHeader('ಜನ್ಮ ಪತ್ರಿಕೆ — ದಶಾ ವಿವರ', '${user.name} — ${user.dateStr}', t),
         const SizedBox(height: 15),
 
-        _buildSectionTitle('ನಕ್ಷತ್ರ ಮತ್ತು ದಶಾ ವಿವರ'),
+        _buildSectionTitle('ನಕ್ಷತ್ರ ಮತ್ತು ದಶಾ ವಿವರ', t),
         _buildDetailBox([
           ['ಜನ್ಮ ನಕ್ಷತ್ರ:', p.nakshatra, 'ಚಂದ್ರ ರಾಶಿ:', p.chandraRashi],
           ['ನಕ್ಷತ್ರ ಪರಮ ಘಟಿ:', p.paramaGhati, 'ಗತ ಘಟಿ:', p.gataGhati],
           ['ಶಿಷ್ಟ ದಶಾ ನಾಥ:', p.dashaLord, 'ಶಿಷ್ಟ ದಶಾ ಶೇಷ:', p.dashaBalance],
-        ]),
+        ], t),
         const SizedBox(height: 15),
 
-        _buildSectionTitle('ವಿಂಶೋತ್ತರೀ ಮಹಾ ದಶಾ'),
-        _buildDashaTable(result),
+        _buildSectionTitle('ವಿಂಶೋತ್ತರೀ ಮಹಾ ದಶಾ', t),
+        _buildDashaTable(result, t),
         const SizedBox(height: 15),
 
         Container(
           alignment: Alignment.center,
           padding: const EdgeInsets.all(10),
           decoration: BoxDecoration(
-            color: const Color(0xFFFFF8E1),
-            border: Border.all(color: const Color(0xFFFFD54F)),
+            color: t.dashaHighlight,
+            border: Border.all(color: t.dashaHighlightBorder),
             borderRadius: BorderRadius.circular(6),
           ),
-          child: Text('ಶಿಷ್ಟ ದಶೆ: ${p.dashaLord} — ಶೇಷ: ${p.dashaBalance}', 
-            style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13, color: Color(0xFFC62828))
+          child: Text('ಶಿಷ್ಟ ದಶೆ: ${p.dashaLord} — ಶೇಷ: ${p.dashaBalance}',
+            style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13, color: t.dashaHighlightText)
           ),
         ),
 
         const SizedBox(height: 15),
-        _buildFooter(user.jyotishiName, user.jyotishiPhone),
+        _buildFooter(user.jyotishiName, user.jyotishiPhone, t),
       ],
     );
   }
 
-  static Widget _buildHeader(String mainTitle, String subTitle) {
+  // ════════════════════════════════════════════════════════
+  // THEMED WIDGETS
+  // ════════════════════════════════════════════════════════
+
+  static Widget _buildHeader(String mainTitle, String subTitle, PdfThemeConfig t) {
+    // For Black & Gold theme, use white text on dark bg
+    final bool isDarkHeader = t.id == 'black_gold';
+    final subtitleColor = isDarkHeader ? const Color(0xFFBBBBBB) : const Color(0xFF757575);
+    final shlokaColor = isDarkHeader ? const Color(0xFFFF6B6B) : t.shlokaText;
+
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 10),
       decoration: BoxDecoration(
-        color: const Color(0xFFF5F0E8),
-        border: Border.all(color: const Color(0xFF2E1A47), width: 1.5),
+        color: t.headerBg,
+        border: Border.all(color: t.primaryDark, width: 1.5),
         borderRadius: BorderRadius.circular(6),
       ),
       child: Column(
@@ -303,50 +319,48 @@ class JanmaPatrikeService {
           Row(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              // Ganapati icon — top left
               Image.asset('assets/images/ganapati.png', width: 48, height: 48),
               const Spacer(),
-              // App logo + shloka — center
               Column(
                 children: [
                   Image.asset('assets/images/logo.png', width: 42, height: 42),
                   const SizedBox(height: 3),
-                  const Text('ಶ್ರೀ ಗಣೇಶಾಯ ನಮಃ ।। ಶ್ರೀ ಗುರುಭ್ಯೋ ನಮಃ ।।', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: Color(0xFFC62828))),
+                  Text('ಶ್ರೀ ಗಣೇಶಾಯ ನಮಃ ।। ಶ್ರೀ ಗುರುಭ್ಯೋ ನಮಃ ।।',
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: shlokaColor)),
                 ],
               ),
               const Spacer(),
-              // Shiva icon — top right
               Image.asset('assets/images/shiva.png', width: 48, height: 48),
             ],
           ),
           const SizedBox(height: 4),
-          Text(mainTitle, style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 22, color: Color(0xFF2E1A47))),
+          Text(mainTitle, style: TextStyle(fontWeight: FontWeight.w900, fontSize: 22, color: t.headerText)),
           const SizedBox(height: 2),
-          Text(subTitle, style: const TextStyle(fontWeight: FontWeight.w500, fontSize: 12, color: Color(0xFF757575))),
+          Text(subTitle, style: TextStyle(fontWeight: FontWeight.w500, fontSize: 12, color: subtitleColor)),
         ],
       ),
     );
   }
 
-  static Widget _buildSectionTitle(String title) {
+  static Widget _buildSectionTitle(String title, PdfThemeConfig t) {
     return Container(
       alignment: Alignment.center,
       margin: const EdgeInsets.only(bottom: 2),
       padding: const EdgeInsets.only(bottom: 1),
-      decoration: const BoxDecoration(
-        border: Border(bottom: BorderSide(color: Color(0xFFE1BEE7), width: 1.5)),
+      decoration: BoxDecoration(
+        border: Border(bottom: BorderSide(color: t.sectionTitleBg, width: 1.5)),
       ),
-      child: Text(title, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 12.5, color: Color(0xFF6A1B9A))),
+      child: Text(title, style: TextStyle(fontWeight: FontWeight.w800, fontSize: 12.5, color: t.sectionTitleText)),
     );
   }
 
-  static Widget _buildDetailBox(List<List<String>> rows) {
+  static Widget _buildDetailBox(List<List<String>> rows, PdfThemeConfig t) {
     return Container(
       padding: const EdgeInsets.all(4),
       decoration: BoxDecoration(
-        border: Border.all(color: const Color(0xFFBDBDBD)),
+        border: Border.all(color: t.detailBorder),
         borderRadius: BorderRadius.circular(6),
-        color: const Color(0xFFF9FBE7),
+        color: t.detailBoxBg,
       ),
       child: Table(
         columnWidths: const {
@@ -366,7 +380,7 @@ class JanmaPatrikeService {
                   style: TextStyle(
                     fontWeight: isLabel ? FontWeight.bold : FontWeight.normal,
                     fontSize: 10,
-                    color: isLabel ? const Color(0xFF37474F) : const Color(0xFF212121),
+                    color: isLabel ? t.primaryDark : const Color(0xFF212121),
                   ),
                 ),
               );
@@ -377,9 +391,9 @@ class JanmaPatrikeService {
     );
   }
 
-  static Widget _buildGrahaTable(KundaliResult result) {
+  static Widget _buildGrahaTable(KundaliResult result, PdfThemeConfig t) {
     final headers = ['ಗ್ರಹ', 'ರಾಶಿ', 'ಅಂಶ', 'ನಕ್ಷತ್ರ', 'ಪಾದ', 'ವಕ್ರ/ಅಸ್ತ'];
-    
+
     final rows = <List<String>>[];
     for (final planetKey in planetOrder) {
       final info = result.planets[planetKey];
@@ -387,7 +401,7 @@ class JanmaPatrikeService {
       String vakrast = '-';
       if (info.speed < 0) vakrast = 'ವ';
       if (info.isCombust) vakrast = vakrast == 'ವ' ? 'ವ / ಅ' : 'ಅ';
-      
+
       rows.add([
         planetKey,
         info.rashi,
@@ -400,7 +414,7 @@ class JanmaPatrikeService {
 
     return Container(
       decoration: BoxDecoration(
-        border: Border.all(color: const Color(0xFFBDBDBD)),
+        border: Border.all(color: t.detailBorder),
         borderRadius: BorderRadius.circular(6),
       ),
       child: Table(
@@ -411,17 +425,17 @@ class JanmaPatrikeService {
         children: [
           // Header
           TableRow(
-            decoration: const BoxDecoration(color: Color(0xFF4A148C), borderRadius: BorderRadius.vertical(top: Radius.circular(5))),
+            decoration: BoxDecoration(color: t.tableHeaderBg, borderRadius: const BorderRadius.vertical(top: Radius.circular(5))),
             children: headers.map((h) => Padding(
               padding: const EdgeInsets.all(2),
-              child: Text(h, textAlign: TextAlign.center, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 11, color: Colors.white)),
+              child: Text(h, textAlign: TextAlign.center, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 11, color: t.tableHeaderText)),
             )).toList(),
           ),
           // Data
           ...rows.asMap().entries.map((entry) {
             final isEven = entry.key % 2 == 0;
             return TableRow(
-              decoration: BoxDecoration(color: isEven ? Colors.white : const Color(0xFFF5F0E8)),
+              decoration: BoxDecoration(color: isEven ? Colors.white : t.tableAltRow),
               children: entry.value.map((cell) => Padding(
                 padding: const EdgeInsets.symmetric(vertical: 1.5, horizontal: 2),
                 child: Text(cell, textAlign: TextAlign.center, style: const TextStyle(fontSize: 10.5, color: Colors.black)),
@@ -433,22 +447,22 @@ class JanmaPatrikeService {
     );
   }
 
-  static Widget _buildChartWidget(String title, List<List<String>> chart) {
+  static Widget _buildChartWidget(String title, List<List<String>> chart, PdfThemeConfig t) {
     if (chart.isEmpty) chart = List.generate(12, (_) => []);
-    String p(int idx) => chart[idx].join('\n'); // use newlines to separate planets cleanly
+    String p(int idx) => chart[idx].join('\n');
 
     Widget box(String text) {
       return Expanded(
         child: Container(
           alignment: Alignment.center,
           decoration: BoxDecoration(
-            border: Border.all(color: const Color(0xFF666666), width: 0.5),
+            border: Border.all(color: t.chartBorder, width: 0.5),
             color: Colors.white,
           ),
           child: Text(
             text,
             textAlign: TextAlign.center,
-            style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 11.5, color: Color(0xFF1A1A1A), height: 1.1),
+            style: TextStyle(fontWeight: FontWeight.w700, fontSize: 11.5, color: const Color(0xFF1A1A1A), height: 1.1),
           ),
         ),
       );
@@ -467,7 +481,7 @@ class JanmaPatrikeService {
       children: [
         Expanded(
           child: Container(
-            decoration: BoxDecoration(border: Border.all(color: const Color(0xFF333333), width: 1.5)),
+            decoration: BoxDecoration(border: Border.all(color: t.primaryDark, width: 1.5)),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
@@ -488,12 +502,12 @@ class JanmaPatrikeService {
                         child: Container(
                           alignment: Alignment.center,
                           decoration: BoxDecoration(
-                            border: Border.all(color: const Color(0xFF666666), width: 0.5),
-                            color: const Color(0xFFF5F0E8),
+                            border: Border.all(color: t.chartBorder, width: 0.5),
+                            color: t.chartCenterBg,
                           ),
                           child: Text(
-                            title.split(' ')[0], // ರಾಶಿ / ನವಾಂಶ / ಭಾವ
-                            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Color(0xFF2E1A47)),
+                            title.split(' ')[0],
+                            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: t.chartCenterText),
                           ),
                         ),
                       ),
@@ -512,21 +526,21 @@ class JanmaPatrikeService {
           ),
         ),
         const SizedBox(height: 6),
-        Text(title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Color(0xFF2E1A47))),
+        Text(title, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: t.primaryDark)),
       ],
     );
   }
 
-  static Widget _buildDashaTable(KundaliResult result) {
+  static Widget _buildDashaTable(KundaliResult result, PdfThemeConfig t) {
     final headers = ['ಕ್ರ.', 'ದಶಾ ನಾಥ', 'ವರ್ಷ', 'ಆರಂಭ ದಿನಾಂಕ', 'ಅಂತ್ಯ ದಿನಾಂಕ'];
-    
+
     final rows = <List<String>>[];
     for (int i = 0; i < result.dashas.length; i++) {
       final d = result.dashas[i];
       final startStr = '${d.start.day.toString().padLeft(2,'0')}-${d.start.month.toString().padLeft(2,'0')}-${d.start.year}';
       final endStr = '${d.end.day.toString().padLeft(2,'0')}-${d.end.month.toString().padLeft(2,'0')}-${d.end.year}';
       int years = d.end.year - d.start.year;
-      
+
       rows.add([
         (i + 1).toString(),
         d.lord,
@@ -538,7 +552,7 @@ class JanmaPatrikeService {
 
     return Container(
       decoration: BoxDecoration(
-        border: Border.all(color: const Color(0xFFBDBDBD)),
+        border: Border.all(color: t.detailBorder),
         borderRadius: BorderRadius.circular(6),
       ),
       child: Table(
@@ -548,16 +562,16 @@ class JanmaPatrikeService {
         ),
         children: [
           TableRow(
-            decoration: const BoxDecoration(color: Color(0xFF4A148C), borderRadius: BorderRadius.vertical(top: Radius.circular(5))),
+            decoration: BoxDecoration(color: t.tableHeaderBg, borderRadius: const BorderRadius.vertical(top: Radius.circular(5))),
             children: headers.map((h) => Padding(
               padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
-              child: Text(h, textAlign: TextAlign.center, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: Colors.white)),
+              child: Text(h, textAlign: TextAlign.center, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: t.tableHeaderText)),
             )).toList(),
           ),
           ...rows.asMap().entries.map((entry) {
             final isEven = entry.key % 2 == 0;
             return TableRow(
-              decoration: BoxDecoration(color: isEven ? Colors.white : const Color(0xFFE8EAF6)),
+              decoration: BoxDecoration(color: isEven ? Colors.white : t.dashaAltRow),
               children: entry.value.map((cell) => Padding(
                 padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 4),
                 child: Text(cell, textAlign: TextAlign.center, style: const TextStyle(fontSize: 14, color: Colors.black)),
@@ -569,22 +583,21 @@ class JanmaPatrikeService {
     );
   }
 
-  static Widget _buildFooter(String jyotishiName, String jyotishiPhone) {
+  static Widget _buildFooter(String jyotishiName, String jyotishiPhone, PdfThemeConfig t) {
     return Container(
       margin: const EdgeInsets.only(top: 10),
       padding: const EdgeInsets.only(top: 8),
-      decoration: const BoxDecoration(
-        border: Border(top: BorderSide(color: Color(0xFFBDBDBD), width: 1)),
+      decoration: BoxDecoration(
+        border: Border(top: BorderSide(color: t.detailBorder, width: 1)),
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(jyotishiName, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Color(0xFF2E1A47))),
-          const Text('ಭಾರತೀಯಂ', style: TextStyle(fontWeight: FontWeight.normal, fontSize: 13, color: Color(0xFF9E9E9E))),
-          Text(jyotishiPhone, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Color(0xFF2E1A47))),
+          Text(jyotishiName, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: t.footerText)),
+          Text('ಭಾರತೀಯಂ', style: TextStyle(fontWeight: FontWeight.normal, fontSize: 13, color: t.footerText.withOpacity(0.5))),
+          Text(jyotishiPhone, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: t.footerText)),
         ],
       ),
     );
   }
 }
-

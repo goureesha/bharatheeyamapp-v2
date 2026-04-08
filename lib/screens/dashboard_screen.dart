@@ -23,6 +23,7 @@ import '../services/docs_service.dart';
 import '../services/calendar_service.dart';
 import '../services/location_service.dart';
 import '../services/janma_patrike_service.dart'; // NEW
+import '../services/pdf_theme.dart';
 import '../constants/places.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -109,6 +110,7 @@ class _DashboardScreenState extends State<DashboardScreen>
   final _gotraCtrl = TextEditingController();
   final _jyotishiNameCtrl = TextEditingController();
   final _jyotishiPhoneCtrl = TextEditingController();
+  String _selectedThemeId = 'traditional';
 
 
   // Multi-person support
@@ -2462,24 +2464,147 @@ class _DashboardScreenState extends State<DashboardScreen>
   // TAB 11: JANMA PATRIKE (PDF GENERATION)
   // ─────────────────────────────────────────────
   Widget _buildJanmaPatrikeTab() {
+    final selectedTheme = PdfThemes.getById(_selectedThemeId);
+
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // ── Theme Picker ──
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
               color: kCard,
               borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: kPurple2.withOpacity(0.3)),
+              border: Border.all(color: kBorder),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Row(
                   children: [
-                    Icon(Icons.picture_as_pdf, color: kPurple2),
+                    Icon(Icons.palette, color: kPurple2),
+                    const SizedBox(width: 8),
+                    Text('PDF ಥೀಮ್ ಆಯ್ಕೆ', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w900, color: kText)),
+                  ],
+                ),
+                const SizedBox(height: 4),
+                Text('ಪತ್ರಿಕೆಯ ವಿನ್ಯಾಸ ಮತ್ತು ಬಣ್ಣ ಬದಲಾಯಿಸಿ', style: TextStyle(fontSize: 12, color: kMuted)),
+                const SizedBox(height: 12),
+                GridView.count(
+                  crossAxisCount: 3,
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  mainAxisSpacing: 10,
+                  crossAxisSpacing: 10,
+                  childAspectRatio: 1.1,
+                  children: PdfThemes.all.map((t) {
+                    final isSelected = t.id == _selectedThemeId;
+                    return GestureDetector(
+                      onTap: () {
+                        setState(() => _selectedThemeId = t.id);
+                        PdfThemes.save(t.id);
+                      },
+                      child: AnimatedContainer(
+                        duration: const Duration(milliseconds: 200),
+                        decoration: BoxDecoration(
+                          color: isSelected ? t.primaryLight.withOpacity(0.1) : kBg,
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(
+                            color: isSelected ? t.primaryLight : kBorder,
+                            width: isSelected ? 2.5 : 1.0,
+                          ),
+                          boxShadow: isSelected ? [
+                            BoxShadow(color: t.primaryLight.withOpacity(0.2), blurRadius: 8, offset: const Offset(0, 2)),
+                          ] : [],
+                        ),
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            // Mini page preview
+                            Container(
+                              width: 44,
+                              height: 56,
+                              decoration: BoxDecoration(
+                                color: t.pageBg,
+                                borderRadius: BorderRadius.circular(3),
+                                border: Border.all(color: t.borderColor1, width: 1.5),
+                              ),
+                              child: Column(
+                                children: [
+                                  // Mini header
+                                  Container(
+                                    height: 10,
+                                    margin: const EdgeInsets.all(3),
+                                    decoration: BoxDecoration(
+                                      color: t.headerBg,
+                                      borderRadius: BorderRadius.circular(1),
+                                      border: Border.all(color: t.primaryDark, width: 0.5),
+                                    ),
+                                  ),
+                                  // Mini table header
+                                  Container(
+                                    height: 5,
+                                    margin: const EdgeInsets.symmetric(horizontal: 3),
+                                    color: t.tableHeaderBg,
+                                  ),
+                                  // Mini rows
+                                  Container(
+                                    height: 4,
+                                    margin: const EdgeInsets.symmetric(horizontal: 3, vertical: 1),
+                                    color: t.detailBoxBg,
+                                  ),
+                                  Container(
+                                    height: 4,
+                                    margin: const EdgeInsets.symmetric(horizontal: 3),
+                                    color: t.tableAltRow,
+                                  ),
+                                  // Mini border line
+                                  const Spacer(),
+                                  Container(
+                                    height: 2,
+                                    margin: const EdgeInsets.fromLTRB(2, 0, 2, 2),
+                                    decoration: BoxDecoration(
+                                      border: Border(
+                                        top: BorderSide(color: t.borderColor2, width: 1),
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            const SizedBox(height: 6),
+                            Text(t.nameKn, style: TextStyle(
+                              fontSize: 11, fontWeight: isSelected ? FontWeight.w900 : FontWeight.w600,
+                              color: isSelected ? t.primaryLight : kText,
+                            )),
+                            Text(t.nameEn, style: TextStyle(fontSize: 9, color: kMuted)),
+                          ],
+                        ),
+                      ),
+                    );
+                  }).toList(),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 16),
+
+          // ── Form Fields ──
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: kCard,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: selectedTheme.primaryLight.withOpacity(0.3)),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Icon(Icons.picture_as_pdf, color: selectedTheme.primaryLight),
                     const SizedBox(width: 8),
                     Text('ಜನ್ಮ ಪತ್ರಿಕೆ ರಚಿಸಿ', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w900, color: kText)),
                   ],
@@ -2532,17 +2657,17 @@ class _DashboardScreenState extends State<DashboardScreen>
                   width: double.infinity,
                   child: ElevatedButton.icon(
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: kPurple2,
+                      backgroundColor: selectedTheme.primaryLight,
                       foregroundColor: Colors.white,
                       padding: const EdgeInsets.symmetric(vertical: 14),
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                     ),
                     icon: const Icon(Icons.print),
-                    label: Text('PDF ಪ್ರಿಂಟ್ ಮಾಡಿ', style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16)),
+                    label: Text('PDF ಪ್ರಿಂಟ್ ಮಾಡಿ — ${selectedTheme.nameKn}', style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16)),
                     onPressed: () async {
                       final dateStr = '${widget.dob.day.toString().padLeft(2,'0')}-${widget.dob.month.toString().padLeft(2,'0')}-${widget.dob.year}';
                       final timeStr = '${widget.hour.toString().padLeft(2,'0')}:${widget.minute.toString().padLeft(2,'0')} ${widget.ampm}';
-                      
+
                       final ud = UserDetails(
                         name: widget.name,
                         dateStr: dateStr,
@@ -2554,13 +2679,13 @@ class _DashboardScreenState extends State<DashboardScreen>
                         jyotishiName: _jyotishiNameCtrl.text.trim(),
                         jyotishiPhone: _jyotishiPhoneCtrl.text.trim(),
                       );
-                      
+
                       ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text('⏳ ${'PDF ಸೃಷ್ಟಿಸಲಾಗುತ್ತಿದೆ...'}'))
+                        SnackBar(content: Text('⏳ ${selectedTheme.nameKn} ಥೀಮ್‌ನಲ್ಲಿ PDF ಸೃಷ್ಟಿಸಲಾಗುತ್ತಿದೆ...'))
                       );
-                      
+
                       try {
-                        await JanmaPatrikeService.generateAndPrint(ud, widget.result);
+                        await JanmaPatrikeService.generateAndPrint(ud, widget.result, theme: selectedTheme);
                       } catch (e) {
                          ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(content: Text('❌ ${'ದೋಷ'}: $e'), backgroundColor: Colors.red)
