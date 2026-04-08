@@ -792,11 +792,7 @@ class _DashboardScreenState extends State<DashboardScreen>
                       tooltip: 'ವ್ಯಕ್ತಿ ಸೇರಿಸಿ',
                       onPressed: _showAddPersonDialog,
                     ),
-                    IconButton(
-                      icon: Icon(Icons.share, color: kTeal),
-                      tooltip: 'Share CSV',
-                      onPressed: _exportAndShareCSV,
-                    ),
+
                     IconButton(
                       icon: _syncing
                         ? SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: kTeal))
