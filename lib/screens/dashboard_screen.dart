@@ -149,8 +149,8 @@ class _DashboardScreenState extends State<DashboardScreen>
     final prefs = await SharedPreferences.getInstance();
     if (mounted) {
       setState(() {
-        _jyotishiNameCtrl.text = prefs.getString('jyotishi_name') ?? 'ಶ್ರೀ ರಾಮಚಂದ್ರ ಜ್ಯೋತಿಷ';
-        _jyotishiPhoneCtrl.text = prefs.getString('jyotishi_phone') ?? '9480603273';
+        _jyotishiNameCtrl.text = prefs.getString('jyotishi_name') ?? '';
+        _jyotishiPhoneCtrl.text = prefs.getString('jyotishi_phone') ?? '';
       });
     }
   }
