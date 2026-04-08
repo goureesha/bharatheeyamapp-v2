@@ -83,11 +83,27 @@ class BharatheeyamApp extends StatefulWidget {
   State<BharatheeyamApp> createState() => _BharatheeyamAppState();
 }
 
-class _BharatheeyamAppState extends State<BharatheeyamApp> {
+class _BharatheeyamAppState extends State<BharatheeyamApp> with WidgetsBindingObserver {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+  }
+
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     SubscriptionService.dispose();
     super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      // Re-verify subscription when app comes back to foreground
+      // This handles: internet reconnects during grace period
+      SubscriptionService.checkOnReconnect();
+    }
   }
 
   @override
@@ -366,7 +382,23 @@ class _InternetRequiredScreenState extends State<_InternetRequiredScreen> {
             textAlign: TextAlign.center,
             style: TextStyle(fontSize: 12, color: kMuted, height: 1.5),
           ),
-          const SizedBox(height: 32),
+          const SizedBox(height: 12),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+            decoration: BoxDecoration(
+              color: Colors.orange.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: Colors.orange.withOpacity(0.3)),
+            ),
+            child: Column(children: [
+              Text(SubscriptionService.statusText,
+                style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: kText)),
+              const SizedBox(height: 4),
+              Text(SubscriptionService.graceStatusText,
+                style: TextStyle(fontSize: 12, color: kMuted)),
+            ]),
+          ),
+          const SizedBox(height: 24),
           if (_checking)
             CircularProgressIndicator(color: kPurple2)
           else

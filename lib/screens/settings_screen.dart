@@ -544,6 +544,73 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                ),
                              ],
                            ),
+                           // ── Subscription Status Info ──
+                           const SizedBox(height: 12),
+                           Container(
+                             padding: const EdgeInsets.all(12),
+                             decoration: BoxDecoration(
+                               color: kBorder.withOpacity(0.12),
+                               borderRadius: BorderRadius.circular(8),
+                             ),
+                             child: Column(
+                               crossAxisAlignment: CrossAxisAlignment.start,
+                               children: [
+                                 Row(children: [
+                                   Icon(Icons.verified_user, size: 16,
+                                     color: SubscriptionService.hasSubscription ? Colors.green : kMuted),
+                                   const SizedBox(width: 8),
+                                   Expanded(child: Text(
+                                     SubscriptionService.statusText,
+                                     style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: kText),
+                                   )),
+                                 ]),
+                                 if (SubscriptionService.hasSubscription && SubscriptionService.subscriptionDaysRemaining > 0) ...[
+                                   const SizedBox(height: 8),
+                                   ClipRRect(
+                                     borderRadius: BorderRadius.circular(4),
+                                     child: LinearProgressIndicator(
+                                       value: SubscriptionService.subscriptionDaysRemaining / 365,
+                                       backgroundColor: kBorder.withOpacity(0.3),
+                                       color: SubscriptionService.subscriptionDaysRemaining > 30 ? Colors.green : Colors.orange,
+                                       minHeight: 6,
+                                     ),
+                                   ),
+                                   const SizedBox(height: 4),
+                                   Text('${SubscriptionService.subscriptionDaysRemaining} / 365 ದಿನ ಬಾಕಿ',
+                                     style: TextStyle(fontSize: 11, color: kMuted)),
+                                 ],
+                                 const SizedBox(height: 10),
+                                 Row(children: [
+                                   Icon(
+                                     SubscriptionService.isGracePeriodActive ? Icons.shield : Icons.shield_outlined,
+                                     size: 16,
+                                     color: SubscriptionService.isGracePeriodActive ? Colors.orange : kMuted,
+                                   ),
+                                   const SizedBox(width: 8),
+                                   Expanded(child: Text(
+                                     SubscriptionService.graceStatusText,
+                                     style: TextStyle(
+                                       fontSize: 12,
+                                       color: SubscriptionService.isGracePeriodActive ? Colors.orange.shade800 : kMuted,
+                                       fontWeight: SubscriptionService.isGracePeriodActive ? FontWeight.w700 : FontWeight.normal,
+                                     ),
+                                   )),
+                                 ]),
+                                 if (SubscriptionService.isGracePeriodActive) ...[
+                                   const SizedBox(height: 6),
+                                   ClipRRect(
+                                     borderRadius: BorderRadius.circular(4),
+                                     child: LinearProgressIndicator(
+                                       value: SubscriptionService.gracePeriodRemainingHours / 48,
+                                       backgroundColor: kBorder.withOpacity(0.3),
+                                       color: Colors.orange,
+                                       minHeight: 4,
+                                     ),
+                                   ),
+                                 ],
+                               ],
+                             ),
+                           ),
                            if (!SubscriptionService.hasSubscription) ...[
                              const SizedBox(height: 12),
                              Text(
@@ -573,6 +640,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                onPressed: () async {
                                   await SubscriptionService.restorePurchases();
                                   if (mounted) {
+                                    setState(() {});
                                     ScaffoldMessenger.of(context).showSnackBar(
                                         const SnackBar(content: Text('ಹಿಂದಿನ ಖರೀದಿಗಳನ್ನು ಮರುಸ್ಥಾಪಿಸಲಾಗಿದೆ.'))
                                     );

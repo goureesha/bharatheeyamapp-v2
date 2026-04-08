@@ -11,8 +11,16 @@ class SubscriptionService {
   static const String _trialStartKey = 'trial_start_timestamp';
   static const String _lastVerifiedKey = 'last_verified_timestamp';
   static const String _purchaseDateKey = 'purchase_date_timestamp';
+  static const String _graceCountKey = 'grace_period_count';
+  static const String _graceYearKey = 'grace_period_year';
+  static const String _graceStartKey = 'grace_start_timestamp';
+  static const String _graceActiveKey = 'grace_active';
+
+  // ── Constants ──
   static const int _trialDays = 3;
   static const int _offlineGraceDays = 2;
+  static const int _maxGracePeriodsPerYear = 10;
+  static const int _subscriptionDurationDays = 365;
 
   static InAppPurchase get _iap => InAppPurchase.instance;
   static StreamSubscription<List<PurchaseDetails>>? _purchaseSub;
@@ -23,8 +31,18 @@ class SubscriptionService {
   static DateTime? lastVerifiedDate;
   static DateTime? purchaseDate;
 
+  // ── Grace period state ──
+  static bool isGracePeriodActive = false;
+  static DateTime? graceStartDate;
+  static int gracePeriodsUsedThisYear = 0;
+  static int _graceYear = 0;
+
   /// Whether the app must show the "connect to internet" screen
   static bool needsInternetVerification = false;
+
+  // ════════════════════════════════════════════════
+  // COMPUTED PROPERTIES FOR UI
+  // ════════════════════════════════════════════════
 
   /// True if the user has access (subscribed + verified recently, OR trial active)
   static bool get hasAccess {
@@ -36,7 +54,6 @@ class SubscriptionService {
   /// True if the free trial is still active
   static bool get isTrialActive {
     if (trialStartDate == null) return false;
-    // Use last verified server time if available, else device time as fallback
     final now = lastVerifiedDate ?? DateTime.now();
     final elapsed = now.difference(trialStartDate!);
     return elapsed.inDays < _trialDays;
@@ -49,6 +66,56 @@ class SubscriptionService {
     final elapsed = now.difference(trialStartDate!);
     final remaining = _trialDays - elapsed.inDays;
     return remaining > 0 ? remaining : 0;
+  }
+
+  /// Days remaining in subscription (0 if expired or not subscribed)
+  static int get subscriptionDaysRemaining {
+    if (!hasSubscription || purchaseDate == null) return 0;
+    final expiryDate = purchaseDate!.add(const Duration(days: _subscriptionDurationDays));
+    final remaining = expiryDate.difference(DateTime.now()).inDays;
+    return remaining > 0 ? remaining : 0;
+  }
+
+  /// Hours remaining in current grace period (0 if not active)
+  static int get gracePeriodRemainingHours {
+    if (!isGracePeriodActive || graceStartDate == null) return 0;
+    final elapsed = DateTime.now().difference(graceStartDate!);
+    final remainingHours = (_offlineGraceDays * 24) - elapsed.inHours;
+    return remainingHours > 0 ? remainingHours : 0;
+  }
+
+  /// Grace periods remaining this year
+  static int get gracePeriodsRemainingThisYear {
+    final remaining = _maxGracePeriodsPerYear - gracePeriodsUsedThisYear;
+    return remaining > 0 ? remaining : 0;
+  }
+
+  /// Subscription status text for UI display
+  static String get statusText {
+    if (!hasSubscription && !isTrialActive) {
+      return 'ಚಂದಾದಾರಿಕೆ ಇಲ್ಲ (No subscription)';
+    }
+    if (isTrialActive) {
+      return 'ಟ್ರಯಲ್ ಸಕ್ರಿಯ - $trialDaysRemaining ದಿನ ಬಾಕಿ';
+    }
+    if (hasSubscription) {
+      final days = subscriptionDaysRemaining;
+      if (days > 0) {
+        return 'ಪ್ರೀಮಿಯಂ ಸಕ್ರಿಯ - $days ದಿನ ಬಾಕಿ';
+      } else {
+        return 'ಚಂದಾದಾರಿಕೆ ಮುಗಿದಿದೆ';
+      }
+    }
+    return '';
+  }
+
+  /// Grace period status text for UI display
+  static String get graceStatusText {
+    if (isGracePeriodActive) {
+      final hrs = gracePeriodRemainingHours;
+      return 'ಗ್ರೇಸ್ ಸಕ್ರಿಯ - ${hrs}h ಬಾಕಿ ($gracePeriodsUsedThisYear/$_maxGracePeriodsPerYear ಬಳಸಲಾಗಿದೆ)';
+    }
+    return 'ಗ್ರೇಸ್ ನಿಷ್ಕ್ರಿಯ ($gracePeriodsUsedThisYear/$_maxGracePeriodsPerYear ಬಳಸಲಾಗಿದೆ)';
   }
 
   // ════════════════════════════════════════════════
@@ -80,6 +147,34 @@ class SubscriptionService {
       purchaseDate = DateTime.fromMillisecondsSinceEpoch(purchaseTs);
     }
 
+    // Load grace period state
+    _graceYear = prefs.getInt(_graceYearKey) ?? DateTime.now().year;
+    gracePeriodsUsedThisYear = prefs.getInt(_graceCountKey) ?? 0;
+    isGracePeriodActive = prefs.getBool(_graceActiveKey) ?? false;
+    final graceStartTs = prefs.getInt(_graceStartKey);
+    if (graceStartTs != null) {
+      graceStartDate = DateTime.fromMillisecondsSinceEpoch(graceStartTs);
+    }
+
+    // Reset grace count if new year
+    if (_graceYear != DateTime.now().year) {
+      _graceYear = DateTime.now().year;
+      gracePeriodsUsedThisYear = 0;
+      await prefs.setInt(_graceYearKey, _graceYear);
+      await prefs.setInt(_graceCountKey, 0);
+    }
+
+    // Check if existing grace period has expired
+    if (isGracePeriodActive && graceStartDate != null) {
+      final elapsed = DateTime.now().difference(graceStartDate!);
+      if (elapsed.inDays >= _offlineGraceDays) {
+        // Grace period expired
+        isGracePeriodActive = false;
+        await prefs.setBool(_graceActiveKey, false);
+        debugPrint('⏰ Grace period expired on startup');
+      }
+    }
+
     if (kIsWeb) return;
 
     // Setup purchase listener
@@ -99,16 +194,19 @@ class SubscriptionService {
     }
   }
 
+  // ════════════════════════════════════════════════
+  // PLAY STORE VERIFICATION
+  // ════════════════════════════════════════════════
+
   /// Checks subscription status with Google Play.
   /// Strategy: ASSUME REVOKED, then GRANT only if Play Store confirms active purchase.
-  /// This handles expired subscriptions where restorePurchases() returns nothing.
   static Future<void> _verifyWithPlayStore() async {
     bool storeReachable = false;
     try {
       final available = await _iap.isAvailable();
       if (!available) {
-        debugPrint('🔌 Play Store not available — going offline mode');
-        _handleOffline();
+        debugPrint('🔌 Play Store not available — activating grace period');
+        await _activateGracePeriod();
         return;
       }
       storeReachable = true;
@@ -127,6 +225,9 @@ class SubscriptionService {
       await _updateLastVerified();
       needsInternetVerification = false;
 
+      // Deactivate grace period since we successfully verified
+      await _deactivateGracePeriod();
+
       // KEY FIX: If we had a subscription but Play Store didn't confirm it,
       // it means the subscription has expired → REVOKE
       if (!_foundActiveDuringRestore && hasSubscription) {
@@ -139,47 +240,87 @@ class SubscriptionService {
       if (storeReachable) {
         // Store WAS reachable but restorePurchases() threw an error
         // (e.g. rate-limited, Play Store glitch).
-        // Still check if we got an active purchase from the stream.
-        // If not, and we had a subscription, REVOKE — don't give free grace.
-        debugPrint('⚠️ Store reachable but restore threw — checking flag');
-        await Future.delayed(const Duration(milliseconds: 1000));
-        if (!_foundActiveDuringRestore && hasSubscription) {
-          debugPrint('⚠️ No active purchase confirmed after error → REVOKING');
-          await _revokeAccess();
-        }
-        needsInternetVerification = false;
-        await _updateLastVerified();
+        // Activate grace period — don't revoke on rate limit.
+        debugPrint('⚠️ Store reachable but restore threw — activating grace period');
+        await _activateGracePeriod();
       } else {
         // Store truly not reachable — genuine offline scenario
-        _handleOffline();
+        await _activateGracePeriod();
       }
     }
   }
 
-  /// Called when we can't reach Play Store — enforce grace period
-  static void _handleOffline() {
+  // ════════════════════════════════════════════════
+  // GRACE PERIOD MANAGEMENT
+  // ════════════════════════════════════════════════
+
+  /// Activate a grace period (offline or rate-limited)
+  static Future<void> _activateGracePeriod() async {
     if (!hasSubscription) {
       // Not subscribed, nothing to grace-period
       needsInternetVerification = false;
       return;
     }
 
-    // Check how long since last successful verification
-    if (lastVerifiedDate == null) {
-      // Never verified — must connect
+    // If already in an active grace period, check if it's still valid
+    if (isGracePeriodActive && graceStartDate != null) {
+      final elapsed = DateTime.now().difference(graceStartDate!);
+      if (elapsed.inDays < _offlineGraceDays) {
+        // Still within active grace period — allow access, don't count again
+        needsInternetVerification = false;
+        debugPrint('📟 Still within grace period (${elapsed.inHours}h elapsed). Access allowed.');
+        return;
+      } else {
+        // This grace period expired — fall through to start a new one (if allowed)
+        isGracePeriodActive = false;
+      }
+    }
+
+    // Reset year counter if needed
+    final currentYear = DateTime.now().year;
+    if (_graceYear != currentYear) {
+      _graceYear = currentYear;
+      gracePeriodsUsedThisYear = 0;
+    }
+
+    // Check if grace periods are exhausted for this year
+    if (gracePeriodsUsedThisYear >= _maxGracePeriodsPerYear) {
+      // No more grace periods — LOCK until internet
       needsInternetVerification = true;
+      isGracePeriodActive = false;
+      debugPrint('🚫 All $gracePeriodsUsedThisYear grace periods used this year. LOCKED.');
+      await _saveGraceState();
       return;
     }
 
-    final elapsed = DateTime.now().difference(lastVerifiedDate!);
-    if (elapsed.inDays >= _offlineGraceDays) {
-      // Grace period expired — lock until internet
-      needsInternetVerification = true;
-      debugPrint('Offline grace period expired (${elapsed.inDays} days). Locking app.');
-    } else {
-      // Within grace period — allow access
-      needsInternetVerification = false;
-      debugPrint('Within offline grace period (${elapsed.inDays} days). Access allowed.');
+    // Activate a NEW grace period
+    isGracePeriodActive = true;
+    graceStartDate = DateTime.now();
+    gracePeriodsUsedThisYear++;
+    needsInternetVerification = false;
+    debugPrint('🛡️ Grace period #$gracePeriodsUsedThisYear activated (${_offlineGraceDays} days). Access allowed.');
+
+    await _saveGraceState();
+  }
+
+  /// Deactivate grace period (after successful verification)
+  static Future<void> _deactivateGracePeriod() async {
+    if (isGracePeriodActive) {
+      isGracePeriodActive = false;
+      graceStartDate = null;
+      debugPrint('✅ Grace period deactivated — verified online.');
+      await _saveGraceState();
+    }
+  }
+
+  /// Save grace period state to SharedPreferences
+  static Future<void> _saveGraceState() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(_graceActiveKey, isGracePeriodActive);
+    await prefs.setInt(_graceCountKey, gracePeriodsUsedThisYear);
+    await prefs.setInt(_graceYearKey, _graceYear);
+    if (graceStartDate != null) {
+      await prefs.setInt(_graceStartKey, graceStartDate!.millisecondsSinceEpoch);
     }
   }
 
@@ -188,6 +329,22 @@ class SubscriptionService {
     lastVerifiedDate = DateTime.now();
     final prefs = await SharedPreferences.getInstance();
     await prefs.setInt(_lastVerifiedKey, lastVerifiedDate!.millisecondsSinceEpoch);
+  }
+
+  // ════════════════════════════════════════════════
+  // CONNECTIVITY RE-CHECK (call from app lifecycle)
+  // ════════════════════════════════════════════════
+
+  /// Call this when the app detects internet connectivity during a grace period.
+  /// Also call on app resume to re-check.
+  static Future<void> checkOnReconnect() async {
+    if (kIsWeb) return;
+
+    // Only re-verify if we are in grace period or need verification
+    if (isGracePeriodActive || needsInternetVerification) {
+      debugPrint('🔄 Internet detected during grace/lock — re-verifying with Play Store');
+      await _verifyWithPlayStore();
+    }
   }
 
   // ════════════════════════════════════════════════
@@ -229,6 +386,9 @@ class SubscriptionService {
       await Future.delayed(const Duration(milliseconds: 2500));
       await _updateLastVerified();
       needsInternetVerification = false;
+
+      // Deactivate grace if we successfully verified
+      await _deactivateGracePeriod();
 
       // If no active purchase was found during restore, revoke
       if (!_foundActiveDuringRestore && hasSubscription) {
@@ -314,8 +474,10 @@ class SubscriptionService {
 
   static Future<void> _revokeAccess() async {
     hasSubscription = false;
+    isGracePeriodActive = false;
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool(_subStatusKey, false);
+    await prefs.setBool(_graceActiveKey, false);
     debugPrint('🔒 Subscription REVOKED — no active purchase found');
   }
 
