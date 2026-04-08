@@ -26,14 +26,12 @@ Future<void> main() async {
     DeviceOrientation.landscapeRight,
   ]);
 
-  // Run the 3 critical startup tasks in PARALLEL (not sequentially)
-  // These are needed before the first frame renders:
-  //   1. Ephemeris engine (for calculations)
-  //   2. Subscription status (to decide paywall vs home)
-  //   3. Theme (to render with correct colors)
   // NTP must init BEFORE SubscriptionService so trusted time is available
   await TrustedTimeService.init();
 
+  // Run ALL critical startup tasks in PARALLEL (not sequentially)
+  // Including silent sign-in + device binding check — these MUST complete
+  // before the first frame so we can show the correct screen
   await Future.wait([
     _initEphemeris(),
     SubscriptionService.initialize(),
@@ -42,13 +40,14 @@ Future<void> main() async {
     AppLocale.loadLang(),
     LocationService.init(),
     TesterService.init(),
+    InstallChecker.check(),
+    _initAuthAndBinding(), // ← Sign in + device binding check BEFORE first frame
   ]);
 
-  // Show the app immediately — don't block on network calls
+  // Now show the app — binding state is already resolved
   runApp(const BharatheeyamApp());
 
-  // Defer non-critical checks to AFTER the first frame renders
-  // This makes the app feel instant while these run in the background
+  // Defer non-critical tasks to AFTER the first frame
   WidgetsBinding.instance.addPostFrameCallback((_) {
     _deferredInit();
   });
@@ -66,17 +65,28 @@ Future<void> _initEphemeris() async {
 /// Notifier for device binding status — triggers UI rebuild when binding changes
 final ValueNotifier<bool> deviceBindingNotifier = ValueNotifier<bool>(true);
 
+/// Sign in silently and check device binding BEFORE the app renders.
+/// This ensures the correct screen is shown on the very first frame.
+Future<void> _initAuthAndBinding() async {
+  try {
+    await GoogleAuthService.signInSilently();
+    if (GoogleAuthService.isSignedIn) {
+      final bound = await DeviceBindingService.checkBinding();
+      deviceBindingNotifier.value = bound;
+      debugPrint('DeviceBinding: pre-render check result=$bound');
+    }
+  } catch (e) {
+    debugPrint('Auth/Binding init error: $e');
+    // If it fails, keep deviceBindingNotifier as true (fail-open for auth errors)
+    // The binding service itself is fail-closed for Firestore errors
+  }
+}
+
 /// Non-critical startup tasks that run AFTER the app is visible
 Future<void> _deferredInit() async {
-  // These don't affect initial screen rendering
-  await InstallChecker.check();
-  await GoogleAuthService.signInSilently();
-
+  // Start Firebase appointment listener
   if (GoogleAuthService.isSignedIn) {
-    // MUST await — the result determines whether to block the user
-    final bound = await DeviceBindingService.checkBinding();
-    deviceBindingNotifier.value = bound;
-    FirebaseService.init(); // Start listening for web appointments
+    FirebaseService.init();
   }
 
   // Pre-load festival events lazily (non-blocking)
