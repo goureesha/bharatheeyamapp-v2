@@ -99,12 +99,9 @@ class SubscriptionService {
     }
   }
 
-  // ════════════════════════════════════════════════
-  // PLAY STORE VERIFICATION (core logic)
-  // ════════════════════════════════════════════════
-
   /// Checks subscription status with Google Play.
-  /// If offline, enforces 2-day grace period.
+  /// Strategy: ASSUME REVOKED, then GRANT only if Play Store confirms active purchase.
+  /// This handles expired subscriptions where restorePurchases() returns nothing.
   static Future<void> _verifyWithPlayStore() async {
     try {
       final available = await _iap.isAvailable();
@@ -113,23 +110,26 @@ class SubscriptionService {
         return;
       }
 
+      // Reset: assume no active purchase until stream confirms one
+      _foundActiveDuringRestore = false;
+
       // This triggers the purchase stream with current purchase state
       await _iap.restorePurchases();
 
-      // If we reach here, Play Store was contactable.
-      // The actual grant/revoke happens in _listenToPurchaseUpdated.
-      // We mark verification timestamp after a short delay to let the stream process.
-      await Future.delayed(const Duration(milliseconds: 1500));
+      // Wait for the stream to process any restored purchases.
+      // If subscription expired, the stream may not fire at all.
+      await Future.delayed(const Duration(milliseconds: 2500));
 
       // Record that we successfully talked to Play Store
       await _updateLastVerified();
       needsInternetVerification = false;
 
-      // After restore completes, if no active purchase was found,
-      // the stream handler would NOT have called _grantAccess.
-      // We need to check: if hasSubscription was true before but the stream
-      // didn't confirm it, we should revoke.
-      // This is handled by _processRestoreResults below.
+      // KEY FIX: If we had a subscription but Play Store didn't confirm it,
+      // it means the subscription has expired → REVOKE
+      if (!_foundActiveDuringRestore && hasSubscription) {
+        debugPrint('⚠️ Play Store did NOT confirm active subscription → REVOKING');
+        await _revokeAccess();
+      }
     } catch (e) {
       debugPrint('Play Store verification failed: $e');
       _handleOffline();
@@ -204,10 +204,16 @@ class SubscriptionService {
   /// Manually restore purchases (user-triggered)
   static Future<void> restorePurchases() async {
     try {
+      _foundActiveDuringRestore = false;
       await _iap.restorePurchases();
-      await Future.delayed(const Duration(milliseconds: 1500));
+      await Future.delayed(const Duration(milliseconds: 2500));
       await _updateLastVerified();
       needsInternetVerification = false;
+
+      // If no active purchase was found during restore, revoke
+      if (!_foundActiveDuringRestore && hasSubscription) {
+        await _revokeAccess();
+      }
     } catch (e) {
       debugPrint('Restore failed: $e');
     }
@@ -222,7 +228,7 @@ class SubscriptionService {
   // PURCHASE STREAM HANDLER
   // ════════════════════════════════════════════════
 
-  static bool _restoredAnyPurchase = false;
+  static bool _foundActiveDuringRestore = false;
 
   static Future<void> _listenToPurchaseUpdated(List<PurchaseDetails> purchaseDetailsList) async {
     if (purchaseDetailsList.isEmpty) {
@@ -244,7 +250,7 @@ class SubscriptionService {
                  pd.status == PurchaseStatus.restored) {
         if (pd.productID == _subscriptionProductId) {
           foundActive = true;
-          _restoredAnyPurchase = true;
+          _foundActiveDuringRestore = true;
 
           // Save the Play Store's transaction date as trusted timestamp
           if (pd.transactionDate != null) {
