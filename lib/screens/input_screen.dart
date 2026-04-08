@@ -5,6 +5,7 @@ import 'dart:convert';
 import '../widgets/common.dart';
 import '../services/storage_service.dart';
 import '../services/client_service.dart';
+import '../services/history_service.dart';
 import '../core/calculator.dart';
 import '../constants/places.dart';
 import '../core/ephemeris.dart';
@@ -62,6 +63,7 @@ class _InputScreenState extends State<InputScreen> {
     _tzCtrl = TextEditingController(text: '${LocationService.tzOffset >= 0 ? '+' : ''}${LocationService.tzOffset}');
     _loadProfiles();
     _checkNetwork();
+    HistoryService.load();
   }
 
   @override
@@ -346,6 +348,20 @@ class _InputScreenState extends State<InputScreen> {
       if (result != null && mounted) {
         String uiNotes = _loadedNotes;
         String? activeClientId = _loadedClientId;
+
+        // ── Auto-save to history (fire-and-forget) ──
+        HistoryService.add(HistoryEntry(
+          name: _nameCtrl.text.trim().isNotEmpty ? _nameCtrl.text.trim() : AppLocale.l('unknown'),
+          date: '${_dob.year}-${_dob.month.toString().padLeft(2, '0')}-${_dob.day.toString().padLeft(2, '0')}',
+          hour: _hour,
+          minute: _minute,
+          ampm: _ampm,
+          lat: lat,
+          lon: lon,
+          tzOffset: tzOffset,
+          place: _placeCtrl.text,
+          timestamp: DateTime.now().toIso8601String(),
+        ));
 
         if (!_loadedFromSaved) {
           activeClientId = await ClientService.generateNextClientId();
@@ -724,6 +740,219 @@ class _InputScreenState extends State<InputScreen> {
     );
   }
 
+  // ════════════════════════════════════════════════
+  // HISTORY SHEET
+  // ════════════════════════════════════════════════
+
+  Widget _buildHistorySheet(ScrollController scrollCtrl) {
+    return StatefulBuilder(
+      builder: (ctx, setSheetState) {
+        final items = HistoryService.entries;
+        return SafeArea(
+          child: Column(
+            children: [
+              // Handle bar
+              Container(
+                margin: const EdgeInsets.only(top: 12, bottom: 4),
+                width: 40, height: 4,
+                decoration: BoxDecoration(
+                  color: kMuted.withOpacity(0.4),
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+              // Header
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                child: Row(
+                  children: [
+                    Icon(Icons.history, color: const Color(0xFF7B2D8E), size: 24),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        'ಇತ್ತೀಚಿನ ಕುಂಡಲಿಗಳು (${items.length}/100)',
+                        style: TextStyle(fontSize: 17, fontWeight: FontWeight.w900, color: const Color(0xFF7B2D8E)),
+                      ),
+                    ),
+                    if (items.isNotEmpty)
+                      TextButton.icon(
+                        onPressed: () async {
+                          final confirm = await showDialog<bool>(
+                            context: ctx,
+                            builder: (dCtx) => AlertDialog(
+                              backgroundColor: kBg,
+                              title: Text('ಇತಿಹಾಸ ಅಳಿಸಿ', style: TextStyle(color: kText, fontWeight: FontWeight.w900)),
+                              content: Text('ಎಲ್ಲಾ ${items.length} ಇತಿಹಾಸ ನಮೂದುಗಳನ್ನು ಅಳಿಸಬೇಕೇ?', style: TextStyle(color: kMuted)),
+                              actions: [
+                                TextButton(onPressed: () => Navigator.pop(dCtx, false), child: Text('ಬೇಡ', style: TextStyle(color: kMuted))),
+                                TextButton(onPressed: () => Navigator.pop(dCtx, true), child: Text('ಅಳಿಸಿ', style: TextStyle(color: Colors.red))),
+                              ],
+                            ),
+                          );
+                          if (confirm == true) {
+                            await HistoryService.clearAll();
+                            setSheetState(() {});
+                          }
+                        },
+                        icon: Icon(Icons.delete_sweep, color: Colors.red.shade400, size: 18),
+                        label: Text('ಅಳಿಸಿ', style: TextStyle(color: Colors.red.shade400, fontSize: 12)),
+                      ),
+                  ],
+                ),
+              ),
+              const Divider(height: 1),
+              if (items.isEmpty)
+                Expanded(
+                  child: Center(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.history_toggle_off, size: 64, color: kMuted.withOpacity(0.3)),
+                        const SizedBox(height: 12),
+                        Text('ಇತಿಹಾಸ ಖಾಲಿ', style: TextStyle(fontSize: 16, color: kMuted)),
+                        const SizedBox(height: 4),
+                        Text('ಕುಂಡಲಿ ರಚಿಸಿದಾಗ ಇಲ್ಲಿ ಕಾಣಿಸುತ್ತದೆ', style: TextStyle(fontSize: 13, color: kMuted.withOpacity(0.6))),
+                      ],
+                    ),
+                  ),
+                )
+              else
+                Expanded(
+                  child: ListView.separated(
+                    controller: scrollCtrl,
+                    itemCount: items.length,
+                    separatorBuilder: (_, __) => Divider(height: 1, color: kBorder),
+                    itemBuilder: (ctx, i) {
+                      final entry = items[i];
+                      // Format relative time
+                      final ts = DateTime.tryParse(entry.timestamp) ?? DateTime.now();
+                      final diff = DateTime.now().difference(ts);
+                      String ago;
+                      if (diff.inMinutes < 1) {
+                        ago = 'ಈಗ';
+                      } else if (diff.inMinutes < 60) {
+                        ago = '${diff.inMinutes}m ಹಿಂದೆ';
+                      } else if (diff.inHours < 24) {
+                        ago = '${diff.inHours}h ಹಿಂದೆ';
+                      } else {
+                        ago = '${diff.inDays}d ಹಿಂದೆ';
+                      }
+
+                      // Check if already saved
+                      final isSaved = _savedProfiles.containsKey(entry.name);
+
+                      return ListTile(
+                        dense: true,
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                        leading: CircleAvatar(
+                          radius: 20,
+                          backgroundColor: isSaved
+                              ? kGreen.withOpacity(0.15)
+                              : const Color(0xFF7B2D8E).withOpacity(0.1),
+                          child: Icon(
+                            isSaved ? Icons.bookmark : Icons.person_outline,
+                            color: isSaved ? kGreen : const Color(0xFF7B2D8E),
+                            size: 20,
+                          ),
+                        ),
+                        title: Text(
+                          entry.name,
+                          style: TextStyle(fontWeight: FontWeight.w700, color: kText, fontSize: 15),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        subtitle: Text(
+                          '${entry.date}  ${entry.hour.toString().padLeft(2, '0')}:${entry.minute.toString().padLeft(2, '0')} ${entry.ampm}  •  ${entry.place}',
+                          style: TextStyle(color: kMuted, fontSize: 12),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        trailing: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                              decoration: BoxDecoration(
+                                color: kMuted.withOpacity(0.1),
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: Text(ago, style: TextStyle(fontSize: 10, color: kMuted)),
+                            ),
+                            const SizedBox(width: 4),
+                            if (!isSaved)
+                              IconButton(
+                                icon: Icon(Icons.bookmark_add_outlined, color: kTeal, size: 20),
+                                tooltip: 'ಉಳಿಸಿ',
+                                padding: EdgeInsets.zero,
+                                constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+                                onPressed: () async {
+                                  await HistoryService.promoteToProfile(entry);
+                                  await _loadProfiles();
+                                  setSheetState(() {});
+                                  if (mounted) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(
+                                        content: Text('\u2705 "${entry.name}" ಉಳಿಸಲಾಗಿದೆ'),
+                                        backgroundColor: kGreen,
+                                        duration: const Duration(seconds: 2),
+                                      ),
+                                    );
+                                  }
+                                },
+                              ),
+                            IconButton(
+                              icon: Icon(Icons.close, color: Colors.red.shade300, size: 18),
+                              tooltip: 'ಅಳಿಸಿ',
+                              padding: EdgeInsets.zero,
+                              constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+                              onPressed: () async {
+                                await HistoryService.removeAt(i);
+                                setSheetState(() {});
+                              },
+                            ),
+                          ],
+                        ),
+                        onTap: () {
+                          Navigator.pop(ctx);
+                          setState(() {
+                            _loadedFromSaved = false;
+                            _nameCtrl.text = entry.name;
+                            _placeCtrl.text = entry.place;
+                            _latCtrl.text = entry.lat.toStringAsFixed(4);
+                            _lonCtrl.text = entry.lon.toStringAsFixed(4);
+                            _tzCtrl.text = '${entry.tzOffset >= 0 ? '+' : ''}${entry.tzOffset}';
+                            _hour = entry.hour;
+                            _minute = entry.minute;
+                            _ampm = entry.ampm;
+                            _loadedNotes = '';
+                            _loadedClientId = null;
+                            _loadedAroodhas = {};
+                            _loadedJanmaNakshatraIdx = null;
+                            _loadedGroupMembers = [];
+                            try {
+                              final parts = entry.date.split('-');
+                              if (parts.length == 3) {
+                                _dob = DateTime(
+                                  int.parse(parts[0]),
+                                  int.parse(parts[1]),
+                                  int.parse(parts[2]),
+                                );
+                              }
+                            } catch (_) {
+                              _dob = DateTime.now();
+                            }
+                          });
+                        },
+                      );
+                    },
+                  ),
+                ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
 
 
   Widget _buildInputCard() {
@@ -937,7 +1166,7 @@ class _InputScreenState extends State<InputScreen> {
 
 
 
-          // Three action buttons
+          // Action buttons
           Row(children: [
             Expanded(
               child: ElevatedButton(
@@ -956,7 +1185,36 @@ class _InputScreenState extends State<InputScreen> {
                 child: Text(AppLocale.l('openSaved'), style: TextStyle(fontWeight: FontWeight.w800, fontSize: 13)),
               ),
             ),
-            const SizedBox(width: 8),
+            const SizedBox(width: 6),
+            // History button
+            SizedBox(
+              height: 48,
+              width: 48,
+              child: ElevatedButton(
+                onPressed: () {
+                  showModalBottomSheet(
+                    context: context,
+                    backgroundColor: kCard,
+                    isScrollControlled: true,
+                    shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+                    builder: (_) => DraggableScrollableSheet(
+                      initialChildSize: 0.6,
+                      minChildSize: 0.3,
+                      maxChildSize: 0.9,
+                      expand: false,
+                      builder: (_, scrollCtrl) => _buildHistorySheet(scrollCtrl),
+                    ),
+                  );
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF7B2D8E),
+                  padding: EdgeInsets.zero,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                ),
+                child: const Icon(Icons.history, color: Colors.white, size: 22),
+              ),
+            ),
+            const SizedBox(width: 6),
             Expanded(
               child: ElevatedButton(
                 onPressed: () {
@@ -977,7 +1235,7 @@ class _InputScreenState extends State<InputScreen> {
                 child: Text(AppLocale.l('currentTime'), style: TextStyle(fontWeight: FontWeight.w800, fontSize: 13)),
               ),
             ),
-            const SizedBox(width: 8),
+            const SizedBox(width: 6),
             Expanded(
               child: ElevatedButton(
                 onPressed: _loading ? null : _calculate,
