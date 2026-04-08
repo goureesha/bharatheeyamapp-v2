@@ -8,6 +8,7 @@ import '../services/trusted_time_service.dart';
 import '../services/backup_service.dart';
 import '../services/google_auth_service.dart';
 import '../services/device_binding_service.dart';
+import '../main.dart';
 import '../services/tester_service.dart';
 import '../services/local_export_service.dart';
 import 'about_screen.dart';
@@ -368,6 +369,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                 ));
                                 if (confirm == true) {
                                   final ok = await DeviceBindingService.migrateDevice();
+                                  if (ok) {
+                                    deviceBindingNotifier.value = true;
+                                  }
                                   if (mounted) {
                                     ScaffoldMessenger.of(context).showSnackBar(SnackBar(
                                       content: Text(ok ? 'ಸಾಧನ ಯಶಸ್ವಿಯಾಗಿ ಬದಲಾಯಿಸಲಾಗಿದೆ!' : 'ವಿಫಲವಾಗಿದೆ'),
@@ -387,6 +391,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
                             ElevatedButton.icon(
                               onPressed: () async {
                                 final ok = await GoogleAuthService.signIn();
+                                if (ok) {
+                                  // Check device binding after sign-in
+                                  final bound = await DeviceBindingService.checkBinding();
+                                  deviceBindingNotifier.value = bound;
+                                }
                                 if (mounted) {
                                   setState(() {});
                                   ScaffoldMessenger.of(context).showSnackBar(SnackBar(

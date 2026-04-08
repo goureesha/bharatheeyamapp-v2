@@ -63,6 +63,9 @@ Future<void> _initEphemeris() async {
   }
 }
 
+/// Notifier for device binding status — triggers UI rebuild when binding changes
+final ValueNotifier<bool> deviceBindingNotifier = ValueNotifier<bool>(true);
+
 /// Non-critical startup tasks that run AFTER the app is visible
 Future<void> _deferredInit() async {
   // These don't affect initial screen rendering
@@ -70,7 +73,9 @@ Future<void> _deferredInit() async {
   await GoogleAuthService.signInSilently();
 
   if (GoogleAuthService.isSignedIn) {
-    DeviceBindingService.checkBinding(); // fire-and-forget, don't await
+    // MUST await — the result determines whether to block the user
+    final bound = await DeviceBindingService.checkBinding();
+    deviceBindingNotifier.value = bound;
     FirebaseService.init(); // Start listening for web appointments
   }
 
@@ -108,6 +113,12 @@ class _BharatheeyamAppState extends State<BharatheeyamApp> with WidgetsBindingOb
       TrustedTimeService.syncWithNtp();
       // Re-verify subscription when app comes back to foreground
       SubscriptionService.checkOnReconnect();
+      // Re-check device binding on resume (catches if user migrated from another device)
+      if (GoogleAuthService.isSignedIn) {
+        DeviceBindingService.checkBinding().then((bound) {
+          deviceBindingNotifier.value = bound;
+        });
+      }
     }
   }
 
@@ -116,122 +127,127 @@ class _BharatheeyamAppState extends State<BharatheeyamApp> with WidgetsBindingOb
     return ValueListenableBuilder<int>(
       valueListenable: AppThemes.themeNotifier,
       builder: (context, themeIndex, child) {
-        return MaterialApp(
-          navigatorKey: navigatorKey,
-          key: ValueKey('theme_$themeIndex'), // Forces full rebuild on theme change
-          title: 'ಭಾರತೀಯಮ್',
-          debugShowCheckedModeBanner: false,
-          builder: (context, child) {
-            final data = MediaQuery.of(context);
-            final shortestSide = data.size.shortestSide;
-            
-            double scale = 1.0;
-            if (shortestSide >= 800) {
-              scale = 1.4;
-            } else if (shortestSide >= 600) {
-              scale = 1.2;
-            }
+        return ValueListenableBuilder<bool>(
+          valueListenable: deviceBindingNotifier,
+          builder: (context, isBound, child) {
+            return MaterialApp(
+              navigatorKey: navigatorKey,
+              key: ValueKey('theme_${themeIndex}_bound_$isBound'),
+              title: 'ಭಾರತೀಯಮ್',
+              debugShowCheckedModeBanner: false,
+              builder: (context, child) {
+                final data = MediaQuery.of(context);
+                final shortestSide = data.size.shortestSide;
+                
+                double scale = 1.0;
+                if (shortestSide >= 800) {
+                  scale = 1.4;
+                } else if (shortestSide >= 600) {
+                  scale = 1.2;
+                }
 
-            // Combine OS text scaling with our screen-size based scaling
-            final finalScale = data.textScaler.scale(scale);
+                // Combine OS text scaling with our screen-size based scaling
+                final finalScale = data.textScaler.scale(scale);
 
-            return MediaQuery(
-              data: data.copyWith(
-                textScaler: TextScaler.linear(finalScale),
+                return MediaQuery(
+                  data: data.copyWith(
+                    textScaler: TextScaler.linear(finalScale),
+                  ),
+                  child: child!,
+                );
+              },
+              theme: ThemeData(
+                useMaterial3: true,
+                scaffoldBackgroundColor: kBg,
+                canvasColor: kCard,
+                dialogBackgroundColor: kCard,
+                colorScheme: ColorScheme.fromSeed(
+                  seedColor: kPurple2,
+                  brightness: themeIndex == 1 ? Brightness.dark : Brightness.light,
+                  primary: kPurple2,
+                  secondary: kOrange,
+                  surface: kCard,
+                ),
+                textTheme: Theme.of(context).textTheme.apply(
+                  bodyColor: kText,
+                  displayColor: kText,
+                ).copyWith(
+                  bodyMedium: TextStyle(color: kText, fontSize: 14),
+                  bodyLarge: TextStyle(color: kText, fontSize: 16, fontWeight: FontWeight.w600),
+                ),
+                listTileTheme: ListTileThemeData(
+                  textColor: kText,
+                  iconColor: kPurple2,
+                ),
+                textSelectionTheme: TextSelectionThemeData(
+                  cursorColor: kPurple2,
+                  selectionColor: kPurple2.withOpacity(0.3),
+                  selectionHandleColor: kPurple2,
+                ),
+                datePickerTheme: DatePickerThemeData(
+                  backgroundColor: kBg,
+                  headerBackgroundColor: kPurple2,
+                  headerForegroundColor: Colors.white,
+                  dayForegroundColor: WidgetStateProperty.resolveWith((states) {
+                    if (states.contains(WidgetState.selected)) return Colors.white;
+                    if (states.contains(WidgetState.disabled)) return kMuted;
+                    return kText;
+                  }),
+                  yearForegroundColor: WidgetStateProperty.resolveWith((states) {
+                    if (states.contains(WidgetState.selected)) return Colors.white;
+                    return kText;
+                  }),
+                ),
+                timePickerTheme: TimePickerThemeData(
+                  backgroundColor: kBg,
+                  dialBackgroundColor: kCard,
+                  dialTextColor: kText,
+                  hourMinuteTextColor: kText,
+                ),
+                appBarTheme: AppBarTheme(
+                  backgroundColor: Colors.transparent,
+                  elevation: 0,
+                  centerTitle: true,
+                  titleTextStyle: TextStyle(color: kText, fontSize: 20, fontWeight: FontWeight.w800),
+                  iconTheme: IconThemeData(color: kText),
+                ),
+                inputDecorationTheme: InputDecorationTheme(
+                  filled: true,
+                  fillColor: kCard,
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: kBorder)),
+                  enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: kBorder)),
+                  focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: kPurple2, width: 2)),
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                  labelStyle: TextStyle(color: kMuted),
+                ),
+                elevatedButtonTheme: ElevatedButtonThemeData(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: kOrange,
+                    foregroundColor: Colors.white,
+                    textStyle: TextStyle(fontWeight: FontWeight.w800, fontSize: 15),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    elevation: 4,
+                  ),
+                ),
+                tabBarTheme: TabBarTheme(
+                  labelColor: kGreen,
+                  unselectedLabelColor: kMuted,
+                  labelStyle: TextStyle(fontWeight: FontWeight.w800, fontSize: 13),
+                  unselectedLabelStyle: TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
+                  indicatorColor: kGreen,
+                  indicatorSize: TabBarIndicatorSize.tab,
+                ),
               ),
-              child: child!,
+              home: !InstallChecker.isFromPlayStore
+                ? const _SideloadBlockedScreen()
+                : !isBound
+                  ? const _DeviceMismatchScreen()
+                  : SubscriptionService.needsInternetVerification
+                    ? const _InternetRequiredScreen()
+                    : SubscriptionService.hasAccess ? const HomeScreen() : const PaywallScreen(),
             );
           },
-          theme: ThemeData(
-            useMaterial3: true,
-            scaffoldBackgroundColor: kBg,
-            canvasColor: kCard,
-            dialogBackgroundColor: kCard,
-            colorScheme: ColorScheme.fromSeed(
-              seedColor: kPurple2,
-              brightness: themeIndex == 1 ? Brightness.dark : Brightness.light,
-              primary: kPurple2,
-              secondary: kOrange,
-              surface: kCard,
-            ),
-            textTheme: Theme.of(context).textTheme.apply(
-              bodyColor: kText,
-              displayColor: kText,
-            ).copyWith(
-              bodyMedium: TextStyle(color: kText, fontSize: 14),
-              bodyLarge: TextStyle(color: kText, fontSize: 16, fontWeight: FontWeight.w600),
-            ),
-            listTileTheme: ListTileThemeData(
-              textColor: kText,
-              iconColor: kPurple2,
-            ),
-            textSelectionTheme: TextSelectionThemeData(
-              cursorColor: kPurple2,
-              selectionColor: kPurple2.withOpacity(0.3),
-              selectionHandleColor: kPurple2,
-            ),
-            datePickerTheme: DatePickerThemeData(
-              backgroundColor: kBg,
-              headerBackgroundColor: kPurple2,
-              headerForegroundColor: Colors.white,
-              dayForegroundColor: WidgetStateProperty.resolveWith((states) {
-                if (states.contains(WidgetState.selected)) return Colors.white;
-                if (states.contains(WidgetState.disabled)) return kMuted;
-                return kText;
-              }),
-              yearForegroundColor: WidgetStateProperty.resolveWith((states) {
-                if (states.contains(WidgetState.selected)) return Colors.white;
-                return kText;
-              }),
-            ),
-            timePickerTheme: TimePickerThemeData(
-              backgroundColor: kBg,
-              dialBackgroundColor: kCard,
-              dialTextColor: kText,
-              hourMinuteTextColor: kText,
-            ),
-            appBarTheme: AppBarTheme(
-              backgroundColor: Colors.transparent,
-              elevation: 0,
-              centerTitle: true,
-              titleTextStyle: TextStyle(color: kText, fontSize: 20, fontWeight: FontWeight.w800),
-              iconTheme: IconThemeData(color: kText),
-            ),
-            inputDecorationTheme: InputDecorationTheme(
-              filled: true,
-              fillColor: kCard,
-              border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: kBorder)),
-              enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: kBorder)),
-              focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: kPurple2, width: 2)),
-              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-              labelStyle: TextStyle(color: kMuted),
-            ),
-            elevatedButtonTheme: ElevatedButtonThemeData(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: kOrange,
-                foregroundColor: Colors.white,
-                textStyle: TextStyle(fontWeight: FontWeight.w800, fontSize: 15),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                padding: const EdgeInsets.symmetric(vertical: 14),
-                elevation: 4,
-              ),
-            ),
-            tabBarTheme: TabBarTheme(
-              labelColor: kGreen,
-              unselectedLabelColor: kMuted,
-              labelStyle: TextStyle(fontWeight: FontWeight.w800, fontSize: 13),
-              unselectedLabelStyle: TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
-              indicatorColor: kGreen,
-              indicatorSize: TabBarIndicatorSize.tab,
-            ),
-          ),
-          home: !InstallChecker.isFromPlayStore
-            ? const _SideloadBlockedScreen()
-            : !DeviceBindingService.isDeviceBound
-              ? const _DeviceMismatchScreen()
-              : SubscriptionService.needsInternetVerification
-                ? const _InternetRequiredScreen()
-                : SubscriptionService.hasAccess ? const HomeScreen() : const PaywallScreen(),
         );
       },
     );
@@ -319,11 +335,8 @@ class _DeviceMismatchScreenState extends State<_DeviceMismatchScreen> {
                 setState(() => _migrating = true);
                 final ok = await DeviceBindingService.migrateDevice();
                 if (ok && mounted) {
-                  // Restart the app to the home screen
-                  Navigator.of(context).pushAndRemoveUntil(
-                    MaterialPageRoute(builder: (_) => SubscriptionService.hasAccess ? const HomeScreen() : const PaywallScreen()),
-                    (_) => false,
-                  );
+                  // Update the notifier → triggers full app rebuild via ValueListenableBuilder
+                  deviceBindingNotifier.value = true;
                 } else {
                   setState(() => _migrating = false);
                   if (mounted) {
@@ -337,12 +350,8 @@ class _DeviceMismatchScreenState extends State<_DeviceMismatchScreen> {
           TextButton(
             onPressed: () async {
               await GoogleAuthService.signOut();
-              if (mounted) {
-                Navigator.of(context).pushAndRemoveUntil(
-                  MaterialPageRoute(builder: (_) => SubscriptionService.hasAccess ? const HomeScreen() : const PaywallScreen()),
-                  (_) => false,
-                );
-              }
+              // After sign-out, no email = binding is N/A → use notifier to rebuild
+              deviceBindingNotifier.value = true;
             },
             child: Text('ಬೇರೆ ಖಾತೆಯಿಂದ ಲಾಗಿನ್ / Sign in with different account',
               style: TextStyle(color: kMuted, fontSize: 13)),
