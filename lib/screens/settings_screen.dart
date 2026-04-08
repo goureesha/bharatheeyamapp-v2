@@ -11,6 +11,7 @@ import '../services/device_binding_service.dart';
 import '../main.dart';
 import '../services/tester_service.dart';
 import '../services/local_export_service.dart';
+import '../services/cloud_sync_service.dart';
 import 'about_screen.dart';
 import 'privacy_policy_screen.dart';
 import '../services/location_service.dart';
@@ -419,6 +420,113 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     const SizedBox(height: 24),
                     Divider(color: kBorder),
                     const SizedBox(height: 24),
+
+                    // Cloud Sync
+                    if (GoogleAuthService.isSignedIn) ...[
+                      SectionTitle('ಕ್ಲೌಡ್ ಸಿಂಕ್ / Cloud Sync'),
+                      const SizedBox(height: 12),
+                      Container(
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: kTeal.withOpacity(0.06),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: kTeal.withOpacity(0.2)),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            Row(children: [
+                              Icon(Icons.cloud_sync, color: kTeal, size: 28),
+                              const SizedBox(width: 12),
+                              Expanded(child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text('ಸ್ವಯಂ ಕ್ಲೌಡ್ ಬ್ಯಾಕಪ್', style: TextStyle(fontWeight: FontWeight.bold, color: kText, fontSize: 15)),
+                                  const SizedBox(height: 2),
+                                  Text('ದಿನಕ್ಕೊಮ್ಮೆ ಸ್ವಯಂ ಸಿಂಕ್ ಆಗುತ್ತದೆ', style: TextStyle(fontSize: 12, color: kMuted)),
+                                ],
+                              )),
+                            ]),
+                            const SizedBox(height: 12),
+                            Container(
+                              padding: const EdgeInsets.all(10),
+                              decoration: BoxDecoration(
+                                color: kBorder.withOpacity(0.12),
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: Row(children: [
+                                Icon(Icons.schedule, size: 16, color: kMuted),
+                                const SizedBox(width: 8),
+                                Text('ಕೊನೆಯ ಸಿಂಕ್: ${CloudSyncService.lastSyncText}',
+                                  style: TextStyle(fontSize: 13, color: kText)),
+                              ]),
+                            ),
+                            const SizedBox(height: 12),
+                            Row(children: [
+                              Expanded(
+                                child: ElevatedButton.icon(
+                                  onPressed: () async {
+                                    setState(() {});
+                                    final ok = await CloudSyncService.syncToCloud();
+                                    if (mounted) {
+                                      setState(() {});
+                                      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                                        content: Text(ok ? '\u2601\uFE0F ಕ್ಲೌಡ್‌ಗೆ ಸಿಂಕ್ ಯಶಸ್ವಿ!' : 'ಸಿಂಕ್ ವಿಫಲ — ಇಂಟರ್ನೆಟ್ ಪರಿಶೀಲಿಸಿ'),
+                                        backgroundColor: ok ? Colors.green : Colors.red,
+                                      ));
+                                    }
+                                  },
+                                  icon: Icon(Icons.cloud_upload),
+                                  label: Text('ಅಪ್‌ಲೋಡ್\n(Upload)', textAlign: TextAlign.center),
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: kTeal,
+                                    foregroundColor: Colors.white,
+                                    padding: const EdgeInsets.symmetric(vertical: 12),
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: OutlinedButton.icon(
+                                  onPressed: () async {
+                                    final confirm = await showDialog<bool>(context: context, builder: (ctx) => AlertDialog(
+                                      backgroundColor: kCard,
+                                      title: Text('ಕ್ಲೌಡ್‌ನಿಂದ ಮರುಸ್ಥಾಪಿಸಿ?', style: TextStyle(color: kText)),
+                                      content: Text('ಕ್ಲೌಡ್‌ನಲ್ಲಿರುವ ಡೇಟಾ ಈ ಸಾಧನಕ್ಕೆ ಡೌನ್‌ಲೋಡ್ ಆಗುತ್ತದೆ. ಸ್ಥಳೀಯ ಡೇಟಾ ಬದಲಾಗಬಹುದು.', style: TextStyle(color: kText)),
+                                      actions: [
+                                        TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text('ರದ್ದು', style: TextStyle(color: kMuted))),
+                                        ElevatedButton(onPressed: () => Navigator.pop(ctx, true),
+                                          style: ElevatedButton.styleFrom(backgroundColor: kPurple2),
+                                          child: Text('ಹೌದು, ಡೌನ್‌ಲೋಡ್ ಮಾಡಿ')),
+                                      ],
+                                    ));
+                                    if (confirm == true) {
+                                      final ok = await CloudSyncService.syncFromCloud();
+                                      if (mounted) {
+                                        setState(() {});
+                                        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                                          content: Text(ok ? '\u2601\uFE0F ಕ್ಲೌಡ್‌ನಿಂದ ಮರುಸ್ಥಾಪಿಸಲಾಗಿದೆ!' : 'ಡೌನ್‌ಲೋಡ್ ವಿಫಲ — ಬ್ಯಾಕಪ್ ಇಲ್ಲ ಅಥವಾ ಇಂಟರ್ನೆಟ್ ಸಮಸ್ಯೆ'),
+                                          backgroundColor: ok ? Colors.green : Colors.red,
+                                        ));
+                                      }
+                                    }
+                                  },
+                                  icon: Icon(Icons.cloud_download, color: kPurple2),
+                                  label: Text('ಡೌನ್‌ಲೋಡ್\n(Download)', style: TextStyle(color: kText), textAlign: TextAlign.center),
+                                  style: OutlinedButton.styleFrom(
+                                    padding: const EdgeInsets.symmetric(vertical: 12),
+                                    side: BorderSide(color: kBorder),
+                                  ),
+                                ),
+                              ),
+                            ]),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 24),
+                      Divider(color: kBorder),
+                      const SizedBox(height: 24),
+                    ],
 
                     // Backup & Restore
                     SectionTitle('ಡೇಟಾ ಬ್ಯಾಕಪ್ ಮತ್ತು ಮರುಸ್ಥಾಪನೆ (Data Backup & Restore)'),
