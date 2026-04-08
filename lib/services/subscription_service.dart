@@ -103,12 +103,15 @@ class SubscriptionService {
   /// Strategy: ASSUME REVOKED, then GRANT only if Play Store confirms active purchase.
   /// This handles expired subscriptions where restorePurchases() returns nothing.
   static Future<void> _verifyWithPlayStore() async {
+    bool storeReachable = false;
     try {
       final available = await _iap.isAvailable();
       if (!available) {
+        debugPrint('🔌 Play Store not available — going offline mode');
         _handleOffline();
         return;
       }
+      storeReachable = true;
 
       // Reset: assume no active purchase until stream confirms one
       _foundActiveDuringRestore = false;
@@ -131,8 +134,25 @@ class SubscriptionService {
         await _revokeAccess();
       }
     } catch (e) {
-      debugPrint('Play Store verification failed: $e');
-      _handleOffline();
+      debugPrint('Play Store verification error: $e');
+
+      if (storeReachable) {
+        // Store WAS reachable but restorePurchases() threw an error
+        // (e.g. rate-limited, Play Store glitch).
+        // Still check if we got an active purchase from the stream.
+        // If not, and we had a subscription, REVOKE — don't give free grace.
+        debugPrint('⚠️ Store reachable but restore threw — checking flag');
+        await Future.delayed(const Duration(milliseconds: 1000));
+        if (!_foundActiveDuringRestore && hasSubscription) {
+          debugPrint('⚠️ No active purchase confirmed after error → REVOKING');
+          await _revokeAccess();
+        }
+        needsInternetVerification = false;
+        await _updateLastVerified();
+      } else {
+        // Store truly not reachable — genuine offline scenario
+        _handleOffline();
+      }
     }
   }
 
