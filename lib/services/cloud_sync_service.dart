@@ -127,7 +127,7 @@ class CloudSyncService {
       // Add metadata
       backupData['_syncedAt'] = DateTime.now().toIso8601String();
       backupData['_deviceId'] = prefs.getString('bharatheeyam_device_id') ?? '';
-      backupData['_version'] = '1.9.10';
+      backupData['_version'] = '1.9.11';
 
       // Count items for metadata
       int clientCount = 0;

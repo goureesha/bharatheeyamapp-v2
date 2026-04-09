@@ -1,7 +1,7 @@
 name: bharatheeyam
 description: "ಭಾರತೀಯಮ್ - Vedic Astrology App"
 publish_to: 'none'
-version: 1.9.10+31
+version: 1.9.11+32
 
 environment:
   sdk: '>=3.2.0 <4.0.0'
@@ -29,6 +29,7 @@ dependencies:
   file_picker: ^10.3.10
   firebase_core: ^4.6.0
   cloud_firestore: ^6.2.0
+  firebase_auth: ^5.5.0
   screenshot: ^3.0.0
 
 dev_dependencies:
