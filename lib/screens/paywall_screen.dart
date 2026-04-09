@@ -67,7 +67,7 @@ class PaywallScreen extends StatelessWidget {
                       _benefit(Icons.calendar_month, 'ಪಂಚಾಂಗ ಮತ್ತು ತಾರಾನುಕೂಲ'),
                       _benefit(Icons.favorite, 'ಹೊಂದಾಣಿಕೆ / Match Making'),
                       _benefit(Icons.menu_book, 'ಮಂತ್ರ ಸಂಗ್ರಹ'),
-                      _benefit(Icons.cloud_sync, 'ನಿಮ್ಮ ಡೇಟಾ ಸುರಕ್ಷಿತ ಬ್ಯಾಕಪ್ (Cloud Data Sync)'),
+                      _benefit(Icons.save, 'ನಿಮ್ಮ ಡೇಟಾ ಸುರಕ್ಷಿತ ಬ್ಯಾಕಪ್ (Data Backup)'),
                     ],
                   ),
                 ),

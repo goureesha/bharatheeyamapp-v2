@@ -9,7 +9,7 @@ import 'services/google_auth_service.dart';
 import 'services/install_checker.dart';
 import 'services/device_binding_service.dart';
 import 'services/firebase_service.dart';
-import 'services/cloud_sync_service.dart';
+
 import 'services/festival_cache_service.dart';
 import 'services/location_service.dart';
 import 'services/tester_service.dart';
@@ -93,8 +93,6 @@ Future<void> _deferredInit() async {
   // Start the appointment listener and cloud sync now that auth is complete.
   if (GoogleAuthService.isSignedIn) {
     FirebaseService.listenForAppointments();
-    // Auto-sync app data to cloud (once per day)
-    CloudSyncService.autoSyncIfNeeded();
   }
 
   // Pre-load festival events lazily (non-blocking)

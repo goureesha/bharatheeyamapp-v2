@@ -29,7 +29,6 @@ dependencies:
   file_picker: ^10.3.10
   firebase_core: ^4.6.0
   cloud_firestore: ^6.2.0
-  firebase_auth: ^5.5.0
   screenshot: ^3.0.0
 
 dev_dependencies:
