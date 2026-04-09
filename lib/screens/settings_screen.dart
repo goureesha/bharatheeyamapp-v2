@@ -467,12 +467,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                 child: ElevatedButton.icon(
                                   onPressed: () async {
                                     setState(() {});
-                                    final ok = await CloudSyncService.syncToCloud();
+                                    final err = await CloudSyncService.syncToCloud();
                                     if (mounted) {
                                       setState(() {});
                                       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                                        content: Text(ok ? '\u2601\uFE0F ಕ್ಲೌಡ್‌ಗೆ ಸಿಂಕ್ ಯಶಸ್ವಿ!' : 'ಸಿಂಕ್ ವಿಫಲ — ಇಂಟರ್ನೆಟ್ ಪರಿಶೀಲಿಸಿ'),
-                                        backgroundColor: ok ? Colors.green : Colors.red,
+                                        content: Text(err == null ? '\u2601\uFE0F ಕ್ಲೌಡ್‌ಗೆ ಸಿಂಕ್ ಯಶಸ್ವಿ!' : 'ಸಿಂಕ್ ವಿಫಲ: $err'),
+                                        backgroundColor: err == null ? Colors.green : Colors.red,
+                                        duration: Duration(seconds: err == null ? 3 : 6),
                                       ));
                                     }
                                   },
@@ -501,12 +502,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                       ],
                                     ));
                                     if (confirm == true) {
-                                      final ok = await CloudSyncService.syncFromCloud();
+                                      final err = await CloudSyncService.syncFromCloud();
                                       if (mounted) {
                                         setState(() {});
                                         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                                          content: Text(ok ? '\u2601\uFE0F ಕ್ಲೌಡ್‌ನಿಂದ ಮರುಸ್ಥಾಪಿಸಲಾಗಿದೆ!' : 'ಡೌನ್‌ಲೋಡ್ ವಿಫಲ — ಬ್ಯಾಕಪ್ ಇಲ್ಲ ಅಥವಾ ಇಂಟರ್ನೆಟ್ ಸಮಸ್ಯೆ'),
-                                          backgroundColor: ok ? Colors.green : Colors.red,
+                                          content: Text(err == null ? '\u2601\uFE0F ಕ್ಲೌಡ್‌ನಿಂದ ಮರುಸ್ಥಾಪಿಸಲಾಗಿದೆ!' : 'ಡೌನ್‌ಲೋಡ್ ವಿಫಲ: $err'),
+                                          backgroundColor: err == null ? Colors.green : Colors.red,
+                                          duration: Duration(seconds: err == null ? 3 : 6),
                                         ));
                                       }
                                     }
