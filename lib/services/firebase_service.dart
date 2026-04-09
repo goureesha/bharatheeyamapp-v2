@@ -31,13 +31,14 @@ class FirebaseService {
       
       _initialized = true;
       debugPrint('FirebaseService: Initialized successfully.');
-      _listenForAppointments();
     } catch (e) {
       debugPrint('FirebaseService: Failed to initialize: $e');
     }
   }
 
-  static void _listenForAppointments() {
+  /// Start listening for new appointment requests from Firestore.
+  /// Call this AFTER the user has signed in.
+  static void listenForAppointments() {
     final email = GoogleAuthService.userEmail;
     if (email == null || email.isEmpty) {
       debugPrint('FirebaseService: No email found, cannot listen for appointments.');

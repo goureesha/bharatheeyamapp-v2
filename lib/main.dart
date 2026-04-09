@@ -30,6 +30,10 @@ Future<void> main() async {
   // NTP must init BEFORE SubscriptionService so trusted time is available
   await TrustedTimeService.init();
 
+  // Firebase must init BEFORE auth/binding/tester because sign-in triggers
+  // TesterService.checkTesterStatus() which uses FirebaseFirestore.instance
+  await FirebaseService.init();
+
   // Run ALL critical startup tasks in PARALLEL (not sequentially)
   // Including silent sign-in + device binding check — these MUST complete
   // before the first frame so we can show the correct screen
@@ -85,9 +89,10 @@ Future<void> _initAuthAndBinding() async {
 
 /// Non-critical startup tasks that run AFTER the app is visible
 Future<void> _deferredInit() async {
-  // Start Firebase appointment listener + cloud sync
+  // Firebase is already initialized in main() before the parallel block.
+  // Start the appointment listener and cloud sync now that auth is complete.
   if (GoogleAuthService.isSignedIn) {
-    FirebaseService.init();
+    FirebaseService.listenForAppointments();
     // Auto-sync app data to cloud (once per day)
     CloudSyncService.autoSyncIfNeeded();
   }
