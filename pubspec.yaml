@@ -11,6 +11,8 @@ dependencies:
     sdk: flutter
   flutter_web_plugins:
     sdk: flutter
+  flutter_localizations:
+    sdk: flutter
   http: ^1.2.0
   intl: ^0.19.0
   sweph: ^3.2.1+2.10.3

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'screens/home_screen.dart';
 import 'screens/paywall_screen.dart';
 import 'widgets/common.dart';
@@ -151,6 +152,16 @@ class _BharatheeyamAppState extends State<BharatheeyamApp> with WidgetsBindingOb
               key: ValueKey('theme_${themeIndex}_bound_$isBound'),
               title: 'ಭಾರತೀಯಮ್',
               debugShowCheckedModeBanner: false,
+              locale: const Locale('en', 'IN'),
+              supportedLocales: const [
+                Locale('en', 'IN'),
+                Locale('en', 'US'),
+              ],
+              localizationsDelegates: const [
+                GlobalMaterialLocalizations.delegate,
+                GlobalWidgetsLocalizations.delegate,
+                GlobalCupertinoLocalizations.delegate,
+              ],
               builder: (context, child) {
                 final data = MediaQuery.of(context);
                 final shortestSide = data.size.shortestSide;
