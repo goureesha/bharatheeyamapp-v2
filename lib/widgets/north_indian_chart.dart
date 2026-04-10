@@ -113,6 +113,10 @@ class NorthIndianChart extends StatelessWidget {
       houseRashi[i] = '${rashiIdx + 1}'; // Rashi number: Mesha=1 ... Meena=12
     }
 
+    // Temporary storage for sorting planets by degree within each house
+    final Map<int, List<({String name, PlanetInfo? info, double degree, bool isAroodha})>> houseData = 
+        {for (int i = 0; i < 12; i++) i: []};
+
     if (aroodhas != null) {
       for (final pName in planetOrder) {
         final info = result.planets[pName];
@@ -120,9 +124,17 @@ class NorthIndianChart extends StatelessWidget {
         final ri = _rashinFor(info.longitude);
         if (ri >= 0 && ri < 12) {
           final h = _rashiToHouse(ri, firstHouseRashiIdx);
-          houses[h]!.add(_planetChip(pName, info: info));
+          houseData[h]!.add((name: pName, info: info, degree: info.longitude % 30, isAroodha: false));
         }
       }
+      // Sort each house by degree (ascending: lowest degree on top)
+      for (final h in houseData.keys) {
+        houseData[h]!.sort((a, b) => a.degree.compareTo(b.degree));
+        for (final item in houseData[h]!) {
+          houses[h]!.add(_planetChip(item.name, info: item.info));
+        }
+      }
+      // Add aroodha labels after sorted planets
       for (final entry in aroodhas!.entries) {
         final h = _rashiToHouse(entry.value, firstHouseRashiIdx);
         houses[h]!.add(_aroodhaChip(entry.key));
@@ -170,7 +182,15 @@ class NorthIndianChart extends StatelessWidget {
         }
         if (ri < 0 || ri > 11) continue;
         final h = _rashiToHouse(ri, firstHouseRashiIdx);
-        houses[h]!.add(_planetChip(pName, info: info));
+        houseData[h]!.add((name: pName, info: info, degree: info.longitude % 30, isAroodha: false));
+      }
+
+      // Sort each house by degree (ascending: lowest degree on top, highest on bottom)
+      for (final h in houseData.keys) {
+        houseData[h]!.sort((a, b) => a.degree.compareTo(b.degree));
+        for (final item in houseData[h]!) {
+          houses[h]!.add(_planetChip(item.name, info: item.info));
+        }
       }
 
       if (showSphutas) {

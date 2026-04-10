@@ -119,25 +119,36 @@ class KundaliChart extends StatelessWidget {
       refLongitude = lagnaLong;
     }
 
-    // Build box contents
+    // Build box contents — collect planet data per box, sort by degree, then create widgets
     final Map<int, List<Widget>> boxes = {for (int i = 0; i < 12; i++) i: []};
 
+    // Temporary storage: (name, info, degree, chipType) per rashi box for sorting
+    final Map<int, List<({String name, PlanetInfo? info, double degree, ChipType type})>> boxData = 
+        {for (int i = 0; i < 12; i++) i: []};
+
     if (aroodhas != null) {
-      // Aroodha chart mode: show planets first
+      // Aroodha chart mode: collect planets first
       for (final pName in planetOrder) {
         final info = result.planets[pName];
         if (info == null) continue;
         final ri = _rashinFor(info.longitude);
         if (ri >= 0 && ri < 12) {
-          boxes[ri]!.add(_planetChip(pName, info: info, type: pName == 'ಲಗ್ನ' ? ChipType.lagna : ChipType.planet));
+          boxData[ri]!.add((name: pName, info: info, degree: info.longitude % 30, type: pName == 'ಲಗ್ನ' ? ChipType.lagna : ChipType.planet));
         }
       }
-      // Then add aroodha labels
+      // Sort each box by degree (ascending: lowest degree on top)
+      for (final ri in boxData.keys) {
+        boxData[ri]!.sort((a, b) => a.degree.compareTo(b.degree));
+        for (final item in boxData[ri]!) {
+          boxes[ri]!.add(_planetChip(item.name, info: item.info, type: item.type));
+        }
+      }
+      // Then add aroodha labels (these don't have degrees, add after sorted planets)
       for (final entry in aroodhas!.entries) {
         boxes[entry.value]!.add(_planetChip(entry.key, type: ChipType.lagna));
       }
     } else {
-      // Normal planets
+      // Normal planets: collect into boxData
       for (final pName in planetOrder) {
         final info = result.planets[pName];
         if (info == null) continue;
@@ -198,10 +209,18 @@ class KundaliChart extends StatelessWidget {
         final type = (pName == 'ಲಗ್ನ' || pName == 'ಮಾಂದಿ')
             ? ChipType.lagna
             : ChipType.planet;
-        boxes[ri]!.add(_planetChip(pName, info: info, type: type));
+        boxData[ri]!.add((name: pName, info: info, degree: info.longitude % 30, type: type));
       }
 
-      // Advanced sphutas overlay
+      // Sort each box by degree (ascending: lowest degree on top, highest on bottom)
+      for (final ri in boxData.keys) {
+        boxData[ri]!.sort((a, b) => a.degree.compareTo(b.degree));
+        for (final item in boxData[ri]!) {
+          boxes[ri]!.add(_planetChip(item.name, info: item.info, type: item.type));
+        }
+      }
+
+      // Advanced sphutas overlay (added after sorted planets)
       if (showSphutas) {
         for (final entry in result.advSphutas.entries) {
           final ri = _rashinFor(entry.value);
