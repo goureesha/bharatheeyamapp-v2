@@ -13,7 +13,10 @@ class GoogleAuthService {
 
   static GoogleSignIn get _instance {
     _googleSignIn ??= GoogleSignIn(
-      scopes: const ['email'],
+      scopes: const [
+        'email',
+        'https://www.googleapis.com/auth/drive.appdata',
+      ],
       clientId: kIsWeb ? _webClientId : null,
       serverClientId: _webClientId,
     );
@@ -24,6 +27,11 @@ class GoogleAuthService {
   static String? get userEmail => _currentUser?.email;
   static String? get userName => _currentUser?.displayName;
   static String? get userPhoto => _currentUser?.photoUrl;
+
+  /// Get auth headers for Google API calls (e.g., Drive API)
+  static Future<Map<String, String>?> getAuthHeaders() async {
+    return _currentUser?.authHeaders;
+  }
 
   static Future<bool> signIn() async {
     try {
@@ -58,3 +66,4 @@ class GoogleAuthService {
     }
   }
 }
+
