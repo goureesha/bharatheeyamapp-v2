@@ -41,27 +41,65 @@ class _SettingsScreenState extends State<SettingsScreen> {
     setState(() { _geoLoading = true; _geoStatus = ''; });
     try {
       final q = Uri.encodeComponent(placeName.trim());
-      final url = Uri.parse('https://nominatim.openstreetmap.org/search?q=$q&format=json&limit=1');
+      final url = Uri.parse('https://nominatim.openstreetmap.org/search?q=$q&format=json&limit=5');
       final resp = await http.get(url, headers: {'User-Agent': 'BharatheeyamApp/1.0'}).timeout(const Duration(seconds: 10));
       if (resp.statusCode == 200) {
         final data = jsonDecode(resp.body) as List;
         if (data.isEmpty) {
           setState(() => _geoStatus = 'ಸ್ಥಳ ಕಂಡುಬಂದಿಲ್ಲ.');
+        } else if (data.length == 1) {
+          // Only one result — auto-select
+          await _applyGeoResult(data[0], placeName.trim());
         } else {
-          final lat = double.parse(data[0]['lat']);
-          final lon = double.parse(data[0]['lon']);
-          final displayName = data[0]['display_name'] as String;
-          final autoTz = await getTimezoneForPlace(displayName, lat, lon);
-          await LocationService.setLocation(placeName.trim(), lat, lon, autoTz);
-          setState(() {
-            _tzCtrl.text = '${autoTz >= 0 ? '+' : ''}$autoTz';
-            _geoStatus = '📍 ${data[0]['display_name']} (TZ: ${autoTz >= 0 ? '+' : ''}$autoTz)';
-          });
-          if (mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-              content: Text('ಡೀಫಾಲ್ಟ್ ಸ್ಥಳ: ${placeName.trim()}'),
-              backgroundColor: Colors.green,
-            ));
+          // Multiple results — show selection dialog
+          if (!mounted) return;
+          final selected = await showDialog<Map<String, dynamic>>(
+            context: context,
+            builder: (ctx) => AlertDialog(
+              backgroundColor: kCard,
+              title: Text('ಸ್ಥಳ ಆಯ್ಕೆಮಾಡಿ / Select Location',
+                  style: TextStyle(color: kText, fontWeight: FontWeight.w900, fontSize: 16)),
+              content: SizedBox(
+                width: double.maxFinite,
+                child: ListView.separated(
+                  shrinkWrap: true,
+                  itemCount: data.length,
+                  separatorBuilder: (_, __) => Divider(height: 1, color: kBorder),
+                  itemBuilder: (ctx, i) {
+                    final item = data[i];
+                    final displayName = item['display_name'] as String;
+                    final lat = double.tryParse(item['lat']?.toString() ?? '') ?? 0;
+                    final lon = double.tryParse(item['lon']?.toString() ?? '') ?? 0;
+                    final type = item['type'] as String? ?? '';
+                    return ListTile(
+                      dense: true,
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                      leading: Icon(Icons.location_on, color: kPurple2, size: 20),
+                      title: Text(
+                        displayName,
+                        style: TextStyle(fontSize: 13, color: kText),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      subtitle: Text(
+                        '${lat.toStringAsFixed(2)}°, ${lon.toStringAsFixed(2)}° • $type',
+                        style: TextStyle(fontSize: 11, color: kMuted),
+                      ),
+                      onTap: () => Navigator.pop(ctx, item),
+                    );
+                  },
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(ctx),
+                  child: Text('ರದ್ದು / Cancel', style: TextStyle(color: kMuted)),
+                ),
+              ],
+            ),
+          );
+          if (selected != null && mounted) {
+            await _applyGeoResult(selected, placeName.trim());
           }
         }
       }
@@ -69,6 +107,25 @@ class _SettingsScreenState extends State<SettingsScreen> {
       setState(() => _geoStatus = 'ಸ್ಥಳ ಸಂಪರ್ಕ ದೋಷ. ನೇರವಾಗಿ ಅಕ್ಷಾಂಶ/ರೇಖಾಂಶ ನಮೂದಿಸಿ.');
     }
     setState(() => _geoLoading = false);
+  }
+
+  /// Apply a selected geocode result
+  Future<void> _applyGeoResult(Map<String, dynamic> result, String placeName) async {
+    final lat = double.parse(result['lat'].toString());
+    final lon = double.parse(result['lon'].toString());
+    final displayName = result['display_name'] as String;
+    final autoTz = await getTimezoneForPlace(displayName, lat, lon);
+    await LocationService.setLocation(placeName, lat, lon, autoTz);
+    if (mounted) {
+      setState(() {
+        _tzCtrl.text = '${autoTz >= 0 ? '+' : ''}$autoTz';
+        _geoStatus = '📍 $displayName (TZ: ${autoTz >= 0 ? '+' : ''}$autoTz)';
+      });
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text('ಡೀಫಾಲ್ಟ್ ಸ್ಥಳ: $placeName'),
+        backgroundColor: Colors.green,
+      ));
+    }
   }
 
   @override
