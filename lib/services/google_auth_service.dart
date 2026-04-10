@@ -33,6 +33,21 @@ class GoogleAuthService {
     return _currentUser?.authHeaders;
   }
 
+  /// Request Drive scope if not already granted (for existing sessions).
+  /// Returns true if scope is available, false if user denied.
+  static Future<bool> ensureDriveScope() async {
+    if (_currentUser == null) return false;
+    try {
+      final granted = await _instance.requestScopes([
+        'https://www.googleapis.com/auth/drive.appdata',
+      ]);
+      return granted;
+    } catch (e) {
+      debugPrint('Drive scope request failed: $e');
+      return false;
+    }
+  }
+
   static Future<bool> signIn() async {
     try {
       _currentUser = await _instance.signIn();

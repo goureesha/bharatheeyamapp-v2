@@ -30,7 +30,13 @@ class DriveBackupService {
   /// Returns a status message string.
   static Future<String> uploadBackup() async {
     try {
-      // 1. Get auth headers
+      // 1. Ensure Drive scope is granted (prompts user if needed)
+      final scopeOk = await GoogleAuthService.ensureDriveScope();
+      if (!scopeOk) {
+        return 'ದಯವಿಟ್ಟು Google Drive ಅನುಮತಿ ನೀಡಿ (Please grant Drive permission)';
+      }
+
+      // 2. Get auth headers
       final headers = await GoogleAuthService.getAuthHeaders();
       if (headers == null) {
         return 'ದಯವಿಟ್ಟು ಮೊದಲು Google ಸೈನ್ ಇನ್ ಮಾಡಿ (Please sign in first)';
@@ -115,7 +121,13 @@ class DriveBackupService {
   /// Returns null on success, or an error message string.
   static Future<String?> downloadAndRestore() async {
     try {
-      // 1. Get auth headers
+      // 1. Ensure Drive scope is granted (prompts user if needed)
+      final scopeOk = await GoogleAuthService.ensureDriveScope();
+      if (!scopeOk) {
+        return 'ದಯವಿಟ್ಟು Google Drive ಅನುಮತಿ ನೀಡಿ (Please grant Drive permission)';
+      }
+
+      // 2. Get auth headers
       final headers = await GoogleAuthService.getAuthHeaders();
       if (headers == null) {
         return 'ದಯವಿಟ್ಟು ಮೊದಲು Google ಸೈನ್ ಇನ್ ಮಾಡಿ (Please sign in first)';
