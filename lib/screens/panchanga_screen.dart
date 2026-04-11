@@ -391,27 +391,52 @@ class _PanchangaScreenState extends State<PanchangaScreen> {
                       child: CircularProgressIndicator(color: kPurple2),
                     )
                   else if (_panchang != null) ...[
-                    // ═══  Main Panchanga Table ═══
+                    // ═══ ಪಂಚಾಂಗ — 5 Core Limbs ═══
                     AppCard(
                       padding: EdgeInsets.zero,
                       child: Column(children: [
-                        _tableRow([tr('ಸಂವತ್ಸರ'), tr(_panchang!.samvatsara)]),
-                        _tableRow([tr('ಋತು'), tr(_panchang!.rutu)]),
-                        _tableRow([tr('ವಾರ'), tr(_panchang!.vara)]),
+                        _sectionHeader(Icons.auto_awesome, tr('ಪಂಚಾಂಗ') + ' / Five Limbs', kPurple2),
                         _tableRow([tr('ತಿಥಿ'), _formatEnd(tr(_panchang!.tithi), _panchang!.tithiEndTime, _panchang!.tithiEndsNextDay)]),
+                        _tableRow([tr('ವಾರ'), tr(_panchang!.vara)]),
                         _tableRow([tr('ಚಂದ್ರ ನಕ್ಷತ್ರ'), _formatEnd('${tr(_panchang!.nakshatra)} - ${tr('ಪಾದ')} ${_chandraPada()}', _panchang!.nakEndTime, _panchang!.nakEndsNextDay)]),
                         _tableRow([tr('ಯೋಗ'), _formatEnd(tr(_panchang!.yoga), _panchang!.yogaEndTime, _panchang!.yogaEndsNextDay)]),
                         _tableRow([tr('ಕರಣ'), _formatEnd(tr(_panchang!.karana), _panchang!.karanaEndTime, _panchang!.karanaEndsNextDay)]),
-                        _tableRow([tr('ಅಗ್ನಿ ವಾಸ'), _panchang!.agniVasa]),
-                        _tableRow([tr('ಚಂದ್ರ ರಾಶಿ'), tr(_panchang!.chandraRashi)]),
-                        _tableRow([tr('ಚಂದ್ರ ಮಾಸ'), tr(_panchang!.chandraMasa)]),
+                      ]),
+                    ),
+
+                    // ═══ ಸೂರ್ಯ — Sun Details ═══
+                    AppCard(
+                      padding: EdgeInsets.zero,
+                      child: Column(children: [
+                        _sectionHeader(Icons.wb_sunny, tr('ಸೂರ್ಯ') + ' / Sun', kOrange),
+                        _tableRow([tr('ಸೂರ್ಯೋದಯ'), _panchang!.sunrise]),
+                        _tableRow([tr('ಸೂರ್ಯಾಸ್ತ'), _panchang!.sunset]),
                         _tableRow([tr('ಸೂರ್ಯ ನಕ್ಷತ್ರ'), '${tr(_panchang!.suryaNakshatra)} - ${tr('ಪಾದ')} ${_panchang!.suryaPada}']),
                         _tableRow([tr('ಸೌರ ಮಾಸ'), tr(_panchang!.souraMasa)]),
                         _tableRow([tr('ಸೌರ ಮಾಸ ಗತ ದಿನ'), _panchang!.souraMasaGataDina]),
-                        _tableRow([tr('ಸೂರ್ಯೋದಯ'), _panchang!.sunrise]),
-                        _tableRow([tr('ಸೂರ್ಯಾಸ್ತ'), _panchang!.sunset]),
+                      ]),
+                    ),
+
+                    // ═══ ಚಂದ್ರ — Moon Details ═══
+                    AppCard(
+                      padding: EdgeInsets.zero,
+                      child: Column(children: [
+                        _sectionHeader(Icons.nightlight_round, tr('ಚಂದ್ರ') + ' / Moon', kTeal),
+                        _tableRow([tr('ಚಂದ್ರ ರಾಶಿ'), tr(_panchang!.chandraRashi)]),
+                        _tableRow([tr('ಚಂದ್ರ ಮಾಸ'), tr(_panchang!.chandraMasa)]),
                         _tableRow([tr('ಚಂದ್ರೋದಯ'), _moonrise]),
                         _tableRow([tr('ಚಂದ್ರಾಸ್ತ'), _moonset]),
+                      ]),
+                    ),
+
+                    // ═══ ಕಾಲ — Time & Season ═══
+                    AppCard(
+                      padding: EdgeInsets.zero,
+                      child: Column(children: [
+                        _sectionHeader(Icons.access_time, tr('ಕಾಲ') + ' / Time', kPurple1),
+                        _tableRow([tr('ಸಂವತ್ಸರ'), tr(_panchang!.samvatsara)]),
+                        _tableRow([tr('ಋತು'), tr(_panchang!.rutu)]),
+                        _tableRow([tr('ಅಗ್ನಿ ವಾಸ'), _panchang!.agniVasa]),
                         _tableRow([tr('ಹಗಲಿನ ಪ್ರಮಾಣ'), _panchang!.divamana]),
                         _tableRow([tr('ರಾತ್ರಿಯ ಪ್ರಮಾಣ'), _panchang!.ratrimana]),
                         _tableRow([tr('ಪರಮ ಘಟಿ'), _panchang!.paramaGhati]),
@@ -419,21 +444,6 @@ class _PanchangaScreenState extends State<PanchangaScreen> {
                         _tableRow([tr('ಅಮೃತ ಪ್ರಘಟಿ'), _panchang!.amrutaPraghati]),
                       ]),
                     ),
-
-                    // ═══ Rahu Kala / Yamaganda / Gulika ═══
-                    _buildKalaCard(),
-
-                    // ═══ Special Muhurta Timings ═══
-                    _buildSpecialMuhurtaCard(),
-
-                    // ═══ Day Muhurtas (15 divisions) ═══
-                    _buildMuhurtaCard(),
-
-                    // ═══ Chougadiya (Day) ═══
-                    _buildChougadiyaCard(true),
-
-                    // ═══ Chougadiya (Night) ═══
-                    _buildChougadiyaCard(false),
 
                     // ═══ Hora (Day) ═══
                     _buildHoraCard(true),
@@ -797,6 +807,21 @@ class _PanchangaScreenState extends State<PanchangaScreen> {
             Text('${item['start']} - ${item['end']}', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: kMuted)),
           ]),
         )),
+      ]),
+    );
+  }
+
+  Widget _sectionHeader(IconData icon, String title, Color color) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.08),
+        border: Border(bottom: BorderSide(color: color.withOpacity(0.2))),
+      ),
+      child: Row(children: [
+        Icon(icon, color: color, size: 20),
+        const SizedBox(width: 8),
+        Text(title, style: TextStyle(fontWeight: FontWeight.w900, fontSize: 14, color: color)),
       ]),
     );
   }
