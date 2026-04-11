@@ -420,6 +420,21 @@ class _PanchangaScreenState extends State<PanchangaScreen> {
                       ]),
                     ),
 
+                    // ═══ Rahu Kala / Yamaganda / Gulika ═══
+                    _buildKalaCard(),
+
+                    // ═══ Special Muhurta Timings ═══
+                    _buildSpecialMuhurtaCard(),
+
+                    // ═══ Day Muhurtas (15 divisions) ═══
+                    _buildMuhurtaCard(),
+
+                    // ═══ Chougadiya (Day) ═══
+                    _buildChougadiyaCard(true),
+
+                    // ═══ Chougadiya (Night) ═══
+                    _buildChougadiyaCard(false),
+
                     // ═══ Hora (Day) ═══
                     _buildHoraCard(true),
 
