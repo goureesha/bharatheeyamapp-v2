@@ -56,7 +56,7 @@ class SubscriptionService {
   /// True if the free trial is still active
   static bool get isTrialActive {
     if (trialStartDate == null) return false;
-    final now = lastVerifiedDate ?? TrustedTimeService.now();
+    final now = TrustedTimeService.now();
     final elapsed = now.difference(trialStartDate!);
     return elapsed.inDays < _trialDays;
   }
@@ -64,7 +64,7 @@ class SubscriptionService {
   /// Days remaining in trial (0 if expired)
   static int get trialDaysRemaining {
     if (trialStartDate == null) return 0;
-    final now = lastVerifiedDate ?? TrustedTimeService.now();
+    final now = TrustedTimeService.now();
     final elapsed = now.difference(trialStartDate!);
     final remaining = _trialDays - elapsed.inDays;
     return remaining > 0 ? remaining : 0;
