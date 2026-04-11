@@ -58,15 +58,15 @@ class SubscriptionService {
     if (trialStartDate == null) return false;
     final now = TrustedTimeService.now();
     final elapsed = now.difference(trialStartDate!);
-    return elapsed.inDays < _trialDays;
+    return elapsed.inHours < _trialDays * 24;
   }
 
-  /// Days remaining in trial (0 if expired)
-  static int get trialDaysRemaining {
+  /// Hours remaining in trial (0 if expired)
+  static int get trialHoursRemaining {
     if (trialStartDate == null) return 0;
     final now = TrustedTimeService.now();
     final elapsed = now.difference(trialStartDate!);
-    final remaining = _trialDays - elapsed.inDays;
+    final remaining = (_trialDays * 24) - elapsed.inHours;
     return remaining > 0 ? remaining : 0;
   }
 
@@ -98,7 +98,8 @@ class SubscriptionService {
       return 'ಚಂದಾದಾರಿಕೆ ಇಲ್ಲ (No subscription)';
     }
     if (isTrialActive) {
-      return 'ಟ್ರಯಲ್ ಸಕ್ರಿಯ - $trialDaysRemaining ದಿನ ಬಾಕಿ';
+      final h = trialHoursRemaining;
+      return 'ಟ್ರಯಲ್ ಸಕ್ರಿಯ - $h ಗಂಟೆ ಬಾಕಿ ($h hrs left)';
     }
     if (hasSubscription) {
       final days = subscriptionDaysRemaining;
