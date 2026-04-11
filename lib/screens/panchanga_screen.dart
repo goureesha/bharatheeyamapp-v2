@@ -426,6 +426,7 @@ class _PanchangaScreenState extends State<PanchangaScreen> {
                         _tableRow([tr('ಚಂದ್ರ ಮಾಸ'), tr(_panchang!.chandraMasa)]),
                         _tableRow([tr('ಚಂದ್ರೋದಯ'), _moonrise]),
                         _tableRow([tr('ಚಂದ್ರಾಸ್ತ'), _moonset]),
+                        _tableRow([tr('ಪರಮ ಘಟಿ'), _panchang!.paramaGhati]),
                       ]),
                     ),
 
@@ -439,7 +440,7 @@ class _PanchangaScreenState extends State<PanchangaScreen> {
                         _tableRow([tr('ಅಗ್ನಿ ವಾಸ'), _panchang!.agniVasa]),
                         _tableRow([tr('ಹಗಲಿನ ಪ್ರಮಾಣ'), _panchang!.divamana]),
                         _tableRow([tr('ರಾತ್ರಿಯ ಪ್ರಮಾಣ'), _panchang!.ratrimana]),
-                        _tableRow([tr('ಪರಮ ಘಟಿ'), _panchang!.paramaGhati]),
+
                         _tableRow([tr('ವಿಷ ಪ್ರಘಟಿ'), _panchang!.vishaPraghati]),
                         _tableRow([tr('ಅಮೃತ ಪ್ರಘಟಿ'), _panchang!.amrutaPraghati]),
                       ]),
