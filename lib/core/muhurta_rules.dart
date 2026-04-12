@@ -86,6 +86,13 @@ class MuhurtaEventRules {
   /// Shastra reference source
   final String? shastraRef;
 
+  /// Per-rule shlokas — one shloka for each of the 5 core rules
+  final String? tithiShloka;
+  final String? varaShloka;
+  final String? nakshatraShloka;
+  final String? lagnaShloka;
+  final String? lagnaShuddhiShloka;
+
   const MuhurtaEventRules({
     this.allowedTithis,
     this.allowedNakshatras,
@@ -94,9 +101,14 @@ class MuhurtaEventRules {
     this.requireShukla = false,
     this.requireUttarayana = false,
     this.allowedLagnas,
-    this.requiredShuddhis = const {ShuddhiType.lagna}, // default: at least lagna
+    this.requiredShuddhis = const {ShuddhiType.lagna},
     this.shloka,
     this.shastraRef,
+    this.tithiShloka,
+    this.varaShloka,
+    this.nakshatraShloka,
+    this.lagnaShloka,
+    this.lagnaShuddhiShloka,
   });
 }
 
@@ -110,8 +122,13 @@ const Map<MuhurtaEvent, MuhurtaEventRules> muhurtaRules = {
     allowedVaras: [1, 3, 4, 5],
     avoidVishti: true,
     requireShukla: true,
-    allowedLagnas: null, // Removed static limits, rely purely on Shuddhi
+    allowedLagnas: null,
     requiredShuddhis: {ShuddhiType.lagna, ShuddhiType.saptama, ShuddhiType.ashtama, ShuddhiType.chandraSaptama},
+    tithiShloka: 'ದ್ವಿತೀಯಾ ತೃತೀಯಾ ಚೈವ ಪಂಚಮೀ ಸಪ್ತಮೀ ತಥಾ ।\nದಶಮ್ಯೇಕಾದಶೀ ಚೈವ ದ್ವಾದಶೀ ತ್ರಯೋದಶೀ ಶುಭಾ ।\nವಿವಾಹೇ ಶುಕ್ಲಪಕ್ಷೇ ತು ಏತಾಃ ತಿಥಯಃ ಪ್ರಶಸ್ಯಂತೇ ॥',
+    varaShloka: 'ಸೋಮೋ ಬುಧೋ ಗುರುಶ್ಚೈವ ಭೃಗುಃ ಶುಭಕರಃ ಸದಾ ।\nವಿವಾಹೇ ವಾರಚತುಷ್ಟಯಂ ಪ್ರೋಕ್ತಂ ಸರ್ವಸಿದ್ಧಿಕರಮ್ ॥',
+    nakshatraShloka: 'ರೋಹಿಣೀಮೃಗಶೀರ್ಷಂ ಚ ಉತ್ತರಾತ್ರಯಮೇವ ಚ ।\nರೇವತೀ ಹಸ್ತಮೂಲಂ ಚ ಸ್ವಾತೀ ಮಾಘಮನುರಾಧಕಾಃ ॥\nಏತೇ ವಿವಾಹೇ ಶುಭದಾಃ ತಾರಾಃ ಪ್ರೋಕ್ತಾ ಮನೀಷಿಭಿಃ ।',
+    lagnaShloka: 'ಮಿಥುನೇ ಕನ್ಯಕೇ ತೌಲೇ ಧನುಷ್ಯೇ ಮೀನಕೇ ತಥಾ ।\nವೃಷಭೇ ಚ ಶುಭಂ ಲಗ್ನಂ ವಿವಾಹೇ ಪರಿಕೀರ್ತಿತಮ್ ॥',
+    lagnaShuddhiShloka: 'ಲಗ್ನಂ ಶುಭಗ್ರಹೈರ್ದೃಷ್ಟಂ ಸಪ್ತಮಂ ಗ್ರಹವರ್ಜಿತಮ್ ।\nಅಷ್ಟಮಂ ಶುಕ್ರವರ್ಜಂ ಚ ವಿವಾಹೇ ಶುಭದಾಯಕಮ್ ॥',
     shloka: '''೧. ನಕ್ಷತ್ರ ನಿಯಮ:
 ರೋಹಿಣೀಮೃಗಶೀರ್ಷಂ ಚ ಉತ್ತರಾತ್ರಯಮೇವ ಚ ।
 ರೇವತೀ ಹಸ್ತಮೂಲಂ ಚ ಸ್ವಾತೀ ಮಾಘಮನುರಾಧಕಾಃ ॥
@@ -136,6 +153,11 @@ const Map<MuhurtaEvent, MuhurtaEventRules> muhurtaRules = {
     requireUttarayana: true,
     allowedLagnas: null,
     requiredShuddhis: {ShuddhiType.lagna, ShuddhiType.ashtama},
+    tithiShloka: 'ದ್ವಿತೀಯಾ ತೃತೀಯಾ ಚ ಪಂಚಮೀ ಷಷ್ಠೀ ತಥೈವ ಚ ।\nದಶಮೀ ಚೈಕಾದಶೀ ದ್ವಾದಶೀ ಶುಭದಾಃ ಸ್ಮೃತಾಃ ॥',
+    varaShloka: 'ಸೋಮ-ಬುಧ-ಗುರು-ಶುಕ್ರೇ ಚ ಉಪನಯನೇ ಶುಭಕರಾಃ ।\nಕೂರ್ ವಾರೇ ಕುಜ-ಅರ್ಕ-ಶನೈಃ ಉಪನಯನಂ ವಿವರ್ಜಯೇತ್ ॥',
+    nakshatraShloka: 'ಆಶ್ಲೇಷಾ ಮೂಲ ಕೃತ್ತಿಕಾ ವರ್ಜಯಿತ್ವಾಖಿಲಾನಿ ಚ ।\nಉಪನಯನೇ ಶುಭದಾನಿ ನಕ್ಷತ್ರಾಣಿ ಭವಂತಿ ಹಿ ॥',
+    lagnaShloka: 'ಶುಭಗ್ರಹೈರ್ನಿರೀಕ್ಷಿತೇ ಲಗ್ನೇ ಚೈವೋಪನಯನಮ್ ।\nಕೇಂದ್ರೇ ಗುರುಬಲಂ ಯಾತ್ರ ಶ್ರೇಷ್ಠಂ ಹಿ ಮಂತ್ರದೀಕ್ಷಣೇ ॥',
+    lagnaShuddhiShloka: 'ಲಗ್ನೇ ಶುಭಗ್ರಹೈರ್ದೃಷ್ಟೇ ಅಷ್ಟಮೇ ಪಾಪವರ್ಜಿತೇ ।\nಗುರುಬಲಂ ವಟೋಃ ಕಾರ್ಯೇ ಸಂಸ್ಕಾರಃ ಸಿದ್ಧಿದಾಯಕಃ ॥',
     shloka: '''೧. ನಕ್ಷತ್ರ ನಿಯಮ:
 ಆಶ್ಲೇಷಾ ಮೂಲ ಕೃತ್ತಿಕಾ ವರ್ಜಯಿತ್ವಾಖಿಲಾನಿ ಚ ।
 ಉಪನಯನೇ ಶುಭದಾನಿ ನಕ್ಷತ್ರಾಣಿ ಭವಂತಿ ಹಿ ॥
@@ -161,6 +183,11 @@ const Map<MuhurtaEvent, MuhurtaEventRules> muhurtaRules = {
     requireShukla: true,
     allowedLagnas: [1, 4, 7, 10], // Sthira rashis
     requiredShuddhis: {ShuddhiType.lagna, ShuddhiType.ashtama, ShuddhiType.chandraSaptama},
+    tithiShloka: 'ದ್ವಿತೀಯಾ ತೃತೀಯಾ ಪಂಚಮೀ ಸಪ್ತಮೀ ದಶಮೀ ತಥಾ ।\nಏಕಾದಶೀ ದ್ವಾದಶೀ ಚ ತ್ರಯೋದಶೀ ಶುಕ್ಲಪಕ್ಷೇ ಶುಭಪ್ರದಾಃ ॥',
+    varaShloka: 'ಸೋಮ-ಬುಧ-ಗುರು-ಶುಕ್ರೇಷು ಗೃಹಪ್ರವೇಶಃ ಸಿದ್ಧಿದಃ ।\nಕುಜ-ಶನಿ-ಅರ್ಕವಾರೇಷು ಗೃಹಂ ಪ್ರವಿಶೇನ್ನ ಕದಾಚನ ॥',
+    nakshatraShloka: 'ರೋಹಿಣೀ ಮೃಗಶೀರ್ಷಂ ಚ ಉತ್ತರಾತ್ರಯಮೇವ ಚ ।\nಪುಷ್ಯೋ ಧನಿಷ್ಠಾ ಶತತಾರಾ ನಕ್ಷತ್ರಾಣಿ ಶುಭಾನಿ ಚ ॥',
+    lagnaShloka: 'ಸ್ಥಿರ ಲಗ್ನಂ ಗೃಹಪ್ರವೇಶೇ ಶ್ರೇಷ್ಠಂ ಭವತಿ ಸರ್ವದಾ ।\nದ್ವಿಸ್ವಭಾವೇ ಮಧ್ಯಮಂ ಸ್ಯಾಚ್ಚರ ಲಗ್ನಂ ವಿವರ್ಜಯೇತ್ ॥',
+    lagnaShuddhiShloka: 'ಲಗ್ನೇ ಶುಭಗ್ರಹೈರ್ದೃಷ್ಟೇ ಅಷ್ಟಮೇ ಪಾಪವರ್ಜಿತೇ ।\nಚಂದ್ರಸಪ್ತಮೇ ಶುದ್ಧೇ ಗೃಹಪ್ರವೇಶಃ ಶುಭಾವಹಃ ॥',
     shloka: '''೧. ನಕ್ಷತ್ರ ನಿಯಮ:
 ರೋಹಿಣೀ ಮೃಗಶೀರ್ಷಂ ಚ ಉತ್ತರಾತ್ರಯಮೇವ ಚ ।
 ಪುಷ್ಯೋ ಧನಿಷ್ಠಾ ಶತತಾರಾ ನಕ್ಷತ್ರಾಣಿ ಶುಭಾನಿ ಚ ॥
@@ -185,6 +212,11 @@ const Map<MuhurtaEvent, MuhurtaEventRules> muhurtaRules = {
     requireShukla: true,
     allowedLagnas: [1, 4, 7, 10], // Sthira
     requiredShuddhis: {ShuddhiType.lagna, ShuddhiType.ashtama},
+    tithiShloka: 'ದ್ವಿತೀಯಾ ಪಂಚಮೀ ಷಷ್ಟೀ ಸಪ್ತಮೀ ದಶಮೀ ತಥಾ ।\nಏಕಾದಶೀ ತ್ರಯೋದಶೀ ಶುಕ್ಲಪಕ್ಷೇ ಪ್ರಶಸ್ಯತೇ ॥',
+    varaShloka: 'ಸೋಮ-ಬುಧ-ಗುರು-ಶುಕ್ರೇಷು ದೇವಪ್ರತಿಷ್ಟಾ ಸಿದ್ಧಿದಾ ।\nಕುಜ-ಶನಿ-ಅರ್ಕವಾರೇಷು ದೇವಾರ್ಚನಂ ವಿವರ್ಜಯೇತ್ ॥',
+    nakshatraShloka: 'ರೋಹಿಣೀ ಶ್ರವಣೋ ಹಸ್ತಃ ಪುಷ್ಯೋತ್ತರ-ತ್ರಯಂ ತಥಾ ।\nರೇವತೀ ಚ ಅಶ್ವಿನೀ ಮೃಗೋ ದೇವ-ಪ್ರತಿಷ್ಟನೇ ಶುಭಮ್ ॥',
+    lagnaShloka: 'ಸ್ಥಿರಲಗ್ನೇ ಶುಭೇ ತಾರೇ ಶುಭಗ್ರಹ ನಿರೀಕ್ಷಿತೇ ।\nದೇವತಾನಾಂ ಪ್ರತಿಷ್ಟಾ ಚ ಕಾರ್ಯಾ ಸರ್ವಾರ್ಥ ಸಿದ್ಧಯೇ ॥',
+    lagnaShuddhiShloka: 'ಅಷ್ಟಮೇ ಪಾಪ ವರ್ಜೇ ಚ ದೇವತಾನಾಂ ಪ್ರತಿಷ್ಟನಮ್ ।\nಲಗ್ನೇ ಕೇಂದ್ರೇ ಶುಭೈರ್ಯುಕ್ತೇ ಶಾಶ್ವತಂ ಪೂಜಾಫಲಮ್ ॥',
     shloka: '''೧. ಅಯನ-ಮಾಸ ನಿಯಮ:
 ಉತ್ತರಾಯಣೇ ವಸಂತೇ ವಾ ಜೇಷ್ಠೇ ವಾ ಫಾಲ್ಗುನೇ ತಥಾ ।
 ದೇವತಾನಾಂ ಪ್ರತಿಷ್ಠಾ ಚ ಕಾರ್ಯಾ ಸರ್ವಾರ್ಥ ಸಿದ್ಧಯೇ ॥
@@ -211,6 +243,11 @@ const Map<MuhurtaEvent, MuhurtaEventRules> muhurtaRules = {
     requireShukla: true,
     allowedLagnas: null,
     requiredShuddhis: {ShuddhiType.lagna},
+    tithiShloka: 'ಪ್ರತಿಪದಾ ತೃತೀಯಾ ಪಂಚಮೀ ದಶಮೀ ಚ ।\nಶುಕ್ಲಪಕ್ಷೇ ವಿದ್ಯಾರಂಭೇ ಏಕಾದಶೀ ಶುಭಾ ಸ್ಮೃತಾಃ ॥',
+    varaShloka: 'ಬುಧ-ಗುರುವಾರೇ ಚೈವ ವಿದ್ಯಾರಂಭಃ ಸಿದ್ಧಿದಃ ।\nಸರಸ್ವತ್ಯಾಃ ಕೃಪಾಯುಕ್ತೇ ವಿದ್ಯಾ ಸಿದ್ಧ್ಯತಿ ನಿಶ್ಚಿತಮ್ ॥',
+    nakshatraShloka: 'ಅಶ್ವಿನೀ ಪುಷ್ಯ ಹಸ್ತೇಷು ಚಿತ್ರಾ ಸ್ವಾತೀ ಪುನರ್ವಸು ।\nಶ್ರವಣೇ ಧನಿಷ್ಠಾಯಾಂ ಚ ಅಕ್ಷರಾರಂಭ ಶುಭದಾಯಕಃ ॥',
+    lagnaShloka: 'ಕನ್ಯಾ-ಮಿಥುನ-ಧನುಷೇ ಲಗ್ನೇ ವಿದ್ಯಾರಂಭಃ ಸಿದ್ಧಿದಃ ।\nಗುರುಶುಕ್ರಬುಧೈರ್ದೃಷ್ಟೇ ಲಗ್ನೇ ವಿದ್ಯಾ ಸಿದ್ಧ್ಯತಿ ॥',
+    lagnaShuddhiShloka: 'ಲಗ್ನೇ ಶುಭಗ್ರಹೈರ್ದೃಷ್ಟೇ ಪಾಪಗ್ರಹವರ್ಜಿತೇ ।\nಅಕ್ಷರಾಭ್ಯಾಸಕರ್ಮಣಿ ವಿದ್ಯಾಸಿದ್ಧಿಃ ಪ್ರಜಾಯತೇ ॥',
     shloka: 'ಅಶ್ವಿನೀ ಪುಷ್ಯ ಹಸ್ತೇಷು ಚಿತ್ರಾ ಸ್ವಾತೀ ಪುನರ್ವಸು ।\nಶ್ರವಣೇ ಧನಿಷ್ಠಾಯಾಂ ಚ ಅಕ್ಷರಾರಂಭ ಶುಭದಾಯಕಃ ॥',
     shastraRef: 'ಮುಹೂರ್ತ ಚಿಂತಾಮಣಿ (ವಿದ್ಯಾರಂಭ ಪ್ರಕರಣ)',
   ),
@@ -223,6 +260,11 @@ const Map<MuhurtaEvent, MuhurtaEventRules> muhurtaRules = {
     avoidVishti: true,
     allowedLagnas: null,
     requiredShuddhis: {ShuddhiType.lagna, ShuddhiType.ashtama, ShuddhiType.chandraSaptama},
+    tithiShloka: 'ದ್ವಿತೀಯಾ ಪಂಚಮೀ ಸಪ್ತಮೀ ದಶಮೀ ತಥಾ ।\nಯಾತ್ರಾಯಾಂ ಶುಭದಾಃ ಪ್ರೋಕ್ತಾ ರಿಕ್ತಾಮಾವಾಸ್ಯಾಂ ವಿವರ್ಜಯೇತ್ ॥',
+    varaShloka: 'ಸೋಮ-ಬುಧ-ಗುರು-ಶುಕ್ರೇಷು ಯಾತ್ರಾಯಾಂ ಶುಭದಾಯಕಾಃ ।\nಕುಜ-ಶನಿ-ಅರ್ಕವಾರೇ ಯಾತ್ರಾಂ ನ ಸಮಾಚರೇತ್ ॥',
+    nakshatraShloka: 'ಅಶ್ವಿನಿ ಪುಷ್ಯ ಹಸ್ತೇಷು ಚಿತ್ರಾ ಸ್ವಾತೀ ಪುನರ್ವಸು ।\nಮೃಗಶಿರೋ ರೇವತೀ ಚ ಯಾತ್ರಾಯಾಂ ಶುಭದಾಯಕಾಃ ॥',
+    lagnaShloka: 'ಚರಲಗ್ನೇ ಯಾತ್ರಾ ಶುಭಾ ಸ್ಯಾತ್ ದ್ವಿಸ್ವಭಾವೇ ಮಧ್ಯಮಾ ।\nಸ್ಥಿರಲಗ್ನೇ ಗಮನಂ ವಿವರ್ಜಯೇತ್ ಸರ್ವದಾ ॥',
+    lagnaShuddhiShloka: 'ಲಗ್ನೇ ಶುಭಗ್ರಹೈರ್ದೃಷ್ಟೇ ಅಷ್ಟಮೇ ಪಾಪವರ್ಜಿತೇ ।\nಚಂದ್ರಸಪ್ತಮೇ ಶುದ್ಧೇ ಯಾತ್ರಾ ಸಿದ್ಧಿದಾಯಿನೀ ॥',
     shloka: 'ಅಶ್ವಿನಿ ಪುಷ್ಯ ಹಸ್ತೇಷು ಚಿತ್ರಾ ಸ್ವಾತೀ ಪುನರ್ವಸು ।\nಮೃಗಶಿರೋ ರೇವತೀ ಚ ಯಾತ್ರಾಯಾಂ ಶುಭದಾಯಕಾಃ ॥',
     shastraRef: 'ಮುಹೂರ್ತ ಚಿಂತಾಮಣಿ (ಯಾತ್ರಾ ಪ್ರಕರಣ)',
   ),
@@ -236,6 +278,11 @@ const Map<MuhurtaEvent, MuhurtaEventRules> muhurtaRules = {
     requireShukla: true,
     allowedLagnas: null,
     requiredShuddhis: {ShuddhiType.lagna, ShuddhiType.saptama},
+    tithiShloka: 'ದ್ವಿತೀಯಾ ಪಂಚಮೀ ಸಪ್ತಮೀ ದಶಮೀ ತಥಾ ।\nಶುಕ್ಲಪಕ್ಷೇ ತ್ರಯೋದಶೀ ವ್ಯಾಪಾರೇ ಶುಭಪ್ರದಾಃ ॥',
+    varaShloka: 'ಸೋಮ-ಬುಧ-ಗುರು-ಶುಕ್ರೇಷು ವ್ಯಾಪಾರಾರಂಭಃ ಸಿದ್ಧಿದಃ ।\nಲಕ್ಷ್ಮೀವಾರೇ ವಿಶೇಷತಃ ಧನಾಗಮಃ ಸಿದ್ಧ್ಯತಿ ॥',
+    nakshatraShloka: 'ಅಶ್ವಿನಿ ಪುಷ್ಯ ಹಸ್ತೇಷು ರೇವತೀ ಚಿತ್ರಕೇ ತಥಾ ।\nವ್ಯಾಪಾರಾರಂಭ ಕಾರ್ಯಾಣಿ ಶುಭದಾನಿ ನ ಸಂಶಯಃ ॥',
+    lagnaShloka: 'ವೃಷಭ-ತುಲಾ-ಧನುಷೇ ಲಗ್ನೇ ವ್ಯಾಪಾರೇ ಧನಪ್ರದಃ ।\nಶುಭಗ್ರಹೈರ್ದೃಷ್ಟೇ ಲಗ್ನೇ ಲಕ್ಷ್ಮೀಕರಂ ಭವೇತ್ ॥',
+    lagnaShuddhiShloka: 'ಲಗ್ನೇ ಶುಭಗ್ರಹೈರ್ದೃಷ್ಟೇ ಸಪ್ತಮೇ ಶುದ್ಧೇ ತಥಾ ।\nವ್ಯಾಪಾರೇ ಧನಲಾಭಃ ಸರ್ವಕಾರ್ಯಜಯಪ್ರದಮ್ ॥',
     shloka: 'ಅಶ್ವಿನಿ ಪುಷ್ಯ ಹಸ್ತೇಷು ರೇವತೀ ಚಿತ್ರಕೇ ತಥಾ ।\nವ್ಯಾಪಾರಾರಂಭ ಕಾರ್ಯಾಣಿ ಶುಭದಾನಿ ನ ಸಂಶಯಃ ॥',
     shastraRef: 'ಮುಹೂರ್ತ ಚಿಂತಾಮಣಿ (ವ್ಯವಹಾರ ಪ್ರಕರಣ)',
   ),
@@ -250,6 +297,11 @@ const Map<MuhurtaEvent, MuhurtaEventRules> muhurtaRules = {
     requireShukla: true,
     allowedLagnas: null,
     requiredShuddhis: {ShuddhiType.lagna, ShuddhiType.dashama},
+    tithiShloka: 'ದ್ವಿತೀಯಾ ಪಂಚಮೀ ಸಪ್ತಮೀ ದಶಮೀ ಚ ।\nಶುಕ್ಲಪಕ್ಷೇ ಅನ್ನಪ್ರಾಶನೇ ಶುಭದಾಃ ತಿಥಯಃ ಸ್ಮೃತಾಃ ॥',
+    varaShloka: 'ಸೋಮ-ಬುಧ-ಗುರು-ಶುಕ್ರೇ ಅನ್ನಪ್ರಾಶನಂ ಶುಭಮ್ ।\nಮಂಗಳ-ಶನಿ-ರವಿವಾರೇ ಸಂಸ್ಕಾರಂ ವಿವರ್ಜಯೇತ್ ॥',
+    nakshatraShloka: 'ಪುಷ್ಯೇ ಪುನರ್ವಸೌ ಹಸ್ತೇ ರೇವತ್ಯಾಂ ಶ್ರವಣೇ ತಥಾ ।\nಅನ್ನಪ್ರಾಶನ ಕರ್ಮಾಣಿ ಕುರ್ಯಾತ್ ಸಂಪತ್ಕರಾಣಿ ಹಿ ॥',
+    lagnaShloka: 'ಶುಭಗ್ರಹೈರ್ನಿರೀಕ್ಷಿತೇ ಲಗ್ನೇ ಅನ್ನಪ್ರಾಶನಂ ಶುಭಮ್ ।\nಕೇಂದ್ರೇ ಶುಭೇ ಸ್ಥಿತೇ ಲಗ್ನೇ ಬಾಲಾರೋಗ್ಯಪ್ರದಾಯಕಮ್ ॥',
+    lagnaShuddhiShloka: 'ದಶಮಂ ಗ್ರಹವರ್ಜಿತಂ ಲಗ್ನಂ ಶುಭದೃಷ್ಟಿ ಸಮನ್ವಿತಮ್ ।\nಅನ್ನಪ್ರಾಶನ ಕಾಲೇ ತು ಸರ್ವರೋಗ ವಿನಾಶನಮ್ ॥',
     shloka: '''೧. ನಕ್ಷತ್ರ ನಿಯಮ:
 ಪುಷ್ಯೇ ಪುನರ್ವಸೌ ಹಸ್ತೇ ರೇವತ್ಯಾಂ ಶ್ರವಣೇ ತಥಾ ।
 ಅನ್ನಪ್ರಾಶನ ಕರ್ಮಾಣಿ ಕುರ್ಯಾತ್ ಸಂಪತ್ಕರಾಣಿ ಹಿ ॥
@@ -269,6 +321,11 @@ const Map<MuhurtaEvent, MuhurtaEventRules> muhurtaRules = {
     requireShukla: true,
     allowedLagnas: null,
     requiredShuddhis: {ShuddhiType.lagna, ShuddhiType.ashtama},
+    tithiShloka: 'ದ್ವಿತೀಯಾ ಪಂಚಮೀ ಸಪ್ತಮೀ ದಶಮೀ ತಥಾ ।\nರಿಕ್ತಾ-ಅಮಾವಾಸ್ಯಾ-ಪರ್ವ ನಾಮಕರ್ಮ ವಿವರ್ಜಯೇತ್ ॥',
+    varaShloka: 'ಸೋಮ-ಬುಧ-ಗುರು-ಶುಕ್ರೇಷು ನಾಮಕರಣಂ ಶುಭಮ್ ।\nಶಿಶೂನಾಂ ನಾಮಕರ್ಮ ಶುಭವಾರೇ ಪ್ರಶಸ್ಯತೇ ॥',
+    nakshatraShloka: 'ಅಶ್ವಿನೀ-ರೋಹಿಣೀ-ಪುಷ್ಯ-ಹಸ್ತ-ರೇವತಿಭಿಃ ಶುಭಮ್ ।\nಲಗ್ನೇ ಶುಭಗ್ರಹೈರ್ದೃಷ್ಟೇ ನಾಮಕರಣಂ ಶುಭಮ್ ॥',
+    lagnaShloka: 'ಗುರು-ಶುಕ್ರ-ಬುಧೈರ್ದೃಷ್ಟೇ ಕೇಂದ್ರ-ತ್ರಿಕೋಣ ಸಂಸ್ಥಿತೇ ।\nನಾಮಕರಣಂ ಶಿಶೂನಾಂ ಚ ಆಯುರ್ವೃದ್ಧಿಕರಂ ಭವೇತ್ ॥',
+    lagnaShuddhiShloka: 'ಲಗ್ನೇ ಶುಭಗ್ರಹೈರ್ದೃಷ್ಟೇ ಅಷ್ಟಮೇ ಪಾಪ-ವರ್ಜಿತೇ ।\nನಾಮಕರಣಂ ಶುಭಂ ಸ್ಯಾತ್ ಬಾಲಾಯುರ್ವೃದ್ಧಿದಮ್ ॥',
     shloka: '''೧. ಮಾಸ-ದಿನ ನಿಯಮ:
 ಏಕಾದಶೇ ತಥಾಹ್ನಿ ಸ್ಯಾತ್ ದ್ವಾದಶೇ ನಾಮಕರ್ಮ ಚ ।
 ರಿಕ್ತಾ-ಅಮಾವಾಸ್ಯಾ-ಪರ್ವ-ದಿನೇ ನಾಮಕರ್ಮ ವಿವರ್ಜಯೇತ್ ॥
@@ -292,6 +349,11 @@ const Map<MuhurtaEvent, MuhurtaEventRules> muhurtaRules = {
     requireShukla: true,
     allowedLagnas: null,
     requiredShuddhis: {ShuddhiType.lagna, ShuddhiType.ashtama},
+    tithiShloka: 'ದ್ವಿತೀಯಾ ಪಂಚಮೀ ಸಪ್ತಮೀ ದಶಮೀ ತಥಾ ।\nಶುಕ್ಲಪಕ್ಷೇ ಸೀಮಂತಕರ್ಮಣಿ ಶುಭದಾಃ ಸ್ಮೃತಾಃ ॥',
+    varaShloka: 'ಸೋಮ-ಬುಧ-ಗುರು-ಶುಕ್ರೇ ಚ ಸೀಮಂತಂ ಶುಭಪ್ರದಮ್ ।\nಮಂಗಳೇವಾಸರೇ ಚೈವ ವರ್ಜಯೇತ್ ಸರ್ವಕರ್ಮಸು ॥',
+    nakshatraShloka: 'ಪುಷ್ಯ-ಶ್ರವಣ-ರೋಹಿಣೀ-ಉತ್ತರ-ಹಸ್ತ-ರೇವತೀ ।\nಸೀಮಂತಕರ್ಮಣಿ ಶುಭನಕ್ಷತ್ರಾಣಿ ಭವಂತಿ ಹಿ ॥',
+    lagnaShloka: 'ಲಗ್ನೇ ಕೇಂದ್ರೇ ಶುಭೈರ್ದೃಷ್ಟೇ ಗರ್ಭರಕ್ಷಾಕರಂ ಭವೇತ್ ।\nಶುಭಗ್ರಹಯುಕ್ತೇ ಲಗ್ನೇ ಸೀಮಂತಂ ಶುಭಪ್ರದಮ್ ॥',
+    lagnaShuddhiShloka: 'ಅಷ್ಟಮೇ ಪಾಪವರ್ಜಿತೇ ಲಗ್ನೇ ಶುಭನಿರೀಕ್ಷಿತೇ ।\nಗರ್ಭಿಣ್ಯಾಃ ಪ್ರೀತಿವರ್ಧನಂ ಸೀಮಂತಂ ಶುಭಾವಹಮ್ ॥',
     shloka: '''೧. ಮಾಸ-ಪಕ್ಷ ನಿಯಮ:
 ಷಷ್ಠೇ ವಾ ಅಷ್ಟಮೇ ಮಾಸಿ ಶುಕ್ಲಪಕ್ಷೇ ಶುಭಾವಹೇ ।
 ಪುಂಸವನ-ಸೀಮಂತಕರ್ಮ ಗರ್ಭ-ರಕ್ಷಾಕರಂ ಭವೇತ್ ॥
@@ -316,6 +378,11 @@ const Map<MuhurtaEvent, MuhurtaEventRules> muhurtaRules = {
     requireShukla: true,
     allowedLagnas: null,
     requiredShuddhis: {ShuddhiType.lagna, ShuddhiType.ashtama, ShuddhiType.chandraSaptama},
+    tithiShloka: 'ದ್ವಿತೀಯಾ ಪಂಚಮೀ ಸಪ್ತಮೀ ದಶಮೀ ತಥಾ ।\nಶುಕ್ಲಪಕ್ಷೇ ಚೌಲಕರ್ಮ ಶುಭದಾಃ ಸ್ಮೃತಾಃ ॥',
+    varaShloka: 'ಸೋಮ-ಬುಧ-ಗುರು-ಶುಕ್ರೇ ಚ ಚೌಲಕರ್ಮ ಪ್ರಶಸ್ಯತೇ ।\nಉತ್ತರಾಯಣೇ ಶುಭದಂ ಪ್ರೋಕ್ತಂ ಬಾಲಾಯುಷ್ಕರಮ್ ॥',
+    nakshatraShloka: 'ಪುನರ್ವಸು-ಪುಷ್ಯ-ಶ್ರವಣೇ ಅಶ್ವಿನೀ ಹಸ್ತ ರೇವತೀ ।\nರಿಕ್ತಾ-ಚತುರ್ದಶೀ-ಅಮಾವಾಸ್ಯಾಂ ಚೈವ ವಿವರ್ಜಯೇತ್ ॥',
+    lagnaShloka: 'ಶುಭಗ್ರಹೈರ್ನಿರೀಕ್ಷಿತೇ ಲಗ್ನೇ ಚೌಲಕರ್ಮ ಸಿದ್ಧಿದಮ್ ।\nಕೇಂದ್ರೇ ದೃಷ್ಟೇ ಶುಭೈರ್ಗೃಹೈರ್-ಬಾಲಾಯುರ್-ವೃದ್ಧಿದಾಯಕಮ್ ॥',
+    lagnaShuddhiShloka: 'ಲಗ್ನ ಶುದ್ಧೇ ಅಷ್ಟಮ ಶುದ್ಧೇ ಚೌಲಕರ್ಮ ಭವೇತ್ ಶುಭಮ್ ।\nಕೇಂದ್ರೇ ದೃಷ್ಟೇ ಶುಭೈರ್ಗೃಹೈರ್-ಬಾಲಾಯುರ್-ವೃದ್ಧಿದಾಯಕಮ್ ॥',
     shloka: '''೧. ಅಯನ-ಮಾಸ ನಿಯಮ:
 ಉತ್ತರಾಯಣೇ ಶುಭದಂ ಪ್ರೋಕ್ತಂ ಚೈತ್ರ ವೈಶಾಖ-ಜೇಷ್ಠಕೇ ।
 ಸೋಮ-ಬುಧ-ಗುರು-ಶುಕ್ರೇ ಚ ಚೌಲಕರ್ಮ ಪ್ರಶಸ್ಯತೇ ॥
@@ -340,6 +407,11 @@ const Map<MuhurtaEvent, MuhurtaEventRules> muhurtaRules = {
     requireShukla: true,
     allowedLagnas: [1, 4, 7, 10], // Sthira
     requiredShuddhis: {ShuddhiType.lagna, ShuddhiType.ashtama},
+    tithiShloka: 'ದ್ವಿತೀಯಾ ಪಂಚಮೀ ಸಪ್ತಮೀ ದಶಮೀ ತಥಾ ।\nಶುಕ್ಲಪಕ್ಷೇ ವಾಸ್ತುಶಿಲಾನ್ಯಾಸೇ ಶುಭಪ್ರದಾಃ ॥',
+    varaShloka: 'ಸೋಮ-ಬುಧ-ಗುರು-ಶುಕ್ರೇ ಚ ವಾಸ್ತುಪೂಜಾ ಸಿದ್ಧಿದಾ ।\nಕುಜ-ಶನಿ-ಅರ್ಕವಾರೇ ಶಿಲಾನ್ಯಾಸಂ ವಿವರ್ಜಯೇತ್ ॥',
+    nakshatraShloka: 'ರೋಹಿಣೀ ಮೃಗಶೀರ್ಷಂ ಚ ಉತ್ತರಾತ್ರಯ-ರೇವತೀ ।\nಸೋಮ-ಬುಧ-ಗುರು-ಶುಕ್ರೇ ಚ ವಾಸ್ತುಪೂಜಾ ಸಿದ್ಧಿದಾ ॥',
+    lagnaShloka: 'ಸ್ಥಿರಲಗ್ನೇ ಶುಭೇ ದೃಷ್ಟೇ ವಾಸ್ತುಶಿಲಾನ್ಯಾಸಂ ಸಿದ್ಧಿದಮ್ ।\nಕೇಂದ್ರ-ತ್ರಿಕೋಣೇ ಶುಭೈರ್ಯುಕ್ತೇ ಗೃಹಂ ಭವತಿ ಶಾಶ್ವತಮ್ ॥',
+    lagnaShuddhiShloka: 'ಸ್ಥಿರಲಗ್ನೇ ಶುಭೇ ದೃಷ್ಟೇ ಅಷ್ಟಮೇ ಪಾಪ ವರ್ಜಿತೇ ।\nಕೇಂದ್ರ-ತ್ರಿಕೋಣೇ ಶುಭೈರ್ಯುಕ್ತೇ ಗೃಹಂ ಭವತಿ ಶಾಶ್ವತಮ್ ॥',
     shloka: '''೧. ಮಾಸ ನಿಯಮ:
 ವೈಶಾಖೇ ಫಾಲ್ಗುಣೇ ಚೈತ್ರೇ ಶ್ರಾವಣೇ ಮಾರ್ಗಶೀರ್ಷಕೇ ।
 ಶುಕ್ಲಪಕ್ಷೇ ಶುಭಂ ಪ್ರೋಕ್ತಂ ವಾಸ್ತು-ಶಿಲಾನ್ಯಾಸ ಕರ್ಮಣಿ ॥
@@ -362,6 +434,11 @@ const Map<MuhurtaEvent, MuhurtaEventRules> muhurtaRules = {
     avoidVishti: true,
     allowedLagnas: null,
     requiredShuddhis: {ShuddhiType.lagna, ShuddhiType.ashtama},
+    tithiShloka: 'ರಿಕ್ತಾ-ಪರ್ವ-ವಿವರ್ಜಿತೇ ದಿನೇ ಔಷಧಂ ದದ್ಯಾತ್ ।\nಶೀಘ್ರಮಾರೋಗ್ಯಕಾರಕಂ ಭೇಷಜಂ ಭವೇತ್ ॥',
+    varaShloka: 'ಸೋಮ-ಬುಧ-ಗುರು-ಶುಕ್ರೇ ಔಷಧಸೇವನಂ ಶುಭಮ್ ।\nಅಶ್ವಿನೀದೇವತಾಯುಕ್ತೇ ವಾರೇ ರೋಗನಾಶನಂ ಭವೇತ್ ॥',
+    nakshatraShloka: 'ಅಶ್ವಿನೀ ಹಸ್ತ ಪುಷ್ಯೇ ಚ ಪುನರ್ವಸು ಶ್ರವಣೇ ತಥಾ ।\nರೋಗಾಣಾಂ ಭೇಷಜಂ ದದ್ಯಾತ್ ಶೀಘ್ರಮಾರೋಗ್ಯಕಾರಕಮ್ ॥',
+    lagnaShloka: 'ಲಗ್ನೇ ಶುಭಗ್ರಹೈರ್ದೃಷ್ಟೇ ಔಷಧಸೇವನಂ ಶುಭಮ್ ।\nಷಷ್ಟೇ-ಅಷ್ಟಮೇ ವಿವರ್ಜಯೇತ್ ರೋಗನಾಶನಂ ಭವೇತ್ ॥',
+    lagnaShuddhiShloka: 'ಲಗ್ನೇ ಪಾಪ-ಗ್ರಹೇ ದೃಷ್ಟೇ ಅಷ್ಟಮೇ ಪಾಪವರ್ಜಿತೇ ।\nಔಷಧ-ಸೇವನಂ ಭಕ್ತ್ಯಾ ಸರ್ವವ್ಯಾಧಿ ವಿನಾಶನಮ್ ॥',
     shloka: '''೧. ನಕ್ಷತ್ರ ನಿಯಮ:
 ಅಶ್ವಿನೀ ಹಸ್ತ ಪುಷ್ಯೇ ಚ ಪುನರ್ವಸು ಶ್ರವಣೇ ತಥಾ ।
 ರೋಗಾಣಾಂ ಭೇಷಜಂ ದದ್ಯಾತ್ ಶೀಘ್ರಮಾರೋಗ್ಯಕಾರಕಮ್ ॥
@@ -384,6 +461,11 @@ const Map<MuhurtaEvent, MuhurtaEventRules> muhurtaRules = {
     avoidVishti: true,
     allowedLagnas: null,
     requiredShuddhis: {ShuddhiType.lagna},
+    tithiShloka: 'ಪ್ರತಿಪದಾ ದ್ವಿತೀಯಾ ಪಂಚಮೀ ಸಪ್ತಮೀ ಚ ।\nಕೃಷಿಕರ್ಮಣಿ ಶುಭದಾಃ ತಿಥಯಃ ಪ್ರಶಸ್ಯಂತೇ ॥',
+    varaShloka: 'ಸೋಮ-ಬುಧ-ಗುರು-ಶುಕ್ರೇ ಕೃಷಿಕರ್ಮ ಶುಭಪ್ರದಮ್ ।\nಬೀಜವಾಪನಮಾಚರೇತ್ ಸಸ್ಯಪ್ರದಾಯಿನೀ ॥',
+    nakshatraShloka: 'ರೋಹಿಣೀಮೃಗಶೀರ್ಷಂ ಚ ಉತ್ತರಾತ್ರಯಮೇವ ಚ ।\nಪುಷ್ಯ-ಹಸ್ತ-ರೇವತೀ ಶುಭಾಃ ಕೃಷಿಕರ್ಮಣಿ ಸರ್ವದಾ ॥',
+    lagnaShloka: 'ಲಗ್ನೇ ಕೇಂದ್ರೇ ಶುಭೇ ದೃಷ್ಟೇ ಪೃಥ್ವೀ ಸಸ್ಯಪ್ರದಾಯಿನೀ ।\nವೃಷಭ-ಕರ್ಕೇ ಲಗ್ನೇ ಕೃಷಿಕರ್ಮ ಪ್ರಶಸ್ಯತೇ ॥',
+    lagnaShuddhiShloka: 'ಲಗ್ನೇ ಶುಭಗ್ರಹೈರ್ದೃಷ್ಟೇ ಪಾಪಗ್ರಹವರ್ಜಿತೇ ।\nಕೃಷಿಕರ್ಮಸು ಸಸ್ಯಪ್ರದಾ ವ್ಯವಸಾಯಃ ಫಲಪ್ರದಃ ॥',
     shloka: '''೧. ನಕ್ಷತ್ರ-ತಿಥಿ ನಿಯಮ:
 ರೋಹಿಣೀಮೃಗಶೀರ್ಷಂ ಚ ಉತ್ತರಾತ್ರಯಮೇವ ಚ ।
 ಪುಷ್ಯ-ಹಸ್ತ-ರೇವತೀ ಶುಭಾಃ ಕೃಷಿಕರ್ಮಣಿ ಸರ್ವದಾ ॥
@@ -407,6 +489,11 @@ const Map<MuhurtaEvent, MuhurtaEventRules> muhurtaRules = {
     requireShukla: true,
     allowedLagnas: null,
     requiredShuddhis: {ShuddhiType.lagna, ShuddhiType.ashtama},
+    tithiShloka: 'ದ್ವಿತೀಯಾ ಪಂಚಮೀ ಸಪ್ತಮೀ ದಶಮೀ ತಥಾ ।\nಶುಕ್ಲಪಕ್ಷೇ ವಾಹನಕ್ರಯೇ ಶುಭಪ್ರದಾಃ ॥',
+    varaShloka: 'ಬುಧ-ಗುರು-ಶುಕ್ರ-ವಾರೇಷು ಶುಕ್ಲಪಕ್ಷೇ ಶುಭಾವಹೇ ।\nವಾಹನಕ್ರಯೇ ಶುಭಂ ಪ್ರೋಕ್ತಂ ಅಪಮೃತ್ಯುವಿನಾಶನಮ್ ॥',
+    nakshatraShloka: 'ಅಶ್ವಿನೀ ಹಸ್ತ ಪುಷ್ಯೇ ಚ ಪುನರ್ವಸು ಶ್ರವಣೇ ತಥಾ ।\nಚರ-ಕ್ಷಿಪ್ರ-ನಕ್ಷತ್ರೇಷು ವಾಹನಕ್ರಯಮಾಚರೇತ್ ॥',
+    lagnaShloka: 'ಲಗ್ನೇ ಚತುರ್ಥೇ ಶುದ್ಧೇ ವಾ ಪಾಪ-ದೃಷ್ಟಿ ವಿವರ್ಜಿತೇ ।\nವಾಹನಂ ಸುಖದಂ ನಿತ್ಯಂ ಅಪಮೃತ್ಯು ವಿನಾಶನಮ್ ॥',
+    lagnaShuddhiShloka: 'ಲಗ್ನೇ ಶುಭಗ್ರಹೈರ್ದೃಷ್ಟೇ ಅಷ್ಟಮೇ ಪಾಪವರ್ಜಿತೇ ।\nವಾಹನಕ್ರಯೇ ಸುಖದಂ ನಿತ್ಯಂ ಸಿದ್ಧಿದಾಯಕಮ್ ॥',
     shloka: '''೧. ನಕ್ಷತ್ರ ನಿಯಮ:
 ಅಶ್ವಿನೀ ಹಸ್ತ ಪುಷ್ಯೇ ಚ ಪುನರ್ವಸು ಶ್ರವಣೇ ತಥಾ ।
 ಚರ-ಕ್ಷಿಪ್ರ-ನಕ್ಷತ್ರೇಷು ವಾಹನಕ್ರಯಮಾಚರೇತ್ ॥
@@ -430,6 +517,11 @@ const Map<MuhurtaEvent, MuhurtaEventRules> muhurtaRules = {
     requireShukla: true,
     allowedLagnas: null,
     requiredShuddhis: {ShuddhiType.lagna, ShuddhiType.ashtama},
+    tithiShloka: 'ಪಂಚಮೀ ದಶಮೀ ಏಕಾದಶೀ ಶುಕ್ಲಪಕ್ಷೇ ।\nಆಸ್ತಿ-ಭೂಮಿ-ಕ್ರಯೇ ಶುಭಪ್ರದಾಃ ತಿಥಯಃ ॥',
+    varaShloka: 'ಗುರು-ಶುಕ್ರ-ಬುಧ-ವಾರೇ ಶುಕ್ಲಪಕ್ಷೇ ವಿಶೇಷತಃ ।\nಸ್ಥಿರ ಲಗ್ನೇ ಶುಭೇ ದೃಷ್ಟೇ ಸಂಪದ್-ವೃದ್ಧಿಕರಂ ಭವೇತ್ ॥',
+    nakshatraShloka: 'ರೋಹಿಣೀ ಮೃಗಶೀರ್ಷಂ ಚ ಉತ್ತರಾತ್ರಯಮೇವ ಚ ।\nಸ್ಥಿರ-ನಕ್ಷತ್ರ-ಯೋಗೇಷು ಭೂಮಿ-ಕ್ರಯ-ವಿಕ್ರಯಃ ಶುಭಃ ॥',
+    lagnaShloka: 'ಸ್ಥಿರಲಗ್ನೇ ಶುಭೇ ದೃಷ್ಟೇ ಆಸ್ತಿಕ್ರಯೇ ಶುಭಪ್ರದಮ್ ।\nಶುಭಗ್ರಹೈರ್ದೃಷ್ಟೇ ಲಗ್ನೇ ಶಾಶ್ವತಂ ಸುಖದಾಯಕಮ್ ॥',
+    lagnaShuddhiShloka: 'ಲಗ್ನಾತ್ ಅಷ್ಟಮ ಭಾವೇ ತು ಪಾಪ-ಗ್ರಹ ವಿವರ್ಜಿತೇ ।\nಆಸ್ತಿ-ಭೂಮಿ-ಕ್ರಯೇ ನಿತ್ಯಂ ಶಾಶ್ವತಂ ಸುಖದಾಯಕಮ್ ॥',
     shloka: '''೧. ನಕ್ಷತ್ರ ನಿಯಮ:
 ರೋಹಿಣೀ ಮೃಗಶೀರ್ಷಂ ಚ ಉತ್ತರಾತ್ರಯಮೇವ ಚ ।
 ಸ್ಥಿರ-ನಕ್ಷತ್ರ-ಯೋಗೇಷು ಭೂಮಿ-ಕ್ರಯ-ವಿಕ್ರಯಃ ಶುಭಃ ॥
@@ -453,6 +545,11 @@ const Map<MuhurtaEvent, MuhurtaEventRules> muhurtaRules = {
     requireShukla: true,
     allowedLagnas: null,
     requiredShuddhis: {ShuddhiType.lagna},
+    tithiShloka: 'ದ್ವಿತೀಯಾ ಪಂಚಮೀ ಸಪ್ತಮೀ ದಶಮೀ ತಥಾ ।\nಶುಕ್ಲಪಕ್ಷೇ ಸ್ವರ್ಣಕ್ರಯೇ ಶುಭಪ್ರದಾಃ ॥',
+    varaShloka: 'ಗುರುಪೂಷ್ಯ-ಯೋಗ-ಕಾಲೇ ತು ಸ್ವರ್ಣ-ಕ್ರಯ-ಮಹೋತ್ಸವಃ ।\nಗುರು-ಶುಕ್ರ-ಬುಧವಾರೇ ಶುಭಪ್ರದಂ ಸದಾ ॥',
+    nakshatraShloka: 'ಪುಷ್ಯ-ಹಸ್ತ-ರೇವತ್ಯಾಂ ಚ ಪುನರ್ವಸು ಶ್ರವಣೇ ತಥಾ ।\nಮಹಾಲಕ್ಷ್ಮೀ-ಕೃಪಾಯುಕ್ತಂ ಸ್ವರ್ಣ-ಮಂಗಳ-ಕಾರಕಮ್ ॥',
+    lagnaShloka: 'ಲಗ್ನ-ವ್ಯಯ-ಧನ-ಭಾವೇ ಪಾಪದೃಷ್ಟಿ ವಿವರ್ಜಿತೇ ।\nಶುಭಗ್ರಹೈರ್ದೃಷ್ಟೇ ಲಗ್ನೇ ಸ್ವರ್ಣಕ್ರಯಃ ಶುಭಃ ॥',
+    lagnaShuddhiShloka: 'ಲಗ್ನೇ ಶುಭಗ್ರಹೈರ್ದೃಷ್ಟೇ ಪಾಪಗ್ರಹವರ್ಜಿತೇ ।\nಸ್ವರ್ಣಕ್ರಯೇ ಸುಖದಂ ನಿತ್ಯಂ ಮಂಗಳವಾಹಕಮ್ ॥',
     shloka: '''೧. ನಕ್ಷತ್ರ ಮತ್ತು ವಾರ:
 ಪುಷ್ಯ-ಹಸ್ತ-ರೇವತ್ಯಾಂ ಚ ಪುನರ್ವಸು ಶ್ರವಣೇ ತಥಾ ।
 ಗುರುಪೂಷ್ಯ-ಯೋಗ-ಕಾಲೇ ತು ಸ್ವರ್ಣ-ಕ್ರಯ-ಮಹೋತ್ಸವಃ ॥
@@ -476,6 +573,11 @@ const Map<MuhurtaEvent, MuhurtaEventRules> muhurtaRules = {
     requireShukla: true,
     allowedLagnas: null,
     requiredShuddhis: {ShuddhiType.lagna, ShuddhiType.dashama},
+    tithiShloka: 'ದ್ವಿತೀಯಾ ಪಂಚಮೀ ದಶಮೀ ಏಕಾದಶೀ ತಥಾ ।\nಶುಕ್ಲಪಕ್ಷೇ ಉದ್ಯೋಗಗ್ರಹಣೇ ಶುಭಪ್ರದಾಃ ॥',
+    varaShloka: 'ಸೋಮ-ಬುಧ-ಗುರು-ಶುಕ್ರೇ ಚ ಭಾನುವಾರೇ ವಿಶೇಷತಃ ।\nರಾಜ-ದರ್ಶನ-ಕಾರ್ಯೇಷು ಉದ್ಯೋಗ-ಗ್ರಹಣೇ ಶುಭಮ್ ॥',
+    nakshatraShloka: 'ಅಶ್ವಿನೀ ಪುಷ್ಯ ಹಸ್ತೇಷು ರೋಹಿಣೀ ಮೃಗಶೀರ್ಷಕೇ ।\nರಿಕ್ತಾಮಾವಾಸ್ಯಾಂ ಹಿತ್ವಾ ಉದ್ಯೋಗ-ಪದ-ಸಿದ್ಧಿದಃ ॥',
+    lagnaShloka: 'ಶುಭಗ್ರಹಯುಕ್ತೇ ಲಗ್ನೇ ಉದ್ಯೋಗಸ್ಥೈರ್ಯಲಾಭಾಯ ।\nದಶಮೇ ಪಾಪ-ರಹಿತೇ ಸರ್ವ-ಕಾರ್ಯ-ಜಯಪ್ರದಮ್ ॥',
+    lagnaShuddhiShloka: 'ದಶಮೇ ಪಾಪ-ರಹಿತೇ ಲಗ್ನೇ ಶುಭ-ನಿರೀಕ್ಷಿತೇ ।\nಉದ್ಯೋಗ-ಸ್ಥೈರ್ಯ-ಲಾಭಾಯ ಸರ್ವ-ಕಾರ್ಯ-ಜಯಪ್ರದಮ್ ॥',
     shloka: '''೧. ನಕ್ಷತ್ರ-ತಿಥಿ ನಿಯಮ:
 ಅಶ್ವಿನೀ ಪುಷ್ಯ ಹಸ್ತೇಷು ರೋಹಿಣೀ ಮೃಗಶೀರ್ಷಕೇ ।
 ರಿಕ್ತಾಮಾವಾಸ್ಯಾಂ ಹಿತ್ವಾ ಉದ್ಯೋಗ-ಪದ-ಸಿದ್ಧಿದಃ ॥
@@ -499,6 +601,11 @@ const Map<MuhurtaEvent, MuhurtaEventRules> muhurtaRules = {
     requireShukla: true,
     allowedLagnas: null,
     requiredShuddhis: {ShuddhiType.lagna, ShuddhiType.ashtama},
+    tithiShloka: 'ದ್ವಿತೀಯಾ ಪಂಚಮೀ ಸಪ್ತಮೀ ದಶಮೀ ತಥಾ ।\nಶುಕ್ಲಪಕ್ಷೇ ಕರ್ಣವೇಧೇ ಶುಭಪ್ರದಾಃ ॥',
+    varaShloka: 'ಸೋಮ-ಬುಧ-ಗುರು-ಶುಕ್ರೇಷು ಕರ್ಣವೇಧಃ ಶುಭಾವಹಃ ।\nಕುಜ-ಶನಿ-ಅರ್ಕವಾರೇ ಸಂಸ್ಕಾರಂ ವಿವರ್ಜಯೇತ್ ॥',
+    nakshatraShloka: 'ಮೃಗಶಿರೋ-ಪುನರ್ವಸು-ಪುಷ್ಯೇ ಹಸ್ತೇ ಚೈವೋತ್ತರಾತ್ರಯೇ ।\nರೇವತ್ಯಾಂ ಶ್ರವಣೇ ವಾಪಿ ಕರ್ಣವೇಧಃ ಶುಭಾವಹಃ ॥',
+    lagnaShloka: 'ಲಗ್ನೇ ಕೇಂದ್ರೇ ಶುಭೈರ್ದೃಷ್ಟೇ ಶಿಶೂನಾಂ ಸಂಸ್ಕಾರೇ ।\nಶುಭಗ್ರಹಯುಕ್ತೇ ಲಗ್ನೇ ಆಯುರ್ವೃದ್ಧಿಕರಂ ಭವೇತ್ ॥',
+    lagnaShuddhiShloka: 'ಲಗ್ನೇ ಕೇಂದ್ರೇ ಶುಭೈರ್ದೃಷ್ಟೇ ಅಷ್ಟಮೇ ಪಾಪ ವರ್ಜಿತೇ ।\nಕರ್ಣ-ರೋಗ-ವಿನಾಶಾಯ ಆಯುರ್-ವೃದ್ಧಿಕರಂ ಭವೇತ್ ॥',
     shloka: '''೧. ನಕ್ಷತ್ರ ನಿಯಮ:
 ಮೃಗಶಿರೋ-ಪುನರ್ವಸು-ಪುಷ್ಯೇ ಹಸ್ತೇ ಚೈವೋತ್ತರಾತ್ರಯೇ ।
 ರೇವತ್ಯಾಂ ಶ್ರವಣೇ ವಾಪಿ ಕರ್ಣವೇಧಃ ಶುಭಾವಹಃ ॥

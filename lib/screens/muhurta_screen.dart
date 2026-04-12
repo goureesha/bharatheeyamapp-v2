@@ -1187,30 +1187,15 @@ class _MuhurtaScreenState extends State<MuhurtaScreen> {
         collapsedShape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8), side: BorderSide(color: kBorder)),
         childrenPadding: const EdgeInsets.only(left: 12, right: 12, bottom: 12),
         children: [
-          Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            const Text('• ತಿಥಿಗಳು: ', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 12)),
-            Expanded(child: Text(tithiText, style: TextStyle(color: kMuted, fontSize: 12))),
-          ]),
+          _ruleWithShloka('• ತಿಥಿಗಳು: ', tithiText, rules.tithiShloka),
           const SizedBox(height: 6),
-          Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            const Text('• ನಕ್ಷತ್ರಗಳು: ', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 12)),
-            Expanded(child: Text(nakText, style: TextStyle(color: kMuted, fontSize: 12))),
-          ]),
+          _ruleWithShloka('• ನಕ್ಷತ್ರಗಳು: ', nakText, rules.nakshatraShloka),
           const SizedBox(height: 6),
-          Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            const Text('• ವಾರಗಳು: ', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 12)),
-            Expanded(child: Text(varaText, style: TextStyle(color: kMuted, fontSize: 12))),
-          ]),
+          _ruleWithShloka('• ವಾರಗಳು: ', varaText, rules.varaShloka),
           const SizedBox(height: 6),
-          Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            const Text('• ಲಗ್ನಗಳು: ', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 12)),
-            Expanded(child: Text(rules.allowedLagnas == null ? 'ಸಾಮಾನ್ಯ (ಶುದ್ಧಿ ಆಧಾರಿತ)' : rules.allowedLagnas!.map((i) => knRashi[i]).join(', '), style: TextStyle(color: kMuted, fontSize: 12))),
-          ]),
+          _ruleWithShloka('• ಲಗ್ನಗಳು: ', rules.allowedLagnas == null ? 'ಸಾಮಾನ್ಯ (ಶುದ್ಧಿ ಆಧಾರಿತ)' : rules.allowedLagnas!.map((i) => knRashi[i]).join(', '), rules.lagnaShloka),
           const SizedBox(height: 6),
-          Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            const Text('• ಕಡ್ಡಾಯ ಶುದ್ಧಿ: ', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 12)),
-            Expanded(child: Text(shuddhis, style: TextStyle(color: kPurple1, fontWeight: FontWeight.w700, fontSize: 12))),
-          ]),
+          _ruleWithShloka('• ಕಡ್ಡಾಯ ಶುದ್ಧಿ: ', shuddhis, rules.lagnaShuddhiShloka, valueColor: kPurple1, valueBold: true),
           
           if (rules.shloka != null) ...[
             const SizedBox(height: 12),
@@ -1238,6 +1223,46 @@ class _MuhurtaScreenState extends State<MuhurtaScreen> {
           ],
         ],
       ),
+    );
+  }
+
+  /// Helper: displays a rule row with optional shloka underneath
+  Widget _ruleWithShloka(String label, String value, String? shloka,
+      {Color? valueColor, bool valueBold = false}) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Text(label, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 12)),
+          Expanded(child: Text(value, style: TextStyle(
+            color: valueColor ?? kMuted,
+            fontSize: 12,
+            fontWeight: valueBold ? FontWeight.w700 : FontWeight.w400,
+          ))),
+        ]),
+        if (shloka != null) ...[
+          const SizedBox(height: 4),
+          Container(
+            width: double.infinity,
+            margin: const EdgeInsets.only(left: 8),
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+            decoration: BoxDecoration(
+              color: Colors.amber.withOpacity(0.06),
+              borderRadius: BorderRadius.circular(6),
+              border: Border.all(color: Colors.amber.shade200, width: 0.5),
+            ),
+            child: Text(
+              shloka.replaceAll('\\n', '\n'),
+              style: TextStyle(
+                fontStyle: FontStyle.italic,
+                fontSize: 10,
+                color: Colors.brown.shade700,
+                height: 1.5,
+              ),
+            ),
+          ),
+        ],
+      ],
     );
   }
 
