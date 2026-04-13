@@ -320,19 +320,30 @@ class JanmaPatrikeService {
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               Image.asset('assets/images/ganapati.png', width: 48, height: 48),
-              const Spacer(),
+              const SizedBox(width: 6),
+              Expanded(
+                child: Text('ಶ್ರೀ ಗಣೇಶಾಯ ನಮಃ',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 11, color: shlokaColor)),
+              ),
               Column(
                 children: [
                   Image.asset('assets/images/logo.png', width: 42, height: 42),
-                  const SizedBox(height: 3),
-                  Text('ಶ್ರೀ ಗಣೇಶಾಯ ನಮಃ ।। ಶ್ರೀ ಗುರುಭ್ಯೋ ನಮಃ ।।',
-                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: shlokaColor)),
                 ],
               ),
-              const Spacer(),
+              Expanded(
+                child: Text('ಶ್ರೀ ಗುರುಭ್ಯೋ ನಮಃ',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 11, color: shlokaColor)),
+              ),
+              const SizedBox(width: 6),
               Image.asset('assets/images/shiva.png', width: 48, height: 48),
             ],
           ),
+          const SizedBox(height: 3),
+          Text('ಜನ್ಮಕಾಲೇ ಗ್ರಹಾಃ ಯೇ ಯೇ ಯದ್ಭಾವಸ್ಥಿತಿಗಾಮಿನಃ ।\nತತ್ಫಲಂ ಪ್ರವದೇದ್ವಿದ್ವಾನ್ ಜಾತಕಂ ಜೀವನಪ್ರದಮ್ ॥',
+            textAlign: TextAlign.center,
+            style: TextStyle(fontWeight: FontWeight.w500, fontSize: 9, color: shlokaColor, fontStyle: FontStyle.italic, height: 1.3)),
           const SizedBox(height: 4),
           Text(mainTitle, style: TextStyle(fontWeight: FontWeight.w900, fontSize: 22, color: t.headerText)),
           const SizedBox(height: 2),
@@ -525,8 +536,6 @@ class JanmaPatrikeService {
             ),
           ),
         ),
-        const SizedBox(height: 6),
-        Text(title, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: t.primaryDark)),
       ],
     );
   }
