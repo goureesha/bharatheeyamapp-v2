@@ -1852,6 +1852,18 @@ class _DashboardScreenState extends State<DashboardScreen>
                 ? '${'ಭಾವ ಮಧ್ಯ ಸ್ಫುಟ'} (${_bhavaPlanet!} ${'ಆಧಾರ'})'
                 : '${'ಭಾವ ಮಧ್ಯ ಸ್ಫುಟ'} (${'ಲಗ್ನ'})';
 
+            // Compute Adi (start) and Antya (end) sphuta for each bhava
+            String rashiLetter(double deg) {
+              final idx = (deg / 30).floor() % 12;
+              final name = appRashi[idx];
+              // Use first 2 characters for Kannada (combining marks)
+              return name.length >= 2 ? name.substring(0, 2) : name;
+            }
+
+            String degWithRashi(double deg) {
+              return '${formatDeg(deg)} ${rashiLetter(deg)}';
+            }
+
             return Column(
               children: [
                 if (allPersons.length > 1)
@@ -1867,11 +1879,22 @@ class _DashboardScreenState extends State<DashboardScreen>
                   padding: EdgeInsets.zero,
                   child: Column(
                     children: [
-                      _tableHeader(['ಭಾವ', 'ಮಧ್ಯ ಸ್ಫುಟ', 'ರಾಶಿ']),
+                      _tableHeader(['ಭಾವ', 'ಆದಿ ಸ್ಫುಟ', 'ಮಧ್ಯ ಸ್ಫುಟ', 'ಅಂತ್ಯ ಸ್ಫುಟ']),
                       ...List.generate(12, (i) {
-                        final deg = currentMadhyas[i];
+                        final madhya = currentMadhyas[i];
+                        final prevMadhya = currentMadhyas[(i + 11) % 12];
+                        final nextMadhya = currentMadhyas[(i + 1) % 12];
+
+                        // Adi = midpoint of previous madhya and current madhya
+                        final adiDiff = (madhya - prevMadhya + 360.0) % 360.0;
+                        final adi = (prevMadhya + adiDiff / 2.0) % 360.0;
+
+                        // Antya = midpoint of current madhya and next madhya
+                        final antyaDiff = (nextMadhya - madhya + 360.0) % 360.0;
+                        final antya = (madhya + antyaDiff / 2.0) % 360.0;
+
                         return _tableRow(
-                          ['${i+1}', formatDeg(deg), appRashi[(deg/30).floor() % 12]],
+                          ['${i+1}', degWithRashi(adi), degWithRashi(madhya), degWithRashi(antya)],
                           bold0: true,
                         );
                       }),
