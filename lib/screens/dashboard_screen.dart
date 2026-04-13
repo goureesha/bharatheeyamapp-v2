@@ -1855,9 +1855,7 @@ class _DashboardScreenState extends State<DashboardScreen>
             // Compute Adi (start) and Antya (end) sphuta for each bhava
             String rashiLetter(double deg) {
               final idx = (deg / 30).floor() % 12;
-              final name = appRashi[idx];
-              // Use first 2 characters for Kannada (combining marks)
-              return name.length >= 2 ? name.substring(0, 2) : name;
+              return appRashi[idx];
             }
 
             String degWithRashi(double deg) {
