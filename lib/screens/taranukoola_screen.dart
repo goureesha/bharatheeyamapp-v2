@@ -54,7 +54,7 @@ class _TaranukoolaScreenState extends State<TaranukoolaScreen> {
       final result = await AstroCalculator.calculate(
         year: _selectedDay!.year, month: _selectedDay!.month, day: _selectedDay!.day,
         hourUtcOffset: LocationService.tzOffset, 
-        hour24: 6.0, 
+        hour24: 12.0, // Use noon to ensure we are after sunrise for correct vara
         lat: LocationService.lat, 
         lon: LocationService.lon,
         ayanamsaMode: 'lahiri',
