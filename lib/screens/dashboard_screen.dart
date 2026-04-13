@@ -1853,13 +1853,25 @@ class _DashboardScreenState extends State<DashboardScreen>
                 : '${'ಭಾವ ಮಧ್ಯ ಸ್ಫುಟ'} (${'ಲಗ್ನ'})';
 
             // Compute Adi (start) and Antya (end) sphuta for each bhava
-            String rashiLetter(double deg) {
+            String rashiName(double deg) {
               final idx = (deg / 30).floor() % 12;
               return appRashi[idx];
             }
 
-            String degWithRashi(double deg) {
-              return '${formatDeg(deg)}\n${rashiLetter(deg)}';
+            Widget bhavaCell(double deg) {
+              return Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 6),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(formatDeg(deg), style: TextStyle(fontSize: 11, color: kText)),
+                      const SizedBox(height: 2),
+                      Text(rashiName(deg), style: TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: kPurple2)),
+                    ],
+                  ),
+                ),
+              );
             }
 
             return Column(
@@ -1891,9 +1903,22 @@ class _DashboardScreenState extends State<DashboardScreen>
                         final antyaDiff = (nextMadhya - madhya + 360.0) % 360.0;
                         final antya = (madhya + antyaDiff / 2.0) % 360.0;
 
-                        return _tableRow(
-                          ['${i+1}', degWithRashi(adi), degWithRashi(madhya), degWithRashi(antya)],
-                          bold0: true,
+                        return Container(
+                          decoration: BoxDecoration(border: Border(bottom: BorderSide(color: kBorder))),
+                          child: IntrinsicHeight(
+                            child: Row(
+                              crossAxisAlignment: CrossAxisAlignment.stretch,
+                              children: [
+                                SizedBox(
+                                  width: 36,
+                                  child: Center(child: Text('${i+1}', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: kText))),
+                                ),
+                                bhavaCell(adi),
+                                bhavaCell(madhya),
+                                bhavaCell(antya),
+                              ],
+                            ),
+                          ),
                         );
                       }),
                     ],
