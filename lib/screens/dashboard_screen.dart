@@ -121,13 +121,13 @@ class _DashboardScreenState extends State<DashboardScreen>
 
 
   static List<String> get _tabs => AppLocale.isHindi
-    ? ['कुंडली', 'स्फुट', 'आरूढ', 'दशा', 'पंचांग', 'भाव', 'ग्रह षड्वर्ग', 'षड्बल', 'अष्टक', 'दृष्टि', 'टिप्पणी', 'पत्रिका']
-    : ['ಕುಂಡಲಿ', 'ಸ್ಫುಟ', 'ಆರೂಢ', 'ದಶ', 'ಪಂಚಾಂಗ', 'ಭಾವ', 'ಗ್ರಹ ಷಡ್ವರ್ಗ', 'ಷಡ್ಬಲ', 'ಅಷ್ಟಕ', 'ದೃಷ್ಟಿ', 'ಟಿಪ್ಪಣಿ', 'ಪತ್ರಿಕೆ'];
+    ? ['कुंडली', 'स्फुट', 'आरूढ', 'दशा', 'पंचांग', 'भाव', 'ग्रह षड्वर्ग', 'षड्बल', 'अष्टक', 'टिप्पणी', 'पत्रिका']
+    : ['ಕುಂಡಲಿ', 'ಸ್ಫುಟ', 'ಆರೂಢ', 'ದಶ', 'ಪಂಚಾಂಗ', 'ಭಾವ', 'ಗ್ರಹ ಷಡ್ವರ್ಗ', 'ಷಡ್ಬಲ', 'ಅಷ್ಟಕ', 'ಟಿಪ್ಪಣಿ', 'ಪತ್ರಿಕೆ'];
 
   @override
   void initState() {
     super.initState();
-    _tabCtrl = TabController(length: _tabs.length, vsync: this); // 12 tabs
+    _tabCtrl = TabController(length: _tabs.length, vsync: this); // 11 tabs
     _notes = widget.initialNotes;
     _aroodhas = Map.from(widget.initialAroodhas);
     _janmaNakshatraIdx = widget.initialJanmaNakshatraIdx;
@@ -918,7 +918,6 @@ class _DashboardScreenState extends State<DashboardScreen>
                   _buildGrahaShadvargaTab(),
                   _buildShadbalaTab(),
                   _buildAshtakaTab(),
-                  _buildDrashtiTab(),
                   _buildNotesTab(),
                   _buildJanmaPatrikeTab(),
                 ],
@@ -2749,223 +2748,6 @@ class _DashboardScreenState extends State<DashboardScreen>
         Text('$k: ', style: TextStyle(fontWeight: FontWeight.w800, color: kPurple2)),
         Expanded(child: Text(v, style: TextStyle())),
       ]),
-    );
-  }
-
-  // ─────────────────────────────────────────────
-  // TAB: DRASHTI (Planetary Aspects)
-  // ─────────────────────────────────────────────
-  Widget _buildDrashtiTab() {
-    final r = widget.result;
-
-    // 7 grahas that cast aspects
-    const aspectPlanets = ['ರವಿ', 'ಚಂದ್ರ', 'ಕುಜ', 'ಬುಧ', 'ಗುರು', 'ಶುಕ್ರ', 'ಶನಿ'];
-
-    // Extra aspects beyond 7th
-    const extraAspects = <String, List<int>>{
-      'ಕುಜ': [4, 8],
-      'ಗುರು': [5, 9],
-      'ಶನಿ': [3, 10],
-    };
-
-    // Planet icons
-    const pIcons = <String, String>{
-      'ರವಿ': '☉', 'ಚಂದ್ರ': '☽', 'ಕುಜ': '♂', 'ಬುಧ': '☿',
-      'ಗುರು': '♃', 'ಶುಕ್ರ': '♀', 'ಶನಿ': '♄',
-    };
-
-    // Planet colors
-    final pColors = <String, Color>{
-      'ರವಿ': const Color(0xFFFF6B00), 'ಚಂದ್ರ': const Color(0xFF4A90D9),
-      'ಕುಜ': const Color(0xFFE53935), 'ಬುಧ': const Color(0xFF43A047),
-      'ಗುರು': const Color(0xFFFFC107), 'ಶುಕ್ರ': const Color(0xFFE91E8C),
-      'ಶನಿ': const Color(0xFF5C6BC0),
-    };
-
-    // Build rashi index map for all planets
-    final Map<String, int> planetRashiIdx = {};
-    for (final pName in planetOrder) {
-      final info = r.planets[pName];
-      if (info != null) {
-        planetRashiIdx[pName] = (info.longitude / 30).floor() % 12;
-      }
-    }
-
-    // Build house occupants map
-    final Map<int, List<String>> houseOccupants = {};
-    for (int i = 0; i < 12; i++) houseOccupants[i] = [];
-    for (final entry in planetRashiIdx.entries) {
-      if (entry.key != 'ಲಗ್ನ') {
-        houseOccupants[entry.value]!.add(entry.key);
-      }
-    }
-
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Header
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              gradient: LinearGradient(colors: [kPurple1.withOpacity(0.15), kPurple2.withOpacity(0.08)]),
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: kPurple1.withOpacity(0.3)),
-            ),
-            child: Row(
-              children: [
-                Icon(Icons.visibility, color: kPurple1, size: 22),
-                const SizedBox(width: 10),
-                Text('ಗ್ರಹ ದೃಷ್ಟಿ ವಿವರ', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 16, color: kPurple1)),
-              ],
-            ),
-          ),
-          const SizedBox(height: 12),
-
-          // Card for each aspect-casting planet
-          ...aspectPlanets.map((planet) {
-            final fromRashi = planetRashiIdx[planet];
-            if (fromRashi == null) return const SizedBox.shrink();
-
-            // Collect all aspect houses
-            final List<int> aspectHouses = [7]; // All planets have 7th
-            if (extraAspects.containsKey(planet)) {
-              aspectHouses.addAll(extraAspects[planet]!);
-            }
-            aspectHouses.sort();
-
-            final pColor = pColors[planet] ?? kPurple1;
-            final pIcon = pIcons[planet] ?? '●';
-
-            return Container(
-              margin: const EdgeInsets.only(bottom: 12),
-              decoration: BoxDecoration(
-                color: kCard,
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: pColor.withOpacity(0.3)),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Planet header
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                    decoration: BoxDecoration(
-                      color: pColor.withOpacity(0.1),
-                      borderRadius: const BorderRadius.vertical(top: Radius.circular(11)),
-                    ),
-                    child: Row(
-                      children: [
-                        CircleAvatar(
-                          radius: 16,
-                          backgroundColor: pColor.withOpacity(0.2),
-                          child: Text(pIcon, style: TextStyle(fontSize: 16, color: pColor)),
-                        ),
-                        const SizedBox(width: 10),
-                        Text(planet, style: TextStyle(fontWeight: FontWeight.w800, fontSize: 15, color: pColor)),
-                        const SizedBox(width: 8),
-                        Text('(${knRashi[fromRashi]})', style: TextStyle(fontSize: 13, color: kMuted)),
-                        const Spacer(),
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                          decoration: BoxDecoration(
-                            color: pColor.withOpacity(0.15),
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: Text(
-                            aspectHouses.length == 1 ? '7ನೇ ದೃಷ್ಟಿ' : '${aspectHouses.map((h) => '${h}ನೇ').join(', ')} ದೃಷ್ಟಿ',
-                            style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: pColor),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-
-                  // Aspect details
-                  Padding(
-                    padding: const EdgeInsets.all(12),
-                    child: Column(
-                      children: aspectHouses.map((houseNum) {
-                        final targetRashi = (fromRashi + houseNum) % 12;
-                        final occupants = houseOccupants[targetRashi] ?? [];
-                        // Remove self from occupants
-                        final aspectedPlanets = occupants.where((p) => p != planet).toList();
-
-                        return Padding(
-                          padding: const EdgeInsets.only(bottom: 8),
-                          child: Row(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Container(
-                                width: 36, height: 36,
-                                alignment: Alignment.center,
-                                decoration: BoxDecoration(
-                                  color: houseNum == 7 ? pColor.withOpacity(0.12) : const Color(0xFFFFF3E0),
-                                  borderRadius: BorderRadius.circular(8),
-                                  border: Border.all(color: houseNum == 7 ? pColor.withOpacity(0.3) : const Color(0xFFFFE0B2)),
-                                ),
-                                child: Text('$houseNum', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 14,
-                                  color: houseNum == 7 ? pColor : const Color(0xFFE65100))),
-                              ),
-                              const SizedBox(width: 10),
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Row(
-                                      children: [
-                                        Icon(Icons.arrow_forward, size: 14, color: pColor),
-                                        const SizedBox(width: 4),
-                                        Text('${knRashi[targetRashi]} ರಾಶಿ',
-                                          style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13, color: kText)),
-                                        if (houseNum != 7) ...[
-                                          const SizedBox(width: 6),
-                                          Container(
-                                            padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
-                                            decoration: BoxDecoration(
-                                              color: const Color(0xFFFFF3E0),
-                                              borderRadius: BorderRadius.circular(4),
-                                            ),
-                                            child: Text('ವಿಶೇಷ', style: TextStyle(fontSize: 9, fontWeight: FontWeight.w700, color: const Color(0xFFE65100))),
-                                          ),
-                                        ],
-                                      ],
-                                    ),
-                                    const SizedBox(height: 2),
-                                    aspectedPlanets.isEmpty
-                                      ? Text('ಯಾವುದೇ ಗ್ರಹ ಇಲ್ಲ', style: TextStyle(fontSize: 11, color: kMuted, fontStyle: FontStyle.italic))
-                                      : Wrap(
-                                          spacing: 6,
-                                          children: aspectedPlanets.map((ap) {
-                                            final apColor = pColors[ap] ?? kText;
-                                            final apIcon = pIcons[ap] ?? '●';
-                                            return Container(
-                                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                                              decoration: BoxDecoration(
-                                                color: apColor.withOpacity(0.1),
-                                                borderRadius: BorderRadius.circular(6),
-                                                border: Border.all(color: apColor.withOpacity(0.3)),
-                                              ),
-                                              child: Text('$apIcon $ap', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: apColor)),
-                                            );
-                                          }).toList(),
-                                        ),
-                                  ],
-                                ),
-                              ),
-                            ],
-                          ),
-                        );
-                      }).toList(),
-                    ),
-                  ),
-                ],
-              ),
-            );
-          }),
-        ],
-      ),
     );
   }
 }
