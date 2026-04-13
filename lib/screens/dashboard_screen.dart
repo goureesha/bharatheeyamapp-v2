@@ -1859,7 +1859,7 @@ class _DashboardScreenState extends State<DashboardScreen>
             }
 
             String degWithRashi(double deg) {
-              return '${formatDeg(deg)} ${rashiLetter(deg)}';
+              return '${formatDeg(deg)}\n${rashiLetter(deg)}';
             }
 
             return Column(
