@@ -836,10 +836,10 @@ class AstroCalculator {
       }
 
       // Agni Vasa
-      // Formula: (Tithi + Vara + 1) % 4
-      // Tithi = tIdx + 1 (1-based), Vara = wIdx + 1 (Sun=1..Sat=7)
+      // Ex: Shukla Panchami(5)+1=6, Kuja Vara(3)+1=4, total=10, 10%4=2
+      // Formula: ((Tithi + 1) + (Vara + 1)) % 4 = (tIdx + wIdx) % 4 (0-indexed)
       // Remainder: 0 or 3 = Bhumi (Shubha), 1 = Akasha (Ashubha), 2 = Patala (Ashubha)
-      final agniVal = ((tIdx + 1) + (wIdx + 1) + 1) % 4;
+      final agniVal = (tIdx + wIdx) % 4;
       final agniVasaStr = (agniVal == 0 || agniVal == 3) ? 'ಭೂಮಿ (ಶುಭ)' : (agniVal == 1 ? 'ಆಕಾಶ (ಅಶುಭ)' : 'ಪಾತಾಳ (ಅಶುಭ)');
 
       // End Times
