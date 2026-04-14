@@ -836,12 +836,11 @@ class AstroCalculator {
       }
 
       // Agni Vasa
-      // (Tithi + Vara + 1) % 3
-      // Tithi index (tIdx) is 0 for Pratipada. Vara index (wIdx) is 0 for Sunday.
-      // So Tithi = tIdx + 1, Vara = wIdx + 1
-      // Formula: ((tIdx + 1) + (wIdx + 1) + 1) % 3 = (tIdx + wIdx + 3) % 3 = (tIdx + wIdx) % 3
-      final agniVal = (tIdx + wIdx) % 3;
-      final agniVasaStr = agniVal == 0 ? 'ಭೂಮಿ (ಶುಭ)' : (agniVal == 1 ? 'ಆಕಾಶ (ಅಶುಭ)' : 'ಪಾತಾಳ (ಅಶುಭ)');
+      // Formula: (Tithi + Vara + 1) % 4
+      // Tithi = tIdx + 1 (1-based), Vara = wIdx + 1 (Sun=1..Sat=7)
+      // Remainder: 0 or 3 = Bhumi (Shubha), 1 = Akasha (Ashubha), 2 = Patala (Ashubha)
+      final agniVal = ((tIdx + 1) + (wIdx + 1) + 1) % 4;
+      final agniVasaStr = (agniVal == 0 || agniVal == 3) ? 'ಭೂಮಿ (ಶುಭ)' : (agniVal == 1 ? 'ಆಕಾಶ (ಅಶುಭ)' : 'ಪಾತಾಳ (ಅಶುಭ)');
 
       // End Times
       final jdTEnd = findTithiLimit(jdBirth, (tIdx + 1) * 12.0, ayanamsaMode);

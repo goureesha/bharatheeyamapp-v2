@@ -78,7 +78,7 @@ class _PanchangaScreenState extends State<PanchangaScreen> {
       // Convert sunrise JD to local hour (decimal)
       final srJd = srSs[0];
       final srLocalFrac = ((srJd + 0.5 + (LocationService.tzOffset / 24.0)) % 1.0 + 1.0) % 1.0;
-      final hour24 = (srLocalFrac * 24.0) + (5.0 / 60.0); // sunrise + 5 minutes
+      final hour24 = srLocalFrac * 24.0; // exact sunrise
 
       final result = await AstroCalculator.calculate(
         year: _selectedDate.year, month: _selectedDate.month, day: _selectedDate.day,
