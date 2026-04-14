@@ -1187,83 +1187,31 @@ class _MuhurtaScreenState extends State<MuhurtaScreen> {
         collapsedShape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8), side: BorderSide(color: kBorder)),
         childrenPadding: const EdgeInsets.only(left: 12, right: 12, bottom: 12),
         children: [
-          _ruleWithShloka('• ತಿಥಿಗಳು: ', tithiText, rules.tithiShloka),
+          _ruleRow('• ತಿಥಿಗಳು: ', tithiText),
           const SizedBox(height: 6),
-          _ruleWithShloka('• ನಕ್ಷತ್ರಗಳು: ', nakText, rules.nakshatraShloka),
+          _ruleRow('• ನಕ್ಷತ್ರಗಳು: ', nakText),
           const SizedBox(height: 6),
-          _ruleWithShloka('• ವಾರಗಳು: ', varaText, rules.varaShloka),
+          _ruleRow('• ವಾರಗಳು: ', varaText),
           const SizedBox(height: 6),
-          _ruleWithShloka('• ಲಗ್ನಗಳು: ', rules.allowedLagnas == null ? 'ಸಾಮಾನ್ಯ (ಶುದ್ಧಿ ಆಧಾರಿತ)' : rules.allowedLagnas!.map((i) => knRashi[i]).join(', '), rules.lagnaShloka),
+          _ruleRow('• ಲಗ್ನಗಳು: ', rules.allowedLagnas == null ? 'ಸಾಮಾನ್ಯ (ಶುದ್ಧಿ ಆಧಾರಿತ)' : rules.allowedLagnas!.map((i) => knRashi[i]).join(', ')),
           const SizedBox(height: 6),
-          _ruleWithShloka('• ಕಡ್ಡಾಯ ಶುದ್ಧಿ: ', shuddhis, rules.lagnaShuddhiShloka, valueColor: kPurple1, valueBold: true),
-          
-          if (rules.shloka != null) ...[
-            const SizedBox(height: 12),
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(10),
-              decoration: BoxDecoration(
-                color: Colors.amber.withOpacity(0.08),
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: Colors.amber.shade300, width: 0.5),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text('ಶಾಸ್ತ್ರ ಪ್ರಮಾಣ ಶ್ಲೋಕ (Reference):', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 11, color: Colors.amber.shade800)),
-                  const SizedBox(height: 6),
-                  Text(rules.shloka!, style: TextStyle(fontStyle: FontStyle.italic, fontSize: 11, color: Colors.black87, height: 1.4)),
-                  if (rules.shastraRef != null) ...[
-                    const SizedBox(height: 4),
-                    Text('📖 ಆಕರ ಗ್ರಂಥ: ${rules.shastraRef}', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 10, color: kPurple1)),
-                  ]
-                ],
-              ),
-            ),
-          ],
+          _ruleRow('• ಕಡ್ಡಾಯ ಶುದ್ಧಿ: ', shuddhis, valueColor: kPurple1, valueBold: true),
         ],
       ),
     );
   }
 
-  /// Helper: displays a rule row with optional shloka underneath
-  Widget _ruleWithShloka(String label, String value, String? shloka,
+  /// Helper: displays a rule row (label + value)
+  Widget _ruleRow(String label, String value,
       {Color? valueColor, bool valueBold = false}) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Text(label, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 12)),
-          Expanded(child: Text(value, style: TextStyle(
-            color: valueColor ?? kMuted,
-            fontSize: 12,
-            fontWeight: valueBold ? FontWeight.w700 : FontWeight.w400,
-          ))),
-        ]),
-        if (shloka != null) ...[
-          const SizedBox(height: 4),
-          Container(
-            width: double.infinity,
-            margin: const EdgeInsets.only(left: 8),
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-            decoration: BoxDecoration(
-              color: Colors.amber.withOpacity(0.06),
-              borderRadius: BorderRadius.circular(6),
-              border: Border.all(color: Colors.amber.shade200, width: 0.5),
-            ),
-            child: Text(
-              shloka.replaceAll('\\n', '\n'),
-              style: TextStyle(
-                fontStyle: FontStyle.italic,
-                fontSize: 10,
-                color: Colors.brown.shade700,
-                height: 1.5,
-              ),
-            ),
-          ),
-        ],
-      ],
-    );
+    return Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+      Text(label, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 12)),
+      Expanded(child: Text(value, style: TextStyle(
+        color: valueColor ?? kMuted,
+        fontSize: 12,
+        fontWeight: valueBold ? FontWeight.w700 : FontWeight.w400,
+      ))),
+    ]);
   }
 
   String _getMonthName(int month) {
