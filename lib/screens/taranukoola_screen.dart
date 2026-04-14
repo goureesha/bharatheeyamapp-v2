@@ -60,7 +60,7 @@ class _TaranukoolaScreenState extends State<TaranukoolaScreen> {
       );
       final srJd = srSs[0];
       final srLocalFrac = ((srJd + 0.5 + (LocationService.tzOffset / 24.0)) % 1.0 + 1.0) % 1.0;
-      final hour24 = (srLocalFrac * 24.0) + (0.5 / 60.0); // sunrise + 30sec safety
+      final hour24 = (srLocalFrac * 24.0) + (1.0 / 60.0); // sunrise + 1 min
 
       final result = await AstroCalculator.calculate(
         year: _selectedDay!.year, month: _selectedDay!.month, day: _selectedDay!.day,
