@@ -33,9 +33,7 @@ class _PanchangaScreenState extends State<PanchangaScreen> {
   // Events for current selected day
   List<AstroEvent> _currentEvents = [];
 
-  // Moonrise/Moonset
-  String _moonrise = '';
-  String _moonset = '';
+
 
   // Debounce timer for month-change swipe
   Timer? _monthDebounce;
@@ -94,22 +92,9 @@ class _PanchangaScreenState extends State<PanchangaScreen> {
         // If cache miss, compute from panchang
         final finalEvents = events.isNotEmpty ? events : EventCalculator.getEventsForPanchang(result.panchang);
 
-        // Compute moonrise/moonset
-        String mr = '', ms = '';
-        try {
-          final moonTimes = Ephemeris.findMoonriseSetForDate(
-            _selectedDate.year, _selectedDate.month, _selectedDate.day,
-            _lat, _lon, tzOffset: LocationService.tzOffset,
-          );
-          if (moonTimes[0] > 0) mr = formatTimeFromJd(moonTimes[0], tzOffset: LocationService.tzOffset);
-          if (moonTimes[1] > 0) ms = formatTimeFromJd(moonTimes[1], tzOffset: LocationService.tzOffset);
-        } catch (_) {}
-
         setState(() {
           _panchang = result.panchang;
           _currentEvents = finalEvents;
-          _moonrise = mr.isNotEmpty ? mr : 'N/A';
-          _moonset = ms.isNotEmpty ? ms : 'N/A';
           _loading = false;
         });
       } else {
@@ -424,8 +409,7 @@ class _PanchangaScreenState extends State<PanchangaScreen> {
                         _sectionHeader(Icons.nightlight_round, tr('ಚಂದ್ರ') + ' / Moon', kTeal),
                         _tableRow([tr('ಚಂದ್ರ ರಾಶಿ'), tr(_panchang!.chandraRashi)]),
                         _tableRow([tr('ಚಂದ್ರ ಮಾಸ'), tr(_panchang!.chandraMasa)]),
-                        _tableRow([tr('ಚಂದ್ರೋದಯ'), _moonrise]),
-                        _tableRow([tr('ಚಂದ್ರಾಸ್ತ'), _moonset]),
+
                         _tableRow([tr('ಪರಮ ಘಟಿ'), _panchang!.paramaGhati]),
                       ]),
                     ),
