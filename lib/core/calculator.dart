@@ -848,11 +848,15 @@ class AstroCalculator {
         return (jdTarget + offset).floor() > (jdBase + offset).floor();
       }
 
-      // Agni Vasa
+      // Agni Vasa — use tithi at sunrise (not at calculation time)
       // Ex: Shukla Panchami(5)+1=6, Kuja Vara(3)+1=4, total=10, 10%4=2
-      // Formula: ((Tithi + 1) + (Vara + 1)) % 4 = (tIdx + wIdx) % 4 (0-indexed)
+      // Formula: ((Tithi + 1) + (Vara + 1)) % 4 = (tIdxSunrise + wIdx) % 4
       // Remainder: 0 or 3 = Bhumi (Shubha), 1 = Akasha (Ashubha), 2 = Patala (Ashubha)
-      final agniVal = (tIdx + wIdx) % 4;
+      final srPlanets = Ephemeris.calcAll(panchSunrise, ayanamsaMode, trueNode);
+      final srMoon = normDeg(srPlanets['Moon']![0]);
+      final srSun = normDeg(srPlanets['Sun']![0]);
+      final tIdxSunrise = (((srMoon - srSun + 360) % 360) / 12).floor().clamp(0, 29);
+      final agniVal = (tIdxSunrise + wIdx) % 4;
       final agniVasaStr = (agniVal == 0 || agniVal == 3) ? 'ಭೂಮಿ (ಶುಭ)' : (agniVal == 1 ? 'ಆಕಾಶ (ಅಶುಭ)' : 'ಪಾತಾಳ (ಅಶುಭ)');
 
       // End Times
