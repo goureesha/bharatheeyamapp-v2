@@ -77,6 +77,34 @@ class NorthIndianChart extends StatelessWidget {
     }
   }
 
+  /// Compute the degree within the amsha division for a given longitude.
+  double _amshaDegree(double deg) {
+    final dr = deg % 30;
+    switch (varga) {
+      case 2: return dr % 15;
+      case 3: return dr % 10;
+      case 9: return dr % 3.33333;
+      case 12: return dr % 2.5;
+      case 30:
+        final r = (deg / 30).floor() % 12;
+        final isOdd = r % 2 == 0;
+        if (isOdd) {
+          if (dr < 5) return dr;
+          if (dr < 10) return dr - 5;
+          if (dr < 18) return dr - 10;
+          if (dr < 25) return dr - 18;
+          return dr - 25;
+        } else {
+          if (dr < 5) return dr;
+          if (dr < 12) return dr - 5;
+          if (dr < 20) return dr - 12;
+          if (dr < 25) return dr - 20;
+          return dr - 25;
+        }
+      default: return dr;
+    }
+  }
+
   /// Convert rashi index to house number (1-12) based on ascendant
   int _rashiToHouse(int rashiIdx, int lagnaRashiIdx) {
     return ((rashiIdx - lagnaRashiIdx + 12) % 12);
@@ -114,7 +142,7 @@ class NorthIndianChart extends StatelessWidget {
     }
 
     // Temporary storage for sorting planets by degree within each house
-    final Map<int, List<({String name, PlanetInfo? info, double degree, bool isAroodha})>> houseData = 
+    final Map<int, List<({String name, PlanetInfo? info, double degree, double displayDeg, bool isAroodha})>> houseData = 
         {for (int i = 0; i < 12; i++) i: []};
 
     if (aroodhas != null) {
@@ -124,7 +152,7 @@ class NorthIndianChart extends StatelessWidget {
         final ri = _rashinFor(info.longitude);
         if (ri >= 0 && ri < 12) {
           final h = _rashiToHouse(ri, firstHouseRashiIdx);
-          houseData[h]!.add((name: pName, info: info, degree: info.longitude % 30, isAroodha: false));
+          houseData[h]!.add((name: pName, info: info, degree: info.longitude % 30, displayDeg: _amshaDegree(info.longitude), isAroodha: false));
         }
       }
       // Sort each house by degree: Mesha(0)-Vrischika(7) ascending top→bottom, Dhanu(8)-Meena(11) ascending bottom→top
@@ -136,7 +164,7 @@ class NorthIndianChart extends StatelessWidget {
           houseData[h]!.sort((a, b) => a.degree.compareTo(b.degree)); // top to bottom
         }
         for (final item in houseData[h]!) {
-          houses[h]!.add(_planetChip(item.name, info: item.info));
+          houses[h]!.add(_planetChip(item.name, info: item.info, displayDeg: item.displayDeg));
         }
       }
       // Add aroodha labels after sorted planets
@@ -187,7 +215,7 @@ class NorthIndianChart extends StatelessWidget {
         }
         if (ri < 0 || ri > 11) continue;
         final h = _rashiToHouse(ri, firstHouseRashiIdx);
-        houseData[h]!.add((name: pName, info: info, degree: info.longitude % 30, isAroodha: false));
+        houseData[h]!.add((name: pName, info: info, degree: info.longitude % 30, displayDeg: _amshaDegree(info.longitude), isAroodha: false));
       }
 
       // Sort each house by degree: Mesha(0)-Vrischika(7) ascending top→bottom, Dhanu(8)-Meena(11) ascending bottom→top
@@ -199,7 +227,7 @@ class NorthIndianChart extends StatelessWidget {
           houseData[h]!.sort((a, b) => a.degree.compareTo(b.degree)); // top to bottom
         }
         for (final item in houseData[h]!) {
-          houses[h]!.add(_planetChip(item.name, info: item.info));
+          houses[h]!.add(_planetChip(item.name, info: item.info, displayDeg: item.displayDeg));
         }
       }
 
@@ -328,7 +356,7 @@ class NorthIndianChart extends StatelessWidget {
     return widgets;
   }
 
-  Widget _planetChip(String name, {PlanetInfo? info}) {
+  Widget _planetChip(String name, {PlanetInfo? info, double? displayDeg}) {
     final map = AppLocale.isHindi ? _shortNamesHi : _shortNamesKn;
     final shortName = map[name] ?? name;
     String displayText = shortName;
@@ -338,12 +366,15 @@ class NorthIndianChart extends StatelessWidget {
     if (info != null) {
       isCombust = info.isCombust;
       isVakri = info.speed < 0 && !['ರಾಹು', 'ಕೇತು'].contains(info.name);
-      final degInRashi = info.longitude % 30;
-      final totalSec = (degInRashi * 3600).round();
+
+      // D1 (Rashi) and Bhava: show rashi degree; Amshas: show amsha degree
+      final bool showRashiDeg = (varga == 1) || isBhava;
+      final double degToShow = showRashiDeg ? (info.longitude % 30) : (displayDeg ?? info.longitude % 30);
+      final totalSec = (degToShow * 3600).round();
       int dg = totalSec ~/ 3600;
       int mn = (totalSec % 3600) ~/ 60;
       int sc = totalSec % 60;
-      if (dg == 30) { dg = 29; mn = 59; sc = 59; }
+      if (showRashiDeg && dg == 30) { dg = 29; mn = 59; sc = 59; }
       displayText = '$shortName $dg°${mn.toString().padLeft(2, '0')}\'';
 
       if (isVakri) displayText = '$displayText↩';

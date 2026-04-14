@@ -88,6 +88,40 @@ class KundaliChart extends StatelessWidget {
     }
   }
 
+  /// Compute the degree within the amsha division for a given longitude.
+  /// For D1/Bhava returns deg % 30. For amshas returns the position within that amsha's span.
+  double _amshaDegree(double deg) {
+    final dr = deg % 30;
+    switch (varga) {
+      case 2: // Hora — each 15° span
+        return dr % 15;
+      case 3: // Drekkana — each 10° span
+        return dr % 10;
+      case 9: // Navamsa — each 3°20' span
+        return dr % 3.33333;
+      case 12: // Dvadashamsa — each 2°30' span
+        return dr % 2.5;
+      case 30: // Trimshamsa — variable spans
+        final r = (deg / 30).floor() % 12;
+        final isOdd = r % 2 == 0;
+        if (isOdd) {
+          if (dr < 5) return dr;
+          if (dr < 10) return dr - 5;
+          if (dr < 18) return dr - 10;
+          if (dr < 25) return dr - 18;
+          return dr - 25;
+        } else {
+          if (dr < 5) return dr;
+          if (dr < 12) return dr - 5;
+          if (dr < 20) return dr - 12;
+          if (dr < 25) return dr - 20;
+          return dr - 25;
+        }
+      default: // Rashi (D1)
+        return dr;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     // Delegate to North Indian chart if selected
@@ -122,8 +156,9 @@ class KundaliChart extends StatelessWidget {
     // Build box contents — collect planet data per box, sort by degree, then create widgets
     final Map<int, List<Widget>> boxes = {for (int i = 0; i < 12; i++) i: []};
 
-    // Temporary storage: (name, info, degree, chipType) per rashi box for sorting
-    final Map<int, List<({String name, PlanetInfo? info, double degree, ChipType type})>> boxData = 
+    // Temporary storage: (name, info, degree, displayDeg, chipType) per rashi box for sorting
+    // displayDeg is the degree shown in the chip (amsha degree for amshas, D1 degree for rashi/bhava)
+    final Map<int, List<({String name, PlanetInfo? info, double degree, double displayDeg, ChipType type})>> boxData = 
         {for (int i = 0; i < 12; i++) i: []};
 
     if (aroodhas != null) {
@@ -133,7 +168,8 @@ class KundaliChart extends StatelessWidget {
         if (info == null) continue;
         final ri = _rashinFor(info.longitude);
         if (ri >= 0 && ri < 12) {
-          boxData[ri]!.add((name: pName, info: info, degree: info.longitude % 30, type: pName == 'ಲಗ್ನ' ? ChipType.lagna : ChipType.planet));
+          final dd = _amshaDegree(info.longitude);
+          boxData[ri]!.add((name: pName, info: info, degree: info.longitude % 30, displayDeg: dd, type: pName == 'ಲಗ್ನ' ? ChipType.lagna : ChipType.planet));
         }
       }
       // Sort each box by degree: Mesha(0)-Vrischika(7) ascending top→bottom, Dhanu(8)-Meena(11) ascending bottom→top
@@ -144,7 +180,7 @@ class KundaliChart extends StatelessWidget {
           boxData[ri]!.sort((a, b) => a.degree.compareTo(b.degree)); // top to bottom
         }
         for (final item in boxData[ri]!) {
-          boxes[ri]!.add(_planetChip(item.name, info: item.info, type: item.type));
+          boxes[ri]!.add(_planetChip(item.name, info: item.info, type: item.type, displayDeg: item.displayDeg));
         }
       }
       // Then add aroodha labels (these don't have degrees, add after sorted planets)
@@ -213,7 +249,8 @@ class KundaliChart extends StatelessWidget {
         final type = (pName == 'ಲಗ್ನ' || pName == 'ಮಾಂದಿ')
             ? ChipType.lagna
             : ChipType.planet;
-        boxData[ri]!.add((name: pName, info: info, degree: info.longitude % 30, type: type));
+        final dd = _amshaDegree(info.longitude);
+        boxData[ri]!.add((name: pName, info: info, degree: info.longitude % 30, displayDeg: dd, type: type));
       }
 
       // Sort each box by degree: Mesha(0)-Vrischika(7) ascending top→bottom, Dhanu(8)-Meena(11) ascending bottom→top
@@ -224,7 +261,7 @@ class KundaliChart extends StatelessWidget {
           boxData[ri]!.sort((a, b) => a.degree.compareTo(b.degree)); // top to bottom
         }
         for (final item in boxData[ri]!) {
-          boxes[ri]!.add(_planetChip(item.name, info: item.info, type: item.type));
+          boxes[ri]!.add(_planetChip(item.name, info: item.info, type: item.type, displayDeg: item.displayDeg));
         }
       }
 
@@ -385,7 +422,7 @@ class KundaliChart extends StatelessWidget {
     'ಮಾಂದಿ': 'मां',
   };
 
-  Widget _planetChip(String name, {PlanetInfo? info, required ChipType type}) {
+  Widget _planetChip(String name, {PlanetInfo? info, required ChipType type, double? displayDeg}) {
     Color color;
     switch (type) {
       case ChipType.lagna:  color = const Color(0xFFE53E3E); break;
@@ -418,16 +455,30 @@ class KundaliChart extends StatelessWidget {
       isCombust = info.isCombust;
       isVakri = info.speed < 0 && !['ರಾಹು', 'ಕೇತು'].contains(info.name);
 
-      // Degree within current rashi — exact same format as sphuta tab
-      final degInRashi = info.longitude % 30;
-      final totalSec = (degInRashi * 3600).round();
-      int dg = totalSec ~/ 3600;
-      int mn = (totalSec % 3600) ~/ 60;
-      int sc = totalSec % 60;
-      if (dg == 30) { dg = 29; mn = 59; sc = 59; }
-      final degStr = '$dg°${mn.toString().padLeft(2, '0')}\'${sc.toString().padLeft(2, '0')}"';
-      
-      displayText = '$shortName $degStr';
+      // Show degrees only in D1 (Rashi) and Bhava kundalis
+      // In amsha kundalis, show the amsha-specific degree
+      final bool showDeg = (varga == 1) || isBhava;
+      final bool showAmshaDeg = (varga != 1) && !isBhava;
+
+      if (showDeg) {
+        // Degree within D1 rashi
+        final degInRashi = info.longitude % 30;
+        final totalSec = (degInRashi * 3600).round();
+        int dg = totalSec ~/ 3600;
+        int mn = (totalSec % 3600) ~/ 60;
+        int sc = totalSec % 60;
+        if (dg == 30) { dg = 29; mn = 59; sc = 59; }
+        final degStr = '$dg°${mn.toString().padLeft(2, '0')}\'${sc.toString().padLeft(2, '0')}"';
+        displayText = '$shortName $degStr';
+      } else if (showAmshaDeg && displayDeg != null) {
+        // Degree within the amsha division
+        final totalSec = (displayDeg * 3600).round();
+        int dg = totalSec ~/ 3600;
+        int mn = (totalSec % 3600) ~/ 60;
+        int sc = totalSec % 60;
+        final degStr = '$dg°${mn.toString().padLeft(2, '0')}\'${sc.toString().padLeft(2, '0')}"';
+        displayText = '$shortName $degStr';
+      }
 
       // Vakri arrow
       if (isVakri) {
