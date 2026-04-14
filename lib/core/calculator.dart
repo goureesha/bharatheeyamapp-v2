@@ -80,6 +80,7 @@ class PanchangData {
   final String ratrimana;
   final String rutu;
   final String agniVasa;
+  final String ayana;
 
   PanchangData({
     required this.vara,
@@ -120,6 +121,7 @@ class PanchangData {
     this.ratrimana = '',
     this.rutu = '',
     this.agniVasa = '',
+    this.ayana = '',
   });
 }
 
@@ -903,6 +905,7 @@ class AstroCalculator {
         ratrimana: ratrimanaStr,
         rutu: rutuStr,
         agniVasa: agniVasaStr,
+        ayana: (sDeg >= 270 || sDeg < 90) ? 'ಉತ್ತರಾಯಣ' : 'ದಕ್ಷಿಣಾಯಣ',
       );
 
       // Dashas

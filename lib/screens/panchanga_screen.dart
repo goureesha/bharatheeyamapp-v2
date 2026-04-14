@@ -420,6 +420,7 @@ class _PanchangaScreenState extends State<PanchangaScreen> {
                       child: Column(children: [
                         _sectionHeader(Icons.access_time, tr('ಕಾಲ') + ' / Time', kPurple1),
                         _tableRow([tr('ಸಂವತ್ಸರ'), tr(_panchang!.samvatsara)]),
+                        _tableRow([tr('ಅಯನ'), tr(_panchang!.ayana)]),
                         _tableRow([tr('ಋತು'), tr(_panchang!.rutu)]),
                         _tableRow([tr('ಅಗ್ನಿ ವಾಸ'), _panchang!.agniVasa]),
                         _tableRow([tr('ಹಗಲಿನ ಪ್ರಮಾಣ'), _panchang!.divamana]),
