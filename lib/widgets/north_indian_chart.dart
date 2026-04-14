@@ -159,9 +159,9 @@ class NorthIndianChart extends StatelessWidget {
       for (final h in houseData.keys) {
         final rashiIdx = (firstHouseRashiIdx + h) % 12;
         if (rashiIdx >= 8) {
-          houseData[h]!.sort((a, b) => b.degree.compareTo(a.degree)); // bottom to top
+          houseData[h]!.sort((a, b) => b.displayDeg.compareTo(a.displayDeg));
         } else {
-          houseData[h]!.sort((a, b) => a.degree.compareTo(b.degree)); // top to bottom
+          houseData[h]!.sort((a, b) => a.displayDeg.compareTo(b.displayDeg));
         }
         for (final item in houseData[h]!) {
           houses[h]!.add(_planetChip(item.name, info: item.info, displayDeg: item.displayDeg));
@@ -218,13 +218,13 @@ class NorthIndianChart extends StatelessWidget {
         houseData[h]!.add((name: pName, info: info, degree: info.longitude % 30, displayDeg: _amshaDegree(info.longitude), isAroodha: false));
       }
 
-      // Sort each house by degree: Mesha(0)-Vrischika(7) ascending top→bottom, Dhanu(8)-Meena(11) ascending bottom→top
+      // Sort each house by degree within the division (amsha or rashi)
       for (final h in houseData.keys) {
         final rashiIdx = (firstHouseRashiIdx + h) % 12;
         if (rashiIdx >= 8) {
-          houseData[h]!.sort((a, b) => b.degree.compareTo(a.degree)); // bottom to top
+          houseData[h]!.sort((a, b) => b.displayDeg.compareTo(a.displayDeg));
         } else {
-          houseData[h]!.sort((a, b) => a.degree.compareTo(b.degree)); // top to bottom
+          houseData[h]!.sort((a, b) => a.displayDeg.compareTo(b.displayDeg));
         }
         for (final item in houseData[h]!) {
           houses[h]!.add(_planetChip(item.name, info: item.info, displayDeg: item.displayDeg));

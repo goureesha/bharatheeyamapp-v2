@@ -172,12 +172,12 @@ class KundaliChart extends StatelessWidget {
           boxData[ri]!.add((name: pName, info: info, degree: info.longitude % 30, displayDeg: dd, type: pName == 'ಲಗ್ನ' ? ChipType.lagna : ChipType.planet));
         }
       }
-      // Sort each box by degree: Mesha(0)-Vrischika(7) ascending top→bottom, Dhanu(8)-Meena(11) ascending bottom→top
+      // Sort each box by degree within the division (amsha or rashi)
       for (final ri in boxData.keys) {
         if (ri >= 8) {
-          boxData[ri]!.sort((a, b) => b.degree.compareTo(a.degree)); // bottom to top
+          boxData[ri]!.sort((a, b) => b.displayDeg.compareTo(a.displayDeg)); // bottom to top
         } else {
-          boxData[ri]!.sort((a, b) => a.degree.compareTo(b.degree)); // top to bottom
+          boxData[ri]!.sort((a, b) => a.displayDeg.compareTo(b.displayDeg)); // top to bottom
         }
         for (final item in boxData[ri]!) {
           boxes[ri]!.add(_planetChip(item.name, info: item.info, type: item.type, displayDeg: item.displayDeg));
@@ -253,12 +253,12 @@ class KundaliChart extends StatelessWidget {
         boxData[ri]!.add((name: pName, info: info, degree: info.longitude % 30, displayDeg: dd, type: type));
       }
 
-      // Sort each box by degree: Mesha(0)-Vrischika(7) ascending top→bottom, Dhanu(8)-Meena(11) ascending bottom→top
+      // Sort each box by degree within the division (amsha or rashi)
       for (final ri in boxData.keys) {
         if (ri >= 8) {
-          boxData[ri]!.sort((a, b) => b.degree.compareTo(a.degree)); // bottom to top
+          boxData[ri]!.sort((a, b) => b.displayDeg.compareTo(a.displayDeg)); // bottom to top
         } else {
-          boxData[ri]!.sort((a, b) => a.degree.compareTo(b.degree)); // top to bottom
+          boxData[ri]!.sort((a, b) => a.displayDeg.compareTo(b.displayDeg)); // top to bottom
         }
         for (final item in boxData[ri]!) {
           boxes[ri]!.add(_planetChip(item.name, info: item.info, type: item.type, displayDeg: item.displayDeg));
