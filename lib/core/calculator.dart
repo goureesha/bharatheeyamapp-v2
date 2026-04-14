@@ -570,9 +570,22 @@ class AstroCalculator {
       final mandiRes = calcMandi(jdBirth: jdBirth, lat: lat, lon: lon, dobObj: dob, tzOffset: hourUtcOffset);
       final mandiTimeJd = mandiRes[0] as double;
       final panchSr = mandiRes[2] as double;
-      final wIdx = mandiRes[3] as int;
       final srCivil = mandiRes[5] as double;
       final ssCivil = mandiRes[6] as double;
+      
+      // Recompute vara using panchanga-consistent sunrise (with tzOffset & refraction)
+      // Mandi's sunrise (horizonAlt=0°) differs from panchanga's (horizonAlt=-0.5667°)
+      // This ensures vara matches the sunrise shown in the panchanga display
+      final panchSrSs = Ephemeris.findSunriseSetForDate(year, month, day, lat, lon, tzOffset: hourUtcOffset);
+      final panchSunrise = panchSrSs[0];
+      int pyWeekday = dob.weekday - 1; // Mon=0..Sun=6
+      int civilWeekdayIdx = (pyWeekday + 1) % 7; // Sun=0..Sat=6
+      int wIdx;
+      if (jdBirth >= panchSunrise) {
+        wIdx = civilWeekdayIdx; // after sunrise = today's vara
+      } else {
+        wIdx = (civilWeekdayIdx - 1 + 7) % 7; // before sunrise = yesterday's vara
+      }
       
       final hMandi = Ephemeris.placidusHousesFull(mandiTimeJd, lat, lon);
       final aMandi = _getAyanamsa(mandiTimeJd, ayanamsaMode);
