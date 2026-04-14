@@ -101,16 +101,21 @@ class _TaranukoolaScreenState extends State<TaranukoolaScreen> {
   }
   
   int _calculateNakshatraForDate(DateTime date) {
-    // Basic calculation for the moon's position on a specific day
-    // A more precise version would check the exact time (like sunrise), 
-    // but for a general day calendar, 12:00 PM is a good average.
-    DateTime noon = DateTime(date.year, date.month, date.day, 12, 0);
-    double jd = Sweph.swe_julday(noon.year, noon.month, noon.day, noon.hour + (noon.minute / 60.0), CalendarType.SE_GREG_CAL);
+    // Calculate Moon's SIDEREAL position at sunrise for accurate Vedic nakshatra
+    final srSs = Ephemeris.findSunriseSetForDate(
+      date.year, date.month, date.day,
+      LocationService.lat, LocationService.lon, tzOffset: LocationService.tzOffset,
+    );
+    final srJd = srSs[0];
+    // Use sunrise + 1 min to be safely past sunrise (matching panchanga)
+    final jd = srJd + (1.0 / 1440.0);
     
-    // Calculate Moon
-    final pos = Sweph.swe_calc_ut(jd, HeavenlyBody.SE_MOON, SwephFlag.SEFLG_SWIEPH);
-    double moonLon = pos.longitude;
-    return (moonLon / (360.0 / 27.0)).floor();
+    // Sidereal Moon using Lahiri ayanamsa
+    Sweph.swe_set_sid_mode(SiderealMode.SE_SIDM_LAHIRI);
+    final pos = Sweph.swe_calc_ut(jd, HeavenlyBody.SE_MOON, 
+        SwephFlag.SEFLG_SWIEPH | SwephFlag.SEFLG_SIDEREAL);
+    double moonLon = pos.longitude % 360.0;
+    return (moonLon / (360.0 / 27.0)).floor() % 27;
   }
 
   int _getNakshatraForDate(DateTime date) {
