@@ -5,6 +5,7 @@ import 'package:sweph/sweph.dart';
 import '../widgets/common.dart';
 import '../constants/strings.dart';
 import '../core/calculator.dart';
+import '../core/ephemeris.dart';
 import '../services/location_service.dart';
 
 class TaranukoolaScreen extends StatefulWidget {
@@ -51,10 +52,20 @@ class _TaranukoolaScreenState extends State<TaranukoolaScreen> {
     if (_selectedDay == null) return;
     if (mounted) setState(() => _isLoadingPanchang = true);
     try {
+      // Compute sunrise for this date — vara starts at sunrise
+      await Ephemeris.initSweph();
+      final srSs = Ephemeris.findSunriseSetForDate(
+        _selectedDay!.year, _selectedDay!.month, _selectedDay!.day,
+        LocationService.lat, LocationService.lon, tzOffset: LocationService.tzOffset,
+      );
+      final srJd = srSs[0];
+      final srLocalFrac = ((srJd + 0.5 + (LocationService.tzOffset / 24.0)) % 1.0 + 1.0) % 1.0;
+      final hour24 = (srLocalFrac * 24.0) + (0.5 / 60.0); // sunrise + 30sec safety
+
       final result = await AstroCalculator.calculate(
         year: _selectedDay!.year, month: _selectedDay!.month, day: _selectedDay!.day,
         hourUtcOffset: LocationService.tzOffset, 
-        hour24: 12.0, // Use noon to ensure we are after sunrise for correct vara
+        hour24: hour24,
         lat: LocationService.lat, 
         lon: LocationService.lon,
         ayanamsaMode: 'lahiri',
