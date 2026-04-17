@@ -7,6 +7,7 @@ import '../constants/strings.dart';
 import '../core/calculator.dart';
 import '../core/ephemeris.dart';
 import '../services/location_service.dart';
+import '../core/muhurta_rules.dart';
 
 class TaranukoolaScreen extends StatefulWidget {
   const TaranukoolaScreen({super.key});
@@ -27,6 +28,7 @@ class _TaranukoolaScreenState extends State<TaranukoolaScreen> {
   KundaliResult? _selectedDayResult;
   bool _isLoadingPanchang = false;
   bool _showTaraCharts = false;
+  MuhurtaEvent _selectedMuhurtaEvent = MuhurtaEvent.vivaha;
 
   final _taras = [
     'ಜನ್ಮ ತಾರೆ (ಅಶುಭ)',
@@ -75,6 +77,7 @@ class _TaranukoolaScreenState extends State<TaranukoolaScreen> {
         _selectedDayResult = result;
         _isLoadingPanchang = false;
       });
+      _computeLagnaWindows();
     } catch (_) {
       if (mounted) setState(() => _isLoadingPanchang = false);
     }
@@ -671,6 +674,10 @@ class _TaranukoolaScreenState extends State<TaranukoolaScreen> {
                       }),
                     ]
 
+                  // ── Muhurta Section ──
+                  if (!_isLoadingPanchang && _selectedDayResult != null)
+                    _buildMuhurtaSection(),
+
                   ],
                 ),
               )),
@@ -681,4 +688,655 @@ class _TaranukoolaScreenState extends State<TaranukoolaScreen> {
       ),
     );
   }
+
+  // ============================================================
+  // MUHURTA SECTIONS
+  // ============================================================
+
+  Widget _buildMuhurtaSection() {
+    if (_selectedDayResult == null) return const SizedBox();
+    final r = _selectedDayResult!;
+    final pan = r.panchang;
+    final rules = muhurtaRules[_selectedMuhurtaEvent];
+    if (rules == null) return const SizedBox();
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        const SizedBox(height: 20),
+        // ── Event Selector ──
+        Text('ಮುಹೂರ್ತ ನಿಯಮಗಳು', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: kPurple1)),
+        const SizedBox(height: 10),
+        Container(
+          decoration: BoxDecoration(
+            border: Border.all(color: kBorder),
+            borderRadius: BorderRadius.circular(8),
+            color: kCard,
+          ),
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
+          child: DropdownButtonHideUnderline(
+            child: DropdownButton<MuhurtaEvent>(
+              isExpanded: true,
+              value: _selectedMuhurtaEvent,
+              dropdownColor: kCard,
+              items: MuhurtaEvent.values.map((e) {
+                final info = muhurtaEventNames[e]!;
+                return DropdownMenuItem(
+                  value: e,
+                  child: Text('${info.kannadaName} (${info.englishName})',
+                      style: TextStyle(fontSize: 13, color: kText)),
+                );
+              }).toList(),
+              onChanged: (e) { if (e != null) setState(() { _selectedMuhurtaEvent = e; _computeLagnaWindows(); }); },
+            ),
+          ),
+        ),
+
+        // ── 5 Rules Display ──
+        const SizedBox(height: 12),
+        _buildEventRulesCard(rules),
+
+        // ── Panchanga Shuddhi ──
+        const SizedBox(height: 12),
+        _buildPanchangaShuddhi(pan, rules),
+
+        // ── Nimma Balagalu ──
+        if (_janmaNakshatraIdx1 != null) ...[
+          const SizedBox(height: 12),
+          _buildBala(r, 1),
+          if (_isTwoPersonMode && _janmaNakshatraIdx2 != null) ...[
+            const SizedBox(height: 8),
+            _buildBala(r, 2),
+          ],
+        ],
+
+        // ── 15 Day Muhurtas ──
+        const SizedBox(height: 12),
+        _buildMuhurtaTimings(pan, true),
+
+        // ── 15 Night Muhurtas ──
+        const SizedBox(height: 12),
+        _buildMuhurtaTimings(pan, false),
+
+        // ── Day Lagna Shuddhi ──
+        const SizedBox(height: 12),
+        _buildLagnaShuddhi(true, rules),
+
+        // ── Night Lagna Shuddhi ──
+        const SizedBox(height: 12),
+        _buildLagnaShuddhi(false, rules),
+      ],
+    );
+  }
+
+  // ── Event Rules Card ──
+  Widget _buildEventRulesCard(MuhurtaEventRules rules) {
+    String tithiText = rules.allowedTithis == null
+        ? 'ಎಲ್ಲಾ ತಿಥಿಗಳು'
+        : rules.allowedTithis!.map((i) => knTithi[i]).join(', ');
+    if (rules.requireShukla) tithiText = 'ಶುಕ್ಲ ಪಕ್ಷ ಮಾತ್ರ: $tithiText';
+
+    String nakText = rules.allowedNakshatras == null
+        ? 'ಎಲ್ಲಾ ನಕ್ಷತ್ರಗಳು'
+        : rules.allowedNakshatras!.map((i) => knNak[i].split(' ')[0]).join(', ');
+    String varaText = rules.allowedVaras == null
+        ? 'ಎಲ್ಲಾ ವಾರಗಳು'
+        : rules.allowedVaras!.map((i) => knVara[i].replaceAll('ವಾರ', '')).join(', ');
+
+    final shuddhis = rules.requiredShuddhis.map((s) {
+      switch (s) {
+        case ShuddhiType.lagna: return 'ಲಗ್ನ';
+        case ShuddhiType.saptama: return 'ಸಪ್ತಮ';
+        case ShuddhiType.ashtama: return 'ಅಷ್ಟಮ';
+        case ShuddhiType.dashama: return 'ದಶಮ';
+        case ShuddhiType.chandraSaptama: return 'ಚಂದ್ರ ಸಪ್ತಮ';
+      }
+    }).join(' + ');
+
+    return AppCard(
+      padding: const EdgeInsets.all(12),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('ಶಾಸ್ತ್ರೋಕ್ತ ನಿಯಮಗಳು', style: TextStyle(fontWeight: FontWeight.w800, color: kPurple1, fontSize: 13)),
+          const SizedBox(height: 8),
+          _ruleRow('• ತಿಥಿಗಳು: ', tithiText),
+          const SizedBox(height: 4),
+          _ruleRow('• ನಕ್ಷತ್ರಗಳು: ', nakText),
+          const SizedBox(height: 4),
+          _ruleRow('• ವಾರಗಳು: ', varaText),
+          const SizedBox(height: 4),
+          _ruleRow('• ಲಗ್ನಗಳು: ', rules.allowedLagnas == null ? 'ಸಾಮಾನ್ಯ (ಶುದ್ಧಿ ಆಧಾರಿತ)' : rules.allowedLagnas!.map((i) => knRashi[i]).join(', ')),
+          const SizedBox(height: 4),
+          _ruleRow('• ಕಡ್ಡಾಯ ಶುದ್ಧಿ: ', shuddhis, valueColor: kPurple1, valueBold: true),
+        ],
+      ),
+    );
+  }
+
+  Widget _ruleRow(String label, String value, {Color? valueColor, bool valueBold = false}) {
+    return Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+      Text(label, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 12)),
+      Expanded(child: Text(value, style: TextStyle(
+        color: valueColor ?? kMuted, fontSize: 12,
+        fontWeight: valueBold ? FontWeight.w700 : FontWeight.w400,
+      ))),
+    ]);
+  }
+
+  // ── Panchanga Shuddhi ──
+  Widget _buildPanchangaShuddhi(PanchangData pan, MuhurtaEventRules rules) {
+    final tIdx = pan.tithiIndex;
+    final nIdx = pan.nakshatraIndex;
+    final varaIdx = knVara.indexOf(pan.vara);
+    final isVishti = pan.karana.contains('ವಿಷ್ಟಿ') || pan.karana.contains('ಭದ್ರ');
+
+    final tithiOk = rules.allowedTithis == null || rules.allowedTithis!.contains(tIdx);
+    final nakOk = rules.allowedNakshatras == null || rules.allowedNakshatras!.contains(nIdx);
+    final varaOk = rules.allowedVaras == null || rules.allowedVaras!.contains(varaIdx);
+    final karanaOk = !rules.avoidVishti || !isVishti;
+    final pakshaOk = !rules.requireShukla || (tIdx >= 0 && tIdx <= 14);
+
+    final checks = [
+      {'label': 'ತಿಥಿ', 'value': pan.tithi, 'ok': tithiOk},
+      {'label': 'ನಕ್ಷತ್ರ', 'value': pan.nakshatra, 'ok': nakOk},
+      {'label': 'ವಾರ', 'value': pan.vara, 'ok': varaOk},
+      {'label': 'ಕರಣ', 'value': pan.karana, 'ok': karanaOk},
+      if (rules.requireShukla)
+        {'label': 'ಪಕ್ಷ', 'value': tIdx <= 14 ? 'ಶುಕ್ಲ' : 'ಕೃಷ್ಣ', 'ok': pakshaOk},
+    ];
+
+    return Container(
+      decoration: BoxDecoration(
+        border: Border.all(color: kBorder),
+        borderRadius: BorderRadius.circular(12),
+        color: kCard,
+      ),
+      child: Column(children: [
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+          decoration: BoxDecoration(
+            color: kPurple1.withOpacity(0.08),
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
+          ),
+          child: Text('ಪಂಚಾಂಗ ಶುದ್ಧಿ', style: TextStyle(fontWeight: FontWeight.w800, color: kPurple1, fontSize: 14)),
+        ),
+        ...checks.map((c) => Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+          decoration: BoxDecoration(
+            border: Border(bottom: BorderSide(color: kBorder.withOpacity(0.5))),
+          ),
+          child: Row(children: [
+            Icon(c['ok'] as bool ? Icons.check_circle : Icons.cancel,
+                color: c['ok'] as bool ? Colors.green : Colors.red, size: 18),
+            const SizedBox(width: 10),
+            Text(c['label'] as String, style: TextStyle(fontWeight: FontWeight.w700, color: kText, fontSize: 13)),
+            const Spacer(),
+            Text(c['value'] as String, style: TextStyle(color: kMuted, fontSize: 13)),
+          ]),
+        )),
+      ]),
+    );
+  }
+
+  // ── Bala (Person Strength) ──
+  Widget _buildBala(KundaliResult r, int personNum) {
+    final janmaIdx = personNum == 1 ? _janmaNakshatraIdx1! : _janmaNakshatraIdx2!;
+    final dinaIdx = r.panchang.nakshatraIndex;
+    final taraIdx = (dinaIdx - janmaIdx + 27) % 27 % 9;
+    final isGoodTara = (taraIdx == 1 || taraIdx == 3 || taraIdx == 5 || taraIdx == 7 || taraIdx == 8);
+    final taraName = _taras[taraIdx];
+
+    // Chandra Bala: Moon in upachaya (3, 6, 10, 11) from janma rashi
+    final moonRashi = r.planets['ಚಂದ್ರ']?.rashiIndex ?? 0;
+    final janmaRashi = (janmaIdx ~/ 3) % 12; // approximate rashi from nakshatra
+    final moonHouse = ((moonRashi - janmaRashi + 12) % 12) + 1;
+    final chandraBala = const [3, 6, 10, 11].contains(moonHouse);
+
+    final label = _isTwoPersonMode ? '👤 ವ್ಯಕ್ತಿ $personNum ಬಲಗಳು' : '👤 ನಿಮ್ಮ ಬಲಗಳು';
+
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        border: Border.all(color: kBorder),
+        borderRadius: BorderRadius.circular(10),
+        color: kCard,
+      ),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Text(label, style: TextStyle(fontWeight: FontWeight.w800, color: kPurple1, fontSize: 13)),
+        const SizedBox(height: 8),
+        _balaChipRow('ತಾರಾ ಬಲ', taraName, isGoodTara),
+        _balaChipRow('ಚಂದ್ರ ಬಲ', chandraBala ? 'ಅನುಕೂಲ' : 'ಪ್ರತಿಕೂಲ', chandraBala),
+      ]),
+    );
+  }
+
+  Widget _balaChipRow(String label, String value, bool good) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 3),
+      child: Row(children: [
+        Icon(good ? Icons.check_circle : Icons.cancel, color: good ? Colors.green : Colors.red, size: 16),
+        const SizedBox(width: 8),
+        Text(label, style: TextStyle(fontWeight: FontWeight.w600, color: kText, fontSize: 12)),
+        const Spacer(),
+        Text(value, style: TextStyle(color: good ? Colors.green.shade700 : Colors.red.shade700, fontWeight: FontWeight.w700, fontSize: 12)),
+      ]),
+    );
+  }
+
+  // ── Muhurta Timings (Day / Night) ──
+  static const List<String> _dayMuhurtaNames = [
+    'ರುದ್ರ', 'ಅಹಿ (ಸರ್ಪ)', 'ಮಿತ್ರ', 'ಪಿತೃ', 'ವಸು',
+    'ವಾರಾಹ', 'ವಿಶ್ವೇದೇವ', 'ಅಭಿಜಿತ್ (ವಿಧಿ)', 'ಸತಮುಖೀ', 'ಪುರುಹೂತ',
+    'ವಾಹಿನಿ', 'ನಕ್ತನಕರಾ', 'ವರುಣ', 'ಅರ್ಯಮ', 'ಭಗ',
+  ];
+  static const List<bool?> _dayMuhurtaNature = [
+    false, false, true, false, true,
+    true, true, true, true, true,
+    false, false, true, null, false,
+  ];
+  static const List<String> _nightMuhurtaNames = [
+    'ಗಿರೀಶ', 'ಅಜಿಪಾದ', 'ಅಹಿರ್ಬುಧ್ನ', 'ಪೂಷಾ', 'ಅಶ್ವಿನೀ',
+    'ಯಮ', 'ಅಗ್ನಿ', 'ವಿಧಾತೃ', 'ಚಂಡ', 'ಅದಿತಿ',
+    'ಜೀವ', 'ವಿಷ್ಣು', 'ದ್ಯುಮದ್ಗದ್ಯುತಿ', 'ತ್ವಷ್ಟೃ', 'ವಾಯು',
+  ];
+  static const List<bool?> _nightMuhurtaNature = [
+    false, false, false, true, true,
+    false, false, true, false, true,
+    true, true, true, false, false,
+  ];
+
+  double _parseTimeToMinutes(String timeStr) {
+    try {
+      final upper = timeStr.toUpperCase().trim();
+      final isPM = upper.contains('PM');
+      final isAM = upper.contains('AM');
+      final cleaned = upper.replaceAll('AM', '').replaceAll('PM', '').trim();
+      final parts = cleaned.split(':');
+      if (parts.length >= 2) {
+        int h = int.parse(parts[0].trim());
+        final m = int.parse(parts[1].trim());
+        if (isPM || isAM) {
+          if (isPM && h != 12) h += 12;
+          if (isAM && h == 12) h = 0;
+        }
+        return h * 60.0 + m;
+      }
+    } catch (_) {}
+    return 0;
+  }
+
+  String _minutesToTimeStr(double mins) {
+    int totalMins = mins.round();
+    if (totalMins < 0) totalMins += 1440;
+    int h = (totalMins ~/ 60) % 24;
+    final m = totalMins % 60;
+    final ampm = h >= 12 ? 'PM' : 'AM';
+    if (h > 12) h -= 12;
+    if (h == 0) h = 12;
+    return '${h.toString().padLeft(2, '0')}:${m.toString().padLeft(2, '0')} $ampm';
+  }
+
+  Widget _buildMuhurtaTimings(PanchangData pan, bool isDay) {
+    final sr = _parseTimeToMinutes(pan.sunrise);
+    final ss = _parseTimeToMinutes(pan.sunset);
+    final names = isDay ? _dayMuhurtaNames : _nightMuhurtaNames;
+    final natures = isDay ? _dayMuhurtaNature : _nightMuhurtaNature;
+    final Color headerColor = isDay ? const Color(0xFF8E44AD) : const Color(0xFF2C3E50);
+    final String headerText = isDay ? '☀️ ೧೫ ಹಗಲಿನ ಮುಹೂರ್ತ' : '🌙 ೧೫ ರಾತ್ರಿಯ ಮುಹೂರ್ತ';
+
+    double duration;
+    double startMin;
+    if (isDay) {
+      duration = (ss - sr) / 15.0;
+      startMin = sr;
+    } else {
+      // Night: sunset to next sunrise (~= sunset + (24h - dayLen))
+      final nightLen = 1440.0 - (ss - sr);
+      duration = nightLen / 15.0;
+      startMin = ss;
+    }
+
+    return Container(
+      decoration: BoxDecoration(
+        border: Border.all(color: kBorder),
+        borderRadius: BorderRadius.circular(12),
+        color: kCard,
+      ),
+      child: Column(children: [
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+          decoration: BoxDecoration(
+            color: headerColor.withOpacity(0.08),
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
+          ),
+          child: Text(headerText, style: TextStyle(fontWeight: FontWeight.w800, color: headerColor, fontSize: 14)),
+        ),
+        ...List.generate(15, (i) {
+          final start = startMin + i * duration;
+          final end = start + duration;
+          final nature = natures[i];
+          final isAbhijit = isDay && i == 7;
+
+          Color rowBg;
+          String natureIcon;
+          if (isAbhijit) {
+            rowBg = Colors.amber.withOpacity(0.12);
+            natureIcon = '🌟';
+          } else if (nature == true) {
+            rowBg = Colors.green.withOpacity(0.05);
+            natureIcon = '✅';
+          } else if (nature == false) {
+            rowBg = Colors.red.withOpacity(0.04);
+            natureIcon = '❌';
+          } else {
+            rowBg = Colors.orange.withOpacity(0.05);
+            natureIcon = '🟡';
+          }
+
+          return Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            decoration: BoxDecoration(
+              color: rowBg,
+              border: i < 14 ? Border(bottom: BorderSide(color: kBorder.withOpacity(0.4))) : null,
+            ),
+            child: Row(children: [
+              SizedBox(width: 24, child: Text('${i + 1}', style: TextStyle(fontWeight: FontWeight.w700, color: kMuted, fontSize: 12))),
+              Text(natureIcon, style: const TextStyle(fontSize: 14)),
+              const SizedBox(width: 8),
+              Expanded(child: Text(names[i], style: TextStyle(
+                fontWeight: isAbhijit ? FontWeight.w900 : FontWeight.w600,
+                color: isAbhijit ? Colors.amber.shade800 : kText, fontSize: 13,
+              ))),
+              Text('${_minutesToTimeStr(start)} - ${_minutesToTimeStr(end)}', style: TextStyle(fontSize: 12, color: kMuted, fontWeight: FontWeight.w600)),
+            ]),
+          );
+        }),
+      ]),
+    );
+  }
+
+  // ── Lagna Shuddhi (Day + Night) ──
+  List<LagnaWindow>? _dayLagnaWindows;
+  List<LagnaWindow>? _nightLagnaWindows;
+
+  void _computeLagnaWindows() {
+    if (_selectedDay == null || _selectedDayResult == null) return;
+    final r = _selectedDayResult!;
+    final rules = muhurtaRules[_selectedMuhurtaEvent];
+    final allowedLagnas = rules?.allowedLagnas;
+
+    // Get planet rashi positions
+    final Map<String, int> planetRashis = {};
+    for (final entry in r.planets.entries) {
+      planetRashis[entry.key] = entry.value.rashiIndex;
+    }
+    final guruRashiIdx = planetRashis['ಗುರು'] ?? -1;
+
+    try {
+      final srSs = Ephemeris.findSunriseSetForDate(
+        _selectedDay!.year, _selectedDay!.month, _selectedDay!.day,
+        LocationService.lat, LocationService.lon, tzOffset: LocationService.tzOffset,
+      );
+      final double srJd = srSs[0];
+      final double ssJd = srSs[1];
+
+      Sweph.swe_set_sid_mode(SiderealMode.SE_SIDM_LAHIRI);
+      final ayn = Sweph.swe_get_ayanamsa(srJd);
+
+      // Day windows: sunrise to sunset
+      final dayW = _scanLagnaRange(srJd, ssJd, ayn, planetRashis, guruRashiIdx, allowedLagnas, rules);
+
+      // Night windows: sunset to next sunrise
+      final nextSrSs = Ephemeris.findSunriseSetForDate(
+        _selectedDay!.year, _selectedDay!.month, _selectedDay!.day + 1,
+        LocationService.lat, LocationService.lon, tzOffset: LocationService.tzOffset,
+      );
+      final double nextSrJd = nextSrSs[0];
+      final nightW = _scanLagnaRange(ssJd, nextSrJd, ayn, planetRashis, guruRashiIdx, allowedLagnas, rules);
+
+      if (mounted) setState(() {
+        _dayLagnaWindows = dayW;
+        _nightLagnaWindows = nightW;
+      });
+    } catch (_) {
+      if (mounted) setState(() {
+        _dayLagnaWindows = [];
+        _nightLagnaWindows = [];
+      });
+    }
+  }
+
+  List<LagnaWindow> _scanLagnaRange(double startJd, double endJd, double ayn,
+      Map<String, int> planetRashis, int guruRashiIdx, List<int>? allowedLagnas, MuhurtaEventRules? rules) {
+    final double step = 10.0 / (24.0 * 60.0); // 10 min
+    final List<_AscSample> samples = [];
+    double jd = startJd;
+    while (jd <= endJd + step) {
+      final houses = Ephemeris.placidusHousesFull(jd, LocationService.lat, LocationService.lon);
+      if (houses != null && houses.ascmc.length >= 1) {
+        final sidAsc = ((houses.ascmc[0] as double) - ayn) % 360.0;
+        final rashiIdx = (sidAsc / 30.0).floor() % 12;
+        final localFrac = ((jd + 0.5 + (LocationService.tzOffset / 24.0)) % 1.0 + 1.0) % 1.0;
+        final localMins = localFrac * 24.0 * 60.0;
+        samples.add(_AscSample(jd: jd, rashiIdx: rashiIdx, localMins: localMins));
+      }
+      jd += step;
+    }
+    if (samples.isEmpty) return [];
+
+    final List<LagnaWindow> windows = [];
+    int currentRashi = samples.first.rashiIdx;
+    double startMins = samples.first.localMins;
+
+    for (int i = 1; i < samples.length; i++) {
+      if (samples[i].rashiIdx != currentRashi || i == samples.length - 1) {
+        final endMins = samples[i].localMins;
+        final saptamaRashi = (currentRashi + 6) % 12;
+        final ashtamaRashi = (currentRashi + 7) % 12;
+        final dashamaRashi = (currentRashi + 9) % 12;
+
+        final lagnaM = findMaleficsInRashi(currentRashi, planetRashis);
+        final saptamaM = _selectedMuhurtaEvent == MuhurtaEvent.vivaha
+            ? findAllPlanetsInRashi(saptamaRashi, planetRashis)
+            : findMaleficsInRashi(saptamaRashi, planetRashis);
+        final ashtamaM = findAllPlanetsInRashi(ashtamaRashi, planetRashis);
+        final rashiLords = [4, 5, 3, 1, 0, 3, 5, 4, 8, 6, 6, 8];
+        if (rashiLords[currentRashi] == rashiLords[ashtamaRashi]) ashtamaM.clear();
+        final dashamaM = findAllPlanetsInRashi(dashamaRashi, planetRashis);
+
+        final chandraRashi = planetRashis['ಚಂದ್ರ'] ?? -1;
+        final chandraSaptamaRashi = chandraRashi >= 0 ? (chandraRashi + 6) % 12 : -1;
+        final List<String> chandraSaptamaM = [];
+        if (chandraSaptamaRashi >= 0) {
+          if (planetRashis['ರವಿ'] == chandraSaptamaRashi) chandraSaptamaM.add('ರವಿ');
+          if (planetRashis['ಕುಜ'] == chandraSaptamaRashi) chandraSaptamaM.add('ಕುಜ');
+          if (planetRashis['ಶನಿ'] == chandraSaptamaRashi) chandraSaptamaM.add('ಶನಿ');
+        }
+
+        final guruOk = guruRashiIdx >= 0 ? isGuruAnukoolaForLagna(currentRashi, guruRashiIdx) : false;
+        final guruHouse = guruRashiIdx >= 0 ? ((guruRashiIdx - currentRashi + 12) % 12) + 1 : 0;
+        final bool isLagnaAllowed = allowedLagnas == null || allowedLagnas.contains(currentRashi);
+
+        windows.add(LagnaWindow(
+          rashiIndex: currentRashi,
+          rashiName: knRashi[currentRashi],
+          startTime: _minutesToTimeStr(startMins),
+          endTime: _minutesToTimeStr(endMins),
+          isAllowed: isLagnaAllowed,
+          lagnaShuddhi: lagnaM.isEmpty,
+          saptamaShuddhi: saptamaM.isEmpty,
+          ashtamaShuddhi: ashtamaM.isEmpty,
+          dashamaShuddhi: dashamaM.isEmpty,
+          chandraSaptamaShuddhi: chandraSaptamaM.isEmpty,
+          guruAnukoola: guruOk,
+          lagnaGrahas: lagnaM,
+          saptamaGrahas: saptamaM,
+          ashtamaGrahas: ashtamaM,
+          dashamaGrahas: dashamaM,
+          chandraSaptamaGrahas: chandraSaptamaM,
+          guruFromLagna: guruHouse,
+          requiredShuddhis: rules?.requiredShuddhis ?? const {ShuddhiType.lagna},
+        ));
+
+        currentRashi = samples[i].rashiIdx;
+        startMins = samples[i].localMins;
+      }
+    }
+    return windows;
+  }
+
+  Widget _buildLagnaShuddhi(bool isDay, MuhurtaEventRules rules) {
+    final windows = isDay ? _dayLagnaWindows : _nightLagnaWindows;
+    if (windows == null || windows.isEmpty) return const SizedBox();
+
+    final Color headerColor = isDay ? const Color(0xFF2E86AB) : const Color(0xFF2C3E50);
+    final String headerText = isDay ? '🏠 ಹಗಲಿನ ಲಗ್ನ ಶುದ್ಧಿ' : '🌙 ರಾತ್ರಿಯ ಲಗ್ನ ಶುದ್ಧಿ';
+
+    final req = rules.requiredShuddhis;
+    final parts = <String>[];
+    if (req.contains(ShuddhiType.lagna)) parts.add('ಲಗ್ನ');
+    if (req.contains(ShuddhiType.saptama)) parts.add('ಸಪ್ತಮ');
+    if (req.contains(ShuddhiType.ashtama)) parts.add('ಅಷ್ಟಮ');
+    if (req.contains(ShuddhiType.dashama)) parts.add('ದಶಮ');
+    if (req.contains(ShuddhiType.chandraSaptama)) parts.add('ಚಂದ್ರಸಪ್ತಮ');
+
+    return Container(
+      decoration: BoxDecoration(
+        border: Border.all(color: kBorder),
+        borderRadius: BorderRadius.circular(12),
+        color: kCard,
+      ),
+      child: Column(children: [
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+          decoration: BoxDecoration(
+            color: headerColor.withOpacity(0.08),
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
+          ),
+          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Text(headerText, style: TextStyle(fontWeight: FontWeight.w800, color: headerColor, fontSize: 14)),
+            const SizedBox(height: 4),
+            Text('ಅಗತ್ಯ: ${parts.join(' + ')} ಶುದ್ಧಿ + ಗುರು ಅನುಕೂಲ',
+                style: TextStyle(fontSize: 11, color: kMuted, fontWeight: FontWeight.w500)),
+          ]),
+        ),
+        ...windows.asMap().entries.map((entry) {
+          final i = entry.key;
+          final lw = entry.value;
+
+          Color rowBg;
+          IconData rowIcon;
+          Color iconColor;
+          if (lw.isPerfect) {
+            rowBg = Colors.green.withOpacity(0.1);
+            rowIcon = Icons.star;
+            iconColor = Colors.amber.shade700;
+          } else if (lw.isShubha) {
+            rowBg = Colors.green.withOpacity(0.05);
+            rowIcon = Icons.check_circle;
+            iconColor = Colors.green;
+          } else if (lw.isAllowed) {
+            rowBg = Colors.orange.withOpacity(0.05);
+            rowIcon = Icons.warning_amber_rounded;
+            iconColor = Colors.orange;
+          } else {
+            rowBg = Colors.red.withOpacity(0.03);
+            rowIcon = Icons.remove_circle_outline;
+            iconColor = Colors.red.shade300;
+          }
+
+          return Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            decoration: BoxDecoration(
+              color: rowBg,
+              border: i < windows.length - 1 ? Border(bottom: BorderSide(color: kBorder.withOpacity(0.4))) : null,
+            ),
+            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Row(children: [
+                Icon(rowIcon, color: iconColor, size: 16),
+                const SizedBox(width: 8),
+                Expanded(child: Text(lw.rashiName, style: TextStyle(
+                  fontWeight: lw.isShubha ? FontWeight.w800 : FontWeight.w500,
+                  color: lw.isShubha ? kText : kMuted, fontSize: 13,
+                ))),
+                Text('${lw.startTime} - ${lw.endTime}', style: TextStyle(
+                  fontSize: 12, color: lw.isShubha ? Colors.green.shade700 : kMuted, fontWeight: FontWeight.w600,
+                )),
+              ]),
+              const SizedBox(height: 4),
+              Wrap(spacing: 6, runSpacing: 4, children: [
+                _shuddhiChip('ಲಗ್ನ', lw.lagnaShuddhi, lw.lagnaGrahas,
+                    required: lw.requiredShuddhis.contains(ShuddhiType.lagna)),
+                _shuddhiChip('೭ ಸಪ್ತಮ', lw.saptamaShuddhi, lw.saptamaGrahas,
+                    required: lw.requiredShuddhis.contains(ShuddhiType.saptama)),
+                _shuddhiChip('೮ ಅಷ್ಟಮ', lw.ashtamaShuddhi, lw.ashtamaGrahas,
+                    required: lw.requiredShuddhis.contains(ShuddhiType.ashtama)),
+                if (lw.requiredShuddhis.contains(ShuddhiType.dashama) || lw.dashamaGrahas.isNotEmpty)
+                  _shuddhiChip('೧೦ ದಶಮ', lw.dashamaShuddhi, lw.dashamaGrahas,
+                      required: lw.requiredShuddhis.contains(ShuddhiType.dashama)),
+                if (lw.requiredShuddhis.contains(ShuddhiType.chandraSaptama) || lw.chandraSaptamaGrahas.isNotEmpty)
+                  _shuddhiChip('ಚಂದ್ರ-೭', lw.chandraSaptamaShuddhi, lw.chandraSaptamaGrahas,
+                      required: lw.requiredShuddhis.contains(ShuddhiType.chandraSaptama)),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: lw.guruAnukoola ? Colors.amber.withOpacity(0.15) : Colors.grey.withOpacity(0.08),
+                    borderRadius: BorderRadius.circular(4),
+                    border: Border.all(color: lw.guruAnukoola ? Colors.amber.shade600 : Colors.grey.shade300, width: 0.5),
+                  ),
+                  child: Text(
+                    lw.guruAnukoola ? 'ಗುರು ✓ (${lw.guruFromLagna})' : 'ಗುರು ✗ (${lw.guruFromLagna})',
+                    style: TextStyle(fontSize: 10, color: lw.guruAnukoola ? Colors.amber.shade800 : kMuted, fontWeight: FontWeight.w700),
+                  ),
+                ),
+                if (!lw.isAllowed)
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                    decoration: BoxDecoration(color: Colors.red.withOpacity(0.1), borderRadius: BorderRadius.circular(4)),
+                    child: Text('ನಿಷಿದ್ಧ ಲಗ್ನ', style: TextStyle(fontSize: 10, color: Colors.red.shade700, fontWeight: FontWeight.w700)),
+                  ),
+              ]),
+            ]),
+          );
+        }),
+      ]),
+    );
+  }
+
+  Widget _shuddhiChip(String label, bool isShuddha, List<String> malefics, {bool required = true}) {
+    if (!required) {
+      final text = isShuddha ? '$label ✓' : '$label ✗ ${malefics.join(',')}';
+      return Container(
+        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+        decoration: BoxDecoration(
+          color: Colors.grey.withOpacity(0.06),
+          borderRadius: BorderRadius.circular(4),
+          border: Border.all(color: Colors.grey.shade300, width: 0.5),
+        ),
+        child: Text(text, style: TextStyle(fontSize: 9, color: kMuted, fontWeight: FontWeight.w500, fontStyle: FontStyle.italic)),
+      );
+    }
+    final MaterialColor color = isShuddha ? Colors.green : Colors.red;
+    final text = isShuddha ? '$label ✓' : '$label ✗ ${malefics.join(',')}';
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(4),
+        border: Border.all(color: color.withOpacity(0.3), width: 0.5),
+      ),
+      child: Text(text, style: TextStyle(fontSize: 10, color: color.shade700, fontWeight: FontWeight.w700)),
+    );
+  }
+}
+
+class _AscSample {
+  final double jd;
+  final int rashiIdx;
+  final double localMins;
+  _AscSample({required this.jd, required this.rashiIdx, required this.localMins});
 }
