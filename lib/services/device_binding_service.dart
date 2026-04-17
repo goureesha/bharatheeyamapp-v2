@@ -148,7 +148,28 @@ class DeviceBindingService {
         return true;
       }
 
-      // DIFFERENT device → BLOCKED
+      // DIFFERENT device → check if one-time rebind is allowed (app update/reinstall)
+      // v39 force-rebind: auto-migrate on first mismatch after update
+      final prefs = await SharedPreferences.getInstance();
+      final rebindVersion = prefs.getInt('bharatheeyam_rebind_version') ?? 0;
+      if (rebindVersion < 39) {
+        // One-time auto-migrate for this version
+        await docRef.set({
+          'deviceId': devId,
+          'email': email.toLowerCase(),
+          'boundAt': FieldValue.serverTimestamp(),
+          'lastSeen': FieldValue.serverTimestamp(),
+          'migratedAt': FieldValue.serverTimestamp(),
+          'autoMigrateVersion': 39,
+        });
+        await _cacheLocalBinding(email, devId);
+        await prefs.setInt('bharatheeyam_rebind_version', 39);
+        _isDeviceBound = true;
+        _hasCheckedOnce = true;
+        debugPrint('DeviceBinding: AUTO-MIGRATE v39 ✅ email=$email devId=$devId');
+        return true;
+      }
+
       _isDeviceBound = false;
       _hasCheckedOnce = true;
       await _clearLocalBinding();
