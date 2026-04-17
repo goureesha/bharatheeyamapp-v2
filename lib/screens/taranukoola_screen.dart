@@ -1090,8 +1090,9 @@ class _TaranukoolaScreenState extends State<TaranukoolaScreen> {
       final dayW = _scanLagnaRange(srJd, ssJd, ayn, planetRashis, guruRashiIdx, allowedLagnas, rules);
 
       // Night windows: sunset to next sunrise
+      final nextDay = _selectedDay!.add(const Duration(days: 1));
       final nextSrSs = Ephemeris.findSunriseSetForDate(
-        _selectedDay!.year, _selectedDay!.month, _selectedDay!.day + 1,
+        nextDay.year, nextDay.month, nextDay.day,
         LocationService.lat, LocationService.lon, tzOffset: LocationService.tzOffset,
       );
       final double nextSrJd = nextSrSs[0];
