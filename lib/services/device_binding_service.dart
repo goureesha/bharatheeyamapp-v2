@@ -78,9 +78,14 @@ class DeviceBindingService {
   ///   - Only allows if we've previously verified via Firestore AND device+email match
   ///   - New devices that never verified via Firestore are BLOCKED
   static Future<bool> checkBinding() async {
+    // BYPASS: device binding disabled — always allow
+    _isDeviceBound = true;
+    _hasCheckedOnce = true;
+    return true;
+
+    /* ORIGINAL LOGIC (disabled):
     final email = GoogleAuthService.userEmail;
     if (email == null) {
-      // Not signed in — no binding to check
       _isDeviceBound = true;
       _hasCheckedOnce = true;
       return true;
@@ -161,6 +166,7 @@ class DeviceBindingService {
       // Firestore unreachable → use STRICT local fallback (not permissive!)
       return _strictLocalFallback(email, devId);
     }
+    */
   }
 
   /// Cache a successful Firestore verification locally
