@@ -1032,12 +1032,12 @@ class _DashboardScreenState extends State<DashboardScreen>
                                   textScale: textScale,
                                   showSphutas: false,
                                   centerLabel: label,
-                                  onPlanetTap: isPrimary ? _showPlanetDetail : null,
-                                  selectedPlanet: (isPrimary && isBhavaChart) ? _bhavaPlanet : null,
-                                  onPlanetLongPress: (isPrimary && isBhavaChart) ? (pName) {
+                                  onPlanetTap: _showPlanetDetail,
+                                  selectedPlanet: isBhavaChart ? _bhavaPlanet : null,
+                                  onPlanetLongPress: isBhavaChart ? (pName) {
                                     setState(() => _bhavaPlanet = _bhavaPlanet == pName ? null : pName);
                                   } : null,
-                                  bhavaFromPlanet: (isPrimary && isBhavaChart) ? _bhavaPlanet : null,
+                                  bhavaFromPlanet: isBhavaChart ? _bhavaPlanet : null,
                                 ),
                               ),
                             ],
