@@ -610,19 +610,20 @@ class AstroCalculator {
         final extra = getPlanetDetail(kn, deg, speed, sunLng);
         
         bool isCombust = false;
-        if (kn != 'ರವಿ' && kn != 'ಚಂದ್ರ' && kn != 'ರಾಹು' && kn != 'ಕೇತು' && kn != 'ಲಗ್ನ' && kn != 'ಮಾಂದಿ') {
+        if (kn != 'ರವಿ' && kn != 'ರಾಹು' && kn != 'ಕೇತು' && kn != 'ಲಗ್ನ' && kn != 'ಮಾಂದಿ') {
           double distFromSun = (deg - sunLng).abs();
           if (distFromSun > 180) distFromSun = 360 - distFromSun;
 
           double orb = 0.0;
           switch (kn) {
+            case 'ಚಂದ್ರ': orb = 12.0; break;
             case 'ಕುಜ': orb = 17.0; break;
             case 'ಬುಧ': orb = 11.0; break;
             case 'ಗುರು': orb = 9.0; break;
             case 'ಶುಕ್ರ': orb = 6.6; break;
             case 'ಶನಿ': orb = 13.0; break;
           }
-          if (distFromSun <= orb) {
+          if (orb > 0 && distFromSun <= orb) {
             isCombust = true;
           }
         }
