@@ -78,6 +78,13 @@ class DeviceBindingService {
   ///   - Only allows if we've previously verified via Firestore AND device+email match
   ///   - New devices that never verified via Firestore are BLOCKED
   static Future<bool> checkBinding() async {
+    // Skip device binding on web — no persistent device identity
+    if (kIsWeb) {
+      _isDeviceBound = true;
+      _hasCheckedOnce = true;
+      return true;
+    }
+
     final email = GoogleAuthService.userEmail;
     if (email == null) {
       // Not signed in — no binding to check
