@@ -672,7 +672,7 @@ class _TaranukoolaScreenState extends State<TaranukoolaScreen> {
                           ),
                         );
                       }),
-                    ]
+                    ],
 
                   // ── Muhurta Section ──
                   if (!_isLoadingPanchang && _selectedDayResult != null)
