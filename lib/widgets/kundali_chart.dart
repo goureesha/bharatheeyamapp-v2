@@ -88,34 +88,34 @@ class KundaliChart extends StatelessWidget {
     }
   }
 
-  /// Compute the degree within the amsha division for a given longitude.
-  /// For D1/Bhava returns deg % 30. For amshas returns the position within that amsha's span.
+  /// Compute the degree within the amsha division for a given longitude,
+  /// normalized to a 0–30° scale (as if each amsha division were a full rashi).
   double _amshaDegree(double deg) {
     final dr = deg % 30;
     switch (varga) {
-      case 2: // Hora — each 15° span
-        return dr % 15;
-      case 3: // Drekkana — each 10° span
-        return dr % 10;
-      case 9: // Navamsa — each 3°20' span
-        return dr % 3.33333;
-      case 12: // Dvadashamsa — each 2°30' span
-        return dr % 2.5;
-      case 30: // Trimshamsa — variable spans
+      case 2: // Hora — each 15° span → scale to 30°
+        return (dr % 15) * (30.0 / 15.0);
+      case 3: // Drekkana — each 10° span → scale to 30°
+        return (dr % 10) * (30.0 / 10.0);
+      case 9: // Navamsa — each 3°20' span → scale to 30°
+        return (dr % 3.33333) * (30.0 / 3.33333);
+      case 12: // Dvadashamsa — each 2°30' span → scale to 30°
+        return (dr % 2.5) * (30.0 / 2.5);
+      case 30: // Trimshamsa — variable spans, scale each to 30°
         final r = (deg / 30).floor() % 12;
         final isOdd = r % 2 == 0;
         if (isOdd) {
-          if (dr < 5) return dr;
-          if (dr < 10) return dr - 5;
-          if (dr < 18) return dr - 10;
-          if (dr < 25) return dr - 18;
-          return dr - 25;
+          if (dr < 5) return dr * (30.0 / 5.0);
+          if (dr < 10) return (dr - 5) * (30.0 / 5.0);
+          if (dr < 18) return (dr - 10) * (30.0 / 8.0);
+          if (dr < 25) return (dr - 18) * (30.0 / 7.0);
+          return (dr - 25) * (30.0 / 5.0);
         } else {
-          if (dr < 5) return dr;
-          if (dr < 12) return dr - 5;
-          if (dr < 20) return dr - 12;
-          if (dr < 25) return dr - 20;
-          return dr - 25;
+          if (dr < 5) return dr * (30.0 / 5.0);
+          if (dr < 12) return (dr - 5) * (30.0 / 7.0);
+          if (dr < 20) return (dr - 12) * (30.0 / 8.0);
+          if (dr < 25) return (dr - 20) * (30.0 / 5.0);
+          return (dr - 25) * (30.0 / 5.0);
         }
       default: // Rashi (D1)
         return dr;

@@ -77,29 +77,29 @@ class NorthIndianChart extends StatelessWidget {
     }
   }
 
-  /// Compute the degree within the amsha division for a given longitude.
+  /// Compute the degree within the amsha division, normalized to 0–30° scale.
   double _amshaDegree(double deg) {
     final dr = deg % 30;
     switch (varga) {
-      case 2: return dr % 15;
-      case 3: return dr % 10;
-      case 9: return dr % 3.33333;
-      case 12: return dr % 2.5;
+      case 2: return (dr % 15) * (30.0 / 15.0);
+      case 3: return (dr % 10) * (30.0 / 10.0);
+      case 9: return (dr % 3.33333) * (30.0 / 3.33333);
+      case 12: return (dr % 2.5) * (30.0 / 2.5);
       case 30:
         final r = (deg / 30).floor() % 12;
         final isOdd = r % 2 == 0;
         if (isOdd) {
-          if (dr < 5) return dr;
-          if (dr < 10) return dr - 5;
-          if (dr < 18) return dr - 10;
-          if (dr < 25) return dr - 18;
-          return dr - 25;
+          if (dr < 5) return dr * (30.0 / 5.0);
+          if (dr < 10) return (dr - 5) * (30.0 / 5.0);
+          if (dr < 18) return (dr - 10) * (30.0 / 8.0);
+          if (dr < 25) return (dr - 18) * (30.0 / 7.0);
+          return (dr - 25) * (30.0 / 5.0);
         } else {
-          if (dr < 5) return dr;
-          if (dr < 12) return dr - 5;
-          if (dr < 20) return dr - 12;
-          if (dr < 25) return dr - 20;
-          return dr - 25;
+          if (dr < 5) return dr * (30.0 / 5.0);
+          if (dr < 12) return (dr - 5) * (30.0 / 7.0);
+          if (dr < 20) return (dr - 12) * (30.0 / 8.0);
+          if (dr < 25) return (dr - 20) * (30.0 / 5.0);
+          return (dr - 25) * (30.0 / 5.0);
         }
       default: return dr;
     }
