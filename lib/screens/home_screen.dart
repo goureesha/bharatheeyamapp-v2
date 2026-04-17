@@ -6,7 +6,6 @@ import '../services/calendar_service.dart';
 import 'input_screen.dart';
 import 'panchanga_screen.dart';
 import 'taranukoola_screen.dart';
-import 'muhurta_screen.dart';
 import 'match_making_tab.dart';
 
 import 'planets_screen.dart';
@@ -52,9 +51,6 @@ class HomeScreen extends StatelessWidget {
 
     // Tester-only sections (incomplete features)
     final testerSections = [
-      _Section('ಮುಹೂರ್ತ', 'Muhurta', Icons.access_time_filled, const Color(0xFF8E44AD), () {
-        Navigator.push(context, MaterialPageRoute(builder: (_) => const MuhurtaScreen()));
-      }),
       _Section(AppLocale.isHindi ? 'अष्टमंगल' : 'ಅಷ್ಟಮಂಗಲ', 'Ashtamangala', Icons.auto_fix_high, const Color(0xFFE67E22), () {
         Navigator.push(context, MaterialPageRoute(builder: (_) => const AshtamangalaScreen()));
       }),
