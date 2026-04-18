@@ -1,4 +1,4 @@
-name: Build AAB & Flutter Web
+name: Build APK & Flutter Web
 
 on:
   push:
@@ -10,7 +10,7 @@ env:
 
 jobs:
   build_android:
-    name: 🤖 Build Android AAB
+    name: 🤖 Build Android APK
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -21,41 +21,41 @@ jobs:
           java-version: '17'
           distribution: 'temurin'
 
-      - name: Decode Keystore
+      - name: Create debug keystore
         run: |
-          echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 -d > android/app/bharatheeyam-release.jks
-          echo "storePassword=${{ secrets.KEYSTORE_PASSWORD }}" > android/key.properties
-          echo "keyPassword=${{ secrets.KEYSTORE_PASSWORD }}" >> android/key.properties
-          echo "keyAlias=upload" >> android/key.properties
-          echo "storeFile=bharatheeyam-release.jks" >> android/key.properties
+          mkdir -p android/app
+          # Use debug signing for APK (no Play Store secrets needed)
+          keytool -genkey -v -keystore android/app/debug.jks -keyalg RSA -keysize 2048 -validity 10000 -alias debug -storepass android -keypass android -dname "CN=Debug,O=Debug,C=US"
+          echo "storePassword=android" > android/key.properties
+          echo "keyPassword=android" >> android/key.properties
+          echo "keyAlias=debug" >> android/key.properties
+          echo "storeFile=debug.jks" >> android/key.properties
 
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.32.0'
+          flutter-version: '3.29.0'
           channel: 'stable'
 
       - name: Get dependencies
         run: flutter pub get
 
-      - name: Build AAB (Play Store)
+      - name: Build APK
         run: |
-          flutter build appbundle --release --verbose 2>&1 | tee build_output.txt || true
-          # Check if AAB was produced
-          if [ ! -f build/app/outputs/bundle/release/app-release.aab ]; then
-            echo "::error::$(grep -i -E 'Duplicate class|FAILURE:|Compilation error|Cannot fit' build_output.txt | head -5 | tr '\n' ' ')"
-            echo "::error::LAST LINES: $(tail -20 build_output.txt | tr '\n' ' ')"
+          flutter build apk --release --verbose 2>&1 | tee build_output.txt || true
+          if [ ! -f build/app/outputs/flutter-apk/app-release.apk ]; then
+            echo "::error::$(grep -i -E 'FAILURE:|Compilation error' build_output.txt | head -5 | tr '\n' ' ')"
             tail -50 build_output.txt
             exit 1
           fi
 
-      - name: Upload AAB (For Google Play)
+      - name: Upload APK
         if: success()
         uses: actions/upload-artifact@v4
         with:
-          name: bharatheeyam-aab
-          path: build/app/outputs/bundle/release/app-release.aab
-          retention-days: 1
+          name: bharatheeyam-apk
+          path: build/app/outputs/flutter-apk/app-release.apk
+          retention-days: 7
 
 
   build_web:
@@ -69,7 +69,7 @@ jobs:
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.32.0'
+          flutter-version: '3.29.0'
           channel: 'stable'
 
       - name: Get dependencies
@@ -79,14 +79,12 @@ jobs:
         run: flutter config --enable-web
 
       - name: Build Web
-        run: flutter build web --release --base-href "/bharatheeyamapp/"
+        run: flutter build web --release --base-href "/bharatheeyamapp-v2/"
 
       - name: Copy docs into web build
         run: |
           cp docs/*.html build/web/ || true
           cp docs/*.md build/web/ || true
-
-
 
       - name: Disable Jekyll
         run: touch build/web/.nojekyll
