@@ -144,9 +144,10 @@ class PrashnaChart extends StatelessWidget {
     // Each entry: (name, info, drekkana, degInRashi)
     final Map<int, List<_PlanetEntry>> boxData = {for (int i = 0; i < 12; i++) i: []};
 
-    // Also collect navamsha and dvadashamsha per rashi for outer labels
-    final Map<int, List<String>> navLabels = {for (int i = 0; i < 12; i++) i: []};
-    final Map<int, List<String>> dvadLabels = {for (int i = 0; i < 12; i++) i: []};
+    // Also collect navamsha and dvadashamsha per rashi+drekkana for outer labels
+    // Key: rashi index, Value: map of drekkana (0,1,2) -> list of planet abbreviations
+    final Map<int, Map<int, List<String>>> navLabels = {for (int i = 0; i < 12; i++) i: {0: [], 1: [], 2: []}};
+    final Map<int, Map<int, List<String>>> dvadLabels = {for (int i = 0; i < 12; i++) i: {0: [], 1: [], 2: []}};
 
     for (final pName in planetOrder) {
       final info = result.planets[pName];
@@ -190,20 +191,22 @@ class PrashnaChart extends StatelessWidget {
       }
       if (ri < 0 || ri > 11) continue;
 
+      final drek = _drekkana(info.longitude);
+
       boxData[ri]!.add(_PlanetEntry(
         name: pName,
         info: info,
-        drekkana: _drekkana(info.longitude),
+        drekkana: drek,
         degInRashi: info.longitude % 30,
       ));
 
-      // Navamsha label (Kannada single letter of planet)
+      // Navamsha label — placed in the navamsha rashi at the planet's drekkana position
       final navRi = _navamshaRashi(info.longitude);
-      navLabels[navRi]!.add(_pNameKn[pName] ?? pName);
+      navLabels[navRi]![drek]!.add(_pNameKn[pName] ?? pName);
 
-      // Dvadashamsha label (Hindi single letter of planet)
+      // Dvadashamsha label — placed in the dvad rashi at the planet's drekkana position
       final dvadRi = _dvadRashi(info.longitude);
-      dvadLabels[dvadRi]!.add(_pNameHi[pName] ?? pName);
+      dvadLabels[dvadRi]![drek]!.add(_pNameHi[pName] ?? pName);
     }
 
     // Sort planets within each house by degree
@@ -388,10 +391,11 @@ class PrashnaChart extends StatelessWidget {
   }
 
   /// Build outer labels for navamsha (Kannada) and dvadashamsha (Hindi)
+  /// Labels are positioned per drekkana zone to align with planets inside.
   List<Widget> _buildOuterLabels(
     double cw, double outerMargin,
-    Map<int, List<String>> navLabels,
-    Map<int, List<String>> dvadLabels,
+    Map<int, Map<int, List<String>>> navLabels,
+    Map<int, Map<int, List<String>>> dvadLabels,
   ) {
     final widgets = <Widget>[];
 
@@ -405,115 +409,140 @@ class PrashnaChart extends StatelessWidget {
       6:  Offset(cw*2, cw*3), 5: Offset(cw*3, cw*3),
     };
 
+    final drekH = cw / 3; // height of one drekkana zone
+
     for (final ri in positions.keys) {
       final pos = positions[ri]!;
       final edge = _outerEdge(ri);
-      final navText = navLabels[ri]?.join(' ') ?? '';
-      final dvadText = dvadLabels[ri]?.join(' ') ?? '';
 
-      if (navText.isEmpty && dvadText.isEmpty) continue;
+      // For each drekkana zone (0, 1, 2), place labels at the matching position
+      for (int drek = 0; drek < 3; drek++) {
+        final navList = navLabels[ri]?[drek] ?? [];
+        final dvadList = dvadLabels[ri]?[drek] ?? [];
+        if (navList.isEmpty && dvadList.isEmpty) continue;
 
-      // Build navamsha line (Kannada green) and dvadashamsha line (Hindi purple)
-      // For left/right edges, stack vertically; for top/bottom, keep horizontal
-      final isVertical = (edge == 'left' || edge == 'right');
+        final navText = navList.join(' ');
+        final dvadText = dvadList.join(' ');
 
-      Widget _navLabel(String text) => Text(
-        isVertical ? text.replaceAll(' ', '\n') : text,
-        style: TextStyle(
-          fontSize: 9 * textScale,
-          fontWeight: FontWeight.w900,
-          color: const Color(0xFF2F855A),
-          height: isVertical ? 1.3 : null,
-        ),
-        textAlign: TextAlign.center,
-        softWrap: true,
-      );
+        double top, left;
+        double ww, hh;
 
-      Widget _dvadLabel(String text) => Text(
-        isVertical ? text.replaceAll(' ', '\n') : text,
-        style: TextStyle(
-          fontSize: 9 * textScale,
-          fontWeight: FontWeight.w900,
-          color: const Color(0xFF805AD5),
-          height: isVertical ? 1.3 : null,
-        ),
-        textAlign: TextAlign.center,
-        softWrap: true,
-      );
+        switch (edge) {
+          case 'top':
+            // Drekkana zones run vertically inside (top=0, mid=1, bot=2)
+            // Outside label is above; place at drekkana's vertical fraction
+            top = 0;
+            left = outerMargin + pos.dx;
+            ww = cw;
+            hh = outerMargin;
+            // Use a Column with alignment based on drekkana
+            widgets.add(Positioned(
+              top: top, left: left,
+              width: ww, height: hh,
+              child: Align(
+                alignment: Alignment.bottomCenter,
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    if (navText.isNotEmpty) Text(navText, style: TextStyle(
+                      fontSize: 9 * textScale, fontWeight: FontWeight.w900,
+                      color: const Color(0xFF2F855A),
+                    ), textAlign: TextAlign.center),
+                    if (navText.isNotEmpty && dvadText.isNotEmpty) const SizedBox(width: 3),
+                    if (dvadText.isNotEmpty) Text(dvadText, style: TextStyle(
+                      fontSize: 9 * textScale, fontWeight: FontWeight.w900,
+                      color: const Color(0xFF805AD5),
+                    ), textAlign: TextAlign.center),
+                  ],
+                ),
+              ),
+            ));
+            break;
 
-      double top, left;
-      double ww, hh;
-      Widget child;
+          case 'bottom':
+            top = outerMargin + pos.dy + cw;
+            left = outerMargin + pos.dx;
+            ww = cw;
+            hh = outerMargin;
+            widgets.add(Positioned(
+              top: top, left: left,
+              width: ww, height: hh,
+              child: Align(
+                alignment: Alignment.topCenter,
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    if (navText.isNotEmpty) Text(navText, style: TextStyle(
+                      fontSize: 9 * textScale, fontWeight: FontWeight.w900,
+                      color: const Color(0xFF2F855A),
+                    ), textAlign: TextAlign.center),
+                    if (navText.isNotEmpty && dvadText.isNotEmpty) const SizedBox(width: 3),
+                    if (dvadText.isNotEmpty) Text(dvadText, style: TextStyle(
+                      fontSize: 9 * textScale, fontWeight: FontWeight.w900,
+                      color: const Color(0xFF805AD5),
+                    ), textAlign: TextAlign.center),
+                  ],
+                ),
+              ),
+            ));
+            break;
 
-      switch (edge) {
-        case 'top':
-          top = 0;
-          left = outerMargin + pos.dx;
-          ww = cw;
-          hh = outerMargin;
-          child = Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-              if (navText.isNotEmpty) Flexible(child: _navLabel(navText)),
-              if (navText.isNotEmpty && dvadText.isNotEmpty) const SizedBox(width: 4),
-              if (dvadText.isNotEmpty) Flexible(child: _dvadLabel(dvadText)),
-            ],
-          );
-          break;
-        case 'bottom':
-          top = outerMargin + pos.dy + cw;
-          left = outerMargin + pos.dx;
-          ww = cw;
-          hh = outerMargin;
-          child = Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              if (navText.isNotEmpty) Flexible(child: _navLabel(navText)),
-              if (navText.isNotEmpty && dvadText.isNotEmpty) const SizedBox(width: 4),
-              if (dvadText.isNotEmpty) Flexible(child: _dvadLabel(dvadText)),
-            ],
-          );
-          break;
-        case 'left':
-          top = outerMargin + pos.dy;
-          left = 0;
-          ww = outerMargin;
-          hh = cw;
-          child = Center(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                if (navText.isNotEmpty) _navLabel(navText),
-                if (dvadText.isNotEmpty) _dvadLabel(dvadText),
-              ],
-            ),
-          );
-          break;
-        case 'right':
-        default:
-          top = outerMargin + pos.dy;
-          left = outerMargin + pos.dx + cw;
-          ww = outerMargin;
-          hh = cw;
-          child = Center(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                if (navText.isNotEmpty) _navLabel(navText),
-                if (dvadText.isNotEmpty) _dvadLabel(dvadText),
-              ],
-            ),
-          );
-          break;
+          case 'left':
+            // Drekkana zones run vertically: drek0=top, drek1=mid, drek2=bottom
+            // Place label at the matching vertical zone, to the LEFT
+            top = outerMargin + pos.dy + (drek * drekH);
+            left = 0;
+            ww = outerMargin;
+            hh = drekH;
+            widgets.add(Positioned(
+              top: top, left: left,
+              width: ww, height: hh,
+              child: Center(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    if (navText.isNotEmpty) Text(navText, style: TextStyle(
+                      fontSize: 9 * textScale, fontWeight: FontWeight.w900,
+                      color: const Color(0xFF2F855A),
+                    ), textAlign: TextAlign.center),
+                    if (dvadText.isNotEmpty) Text(dvadText, style: TextStyle(
+                      fontSize: 9 * textScale, fontWeight: FontWeight.w900,
+                      color: const Color(0xFF805AD5),
+                    ), textAlign: TextAlign.center),
+                  ],
+                ),
+              ),
+            ));
+            break;
+
+          case 'right':
+          default:
+            top = outerMargin + pos.dy + (drek * drekH);
+            left = outerMargin + pos.dx + cw;
+            ww = outerMargin;
+            hh = drekH;
+            widgets.add(Positioned(
+              top: top, left: left,
+              width: ww, height: hh,
+              child: Center(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    if (navText.isNotEmpty) Text(navText, style: TextStyle(
+                      fontSize: 9 * textScale, fontWeight: FontWeight.w900,
+                      color: const Color(0xFF2F855A),
+                    ), textAlign: TextAlign.center),
+                    if (dvadText.isNotEmpty) Text(dvadText, style: TextStyle(
+                      fontSize: 9 * textScale, fontWeight: FontWeight.w900,
+                      color: const Color(0xFF805AD5),
+                    ), textAlign: TextAlign.center),
+                  ],
+                ),
+              ),
+            ));
+            break;
+        }
       }
-
-      widgets.add(Positioned(
-        top: top, left: left,
-        width: ww, height: hh,
-        child: child,
-      ));
     }
 
     return widgets;
