@@ -17,7 +17,7 @@ const RESOURCES = {"assets/assets/images/logo.png": "8b3be256f8c343bfe505d1de18b
 "assets/packages/sweph/assets/ephe/seasnam.txt": "b81323f1dc15e087893f3ed5d9a7fe37",
 "assets/packages/sweph/assets/sweph.wasm": "86bb41f54251a2f842df92029ea5a9f9",
 "assets/shaders/ink_sparkle.frag": "ecc85a2e95f5e9f53123dcaf8cb9b6ce",
-"assets/fonts/MaterialIcons-Regular.otf": "6b015fdf0f86cd50772f8dc504067dd3",
+"assets/fonts/MaterialIcons-Regular.otf": "9fc2ae55a0a0986898ec99e86948e125",
 "assets/AssetManifest.bin": "c0b4cd9fe437c1efaf28fdfad57547be",
 "assets/NOTICES": "8be4a64d4860f5d8c59e30de85ad1128",
 "assets/FontManifest.json": "7b2a36307916a9721811788013e65289",
@@ -37,8 +37,8 @@ const RESOURCES = {"assets/assets/images/logo.png": "8b3be256f8c343bfe505d1de18b
 "canvaskit/skwasm_st.js": "d1326ceef381ad382ab492ba5d96f04d",
 "privacy_policy.html": "10094331e2887570d5e079618ca2fdc8",
 "flutter.js": "76f08d47ff9f5715220992f993002504",
-"flutter_bootstrap.js": "40ba34e30d4d311ba7728ab12b2e915f",
-"main.dart.js": "279b98087b8dacdedf2914dd45b27904",
+"flutter_bootstrap.js": "d892c1ee7b742fb2821be4566f3e1be4",
+"main.dart.js": "8ec090e538ce4ab68033a7b423230499",
 "version.json": "40d383273be60e5774161ecd3d63e663",
 "googled477f94eebb558c3.html": "b609deddf10e215d559e8f07f04425df"};
 // The application shell files that are downloaded before a service worker can
