@@ -414,28 +414,32 @@ class PrashnaChart extends StatelessWidget {
       if (navText.isEmpty && dvadText.isEmpty) continue;
 
       // Build navamsha line (Kannada green) and dvadashamsha line (Hindi purple)
-      final navWidget = navText.isNotEmpty
-          ? Text(navText,
-              style: TextStyle(
-                fontSize: 9 * textScale,
-                fontWeight: FontWeight.w900,
-                color: const Color(0xFF2F855A),
-              ),
-              overflow: TextOverflow.ellipsis,
-              maxLines: 1,
-            )
-          : null;
-      final dvadWidget = dvadText.isNotEmpty
-          ? Text(dvadText,
-              style: TextStyle(
-                fontSize: 9 * textScale,
-                fontWeight: FontWeight.w900,
-                color: const Color(0xFF805AD5),
-              ),
-              overflow: TextOverflow.ellipsis,
-              maxLines: 1,
-            )
-          : null;
+      // For left/right edges, stack vertically; for top/bottom, keep horizontal
+      final isVertical = (edge == 'left' || edge == 'right');
+
+      Widget _navLabel(String text) => Text(
+        isVertical ? text.replaceAll(' ', '\n') : text,
+        style: TextStyle(
+          fontSize: 9 * textScale,
+          fontWeight: FontWeight.w900,
+          color: const Color(0xFF2F855A),
+          height: isVertical ? 1.3 : null,
+        ),
+        textAlign: TextAlign.center,
+        softWrap: true,
+      );
+
+      Widget _dvadLabel(String text) => Text(
+        isVertical ? text.replaceAll(' ', '\n') : text,
+        style: TextStyle(
+          fontSize: 9 * textScale,
+          fontWeight: FontWeight.w900,
+          color: const Color(0xFF805AD5),
+          height: isVertical ? 1.3 : null,
+        ),
+        textAlign: TextAlign.center,
+        softWrap: true,
+      );
 
       double top, left;
       double ww, hh;
@@ -447,11 +451,13 @@ class PrashnaChart extends StatelessWidget {
           left = outerMargin + pos.dx;
           ww = cw;
           hh = outerMargin;
-          child = Column(
-            mainAxisAlignment: MainAxisAlignment.end,
+          child = Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.end,
             children: [
-              if (navWidget != null) navWidget,
-              if (dvadWidget != null) dvadWidget,
+              if (navText.isNotEmpty) Flexible(child: _navLabel(navText)),
+              if (navText.isNotEmpty && dvadText.isNotEmpty) const SizedBox(width: 4),
+              if (dvadText.isNotEmpty) Flexible(child: _dvadLabel(dvadText)),
             ],
           );
           break;
@@ -460,11 +466,13 @@ class PrashnaChart extends StatelessWidget {
           left = outerMargin + pos.dx;
           ww = cw;
           hh = outerMargin;
-          child = Column(
-            mainAxisAlignment: MainAxisAlignment.start,
+          child = Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              if (navWidget != null) navWidget,
-              if (dvadWidget != null) dvadWidget,
+              if (navText.isNotEmpty) Flexible(child: _navLabel(navText)),
+              if (navText.isNotEmpty && dvadText.isNotEmpty) const SizedBox(width: 4),
+              if (dvadText.isNotEmpty) Flexible(child: _dvadLabel(dvadText)),
             ],
           );
           break;
@@ -473,12 +481,14 @@ class PrashnaChart extends StatelessWidget {
           left = 0;
           ww = outerMargin;
           hh = cw;
-          child = Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              if (navWidget != null) FittedBox(fit: BoxFit.scaleDown, child: navWidget),
-              if (dvadWidget != null) FittedBox(fit: BoxFit.scaleDown, child: dvadWidget),
-            ],
+          child = Center(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (navText.isNotEmpty) _navLabel(navText),
+                if (dvadText.isNotEmpty) _dvadLabel(dvadText),
+              ],
+            ),
           );
           break;
         case 'right':
@@ -487,12 +497,14 @@ class PrashnaChart extends StatelessWidget {
           left = outerMargin + pos.dx + cw;
           ww = outerMargin;
           hh = cw;
-          child = Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              if (navWidget != null) FittedBox(fit: BoxFit.scaleDown, child: navWidget),
-              if (dvadWidget != null) FittedBox(fit: BoxFit.scaleDown, child: dvadWidget),
-            ],
+          child = Center(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (navText.isNotEmpty) _navLabel(navText),
+                if (dvadText.isNotEmpty) _dvadLabel(dvadText),
+              ],
+            ),
           );
           break;
       }
