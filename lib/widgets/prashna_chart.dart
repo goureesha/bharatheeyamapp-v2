@@ -429,26 +429,23 @@ class PrashnaChart extends StatelessWidget {
 
         switch (edge) {
           case 'top':
-            // Drekkana zones run vertically inside (top=0, mid=1, bot=2)
-            // Outside label is above; place at drekkana's vertical fraction
+            // Top edge: Column (top-to-bottom) — navamsha above dvadashamsha
             top = 0;
             left = outerMargin + pos.dx;
             ww = cw;
             hh = outerMargin;
-            // Use a Column with alignment based on drekkana
             widgets.add(Positioned(
               top: top, left: left,
               width: ww, height: hh,
               child: Align(
                 alignment: Alignment.bottomCenter,
-                child: Row(
+                child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     if (navText.isNotEmpty) Text(navText, style: TextStyle(
                       fontSize: 9 * textScale, fontWeight: FontWeight.w900,
                       color: const Color(0xFF2F855A),
                     ), textAlign: TextAlign.center),
-                    if (navText.isNotEmpty && dvadText.isNotEmpty) const SizedBox(width: 3),
                     if (dvadText.isNotEmpty) Text(dvadText, style: TextStyle(
                       fontSize: 9 * textScale, fontWeight: FontWeight.w900,
                       color: const Color(0xFF805AD5),
@@ -460,6 +457,7 @@ class PrashnaChart extends StatelessWidget {
             break;
 
           case 'bottom':
+            // Bottom edge: Column (top-to-bottom)
             top = outerMargin + pos.dy + cw;
             left = outerMargin + pos.dx;
             ww = cw;
@@ -469,14 +467,13 @@ class PrashnaChart extends StatelessWidget {
               width: ww, height: hh,
               child: Align(
                 alignment: Alignment.topCenter,
-                child: Row(
+                child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     if (navText.isNotEmpty) Text(navText, style: TextStyle(
                       fontSize: 9 * textScale, fontWeight: FontWeight.w900,
                       color: const Color(0xFF2F855A),
                     ), textAlign: TextAlign.center),
-                    if (navText.isNotEmpty && dvadText.isNotEmpty) const SizedBox(width: 3),
                     if (dvadText.isNotEmpty) Text(dvadText, style: TextStyle(
                       fontSize: 9 * textScale, fontWeight: FontWeight.w900,
                       color: const Color(0xFF805AD5),
@@ -488,8 +485,7 @@ class PrashnaChart extends StatelessWidget {
             break;
 
           case 'left':
-            // Drekkana zones run vertically: drek0=top, drek1=mid, drek2=bottom
-            // Place label at the matching vertical zone, to the LEFT
+            // Left edge: Row (left-to-right) — navamsha then dvadashamsha
             top = outerMargin + pos.dy + (drek * drekH);
             left = 0;
             ww = outerMargin;
@@ -498,13 +494,14 @@ class PrashnaChart extends StatelessWidget {
               top: top, left: left,
               width: ww, height: hh,
               child: Center(
-                child: Column(
+                child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     if (navText.isNotEmpty) Text(navText, style: TextStyle(
                       fontSize: 9 * textScale, fontWeight: FontWeight.w900,
                       color: const Color(0xFF2F855A),
                     ), textAlign: TextAlign.center),
+                    if (navText.isNotEmpty && dvadText.isNotEmpty) const SizedBox(width: 2),
                     if (dvadText.isNotEmpty) Text(dvadText, style: TextStyle(
                       fontSize: 9 * textScale, fontWeight: FontWeight.w900,
                       color: const Color(0xFF805AD5),
@@ -517,6 +514,7 @@ class PrashnaChart extends StatelessWidget {
 
           case 'right':
           default:
+            // Right edge: Row (left-to-right)
             top = outerMargin + pos.dy + (drek * drekH);
             left = outerMargin + pos.dx + cw;
             ww = outerMargin;
@@ -525,13 +523,14 @@ class PrashnaChart extends StatelessWidget {
               top: top, left: left,
               width: ww, height: hh,
               child: Center(
-                child: Column(
+                child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     if (navText.isNotEmpty) Text(navText, style: TextStyle(
                       fontSize: 9 * textScale, fontWeight: FontWeight.w900,
                       color: const Color(0xFF2F855A),
                     ), textAlign: TextAlign.center),
+                    if (navText.isNotEmpty && dvadText.isNotEmpty) const SizedBox(width: 2),
                     if (dvadText.isNotEmpty) Text(dvadText, style: TextStyle(
                       fontSize: 9 * textScale, fontWeight: FontWeight.w900,
                       color: const Color(0xFF805AD5),
