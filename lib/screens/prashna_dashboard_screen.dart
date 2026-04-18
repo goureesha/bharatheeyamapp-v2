@@ -121,17 +121,26 @@ class _PrashnaDashboardScreenState extends State<PrashnaDashboardScreen>
   }
 
   void _showPlanetDetail(String pName) {
-    final info = _result.planets[pName];
-    if (info == null) return;
-    final sun = _result.planets['ರವಿ'];
-    final detail = AstroCalculator.getPlanetDetail(
-      pName, info.longitude, info.speed, sun?.longitude ?? 0);
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (_) => PlanetDetailSheet(pName: pName, detail: detail),
-    );
+    try {
+      final info = _result.planets[pName];
+      if (info == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Planet "$pName" not found in result')));
+        return;
+      }
+      final sun = _result.planets['ರವಿ'];
+      final detail = AstroCalculator.getPlanetDetail(
+        pName, info.longitude, info.speed, sun?.longitude ?? 0);
+      showModalBottomSheet(
+        context: context,
+        isScrollControlled: true,
+        backgroundColor: Colors.transparent,
+        builder: (_) => PlanetDetailSheet(pName: pName, detail: detail),
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error for $pName: $e')));
+    }
   }
 
   @override
