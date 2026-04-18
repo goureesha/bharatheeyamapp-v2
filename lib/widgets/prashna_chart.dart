@@ -192,21 +192,28 @@ class PrashnaChart extends StatelessWidget {
       if (ri < 0 || ri > 11) continue;
 
       final drek = _drekkana(info.longitude);
+      final degInRashi = info.longitude % 30;
 
       boxData[ri]!.add(_PlanetEntry(
         name: pName,
         info: info,
         drekkana: drek,
-        degInRashi: info.longitude % 30,
+        degInRashi: degInRashi,
       ));
 
-      // Navamsha label — placed in the navamsha rashi at the planet's drekkana position
+      // Navamsha label — placed at the navamsha's OWN drekkana zone
+      // 9 navamshas per rashi (3°20' each): 0-2→drek0, 3-5→drek1, 6-8→drek2
       final navRi = _navamshaRashi(info.longitude);
-      navLabels[navRi]![drek]!.add(_pNameKn[pName] ?? pName);
+      final navIdx = (degInRashi / (30 / 9)).floor().clamp(0, 8);
+      final navDrek = navIdx ~/ 3;
+      navLabels[navRi]![navDrek]!.add(_pNameKn[pName] ?? pName);
 
-      // Dvadashamsha label — placed in the dvad rashi at the planet's drekkana position
+      // Dvadashamsha label — placed at the dvad's OWN drekkana zone
+      // 12 dvadamshas per rashi (2.5° each): 0-3→drek0, 4-7→drek1, 8-11→drek2
       final dvadRi = _dvadRashi(info.longitude);
-      dvadLabels[dvadRi]![drek]!.add(_pNameHi[pName] ?? pName);
+      final dvadIdx = (degInRashi / 2.5).floor().clamp(0, 11);
+      final dvadDrek = dvadIdx ~/ 4;
+      dvadLabels[dvadRi]![dvadDrek]!.add(_pNameHi[pName] ?? pName);
     }
 
     // Sort planets within each house by degree
@@ -215,7 +222,7 @@ class PrashnaChart extends StatelessWidget {
     }
 
     // Outer margin for navamsha/dvad labels
-    const outerMargin = 30.0;
+    const outerMargin = 40.0;
 
     return Center(
       child: LayoutBuilder(
@@ -391,13 +398,15 @@ class PrashnaChart extends StatelessWidget {
   }
 
   /// Build outer labels for navamsha (Kannada) and dvadashamsha (Hindi)
-  /// Labels are positioned per drekkana zone to align with planets inside.
+  /// Navamsha and dvadashamsha are rendered as SEPARATE widgets, each at
+  /// their own drekkana zone, so they never overlap.
   List<Widget> _buildOuterLabels(
     double cw, double outerMargin,
     Map<int, Map<int, List<String>>> navLabels,
     Map<int, Map<int, List<String>>> dvadLabels,
   ) {
     final widgets = <Widget>[];
+    final fs = 9 * textScale;
 
     // Positions of each rashi box within the chart
     final positions = <int, Offset>{
@@ -410,133 +419,139 @@ class PrashnaChart extends StatelessWidget {
     };
 
     final drekH = cw / 3; // height of one drekkana zone
+    final halfMargin = outerMargin / 2; // split margin for nav vs dvad
 
     for (final ri in positions.keys) {
       final pos = positions[ri]!;
       final edge = _outerEdge(ri);
 
-      // For each drekkana zone (0, 1, 2), place labels at the matching position
+      // Render NAVAMSHA labels (green, Kannada) — each drekkana zone separately
       for (int drek = 0; drek < 3; drek++) {
         final navList = navLabels[ri]?[drek] ?? [];
-        final dvadList = dvadLabels[ri]?[drek] ?? [];
-        if (navList.isEmpty && dvadList.isEmpty) continue;
-
+        if (navList.isEmpty) continue;
         final navText = navList.join(' ');
-        final dvadText = dvadList.join(' ');
-
-        double top, left;
-        double ww, hh;
 
         switch (edge) {
           case 'top':
-            // Top edge: Column (top-to-bottom) — navamsha above dvadashamsha
-            top = 0;
-            left = outerMargin + pos.dx;
-            ww = cw;
-            hh = outerMargin;
+            // Top half of margin, aligned to bottom
             widgets.add(Positioned(
-              top: top, left: left,
-              width: ww, height: hh,
+              top: 0, left: outerMargin + pos.dx,
+              width: cw, height: halfMargin,
               child: Align(
                 alignment: Alignment.bottomCenter,
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    if (navText.isNotEmpty) Text(navText, style: TextStyle(
-                      fontSize: 9 * textScale, fontWeight: FontWeight.w900,
-                      color: const Color(0xFF2F855A),
-                    ), textAlign: TextAlign.center),
-                    if (dvadText.isNotEmpty) Text(dvadText, style: TextStyle(
-                      fontSize: 9 * textScale, fontWeight: FontWeight.w900,
-                      color: const Color(0xFF805AD5),
-                    ), textAlign: TextAlign.center),
-                  ],
-                ),
+                child: Text(navText, style: TextStyle(
+                  fontSize: fs, fontWeight: FontWeight.w900,
+                  color: const Color(0xFF2F855A),
+                ), textAlign: TextAlign.center),
               ),
             ));
             break;
-
           case 'bottom':
-            // Bottom edge: Column (top-to-bottom)
-            top = outerMargin + pos.dy + cw;
-            left = outerMargin + pos.dx;
-            ww = cw;
-            hh = outerMargin;
             widgets.add(Positioned(
-              top: top, left: left,
-              width: ww, height: hh,
+              top: outerMargin + pos.dy + cw, left: outerMargin + pos.dx,
+              width: cw, height: halfMargin,
               child: Align(
                 alignment: Alignment.topCenter,
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    if (navText.isNotEmpty) Text(navText, style: TextStyle(
-                      fontSize: 9 * textScale, fontWeight: FontWeight.w900,
-                      color: const Color(0xFF2F855A),
-                    ), textAlign: TextAlign.center),
-                    if (dvadText.isNotEmpty) Text(dvadText, style: TextStyle(
-                      fontSize: 9 * textScale, fontWeight: FontWeight.w900,
-                      color: const Color(0xFF805AD5),
-                    ), textAlign: TextAlign.center),
-                  ],
-                ),
+                child: Text(navText, style: TextStyle(
+                  fontSize: fs, fontWeight: FontWeight.w900,
+                  color: const Color(0xFF2F855A),
+                ), textAlign: TextAlign.center),
               ),
             ));
             break;
-
           case 'left':
-            // Left edge: Row (left-to-right) — navamsha then dvadashamsha
-            top = outerMargin + pos.dy + (drek * drekH);
-            left = 0;
-            ww = outerMargin;
-            hh = drekH;
+            // Inner half (right side of margin), at drekkana zone
             widgets.add(Positioned(
-              top: top, left: left,
-              width: ww, height: hh,
+              top: outerMargin + pos.dy + (drek * drekH),
+              left: halfMargin,
+              width: halfMargin, height: drekH,
               child: Center(
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    if (navText.isNotEmpty) Text(navText, style: TextStyle(
-                      fontSize: 9 * textScale, fontWeight: FontWeight.w900,
-                      color: const Color(0xFF2F855A),
-                    ), textAlign: TextAlign.center),
-                    if (navText.isNotEmpty && dvadText.isNotEmpty) const SizedBox(width: 2),
-                    if (dvadText.isNotEmpty) Text(dvadText, style: TextStyle(
-                      fontSize: 9 * textScale, fontWeight: FontWeight.w900,
-                      color: const Color(0xFF805AD5),
-                    ), textAlign: TextAlign.center),
-                  ],
-                ),
+                child: Text(navText, style: TextStyle(
+                  fontSize: fs, fontWeight: FontWeight.w900,
+                  color: const Color(0xFF2F855A),
+                ), textAlign: TextAlign.center),
               ),
             ));
             break;
-
           case 'right':
           default:
-            // Right edge: Row (left-to-right)
-            top = outerMargin + pos.dy + (drek * drekH);
-            left = outerMargin + pos.dx + cw;
-            ww = outerMargin;
-            hh = drekH;
+            // Inner half (left side of margin), at drekkana zone
             widgets.add(Positioned(
-              top: top, left: left,
-              width: ww, height: hh,
+              top: outerMargin + pos.dy + (drek * drekH),
+              left: outerMargin + pos.dx + cw,
+              width: halfMargin, height: drekH,
               child: Center(
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    if (navText.isNotEmpty) Text(navText, style: TextStyle(
-                      fontSize: 9 * textScale, fontWeight: FontWeight.w900,
-                      color: const Color(0xFF2F855A),
-                    ), textAlign: TextAlign.center),
-                    if (navText.isNotEmpty && dvadText.isNotEmpty) const SizedBox(width: 2),
-                    if (dvadText.isNotEmpty) Text(dvadText, style: TextStyle(
-                      fontSize: 9 * textScale, fontWeight: FontWeight.w900,
-                      color: const Color(0xFF805AD5),
-                    ), textAlign: TextAlign.center),
-                  ],
-                ),
+                child: Text(navText, style: TextStyle(
+                  fontSize: fs, fontWeight: FontWeight.w900,
+                  color: const Color(0xFF2F855A),
+                ), textAlign: TextAlign.center),
+              ),
+            ));
+            break;
+        }
+      }
+
+      // Render DVADASHAMSHA labels (purple, Hindi) — each drekkana zone separately
+      for (int drek = 0; drek < 3; drek++) {
+        final dvadList = dvadLabels[ri]?[drek] ?? [];
+        if (dvadList.isEmpty) continue;
+        final dvadText = dvadList.join(' ');
+
+        switch (edge) {
+          case 'top':
+            // Bottom half of margin, aligned to bottom
+            widgets.add(Positioned(
+              top: halfMargin, left: outerMargin + pos.dx,
+              width: cw, height: halfMargin,
+              child: Align(
+                alignment: Alignment.bottomCenter,
+                child: Text(dvadText, style: TextStyle(
+                  fontSize: fs, fontWeight: FontWeight.w900,
+                  color: const Color(0xFF805AD5),
+                ), textAlign: TextAlign.center),
+              ),
+            ));
+            break;
+          case 'bottom':
+            widgets.add(Positioned(
+              top: outerMargin + pos.dy + cw + halfMargin,
+              left: outerMargin + pos.dx,
+              width: cw, height: halfMargin,
+              child: Align(
+                alignment: Alignment.topCenter,
+                child: Text(dvadText, style: TextStyle(
+                  fontSize: fs, fontWeight: FontWeight.w900,
+                  color: const Color(0xFF805AD5),
+                ), textAlign: TextAlign.center),
+              ),
+            ));
+            break;
+          case 'left':
+            // Outer half (left side of margin), at drekkana zone
+            widgets.add(Positioned(
+              top: outerMargin + pos.dy + (drek * drekH),
+              left: 0,
+              width: halfMargin, height: drekH,
+              child: Center(
+                child: Text(dvadText, style: TextStyle(
+                  fontSize: fs, fontWeight: FontWeight.w900,
+                  color: const Color(0xFF805AD5),
+                ), textAlign: TextAlign.center),
+              ),
+            ));
+            break;
+          case 'right':
+          default:
+            // Outer half (right side of margin), at drekkana zone
+            widgets.add(Positioned(
+              top: outerMargin + pos.dy + (drek * drekH),
+              left: outerMargin + pos.dx + cw + halfMargin,
+              width: halfMargin, height: drekH,
+              child: Center(
+                child: Text(dvadText, style: TextStyle(
+                  fontSize: fs, fontWeight: FontWeight.w900,
+                  color: const Color(0xFF805AD5),
+                ), textAlign: TextAlign.center),
               ),
             ));
             break;
