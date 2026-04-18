@@ -433,16 +433,13 @@ class PrashnaChart extends StatelessWidget {
         final dvadList = dvadLabels[ri]?[drek] ?? [];
         if (navList.isEmpty && dvadList.isEmpty) continue;
 
-        final navText = navList.join(' ');
-        final dvadText = dvadList.join(' ');
-
-        // Single line: nav (Kannada green) + dvad (Hindi purple) side by side
-        Widget label = Row(
+        // Each planet on its own line in a column
+        // Nav = Kannada (green), Dvad = Hindi (purple)
+        Widget label = Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            if (navText.isNotEmpty) Text(navText, style: navStyle),
-            if (navText.isNotEmpty && dvadText.isNotEmpty) const SizedBox(width: 3),
-            if (dvadText.isNotEmpty) Text(dvadText, style: dvadStyle),
+            for (final n in navList) Text(n, style: navStyle),
+            for (final d in dvadList) Text(d, style: dvadStyle),
           ],
         );
 
