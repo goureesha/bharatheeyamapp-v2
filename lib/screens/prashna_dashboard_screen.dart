@@ -37,6 +37,12 @@ class _PrashnaDashboardScreenState extends State<PrashnaDashboardScreen>
     with SingleTickerProviderStateMixin {
   String? _bhavaPlanet;
   late TabController _tabCtrl;
+  late KundaliResult _result;
+  late DateTime _dob;
+  late int _hour;
+  late int _minute;
+  late String _ampm;
+  bool _recalculating = false;
 
   static const _tabs = ['ಕುಂಡಲಿ', 'ಸ್ಫುಟ', 'ಪಂಚಾಂಗ', 'ಷಡ್ವರ್ಗ'];
 
@@ -44,6 +50,11 @@ class _PrashnaDashboardScreenState extends State<PrashnaDashboardScreen>
   void initState() {
     super.initState();
     _tabCtrl = TabController(length: _tabs.length, vsync: this);
+    _result = widget.result;
+    _dob = widget.dob;
+    _hour = widget.hour;
+    _minute = widget.minute;
+    _ampm = widget.ampm;
   }
 
   @override
@@ -52,10 +63,67 @@ class _PrashnaDashboardScreenState extends State<PrashnaDashboardScreen>
     super.dispose();
   }
 
+  Future<void> _pickDateTime() async {
+    // Pick date
+    final newDate = await showDatePicker(
+      context: context,
+      initialDate: _dob,
+      firstDate: DateTime(1900),
+      lastDate: DateTime(2100),
+    );
+    if (newDate == null || !mounted) return;
+
+    // Pick time
+    int h24 = _hour + (_ampm == 'PM' && _hour != 12 ? 12 : 0);
+    if (_ampm == 'AM' && _hour == 12) h24 = 0;
+    final newTime = await showTimePicker(
+      context: context,
+      initialTime: TimeOfDay(hour: h24, minute: _minute),
+    );
+    if (newTime == null || !mounted) return;
+
+    // Convert back to 12h
+    final newHour = newTime.hourOfPeriod == 0 ? 12 : newTime.hourOfPeriod;
+    final newAmpm = newTime.hour < 12 ? 'AM' : 'PM';
+
+    setState(() {
+      _dob = newDate;
+      _hour = newHour;
+      _minute = newTime.minute;
+      _ampm = newAmpm;
+      _recalculating = true;
+    });
+
+    // Recalculate
+    try {
+      int h24r = _hour + (_ampm == 'PM' && _hour != 12 ? 12 : 0);
+      if (_ampm == 'AM' && _hour == 12) h24r = 0;
+      final localHour = h24r + _minute / 60.0;
+
+      final result = await AstroCalculator.calculate(
+        year: _dob.year, month: _dob.month, day: _dob.day,
+        hourUtcOffset: 5.5,
+        hour24: localHour,
+        lat: widget.lat, lon: widget.lon,
+        ayanamsaMode: 'lahiri',
+        trueNode: true,
+      );
+      if (result != null && mounted) {
+        setState(() => _result = result);
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('ದೋಷ: $e'), backgroundColor: Colors.red));
+      }
+    }
+    if (mounted) setState(() => _recalculating = false);
+  }
+
   void _showPlanetDetail(String pName) {
-    final info = widget.result.planets[pName];
+    final info = _result.planets[pName];
     if (info == null) return;
-    final sun = widget.result.planets['ರವಿ'];
+    final sun = _result.planets['ರವಿ'];
     final detail = AstroCalculator.getPlanetDetail(
       pName, info.longitude, info.speed, sun?.longitude ?? 0);
     showModalBottomSheet(
@@ -79,35 +147,43 @@ class _PrashnaDashboardScreenState extends State<PrashnaDashboardScreen>
       ),
       body: Column(
         children: [
-          // Info header
+          // Info header — tappable to change date/time
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
-            child: Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(10),
-              decoration: BoxDecoration(
-                color: kCard,
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: kBorder),
-              ),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(widget.name.isNotEmpty ? widget.name : 'ಪ್ರಶ್ನ',
-                            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w900, color: kPurple2)),
-                        const SizedBox(height: 2),
-                        Text(
-                          '${widget.dob.day.toString().padLeft(2, '0')}/${widget.dob.month.toString().padLeft(2, '0')}/${widget.dob.year}  '
-                          '${widget.hour}:${widget.minute.toString().padLeft(2, '0')} ${widget.ampm}  •  ${widget.place}',
-                          style: TextStyle(fontSize: 12, color: kMuted),
-                        ),
-                      ],
+            child: InkWell(
+              onTap: _recalculating ? null : _pickDateTime,
+              borderRadius: BorderRadius.circular(12),
+              child: Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: kCard,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: kBorder),
+                ),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(widget.name.isNotEmpty ? widget.name : 'ಪ್ರಶ್ನ',
+                              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w900, color: kPurple2)),
+                          const SizedBox(height: 2),
+                          Text(
+                            '${_dob.day.toString().padLeft(2, '0')}/${_dob.month.toString().padLeft(2, '0')}/${_dob.year}  '
+                            '$_hour:${_minute.toString().padLeft(2, '0')} $_ampm  •  ${widget.place}',
+                            style: TextStyle(fontSize: 12, color: kMuted),
+                          ),
+                        ],
+                      ),
                     ),
-                  ),
-                ],
+                    if (_recalculating)
+                      const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2))
+                    else
+                      Icon(Icons.edit_calendar, color: kPurple2, size: 22),
+                  ],
+                ),
               ),
             ),
           ),
@@ -202,7 +278,7 @@ class _PrashnaDashboardScreenState extends State<PrashnaDashboardScreen>
           width: chartSize,
           height: chartSize,
           child: PrashnaChart(
-            result: widget.result,
+            result: _result,
             isBhava: isBhava,
             textScale: textScale,
             centerLabel: isBhava ? 'ಭಾವ\nಕುಂಡಲಿ' : 'ರಾಶಿ\nಕುಂಡಲಿ',
@@ -274,7 +350,7 @@ class _PrashnaDashboardScreenState extends State<PrashnaDashboardScreen>
   // TAB 2: SPHUTA (Graha + Upagraha)
   // ═══════════════════════════════════════════
   Widget _buildSphutas() {
-    final r = widget.result;
+    final r = _result;
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
       child: Column(
@@ -334,7 +410,7 @@ class _PrashnaDashboardScreenState extends State<PrashnaDashboardScreen>
   // TAB 3: PANCHANGA
   // ═══════════════════════════════════════════
   Widget _buildPanchangTab() {
-    final r = widget.result;
+    final r = _result;
     final pan = r.panchang;
     final dateStr = '${widget.dob.day.toString().padLeft(2, "0")}-${widget.dob.month.toString().padLeft(2, "0")}-${widget.dob.year}';
     final timeStr = '${widget.hour}:${widget.minute.toString().padLeft(2, "0")} ${widget.ampm}';
@@ -390,7 +466,7 @@ class _PrashnaDashboardScreenState extends State<PrashnaDashboardScreen>
   // TAB 4: SHADVARGA
   // ═══════════════════════════════════════════
   Widget _buildShadvargaTab() {
-    final r = widget.result;
+    final r = _result;
 
     // Column headers
     const hGraha = 'ಗ್ರಹ';
@@ -635,7 +711,7 @@ class _PrashnaDashboardScreenState extends State<PrashnaDashboardScreen>
   }
 
   List<Map<String, dynamic>> _detectYogas() {
-    final r = widget.result;
+    final r = _result;
     final yogas = <Map<String, dynamic>>[];
 
     // Helper: get rashi index of a planet

@@ -240,53 +240,38 @@ class _PrashnaInputScreenState extends State<PrashnaInputScreen> {
                     ),
                     const SizedBox(height: 12),
 
-                    // Time
+                    // Time — scrollable wheel pickers
                     Row(
                       children: [
                         Icon(Icons.access_time, color: kPurple2, size: 20),
                         const SizedBox(width: 8),
                         Text('ಸಮಯ:', style: TextStyle(color: kMuted, fontWeight: FontWeight.w600)),
                         const SizedBox(width: 8),
-                        // Hour
-                        SizedBox(
-                          width: 50,
-                          child: TextField(
-                            textAlign: TextAlign.center,
-                            keyboardType: TextInputType.number,
-                            inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                            decoration: InputDecoration(hintText: '$_hour', isDense: true, border: OutlineInputBorder(borderRadius: BorderRadius.circular(8))),
-                            onChanged: (v) { final h = int.tryParse(v); if (h != null && h >= 1 && h <= 12) setState(() => _hour = h); },
-                            controller: TextEditingController(text: '$_hour'),
-                            style: TextStyle(color: kText, fontWeight: FontWeight.w700),
-                          ),
+                        // Hour wheel (1-12)
+                        _scrollWheel(
+                          value: _hour,
+                          items: List.generate(12, (i) => i + 1),
+                          label: (v) => '$v',
+                          onChanged: (v) => setState(() => _hour = v),
+                          width: 48,
                         ),
-                        Text(' : ', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: kText)),
-                        // Minute
-                        SizedBox(
-                          width: 50,
-                          child: TextField(
-                            textAlign: TextAlign.center,
-                            keyboardType: TextInputType.number,
-                            inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                            decoration: InputDecoration(hintText: '${_minute.toString().padLeft(2, '0')}', isDense: true, border: OutlineInputBorder(borderRadius: BorderRadius.circular(8))),
-                            onChanged: (v) { final m = int.tryParse(v); if (m != null && m >= 0 && m < 60) setState(() => _minute = m); },
-                            controller: TextEditingController(text: _minute.toString().padLeft(2, '0')),
-                            style: TextStyle(color: kText, fontWeight: FontWeight.w700),
-                          ),
+                        Text(' : ', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w900, color: kText)),
+                        // Minute wheel (0-59)
+                        _scrollWheel(
+                          value: _minute,
+                          items: List.generate(60, (i) => i),
+                          label: (v) => v.toString().padLeft(2, '0'),
+                          onChanged: (v) => setState(() => _minute = v),
+                          width: 48,
                         ),
                         const SizedBox(width: 8),
-                        // AM/PM toggle
-                        GestureDetector(
-                          onTap: () => setState(() => _ampm = _ampm == 'AM' ? 'PM' : 'AM'),
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                            decoration: BoxDecoration(
-                              color: kPurple2.withOpacity(0.1),
-                              borderRadius: BorderRadius.circular(8),
-                              border: Border.all(color: kPurple2.withOpacity(0.3)),
-                            ),
-                            child: Text(_ampm, style: TextStyle(fontSize: 14, fontWeight: FontWeight.w900, color: kPurple2)),
-                          ),
+                        // AM/PM wheel
+                        _scrollWheel(
+                          value: _ampm == 'AM' ? 0 : 1,
+                          items: [0, 1],
+                          label: (v) => v == 0 ? 'AM' : 'PM',
+                          onChanged: (v) => setState(() => _ampm = v == 0 ? 'AM' : 'PM'),
+                          width: 52,
                         ),
                       ],
                     ),
@@ -409,6 +394,50 @@ class _PrashnaInputScreenState extends State<PrashnaInputScreen> {
         enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: kBorder)),
       ),
       style: TextStyle(color: kText, fontSize: 13, fontWeight: FontWeight.w700),
+    );
+  }
+
+  /// Compact scrollable wheel picker
+  Widget _scrollWheel<T>({
+    required T value,
+    required List<T> items,
+    required String Function(T) label,
+    required ValueChanged<T> onChanged,
+    double width = 50,
+  }) {
+    final idx = items.indexOf(value).clamp(0, items.length - 1);
+    final ctrl = FixedExtentScrollController(initialItem: idx);
+    return Container(
+      width: width,
+      height: 80,
+      decoration: BoxDecoration(
+        color: kPurple2.withOpacity(0.06),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: kPurple2.withOpacity(0.2)),
+      ),
+      child: ListWheelScrollView.useDelegate(
+        controller: ctrl,
+        itemExtent: 28,
+        diameterRatio: 1.2,
+        physics: const FixedExtentScrollPhysics(),
+        onSelectedItemChanged: (i) => onChanged(items[i]),
+        childDelegate: ListWheelChildBuilderDelegate(
+          childCount: items.length,
+          builder: (ctx, i) {
+            final selected = i == idx;
+            return Center(
+              child: Text(
+                label(items[i]),
+                style: TextStyle(
+                  fontSize: selected ? 16 : 12,
+                  fontWeight: selected ? FontWeight.w900 : FontWeight.w500,
+                  color: selected ? kPurple2 : kMuted,
+                ),
+              ),
+            );
+          },
+        ),
+      ),
     );
   }
 }
