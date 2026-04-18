@@ -201,13 +201,20 @@ class PrashnaChart extends StatelessWidget {
         degInRashi: degInRashi,
       ));
 
-      // Navamsha label — placed at planet's drekkana zone
+      // Navamsha label — drekkana within the navamsha rashi
+      // d9Exact = (deg * 9) % 360, degInD9 = d9Exact % 30
       final navRi = _navamshaRashi(info.longitude);
-      navLabels[navRi]![drek]!.add(_pNameKn[pName] ?? pName);
+      final d9Exact = (info.longitude * 9) % 360;
+      final degInD9 = d9Exact % 30;
+      final navDrek = degInD9 < 10 ? 0 : (degInD9 < 20 ? 1 : 2);
+      navLabels[navRi]![navDrek]!.add(_pNameKn[pName] ?? pName);
 
-      // Dvadashamsha label — placed at planet's drekkana zone
+      // Dvadashamsha label — drekkana within the dvad rashi
+      // degInD12 = (deg % 2.5) * 12
       final dvadRi = _dvadRashi(info.longitude);
-      dvadLabels[dvadRi]![drek]!.add(_pNameHi[pName] ?? pName);
+      final degInD12 = (info.longitude % 2.5) * 12;
+      final dvadDrek = degInD12 < 10 ? 0 : (degInD12 < 20 ? 1 : 2);
+      dvadLabels[dvadRi]![dvadDrek]!.add(_pNameHi[pName] ?? pName);
     }
 
     // Sort planets within each house by degree
