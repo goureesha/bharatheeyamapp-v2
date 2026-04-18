@@ -397,9 +397,9 @@ class PrashnaChart extends StatelessWidget {
     );
   }
 
-  /// Build outer labels for navamsha (Kannada) and dvadashamsha (Hindi)
-  /// Navamsha and dvadashamsha are rendered as SEPARATE widgets, each at
-  /// their own drekkana zone, so they never overlap.
+  /// Build outer labels for navamsha (Kannada green) and dvadashamsha (Hindi purple).
+  /// Each drekkana zone gets its own row/slot. Nav and dvad are side-by-side
+  /// within each drekkana row, separated by color.
   List<Widget> _buildOuterLabels(
     double cw, double outerMargin,
     Map<int, Map<int, List<String>>> navLabels,
@@ -407,8 +407,9 @@ class PrashnaChart extends StatelessWidget {
   ) {
     final widgets = <Widget>[];
     final fs = 9 * textScale;
+    final navStyle = TextStyle(fontSize: fs, fontWeight: FontWeight.w900, color: const Color(0xFF2F855A));
+    final dvadStyle = TextStyle(fontSize: fs, fontWeight: FontWeight.w900, color: const Color(0xFF805AD5));
 
-    // Positions of each rashi box within the chart
     final positions = <int, Offset>{
       11: Offset(0, 0),       0: Offset(cw, 0),
       1:  Offset(cw*2, 0),    2: Offset(cw*3, 0),
@@ -418,141 +419,88 @@ class PrashnaChart extends StatelessWidget {
       6:  Offset(cw*2, cw*3), 5: Offset(cw*3, cw*3),
     };
 
-    final drekH = cw / 3; // height of one drekkana zone
-    final halfMargin = outerMargin / 2; // split margin for nav vs dvad
+    final drekZone = cw / 3;       // drekkana zone height inside house
+    final marginSlot = outerMargin / 3; // drekkana slot height in margin area
 
     for (final ri in positions.keys) {
       final pos = positions[ri]!;
       final edge = _outerEdge(ri);
 
-      // Render NAVAMSHA labels (green, Kannada) — each drekkana zone separately
       for (int drek = 0; drek < 3; drek++) {
         final navList = navLabels[ri]?[drek] ?? [];
-        if (navList.isEmpty) continue;
-        final navText = navList.join(' ');
-
-        switch (edge) {
-          case 'top':
-            // Top half of margin, aligned to bottom
-            widgets.add(Positioned(
-              top: 0, left: outerMargin + pos.dx,
-              width: cw, height: halfMargin,
-              child: Align(
-                alignment: Alignment.bottomCenter,
-                child: Text(navText, style: TextStyle(
-                  fontSize: fs, fontWeight: FontWeight.w900,
-                  color: const Color(0xFF2F855A),
-                ), textAlign: TextAlign.center),
-              ),
-            ));
-            break;
-          case 'bottom':
-            widgets.add(Positioned(
-              top: outerMargin + pos.dy + cw, left: outerMargin + pos.dx,
-              width: cw, height: halfMargin,
-              child: Align(
-                alignment: Alignment.topCenter,
-                child: Text(navText, style: TextStyle(
-                  fontSize: fs, fontWeight: FontWeight.w900,
-                  color: const Color(0xFF2F855A),
-                ), textAlign: TextAlign.center),
-              ),
-            ));
-            break;
-          case 'left':
-            // Inner half (right side of margin), at drekkana zone
-            widgets.add(Positioned(
-              top: outerMargin + pos.dy + (drek * drekH),
-              left: halfMargin,
-              width: halfMargin, height: drekH,
-              child: Center(
-                child: Text(navText, style: TextStyle(
-                  fontSize: fs, fontWeight: FontWeight.w900,
-                  color: const Color(0xFF2F855A),
-                ), textAlign: TextAlign.center),
-              ),
-            ));
-            break;
-          case 'right':
-          default:
-            // Inner half (left side of margin), at drekkana zone
-            widgets.add(Positioned(
-              top: outerMargin + pos.dy + (drek * drekH),
-              left: outerMargin + pos.dx + cw,
-              width: halfMargin, height: drekH,
-              child: Center(
-                child: Text(navText, style: TextStyle(
-                  fontSize: fs, fontWeight: FontWeight.w900,
-                  color: const Color(0xFF2F855A),
-                ), textAlign: TextAlign.center),
-              ),
-            ));
-            break;
-        }
-      }
-
-      // Render DVADASHAMSHA labels (purple, Hindi) — each drekkana zone separately
-      for (int drek = 0; drek < 3; drek++) {
         final dvadList = dvadLabels[ri]?[drek] ?? [];
-        if (dvadList.isEmpty) continue;
+        if (navList.isEmpty && dvadList.isEmpty) continue;
+
+        final navText = navList.join(' ');
         final dvadText = dvadList.join(' ');
 
+        // Build a row with nav (green) + dvad (purple) side by side
+        Widget labelRow = Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (navText.isNotEmpty) Text(navText, style: navStyle, textAlign: TextAlign.center),
+            if (navText.isNotEmpty && dvadText.isNotEmpty) const SizedBox(width: 4),
+            if (dvadText.isNotEmpty) Text(dvadText, style: dvadStyle, textAlign: TextAlign.center),
+          ],
+        );
+
+        // Build a column with nav (green) on top, dvad (purple) below
+        Widget labelCol = Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (navText.isNotEmpty) Text(navText, style: navStyle, textAlign: TextAlign.center),
+            if (dvadText.isNotEmpty) Text(dvadText, style: dvadStyle, textAlign: TextAlign.center),
+          ],
+        );
+
         switch (edge) {
           case 'top':
-            // Bottom half of margin, aligned to bottom
+            // 3 drekkana rows above the house.
+            // drek 0 = bottom row (closest to chart), drek 2 = top row (farthest)
+            final rowTop = outerMargin - ((drek + 1) * marginSlot);
             widgets.add(Positioned(
-              top: halfMargin, left: outerMargin + pos.dx,
-              width: cw, height: halfMargin,
-              child: Align(
-                alignment: Alignment.bottomCenter,
-                child: Text(dvadText, style: TextStyle(
-                  fontSize: fs, fontWeight: FontWeight.w900,
-                  color: const Color(0xFF805AD5),
-                ), textAlign: TextAlign.center),
-              ),
-            ));
-            break;
-          case 'bottom':
-            widgets.add(Positioned(
-              top: outerMargin + pos.dy + cw + halfMargin,
+              top: rowTop,
               left: outerMargin + pos.dx,
-              width: cw, height: halfMargin,
-              child: Align(
-                alignment: Alignment.topCenter,
-                child: Text(dvadText, style: TextStyle(
-                  fontSize: fs, fontWeight: FontWeight.w900,
-                  color: const Color(0xFF805AD5),
-                ), textAlign: TextAlign.center),
-              ),
+              width: cw,
+              height: marginSlot,
+              child: Center(child: labelRow),
             ));
             break;
-          case 'left':
-            // Outer half (left side of margin), at drekkana zone
+
+          case 'bottom':
+            // 3 drekkana rows below the house.
+            // drek 0 = top row (closest to chart), drek 2 = bottom row (farthest)
+            final rowTop = outerMargin + pos.dy + cw + (drek * marginSlot);
             widgets.add(Positioned(
-              top: outerMargin + pos.dy + (drek * drekH),
-              left: 0,
-              width: halfMargin, height: drekH,
-              child: Center(
-                child: Text(dvadText, style: TextStyle(
-                  fontSize: fs, fontWeight: FontWeight.w900,
-                  color: const Color(0xFF805AD5),
-                ), textAlign: TextAlign.center),
-              ),
+              top: rowTop,
+              left: outerMargin + pos.dx,
+              width: cw,
+              height: marginSlot,
+              child: Center(child: labelRow),
             ));
             break;
+
+          case 'left':
+            // 3 drekkana zones on left, matching vertical zones inside.
+            // drek 0 = top, drek 1 = mid, drek 2 = bottom
+            widgets.add(Positioned(
+              top: outerMargin + pos.dy + (drek * drekZone),
+              left: 0,
+              width: outerMargin,
+              height: drekZone,
+              child: Center(child: labelCol),
+            ));
+            break;
+
           case 'right':
           default:
-            // Outer half (right side of margin), at drekkana zone
+            // 3 drekkana zones on right, matching vertical zones inside.
             widgets.add(Positioned(
-              top: outerMargin + pos.dy + (drek * drekH),
-              left: outerMargin + pos.dx + cw + halfMargin,
-              width: halfMargin, height: drekH,
-              child: Center(
-                child: Text(dvadText, style: TextStyle(
-                  fontSize: fs, fontWeight: FontWeight.w900,
-                  color: const Color(0xFF805AD5),
-                ), textAlign: TextAlign.center),
-              ),
+              top: outerMargin + pos.dy + (drek * drekZone),
+              left: outerMargin + pos.dx + cw,
+              width: outerMargin,
+              height: drekZone,
+              child: Center(child: labelCol),
             ));
             break;
         }
