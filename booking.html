@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="kn">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ಭಾರತೀಯಮ್ - ಅಪಾಯಿಂಟ್‌ಮೆಂಟ್ ಬುಕ್ ಮಾಡಿ</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Segoe UI',system-ui,sans-serif;background:#0f172a;color:#e2e8f0;min-height:100vh}
+.header{background:linear-gradient(135deg,#0d9488,#6366f1);padding:28px 20px;text-align:center}
+.header h1{font-size:26px;font-weight:900;color:#fff;letter-spacing:1px}
+.header p{color:rgba(255,255,255,.8);font-size:13px;margin-top:6px}
+.container{max-width:500px;margin:0 auto;padding:16px}
+.card{background:#1e293b;border-radius:16px;padding:20px;margin-bottom:16px;border:1px solid rgba(255,255,255,.06)}
+.card h2{font-size:16px;font-weight:800;margin-bottom:14px;color:#5eead4;display:flex;align-items:center;gap:8px}
+.day-group{margin-bottom:16px}
+.day-label{font-size:14px;font-weight:700;color:#a78bfa;margin-bottom:8px;display:flex;align-items:center;gap:6px}
+.slots{display:flex;flex-wrap:wrap;gap:8px}
+.slot{padding:10px 16px;border-radius:10px;border:2px solid #334155;background:#0f172a;color:#cbd5e1;font-weight:700;font-size:14px;cursor:pointer;transition:all .2s}
+.slot:hover{border-color:#5eead4;color:#5eead4}
+.slot.selected{background:#0d9488;border-color:#0d9488;color:#fff;transform:scale(1.05)}
+.field{margin-bottom:14px}
+.field label{display:block;font-size:13px;font-weight:600;color:#94a3b8;margin-bottom:6px}
+.field input{width:100%;padding:12px 14px;border-radius:10px;border:2px solid #334155;background:#0f172a;color:#e2e8f0;font-size:15px;font-weight:600;outline:none;transition:border .2s}
+.field input:focus{border-color:#5eead4}
+.book-btn{width:100%;padding:16px;border:none;border-radius:12px;background:linear-gradient(135deg,#0d9488,#059669);color:#fff;font-size:17px;font-weight:900;cursor:pointer;transition:all .2s;display:flex;align-items:center;justify-content:center;gap:8px;margin-top:8px}
+.book-btn:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(13,148,136,.3)}
+.book-btn:disabled{opacity:.4;cursor:not-allowed;transform:none;box-shadow:none}
+.summary{background:#064e3b;border:1px solid #065f46;border-radius:12px;padding:14px;margin-bottom:16px;display:none}
+.summary.show{display:block}
+.summary p{font-size:14px;color:#6ee7b7;line-height:1.6}
+.summary strong{color:#5eead4}
+.empty{text-align:center;padding:40px;color:#64748b;font-size:15px}
+.footer{text-align:center;padding:24px;color:#475569;font-size:12px}
+.info-box{background:#1e1b4b;border:1px solid #312e81;border-radius:12px;padding:14px;margin-bottom:16px}
+.info-box p{font-size:13px;color:#a5b4fc;line-height:1.6}
+.info-box .icon{font-size:20px;margin-right:6px}
+.success{display:none;text-align:center;padding:40px 20px}
+.success.show{display:block}
+.success h2{color:#5eead4;font-size:22px;margin-bottom:12px}
+.success p{color:#94a3b8;font-size:14px;line-height:1.6}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>🙏 ಭಾರತೀಯಮ್</h1>
+  <p>Vedic Astrology Appointments</p>
+</div>
+
+<div class="container" id="app">
+  <div class="empty" id="loading">⏳ ಲೋಡ್ ಆಗುತ್ತಿದೆ...</div>
+</div>
+
+<div class="footer">ಭಾರತೀಯಮ್ ✨ Vedic Astrology</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.10.0/firebase-app.js";
+import { getFirestore, collection, addDoc } from "https://www.gstatic.com/firebasejs/10.10.0/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyAkG1hdauVlL9b8nHM5o2B25yPQ6IANci4",
+  authDomain: "bharatheeyam-app.firebaseapp.com",
+  projectId: "bharatheeyam-app",
+  storageBucket: "bharatheeyam-app.firebasestorage.app",
+  messagingSenderId: "212430902387",
+  appId: "1:212430902387:web:149c933fd3d29aa5014606",
+  measurementId: "G-BNTGY2WSLZ"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+const dayNamesKn = ['ರವಿವಾರ','ಸೋಮವಾರ','ಮಂಗಳವಾರ','ಬುಧವಾರ','ಗುರುವಾರ','ಶುಕ್ರವಾರ','ಶನಿವಾರ'];
+const monthNamesKn = ['ಜನವರಿ','ಫೆಬ್ರವರಿ','ಮಾರ್ಚ್','ಏಪ್ರಿಲ್','ಮೇ','ಜೂನ್','ಜುಲೈ','ಆಗಸ್ಟ್','ಸೆಪ್ಟೆಂಬರ್','ಅಕ್ಟೋಬರ್','ನವೆಂಬರ್','ಡಿಸೆಂಬರ್'];
+
+let selectedSlot = null;
+
+function fmt12(h, m) {
+  const amPm = h >= 12 ? 'PM' : 'AM';
+  const h12 = h > 12 ? h - 12 : (h === 0 ? 12 : h);
+  return `${h12}:${String(m).padStart(2,'0')} ${amPm}`;
+}
+
+function parseData() {
+  try {
+    const hash = decodeURIComponent(location.hash.substring(1));
+    return JSON.parse(hash);
+  } catch(e) {
+    return null;
+  }
+}
+
+window.selectSlot = function(dateKey, time, el) {
+  document.querySelectorAll('.slot.selected').forEach(s => s.classList.remove('selected'));
+  el.classList.add('selected');
+  selectedSlot = { date: dateKey, time: time };
+  updateSummary();
+}
+
+function updateSummary() {
+  const sum = document.getElementById('summary');
+  if (!selectedSlot) { sum.classList.remove('show'); return; }
+  const d = new Date(selectedSlot.date);
+  const dayName = dayNamesKn[d.getDay()];
+  const monthName = monthNamesKn[d.getMonth()];
+  const [h,m] = selectedSlot.time.split(':').map(Number);
+  sum.innerHTML = `<p>📅 <strong>${d.getDate()} ${monthName} (${dayName})</strong><br>⏰ <strong>${fmt12(h,m)}</strong></p>`;
+  sum.classList.add('show');
+}
+
+window.bookNow = async function() {
+  if (!selectedSlot) return;
+  const name = document.getElementById('clientName').value.trim();
+  const phone = document.getElementById('clientPhone').value.trim();
+  if (!name) { alert('ದಯವಿಟ್ಟು ನಿಮ್ಮ ಹೆಸರು ನಮೂದಿಸಿ'); return; }
+  if (!phone) { alert('ದಯವಿಟ್ಟು ನಿಮ್ಮ ಫೋನ್ ಸಂಖ್ಯೆ ನಮೂದಿಸಿ'); return; }
+
+  const data = parseData();
+  const astrologerEmail = data && data.email ? data.email : '';
+  if (!astrologerEmail) {
+    alert('ದೋಷ: ಜ್ಯೋತಿಷಿಯವರ ಇಮೇಲ್ ಕಂಡುಬಂದಿಲ್ಲ.');
+    return;
+  }
+
+  const btn = document.querySelector('.book-btn');
+  btn.disabled = true;
+  btn.innerHTML = '⏳ ದಯವಿಟ್ಟು ಕಾಯಿರಿ...';
+
+  // Parse selected date and time for Firestore
+  const [sH, sM] = selectedSlot.time.split(':').map(Number);
+  const d = new Date(selectedSlot.date);
+  d.setHours(sH, sM, 0, 0);
+  
+  // Format to ISO 8601 (local timezone) to safely send across
+  const localIso = new Date(d.getTime() - (d.getTimezoneOffset() * 60000)).toISOString().slice(0, 19);
+
+  try {
+    const requestsRef = collection(db, 'appointments', astrologerEmail, 'requests');
+    
+    // Add a 10 second timeout because Firebase can hang if the DB doesn't exist
+    const timeoutPromise = new Promise((_, reject) => 
+      setTimeout(() => reject(new Error('Timeout: Firebase took too long. Check if Database is created.')), 10000)
+    );
+    
+    await Promise.race([
+      addDoc(requestsRef, {
+        clientName: name,
+        clientPhone: phone,
+        dateTime: localIso, // "2026-03-28T10:00:00"
+        status: 'pending',
+        createdAt: new Date().toISOString()
+      }),
+      timeoutPromise
+    ]);
+
+    // Mark this link as used so it can't be reused
+    try { localStorage.setItem('booked_' + location.hash, 'true'); } catch(e) {}
+
+    // Show success state
+    document.getElementById('bookingForm').style.display = 'none';
+    const successMsg = document.getElementById('successMsg');
+    successMsg.innerHTML = `
+      <h2>✅ ಅಪಾಯಿಂಟ್‌ಮೆಂಟ್ ಕಾಯ್ದಿರಿಸಲಾಗಿದೆ!</h2>
+      <p>ನಿಮ್ಮ ಅಪಾಯಿಂಟ್‌ಮೆಂಟ್ ಯಶಸ್ವಿಯಾಗಿ ಆ್ಯಪ್‌ಗೆ ಸಿಂಕ್ ಆಗಿದೆ.<br><br>
+        ಜ್ಯೋತಿಷಿಯವರು ನೇರವಾಗಿ ಆ್ಯಪ್‌ನಲ್ಲಿ ನೋಟಿಫಿಕೇಶನ್ ಪಡೆಯುತ್ತಾರೆ.</p>
+    `;
+    successMsg.classList.add('show');
+  } catch (error) {
+    console.error("Error adding document: ", error);
+    alert('ದೋಷ ಉಂಟಾಗಿದೆ: ' + error.message + '\n\nದಯವಿಟ್ಟು Firebase Console ನಲ್ಲಿ Firestore Database ಅನ್ನು "Start in test mode" ಬಳಸಿ Create ಮಾಡಿದ್ದೀರಾ ಎಂದು ಪರೀಕ್ಷಿಸಿ.');
+    btn.disabled = false;
+    btn.innerHTML = '✅ ಅಪಾಯಿಂಟ್‌ಮೆಂಟ್ ಕಾಯ್ದಿರಿಸಿ';
+  }
+}
+
+function render() {
+  const data = parseData();
+  const app = document.getElementById('app');
+
+  // Check if this link was already used for booking
+  try {
+    if (localStorage.getItem('booked_' + location.hash) === 'true') {
+      app.innerHTML = '<div class="success show">' +
+        '<h2>✅ ಈ ಲಿಂಕ್ ಈಗಾಗಲೇ ಬಳಸಲಾಗಿದೆ</h2>' +
+        '<p>ನೀವು ಈಗಾಗಲೇ ಈ ಲಿಂಕ್ ಮೂಲಕ ಅಪಾಯಿಂಟ್‌ಮೆಂಟ್ ಬುಕ್ ಮಾಡಿದ್ದೀರಿ.<br><br>' +
+        'This link has already been used for a booking.</p></div>';
+      return;
+    }
+  } catch(e) {}
+
+  if (!data || !data.slots || Object.keys(data.slots).length === 0) {
+    app.innerHTML = '<div class="empty">❌ ಯಾವುದೇ ಲಭ್ಯ ಸ್ಲಾಟ್ ಕಂಡುಬಂದಿಲ್ಲ.<br><br>ದಯವಿಟ್ಟು ಮಾಲೀಕರ ಲಿಂಕ್ ಪರಿಶೀಲಿಸಿ.</div>';
+    return;
+  }
+
+  let html = '<div id="bookingForm">';
+
+  // Info box
+  html += '<div class="info-box"><p><span class="icon">📅</span>';
+  html += 'ಕೆಳಗಿನ ಲಭ್ಯ ಸಮಯಗಳಿಂದ ಒಂದನ್ನು ಆಯ್ಕೆ ಮಾಡಿ. ';
+  html += 'ನಿಮ್ಮ ಅಪಾಯಿಂಟ್‌ಮೆಂಟ್ ನೇರವಾಗಿ ಜ್ಯೋತಿಷಿಯವರ ಆ್ಯಪ್‌ಗೆ ತಲುಪುತ್ತದೆ.</p></div>';
+
+  // Available Slots
+  html += '<div class="card"><h2>📅 ಲಭ್ಯ ಸಮಯಗಳು</h2>';
+  const sortedDates = Object.keys(data.slots).sort();
+  for (const dateKey of sortedDates) {
+    const times = data.slots[dateKey];
+    if (!times || times.length === 0) continue;
+    const d = new Date(dateKey);
+    const dayName = dayNamesKn[d.getDay()];
+    const monthName = monthNamesKn[d.getMonth()];
+    html += `<div class="day-group">`;
+    html += `<div class="day-label">📅 ${d.getDate()} ${monthName} (${dayName})</div>`;
+    html += `<div class="slots">`;
+    for (const t of times) {
+      const [h,m] = t.split(':').map(Number);
+      html += `<div class="slot" onclick="selectSlot('${dateKey}','${t}',this)">${fmt12(h,m)}</div>`;
+    }
+    html += '</div></div>';
+  }
+  html += '</div>';
+
+  // Summary
+  html += '<div class="summary" id="summary"></div>';
+
+  // Client Details
+  html += '<div class="card"><h2>👤 ನಿಮ್ಮ ವಿವರಗಳು</h2>';
+  html += '<div class="field"><label>ಹೆಸರು *</label><input type="text" id="clientName" placeholder="ನಿಮ್ಮ ಪೂರ್ಣ ಹೆಸರು"></div>';
+  html += '<div class="field"><label>ಫೋನ್ ಸಂಖ್ಯೆ *</label><input type="tel" id="clientPhone" placeholder="9876543210"></div>';
+  html += '</div>';
+
+  // Book Button
+  html += '<button class="book-btn" onclick="bookNow()">✅ ಅಪಾಯಿಂಟ್‌ಮೆಂಟ್ ಕಾಯ್ದಿರಿಸಿ</button>';
+
+  html += '</div>';
+
+  // Success message
+  html += '<div class="success" id="successMsg"></div>';
+
+  app.innerHTML = html;
+}
+
+render();
+</script>
+</body>
+</html>
