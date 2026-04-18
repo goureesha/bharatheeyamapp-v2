@@ -398,8 +398,9 @@ class PrashnaChart extends StatelessWidget {
   }
 
   /// Build outer labels for navamsha (Kannada green) and dvadashamsha (Hindi purple).
-  /// Each drekkana zone gets its own row/slot. Nav and dvad are side-by-side
-  /// within each drekkana row, separated by color.
+  /// Top/Bottom edges: 3 COLUMNS (one per drekkana, I=left, II=mid, III=right).
+  /// Left/Right edges: 3 ROWS (one per drekkana, I=top, II=mid, III=bottom).
+  /// Within each slot, nav (green) on top, dvad (purple) below.
   List<Widget> _buildOuterLabels(
     double cw, double outerMargin,
     Map<int, Map<int, List<String>>> navLabels,
@@ -419,8 +420,8 @@ class PrashnaChart extends StatelessWidget {
       6:  Offset(cw*2, cw*3), 5: Offset(cw*3, cw*3),
     };
 
-    final drekZone = cw / 3;       // drekkana zone height inside house
-    final marginSlot = outerMargin / 3; // drekkana slot height in margin area
+    final drekZone = cw / 3;  // drekkana zone size inside house
+    final colW = cw / 3;      // column width for top/bottom edges
 
     for (final ri in positions.keys) {
       final pos = positions[ri]!;
@@ -434,17 +435,7 @@ class PrashnaChart extends StatelessWidget {
         final navText = navList.join(' ');
         final dvadText = dvadList.join(' ');
 
-        // Build a row with nav (green) + dvad (purple) side by side
-        Widget labelRow = Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            if (navText.isNotEmpty) Text(navText, style: navStyle, textAlign: TextAlign.center),
-            if (navText.isNotEmpty && dvadText.isNotEmpty) const SizedBox(width: 4),
-            if (dvadText.isNotEmpty) Text(dvadText, style: dvadStyle, textAlign: TextAlign.center),
-          ],
-        );
-
-        // Build a column with nav (green) on top, dvad (purple) below
+        // Nav on top, dvad below — used for all edges
         Widget labelCol = Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -455,34 +446,35 @@ class PrashnaChart extends StatelessWidget {
 
         switch (edge) {
           case 'top':
-            // 3 drekkana rows above the house.
-            // drek 0 = bottom row (closest to chart), drek 2 = top row (farthest)
-            final rowTop = outerMargin - ((drek + 1) * marginSlot);
+            // 3 columns above the house: drek 0=left, 1=mid, 2=right
             widgets.add(Positioned(
-              top: rowTop,
-              left: outerMargin + pos.dx,
-              width: cw,
-              height: marginSlot,
-              child: Center(child: labelRow),
+              top: 0,
+              left: outerMargin + pos.dx + (drek * colW),
+              width: colW,
+              height: outerMargin,
+              child: Align(
+                alignment: Alignment.bottomCenter,
+                child: labelCol,
+              ),
             ));
             break;
 
           case 'bottom':
-            // 3 drekkana rows below the house.
-            // drek 0 = top row (closest to chart), drek 2 = bottom row (farthest)
-            final rowTop = outerMargin + pos.dy + cw + (drek * marginSlot);
+            // 3 columns below the house: drek 0=left, 1=mid, 2=right
             widgets.add(Positioned(
-              top: rowTop,
-              left: outerMargin + pos.dx,
-              width: cw,
-              height: marginSlot,
-              child: Center(child: labelRow),
+              top: outerMargin + pos.dy + cw,
+              left: outerMargin + pos.dx + (drek * colW),
+              width: colW,
+              height: outerMargin,
+              child: Align(
+                alignment: Alignment.topCenter,
+                child: labelCol,
+              ),
             ));
             break;
 
           case 'left':
-            // 3 drekkana zones on left, matching vertical zones inside.
-            // drek 0 = top, drek 1 = mid, drek 2 = bottom
+            // 3 rows on left: drek 0=top, 1=mid, 2=bottom
             widgets.add(Positioned(
               top: outerMargin + pos.dy + (drek * drekZone),
               left: 0,
@@ -494,7 +486,7 @@ class PrashnaChart extends StatelessWidget {
 
           case 'right':
           default:
-            // 3 drekkana zones on right, matching vertical zones inside.
+            // 3 rows on right: drek 0=top, 1=mid, 2=bottom
             widgets.add(Positioned(
               top: outerMargin + pos.dy + (drek * drekZone),
               left: outerMargin + pos.dx + cw,
