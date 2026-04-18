@@ -5,7 +5,7 @@ import 'dart:convert';
 import '../widgets/common.dart';
 import '../core/calculator.dart';
 import '../constants/places.dart';
-import '../core/ephemeris.dart';
+// ephemeris not needed
 import '../services/location_service.dart';
 import 'prashna_dashboard_screen.dart';
 

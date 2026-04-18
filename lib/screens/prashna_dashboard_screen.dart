@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/gestures.dart';
 import '../core/calculator.dart';
 import '../widgets/common.dart';
 import '../widgets/prashna_chart.dart';
@@ -36,17 +35,17 @@ class PrashnaDashboardScreen extends StatefulWidget {
 class _PrashnaDashboardScreenState extends State<PrashnaDashboardScreen> {
   String? _bhavaPlanet; // selected planet for bhava reference
 
-  void _showPlanetDetail(String planetName) {
-    final info = widget.result.planets[planetName];
+  void _showPlanetDetail(String pName) {
+    final info = widget.result.planets[pName];
     if (info == null) return;
+    final sun = widget.result.planets['ರವಿ'];
+    final detail = AstroCalculator.getPlanetDetail(
+      pName, info.longitude, info.speed, sun?.longitude ?? 0);
     showModalBottomSheet(
       context: context,
-      backgroundColor: kBg,
       isScrollControlled: true,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (_) => PlanetDetailSheet(info: info, result: widget.result),
+      backgroundColor: Colors.transparent,
+      builder: (_) => PlanetDetailSheet(pName: pName, detail: detail),
     );
   }
 
@@ -122,7 +121,7 @@ class _PrashnaDashboardScreenState extends State<PrashnaDashboardScreen> {
             // ── Bhava Kundali ──
             _chartSection(
               label: _bhavaPlanet != null
-                  ? 'ಭಾವ ಕುಂಡಲಿ (${_bhavaPlanet!} ಕೇಂದ್ರ)'
+                  ? 'ಭಾವ ಕುಂಡಲಿ ($_bhavaPlanet ಕೇಂದ್ರ)'
                   : 'ಭಾವ ಕುಂಡಲಿ',
               isBhava: true,
               chartSize: chartSize,
