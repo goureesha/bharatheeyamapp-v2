@@ -1,4 +1,4 @@
-package com.bharatheeyam.app
+package com.bharatheeyam.prashna
 
 import android.app.AlarmManager
 import android.app.PendingIntent

@@ -27,7 +27,7 @@ if (keystorePropertiesFile.exists()) {
 }
 
 android {
-    namespace = "com.bharatheeyam.app"
+    namespace = "com.bharatheeyam.prashna"
     compileSdk = 35
     ndkVersion = flutter.ndkVersion
 
@@ -50,7 +50,7 @@ android {
     }
 
     defaultConfig {
-        applicationId = "com.bharatheeyam.app"
+        applicationId = "com.bharatheeyam.prashna"
         minSdk = 24
         targetSdk = flutter.targetSdkVersion
         versionCode = flutterVersionCode.toInteger()
