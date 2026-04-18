@@ -436,12 +436,13 @@ class PrashnaChart extends StatelessWidget {
         final navText = navList.join(' ');
         final dvadText = dvadList.join(' ');
 
-        // Nav on top, dvad below — used for all edges
-        Widget labelCol = Column(
+        // Single line: nav (Kannada green) + dvad (Hindi purple) side by side
+        Widget label = Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            if (navText.isNotEmpty) Text(navText, style: navStyle, textAlign: TextAlign.center),
-            if (dvadText.isNotEmpty) Text(dvadText, style: dvadStyle, textAlign: TextAlign.center),
+            if (navText.isNotEmpty) Text(navText, style: navStyle),
+            if (navText.isNotEmpty && dvadText.isNotEmpty) const SizedBox(width: 3),
+            if (dvadText.isNotEmpty) Text(dvadText, style: dvadStyle),
           ],
         );
 
@@ -455,7 +456,7 @@ class PrashnaChart extends StatelessWidget {
               height: outerMargin,
               child: Align(
                 alignment: Alignment.bottomCenter,
-                child: labelCol,
+                child: label,
               ),
             ));
             break;
@@ -469,7 +470,7 @@ class PrashnaChart extends StatelessWidget {
               height: outerMargin,
               child: Align(
                 alignment: Alignment.topCenter,
-                child: labelCol,
+                child: label,
               ),
             ));
             break;
@@ -481,7 +482,7 @@ class PrashnaChart extends StatelessWidget {
               left: 0,
               width: outerMargin,
               height: drekZone,
-              child: Center(child: labelCol),
+              child: Center(child: label),
             ));
             break;
 
@@ -493,7 +494,7 @@ class PrashnaChart extends StatelessWidget {
               left: outerMargin + pos.dx + cw,
               width: outerMargin,
               height: drekZone,
-              child: Center(child: labelCol),
+              child: Center(child: label),
             ));
             break;
         }
