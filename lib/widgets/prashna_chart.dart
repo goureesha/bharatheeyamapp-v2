@@ -504,51 +504,47 @@ class PrashnaChart extends StatelessWidget {
     }
 
     // Add divider lines between drekkana zones for each house
-    final divColor = Colors.grey.withOpacity(0.4);
+    final divColor = Colors.grey.shade600;
     for (final ri in positions.keys) {
       final pos = positions[ri]!;
       final edge = _outerEdge(ri);
 
       switch (edge) {
         case 'top':
-          // 2 vertical dividers above the house
           for (int d = 1; d < 3; d++) {
             widgets.add(Positioned(
               top: 0, left: outerMargin + pos.dx + (d * colW),
-              width: 0.5, height: outerMargin,
+              width: 1.5, height: outerMargin,
               child: Container(color: divColor),
             ));
           }
           break;
         case 'bottom':
-          // 2 vertical dividers below the house
           for (int d = 1; d < 3; d++) {
             widgets.add(Positioned(
               top: outerMargin + pos.dy + cw,
               left: outerMargin + pos.dx + (d * colW),
-              width: 0.5, height: outerMargin,
+              width: 1.5, height: outerMargin,
               child: Container(color: divColor),
             ));
           }
           break;
         case 'left':
-          // 2 horizontal dividers to the left
           for (int d = 1; d < 3; d++) {
             widgets.add(Positioned(
               top: outerMargin + pos.dy + (d * drekZone),
-              left: 0, width: outerMargin, height: 0.5,
+              left: 0, width: outerMargin, height: 1.5,
               child: Container(color: divColor),
             ));
           }
           break;
         case 'right':
         default:
-          // 2 horizontal dividers to the right
           for (int d = 1; d < 3; d++) {
             widgets.add(Positioned(
               top: outerMargin + pos.dy + (d * drekZone),
               left: outerMargin + pos.dx + cw,
-              width: outerMargin, height: 0.5,
+              width: outerMargin, height: 1.5,
               child: Container(color: divColor),
             ));
           }
