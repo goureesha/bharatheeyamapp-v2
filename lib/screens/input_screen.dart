@@ -400,28 +400,6 @@ class _InputScreenState extends State<InputScreen> {
           ),
         )).then((_) async {
           await _loadProfiles();
-          // Reset the form back to current time/empty strings when returning FROM dashboard
-          if (mounted) {
-            final now = DateTime.now();
-            setState(() {
-              _loadedFromSaved = false;
-              _nameCtrl.clear();
-              _placeCtrl.text = LocationService.place;
-              _latCtrl.text = LocationService.lat.toStringAsFixed(4);
-              _lonCtrl.text = LocationService.lon.toStringAsFixed(4);
-              _tzCtrl.text = '${LocationService.tzOffset >= 0 ? '+' : ''}${LocationService.tzOffset}';
-
-              _dob = now;
-              _hour = now.hour % 12 == 0 ? 12 : now.hour % 12;
-              _minute = now.minute;
-              _ampm = now.hour >= 12 ? 'PM' : 'AM';
-              _loadedNotes = '';
-              _loadedClientId = null;
-              _loadedAroodhas = {};
-              _loadedJanmaNakshatraIdx = null;
-              _loadedGroupMembers = [];
-            });
-          }
         });
         setState(() => _loading = false);
       }
@@ -1220,12 +1198,21 @@ class _InputScreenState extends State<InputScreen> {
                 onPressed: () {
                   final now = DateTime.now();
                   setState(() {
+                    _loadedFromSaved = false;
+                    _nameCtrl.clear();
+                    _placeCtrl.text = LocationService.place;
+                    _latCtrl.text = LocationService.lat.toStringAsFixed(4);
+                    _lonCtrl.text = LocationService.lon.toStringAsFixed(4);
+                    _tzCtrl.text = '${LocationService.tzOffset >= 0 ? '+' : ''}${LocationService.tzOffset}';
                     _dob = now;
                     _hour = now.hour % 12 == 0 ? 12 : now.hour % 12;
                     _minute = now.minute;
                     _ampm = now.hour >= 12 ? 'PM' : 'AM';
                     _loadedNotes = '';
+                    _loadedClientId = null;
                     _loadedAroodhas = {};
+                    _loadedJanmaNakshatraIdx = null;
+                    _loadedGroupMembers = [];
                   });
                 },
                 style: ElevatedButton.styleFrom(
