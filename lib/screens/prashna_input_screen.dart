@@ -34,6 +34,11 @@ class _PrashnaInputScreenState extends State<PrashnaInputScreen> {
   bool _geoLoading = false;
   String _geoStatus = '';
 
+  // Persistent scroll controllers for time wheels
+  late FixedExtentScrollController _hourCtrl;
+  late FixedExtentScrollController _minuteCtrl;
+  late FixedExtentScrollController _ampmCtrl;
+
   @override
   void initState() {
     super.initState();
@@ -41,6 +46,9 @@ class _PrashnaInputScreenState extends State<PrashnaInputScreen> {
     _latCtrl = TextEditingController(text: LocationService.lat.toStringAsFixed(4));
     _lonCtrl = TextEditingController(text: LocationService.lon.toStringAsFixed(4));
     _tzCtrl = TextEditingController(text: '${LocationService.tzOffset >= 0 ? '+' : ''}${LocationService.tzOffset}');
+    _hourCtrl = FixedExtentScrollController(initialItem: _hour - 1);
+    _minuteCtrl = FixedExtentScrollController(initialItem: _minute);
+    _ampmCtrl = FixedExtentScrollController(initialItem: _ampm == 'AM' ? 0 : 1);
   }
 
   @override
@@ -50,6 +58,9 @@ class _PrashnaInputScreenState extends State<PrashnaInputScreen> {
     _latCtrl.dispose();
     _lonCtrl.dispose();
     _tzCtrl.dispose();
+    _hourCtrl.dispose();
+    _minuteCtrl.dispose();
+    _ampmCtrl.dispose();
     super.dispose();
   }
 
@@ -248,29 +259,29 @@ class _PrashnaInputScreenState extends State<PrashnaInputScreen> {
                         Text('ಸಮಯ:', style: TextStyle(color: kMuted, fontWeight: FontWeight.w600)),
                         const SizedBox(width: 8),
                         // Hour wheel (1-12)
-                        _scrollWheel(
-                          value: _hour,
-                          items: List.generate(12, (i) => i + 1),
-                          label: (v) => '$v',
-                          onChanged: (v) => setState(() => _hour = v),
+                        _buildWheel(
+                          controller: _hourCtrl,
+                          count: 12,
+                          label: (i) => '${i + 1}',
+                          onChanged: (i) => setState(() => _hour = i + 1),
                           width: 48,
                         ),
                         Text(' : ', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w900, color: kText)),
                         // Minute wheel (0-59)
-                        _scrollWheel(
-                          value: _minute,
-                          items: List.generate(60, (i) => i),
-                          label: (v) => v.toString().padLeft(2, '0'),
-                          onChanged: (v) => setState(() => _minute = v),
+                        _buildWheel(
+                          controller: _minuteCtrl,
+                          count: 60,
+                          label: (i) => i.toString().padLeft(2, '0'),
+                          onChanged: (i) => setState(() => _minute = i),
                           width: 48,
                         ),
                         const SizedBox(width: 8),
                         // AM/PM wheel
-                        _scrollWheel(
-                          value: _ampm == 'AM' ? 0 : 1,
-                          items: [0, 1],
-                          label: (v) => v == 0 ? 'AM' : 'PM',
-                          onChanged: (v) => setState(() => _ampm = v == 0 ? 'AM' : 'PM'),
+                        _buildWheel(
+                          controller: _ampmCtrl,
+                          count: 2,
+                          label: (i) => i == 0 ? 'AM' : 'PM',
+                          onChanged: (i) => setState(() => _ampm = i == 0 ? 'AM' : 'PM'),
                           width: 52,
                         ),
                       ],
@@ -338,6 +349,9 @@ class _PrashnaInputScreenState extends State<PrashnaInputScreen> {
                               _minute = now.minute;
                               _ampm = now.hour >= 12 ? 'PM' : 'AM';
                             });
+                            _hourCtrl.animateToItem(_hour - 1, duration: const Duration(milliseconds: 300), curve: Curves.easeOut);
+                            _minuteCtrl.animateToItem(_minute, duration: const Duration(milliseconds: 300), curve: Curves.easeOut);
+                            _ampmCtrl.animateToItem(_ampm == 'AM' ? 0 : 1, duration: const Duration(milliseconds: 300), curve: Curves.easeOut);
                           },
                           style: ElevatedButton.styleFrom(
                             backgroundColor: kTeal,
@@ -397,41 +411,39 @@ class _PrashnaInputScreenState extends State<PrashnaInputScreen> {
     );
   }
 
-  /// Compact scrollable wheel picker
-  Widget _scrollWheel<T>({
-    required T value,
-    required List<T> items,
-    required String Function(T) label,
-    required ValueChanged<T> onChanged,
+  /// Compact scrollable wheel picker with persistent controller
+  Widget _buildWheel({
+    required FixedExtentScrollController controller,
+    required int count,
+    required String Function(int) label,
+    required ValueChanged<int> onChanged,
     double width = 50,
   }) {
-    final idx = items.indexOf(value).clamp(0, items.length - 1);
-    final ctrl = FixedExtentScrollController(initialItem: idx);
     return Container(
       width: width,
-      height: 80,
+      height: 100,
       decoration: BoxDecoration(
         color: kPurple2.withOpacity(0.06),
         borderRadius: BorderRadius.circular(10),
         border: Border.all(color: kPurple2.withOpacity(0.2)),
       ),
       child: ListWheelScrollView.useDelegate(
-        controller: ctrl,
-        itemExtent: 28,
-        diameterRatio: 1.2,
+        controller: controller,
+        itemExtent: 32,
+        diameterRatio: 1.4,
+        perspective: 0.003,
         physics: const FixedExtentScrollPhysics(),
-        onSelectedItemChanged: (i) => onChanged(items[i]),
+        onSelectedItemChanged: onChanged,
         childDelegate: ListWheelChildBuilderDelegate(
-          childCount: items.length,
+          childCount: count,
           builder: (ctx, i) {
-            final selected = i == idx;
             return Center(
               child: Text(
-                label(items[i]),
+                label(i),
                 style: TextStyle(
-                  fontSize: selected ? 16 : 12,
-                  fontWeight: selected ? FontWeight.w900 : FontWeight.w500,
-                  color: selected ? kPurple2 : kMuted,
+                  fontSize: 15,
+                  fontWeight: FontWeight.w800,
+                  color: kPurple2,
                 ),
               ),
             );
