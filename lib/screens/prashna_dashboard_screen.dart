@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../core/calculator.dart';
+import '../constants/strings.dart';
 import '../widgets/common.dart';
 import '../widgets/prashna_chart.dart';
 import '../widgets/planet_detail_sheet.dart';
@@ -32,8 +33,24 @@ class PrashnaDashboardScreen extends StatefulWidget {
   State<PrashnaDashboardScreen> createState() => _PrashnaDashboardScreenState();
 }
 
-class _PrashnaDashboardScreenState extends State<PrashnaDashboardScreen> {
-  String? _bhavaPlanet; // selected planet for bhava reference
+class _PrashnaDashboardScreenState extends State<PrashnaDashboardScreen>
+    with SingleTickerProviderStateMixin {
+  String? _bhavaPlanet;
+  late TabController _tabCtrl;
+
+  static const _tabs = ['ಕುಂಡಲಿ', 'ಸ್ಫುಟ', 'ಪಂಚಾಂಗ'];
+
+  @override
+  void initState() {
+    super.initState();
+    _tabCtrl = TabController(length: _tabs.length, vsync: this);
+  }
+
+  @override
+  void dispose() {
+    _tabCtrl.dispose();
+    super.dispose();
+  }
 
   void _showPlanetDetail(String pName) {
     final info = widget.result.planets[pName];
@@ -51,21 +68,6 @@ class _PrashnaDashboardScreenState extends State<PrashnaDashboardScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final screenWidth = MediaQuery.of(context).size.width;
-    final isLandscape = MediaQuery.of(context).orientation == Orientation.landscape;
-    final isLargeScreen = screenWidth > 600 || isLandscape;
-
-    // Chart size: make it large enough to fit the outer labels
-    final chartSize = isLargeScreen
-        ? (screenWidth * 0.45).clamp(350.0, 550.0)
-        : screenWidth * 0.92;
-    final textScale = isLargeScreen ? (chartSize / 350.0).clamp(1.1, 1.4) : 1.0;
-
-    final dateStr = '${widget.dob.day.toString().padLeft(2, '0')}/'
-        '${widget.dob.month.toString().padLeft(2, '0')}/'
-        '${widget.dob.year}';
-    final timeStr = '${widget.hour}:${widget.minute.toString().padLeft(2, '0')} ${widget.ampm}';
-
     return Scaffold(
       backgroundColor: kBg,
       appBar: AppBar(
@@ -75,61 +77,106 @@ class _PrashnaDashboardScreenState extends State<PrashnaDashboardScreen> {
         iconTheme: IconThemeData(color: kText),
         elevation: 0,
       ),
-      body: SingleChildScrollView(
-        child: Column(
-          children: [
-            const SizedBox(height: 8),
-
-            // Info header
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: kCard,
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: kBorder),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(widget.name.isNotEmpty ? widget.name : 'ಪ್ರಶ್ನ',
-                        style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: kPurple2)),
-                    const SizedBox(height: 4),
-                    Text('$dateStr  $timeStr  •  ${widget.place}',
-                        style: TextStyle(fontSize: 13, color: kMuted)),
-                  ],
-                ),
+      body: Column(
+        children: [
+          // Info header
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+            child: Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: kCard,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: kBorder),
+              ),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(widget.name.isNotEmpty ? widget.name : 'ಪ್ರಶ್ನ',
+                            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w900, color: kPurple2)),
+                        const SizedBox(height: 2),
+                        Text(
+                          '${widget.dob.day.toString().padLeft(2, '0')}/${widget.dob.month.toString().padLeft(2, '0')}/${widget.dob.year}  '
+                          '${widget.hour}:${widget.minute.toString().padLeft(2, '0')} ${widget.ampm}  •  ${widget.place}',
+                          style: TextStyle(fontSize: 12, color: kMuted),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
               ),
             ),
-            const SizedBox(height: 12),
+          ),
 
-            // ── Rashi Kundali ──
-            _chartSection(
-              label: 'ರಾಶಿ ಕುಂಡಲಿ',
-              isBhava: false,
-              chartSize: chartSize,
-              textScale: textScale,
+          // Tab bar
+          Container(
+            margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+            child: TabBar(
+              controller: _tabCtrl,
+              tabs: _tabs.map((t) => Tab(text: t)).toList(),
+              labelColor: kPurple2,
+              unselectedLabelColor: kMuted,
+              labelStyle: const TextStyle(fontWeight: FontWeight.w800, fontSize: 13),
+              indicatorColor: kPurple2,
+              indicatorWeight: 3,
             ),
-            const SizedBox(height: 16),
+          ),
 
-            // ── Bhava reference buttons ──
-            _buildBhavaControls(),
-            const SizedBox(height: 8),
-
-            // ── Bhava Kundali ──
-            _chartSection(
-              label: _bhavaPlanet != null
-                  ? 'ಭಾವ ಕುಂಡಲಿ ($_bhavaPlanet ಕೇಂದ್ರ)'
-                  : 'ಭಾವ ಕುಂಡಲಿ',
-              isBhava: true,
-              chartSize: chartSize,
-              textScale: textScale,
+          // Tab content
+          Expanded(
+            child: TabBarView(
+              controller: _tabCtrl,
+              children: [
+                _buildKundaliTab(),
+                _buildSphutas(),
+                _buildPanchangTab(),
+              ],
             ),
-            const SizedBox(height: 24),
-          ],
-        ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ═══════════════════════════════════════════
+  // TAB 1: KUNDALI (Rashi + Bhava charts)
+  // ═══════════════════════════════════════════
+  Widget _buildKundaliTab() {
+    final screenWidth = MediaQuery.of(context).size.width;
+    final isLandscape = MediaQuery.of(context).orientation == Orientation.landscape;
+    final isLargeScreen = screenWidth > 600 || isLandscape;
+    final chartSize = isLargeScreen
+        ? (screenWidth * 0.45).clamp(350.0, 550.0)
+        : screenWidth * 0.92;
+    final textScale = isLargeScreen ? (chartSize / 350.0).clamp(1.1, 1.4) : 1.0;
+
+    return SingleChildScrollView(
+      child: Column(
+        children: [
+          const SizedBox(height: 8),
+          _chartSection(
+            label: 'ರಾಶಿ ಕುಂಡಲಿ',
+            isBhava: false,
+            chartSize: chartSize,
+            textScale: textScale,
+          ),
+          const SizedBox(height: 16),
+          _buildBhavaControls(),
+          const SizedBox(height: 8),
+          _chartSection(
+            label: _bhavaPlanet != null
+                ? 'ಭಾವ ಕುಂಡಲಿ ($_bhavaPlanet ಕೇಂದ್ರ)'
+                : 'ಭಾವ ಕುಂಡಲಿ',
+            isBhava: true,
+            chartSize: chartSize,
+            textScale: textScale,
+          ),
+          const SizedBox(height: 24),
+        ],
       ),
     );
   }
@@ -188,7 +235,6 @@ class _PrashnaDashboardScreenState extends State<PrashnaDashboardScreen> {
               spacing: 4,
               runSpacing: 4,
               children: [
-                // Lagna (default)
                 _bhavaChip('ಲಗ್ನ', null),
                 ...planets.map((p) => _bhavaChip(p, p)),
               ],
@@ -218,6 +264,171 @@ class _PrashnaDashboardScreenState extends State<PrashnaDashboardScreen> {
           ),
         ),
       ),
+    );
+  }
+
+  // ═══════════════════════════════════════════
+  // TAB 2: SPHUTA (Graha + Upagraha)
+  // ═══════════════════════════════════════════
+  Widget _buildSphutas() {
+    final r = widget.result;
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        children: [
+          // Graha Sphuta
+          Text('ಗ್ರಹ ಸ್ಫುಟ', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 15, color: kPurple2)),
+          const SizedBox(height: 8),
+          AppCard(
+            padding: EdgeInsets.zero,
+            child: Column(
+              children: [
+                _tableHeader(['ಗ್ರಹ', 'ರಾಶಿ', 'ಸ್ಫುಟ', 'ನಕ್ಷತ್ರ - ಪದ']),
+                ...planetOrder.map((p) {
+                  final info = r.planets[p];
+                  if (info == null) return const SizedBox.shrink();
+                  final ri = (info.longitude / 30).floor() % 12;
+                  return _tableRow([
+                    appPlanetNames[p] ?? p,
+                    appRashi[ri],
+                    formatDeg(info.longitude),
+                    '${info.nakshatra} - ${info.pada}',
+                  ], bold0: true);
+                }),
+              ],
+            ),
+          ),
+          const SizedBox(height: 24),
+
+          // Upagraha Sphuta
+          Text('ಉಪಗ್ರಹ ಸ್ಫುಟ', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 15, color: kPurple2)),
+          const SizedBox(height: 8),
+          AppCard(
+            padding: EdgeInsets.zero,
+            child: Column(
+              children: [
+                _tableHeader(['ಉಪಗ್ರಹ', 'ರಾಶಿ', 'ಅಂಶ', 'ನಕ್ಷತ್ರ']),
+                ...sphutas16Order.map((sp) {
+                  final deg = r.advSphutas[sp];
+                  if (deg == null) return const SizedBox.shrink();
+                  final ri = (deg / 30).floor() % 12;
+                  final nakIdx = (deg / 13.333333).floor() % 27;
+                  final pada = ((deg % 13.333333) / 3.333333).floor() + 1;
+                  return _tableRow([
+                    sp, appRashi[ri], formatDeg(deg), '${appNak[nakIdx]}-$pada',
+                  ], bold0: true);
+                }),
+              ],
+            ),
+          ),
+          const SizedBox(height: 24),
+        ],
+      ),
+    );
+  }
+
+  // ═══════════════════════════════════════════
+  // TAB 3: PANCHANGA
+  // ═══════════════════════════════════════════
+  Widget _buildPanchangTab() {
+    final r = widget.result;
+    final pan = r.panchang;
+    final dateStr = '${widget.dob.day.toString().padLeft(2, "0")}-${widget.dob.month.toString().padLeft(2, "0")}-${widget.dob.year}';
+    final timeStr = '${widget.hour}:${widget.minute.toString().padLeft(2, "0")} ${widget.ampm}';
+
+    return SingleChildScrollView(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          AppCard(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            if (widget.name.isNotEmpty) _kv('ಹೆಸರು', widget.name),
+            _kv('ಸ್ಥಳ', widget.place),
+            _kv('ದಿನಾಂಕ', dateStr),
+            _kv('ಸಮಯ', timeStr),
+          ])),
+          const SizedBox(height: 8),
+          AppCard(
+            padding: EdgeInsets.zero,
+            child: Column(children: [
+              _tableRow(['ಸಂವತ್ಸರ', pan.samvatsara]),
+              _tableRow(['ವಾರ', pan.vara]),
+              _tableRow(['ತಿಥಿ', pan.tithi]),
+              _tableRow(['ಚಂದ್ರ ನಕ್ಷತ್ರ', () {
+                final moonPada = r.planets['ಚಂದ್ರ']?.pada;
+                final fallback = (pan.nakPercent * 4).floor() + 1;
+                final p = moonPada ?? (fallback < 1 ? 1 : fallback > 4 ? 4 : fallback);
+                return '${pan.nakshatra} - ಪದ $p';
+              }()]),
+              _tableRow(['ಯೋಗ', pan.yoga]),
+              _tableRow(['ಕರಣ', pan.karana]),
+              _tableRow(['ಚಂದ್ರ ರಾಶಿ', pan.chandraRashi]),
+              _tableRow(['ಚಂದ್ರ ಮಾಸ', pan.chandraMasa]),
+              _tableRow(['ಸೌರ ನಕ್ಷತ್ರ', '${pan.suryaNakshatra} - ಪದ ${pan.suryaPada}']),
+              _tableRow(['ಸೌರ ಮಾಸ', pan.souraMasa]),
+              _tableRow(['ಸೌರ ಮಾಸ ಗತ ದಿನ', pan.souraMasaGataDina]),
+              _tableRow(['ಸೂರ್ಯೋದಯ', pan.sunrise]),
+              _tableRow(['ಸೂರ್ಯಾಸ್ತ', pan.sunset]),
+              _tableRow(['ಉದಯಾದಿ ಘಟಿ', pan.udayadiGhati]),
+              _tableRow(['ಗತ ಘಟಿ', pan.gataGhati]),
+              _tableRow(['ಪರಮ ಘಟಿ', pan.paramaGhati]),
+              _tableRow(['ಶೇಷ ಘಟಿ', pan.shesha]),
+              _tableRow(['ವಿಷ ಘಟಿ', pan.vishaPraghati]),
+              _tableRow(['ಅಮೃತ ಘಟಿ', pan.amrutaPraghati]),
+            ]),
+          ),
+          const SizedBox(height: 24),
+        ],
+      ),
+    );
+  }
+
+  // ═══════════════════════════════════════════
+  // HELPERS
+  // ═══════════════════════════════════════════
+  Widget _tableHeader(List<String> cols) {
+    return Container(
+      color: kPurple2.withOpacity(0.12),
+      child: Row(
+        children: cols.map((c) => Expanded(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
+            child: Text(c, style: TextStyle(fontWeight: FontWeight.w800, fontSize: 12, color: kText)),
+          ),
+        )).toList(),
+      ),
+    );
+  }
+
+  Widget _tableRow(List<String> cols, {bool bold0 = false}) {
+    return Container(
+      decoration: BoxDecoration(border: Border(bottom: BorderSide(color: kBorder))),
+      child: Row(
+        children: cols.asMap().entries.map((e) => Expanded(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+            child: Text(e.value,
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: (e.key == 0 && bold0) ? FontWeight.w700 : FontWeight.normal,
+                color: kText,
+              ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+        )).toList(),
+      ),
+    );
+  }
+
+  Widget _kv(String k, String v) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: Row(children: [
+        Text('$k: ', style: TextStyle(fontWeight: FontWeight.w800, color: kPurple2)),
+        Expanded(child: Text(v, style: const TextStyle())),
+      ]),
     );
   }
 }
