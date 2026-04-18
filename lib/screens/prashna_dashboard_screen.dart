@@ -38,7 +38,7 @@ class _PrashnaDashboardScreenState extends State<PrashnaDashboardScreen>
   String? _bhavaPlanet;
   late TabController _tabCtrl;
 
-  static const _tabs = ['ಕುಂಡಲಿ', 'ಸ್ಫುಟ', 'ಪಂಚಾಂಗ'];
+  static const _tabs = ['ಕುಂಡಲಿ', 'ಸ್ಫುಟ', 'ಪಂಚಾಂಗ', 'ಷಡ್ವರ್ಗ'];
 
   @override
   void initState() {
@@ -134,6 +134,7 @@ class _PrashnaDashboardScreenState extends State<PrashnaDashboardScreen>
                 _buildKundaliTab(),
                 _buildSphutas(),
                 _buildPanchangTab(),
+                _buildShadvargaTab(),
               ],
             ),
           ),
@@ -376,6 +377,149 @@ class _PrashnaDashboardScreenState extends State<PrashnaDashboardScreen>
               _tableRow(['ವಿಷ ಘಟಿ', pan.vishaPraghati]),
               _tableRow(['ಅಮೃತ ಘಟಿ', pan.amrutaPraghati]),
             ]),
+          ),
+          const SizedBox(height: 24),
+        ],
+      ),
+    );
+  }
+
+  // ═══════════════════════════════════════════
+  // TAB 4: SHADVARGA
+  // ═══════════════════════════════════════════
+  Widget _buildShadvargaTab() {
+    final r = widget.result;
+
+    // Column headers
+    const hGraha = 'ಗ್ರಹ';
+    const hD3 = 'ದ್ರೇಕ್';
+    const hD2 = 'ಹೋರ';
+    const hD9 = 'ನ';
+    const hD30 = 'ತ್ರಿಶಾಂಸ';
+    const hD12 = 'ದ್ವಾಧ';
+    const hKshetra = 'ಕ್ಷೇಕ್';
+
+    String getRashiLord(String rashiNameKn) {
+      int idx = knRashi.indexOf(rashiNameKn);
+      if (idx < 0) return rashiNameKn;
+      switch (idx) {
+        case 0: return 'ಕುಜ';
+        case 1: return 'ಶುಕ್ರ';
+        case 2: return 'ಬುಧ';
+        case 3: return 'ಚಂ';
+        case 4: return 'ಸೂ';
+        case 5: return 'ಬುಧ';
+        case 6: return 'ಶುಕ್ರ';
+        case 7: return 'ಕುಜ';
+        case 8: return 'ಗುರು';
+        case 9: return 'ಶ';
+        case 10: return 'ಶ';
+        case 11: return 'ಗುರು';
+      }
+      return '';
+    }
+
+    int rowIdx = 0;
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        children: [
+          // Title
+          Container(
+            padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 16),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(colors: [kPurple1.withOpacity(0.12), kPurple2.withOpacity(0.06)]),
+              borderRadius: const BorderRadius.only(
+                topLeft: Radius.circular(14), topRight: Radius.circular(14),
+              ),
+              border: Border(bottom: BorderSide(color: kPurple2.withOpacity(0.3), width: 2)),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.grid_view_rounded, size: 18, color: kPurple2),
+                const SizedBox(width: 8),
+                Text('ಷಡ್ವರ್ಗ', style: TextStyle(
+                  fontWeight: FontWeight.w900, fontSize: 16, color: kPurple2,
+                )),
+              ],
+            ),
+          ),
+
+          // Table
+          Container(
+            decoration: BoxDecoration(
+              color: kCard,
+              borderRadius: const BorderRadius.only(
+                bottomLeft: Radius.circular(14), bottomRight: Radius.circular(14),
+              ),
+              border: Border.all(color: kBorder),
+              boxShadow: [
+                BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 10, offset: const Offset(0, 4)),
+              ],
+            ),
+            child: ClipRRect(
+              borderRadius: const BorderRadius.only(
+                bottomLeft: Radius.circular(14), bottomRight: Radius.circular(14),
+              ),
+              child: Table(
+                border: TableBorder.symmetric(
+                  inside: BorderSide(color: kBorder.withOpacity(0.6), width: 0.5),
+                ),
+                columnWidths: const {
+                  0: FlexColumnWidth(1.3),
+                  1: FlexColumnWidth(1),
+                  2: FlexColumnWidth(1),
+                  3: FlexColumnWidth(1),
+                  4: FlexColumnWidth(1),
+                  5: FlexColumnWidth(1),
+                  6: FlexColumnWidth(1),
+                },
+                children: [
+                  // Header row
+                  TableRow(
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(colors: [kPurple1.withOpacity(0.15), kPurple2.withOpacity(0.08)]),
+                    ),
+                    children: [hGraha, hD3, hD2, hD9, hD30, hD12, hKshetra].map((h) =>
+                      Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        child: Text(h, textAlign: TextAlign.center, style: TextStyle(
+                          fontWeight: FontWeight.w900, fontSize: 13, color: kPurple2,
+                        )),
+                      ),
+                    ).toList(),
+                  ),
+                  // Data rows
+                  ...planetOrder.map((pNameKey) {
+                    final pInfo = r.planets[pNameKey];
+                    if (pInfo == null) return const TableRow(children: [SizedBox(), SizedBox(), SizedBox(), SizedBox(), SizedBox(), SizedBox(), SizedBox()]);
+
+                    final details = AstroCalculator.getPlanetDetail(pNameKey, pInfo.longitude, pInfo.speed, r.planets['ರವಿ']?.longitude ?? 0.0);
+                    final displayName = appPlanetNames[pNameKey] ?? pNameKey;
+                    final isEvenRow = rowIdx++ % 2 == 0;
+
+                    return TableRow(
+                      decoration: BoxDecoration(
+                        color: isEvenRow ? kBg.withOpacity(0.5) : kCard,
+                      ),
+                      children: [
+                        Padding(padding: const EdgeInsets.symmetric(vertical: 12), child: Text(
+                          displayName, textAlign: TextAlign.center,
+                          style: TextStyle(fontWeight: FontWeight.w900, fontSize: 13, color: kTeal),
+                        )),
+                        ...[details['d3'], details['d2'], details['d9'], details['d30'], details['d12'], details['d1']].map((v) =>
+                          Padding(padding: const EdgeInsets.symmetric(vertical: 12), child: Text(
+                            getRashiLord(v as String), textAlign: TextAlign.center,
+                            style: TextStyle(fontSize: 13, fontWeight: FontWeight.w800, color: kText),
+                          )),
+                        ),
+                      ],
+                    );
+                  }),
+                ],
+              ),
+            ),
           ),
           const SizedBox(height: 24),
         ],
