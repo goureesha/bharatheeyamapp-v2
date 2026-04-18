@@ -212,7 +212,7 @@ class PrashnaChart extends StatelessWidget {
     }
 
     // Outer margin for navamsha/dvad labels
-    const outerMargin = 18.0;
+    const outerMargin = 30.0;
 
     return Center(
       child: LayoutBuilder(
@@ -413,70 +413,94 @@ class PrashnaChart extends StatelessWidget {
 
       if (navText.isEmpty && dvadText.isEmpty) continue;
 
-      // Combined label: navamsha (Kannada) on one line, dvadashamsha (Hindi) on next
-      final labelWidget = Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          if (navText.isNotEmpty)
-            Text(navText,
+      // Build navamsha line (Kannada green) and dvadashamsha line (Hindi purple)
+      final navWidget = navText.isNotEmpty
+          ? Text(navText,
               style: TextStyle(
-                fontSize: 7 * textScale,
-                fontWeight: FontWeight.w800,
-                color: const Color(0xFF2F855A), // green for navamsha
+                fontSize: 9 * textScale,
+                fontWeight: FontWeight.w900,
+                color: const Color(0xFF2F855A),
               ),
               overflow: TextOverflow.ellipsis,
-            ),
-          if (dvadText.isNotEmpty)
-            Text(dvadText,
+              maxLines: 1,
+            )
+          : null;
+      final dvadWidget = dvadText.isNotEmpty
+          ? Text(dvadText,
               style: TextStyle(
-                fontSize: 7 * textScale,
-                fontWeight: FontWeight.w800,
-                color: const Color(0xFF805AD5), // purple for dvadashamsha
+                fontSize: 9 * textScale,
+                fontWeight: FontWeight.w900,
+                color: const Color(0xFF805AD5),
               ),
               overflow: TextOverflow.ellipsis,
-            ),
-        ],
-      );
+              maxLines: 1,
+            )
+          : null;
 
       double top, left;
-      double width, height;
+      double ww, hh;
+      Widget child;
 
       switch (edge) {
         case 'top':
-          // Above the rashi box
           top = 0;
           left = outerMargin + pos.dx;
-          width = cw;
-          height = outerMargin;
+          ww = cw;
+          hh = outerMargin;
+          child = Column(
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: [
+              if (navWidget != null) navWidget,
+              if (dvadWidget != null) dvadWidget,
+            ],
+          );
           break;
         case 'bottom':
-          // Below the rashi box
           top = outerMargin + pos.dy + cw;
           left = outerMargin + pos.dx;
-          width = cw;
-          height = outerMargin;
+          ww = cw;
+          hh = outerMargin;
+          child = Column(
+            mainAxisAlignment: MainAxisAlignment.start,
+            children: [
+              if (navWidget != null) navWidget,
+              if (dvadWidget != null) dvadWidget,
+            ],
+          );
           break;
         case 'left':
-          // Left of the rashi box
           top = outerMargin + pos.dy;
           left = 0;
-          width = outerMargin;
-          height = cw;
+          ww = outerMargin;
+          hh = cw;
+          child = Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              if (navWidget != null) FittedBox(fit: BoxFit.scaleDown, child: navWidget),
+              if (dvadWidget != null) FittedBox(fit: BoxFit.scaleDown, child: dvadWidget),
+            ],
+          );
           break;
         case 'right':
         default:
-          // Right of the rashi box
           top = outerMargin + pos.dy;
           left = outerMargin + pos.dx + cw;
-          width = outerMargin;
-          height = cw;
+          ww = outerMargin;
+          hh = cw;
+          child = Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              if (navWidget != null) FittedBox(fit: BoxFit.scaleDown, child: navWidget),
+              if (dvadWidget != null) FittedBox(fit: BoxFit.scaleDown, child: dvadWidget),
+            ],
+          );
           break;
       }
 
       widgets.add(Positioned(
         top: top, left: left,
-        width: width, height: height,
-        child: Center(child: labelWidget),
+        width: ww, height: hh,
+        child: child,
       ));
     }
 
