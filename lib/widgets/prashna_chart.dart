@@ -73,7 +73,7 @@ class PrashnaChart extends StatelessWidget {
       case 'ಬುಧ': return const Color(0xFF2F855A);
       case 'ಗುರು': return const Color(0xFFDD6B20);
       case 'ಶುಕ್ರ': return const Color(0xFFB83280);
-      case 'ಶನಿ': return const Color(0xFF1A202C);
+      case 'ಶನಿ': return const Color(0xFF5A6A8A);
       case 'ರಾಹು': return const Color(0xFF744210);
       case 'ಕೇತು': return const Color(0xFF4A5568);
       case 'ಲಗ್ನ': return const Color(0xFFE53E3E);
@@ -445,7 +445,7 @@ class PrashnaChart extends StatelessWidget {
 
         switch (edge) {
           case 'top':
-            // 3 columns above the house: drek 0=left, 1=mid, 2=right
+            // 3 columns: I(left), II(mid), III(right)
             widgets.add(Positioned(
               top: 0,
               left: outerMargin + pos.dx + (drek * colW),
@@ -459,10 +459,11 @@ class PrashnaChart extends StatelessWidget {
             break;
 
           case 'bottom':
-            // 3 columns below the house: drek 0=left, 1=mid, 2=right
+            // 3 columns REVERSED: III(left), II(mid), I(right)
+            final revDrek = 2 - drek;
             widgets.add(Positioned(
               top: outerMargin + pos.dy + cw,
-              left: outerMargin + pos.dx + (drek * colW),
+              left: outerMargin + pos.dx + (revDrek * colW),
               width: colW,
               height: outerMargin,
               child: Align(
@@ -473,9 +474,10 @@ class PrashnaChart extends StatelessWidget {
             break;
 
           case 'left':
-            // 3 rows on left: drek 0=top, 1=mid, 2=bottom
+            // 3 rows REVERSED: III(top), II(mid), I(bottom)
+            final revDrek = 2 - drek;
             widgets.add(Positioned(
-              top: outerMargin + pos.dy + (drek * drekZone),
+              top: outerMargin + pos.dy + (revDrek * drekZone),
               left: 0,
               width: outerMargin,
               height: drekZone,
@@ -485,7 +487,7 @@ class PrashnaChart extends StatelessWidget {
 
           case 'right':
           default:
-            // 3 rows on right: drek 0=top, 1=mid, 2=bottom
+            // 3 rows: I(top), II(mid), III(bottom)
             widgets.add(Positioned(
               top: outerMargin + pos.dy + (drek * drekZone),
               left: outerMargin + pos.dx + cw,
