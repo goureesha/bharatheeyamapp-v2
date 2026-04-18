@@ -73,7 +73,7 @@ class PrashnaChart extends StatelessWidget {
       case 'ಬುಧ': return const Color(0xFF2F855A);
       case 'ಗುರು': return const Color(0xFFDD6B20);
       case 'ಶುಕ್ರ': return const Color(0xFFB83280);
-      case 'ಶನಿ': return const Color(0xFF5A6A8A);
+      case 'ಶನಿ': return const Color(0xFF1A202C);
       case 'ರಾಹು': return const Color(0xFF744210);
       case 'ಕೇತು': return const Color(0xFF4A5568);
       case 'ಲಗ್ನ': return const Color(0xFFE53E3E);
@@ -356,15 +356,18 @@ class PrashnaChart extends StatelessWidget {
       onTap: () { if (onPlanetTap != null) onPlanetTap!(p.name); },
       onLongPress: () { if (onPlanetLongPress != null) onPlanetLongPress!(p.name); },
       behavior: HitTestBehavior.opaque,
-      child: Text(
-        displayText,
-        style: TextStyle(
-          fontSize: (isSelected ? 11 : 8.5) * textScale,
-          fontWeight: FontWeight.w900,
-          color: color.withValues(alpha: opacity),
-          decoration: isSelected ? TextDecoration.underline : null,
-          decorationColor: color,
-          decorationThickness: 2,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 2, horizontal: 1),
+        child: Text(
+          displayText,
+          style: TextStyle(
+            fontSize: (isSelected ? 11 : 8.5) * textScale,
+            fontWeight: FontWeight.w900,
+            color: color.withOpacity(opacity),
+            decoration: isSelected ? TextDecoration.underline : null,
+            decorationColor: color,
+            decorationThickness: 2,
+          ),
         ),
       ),
     );
