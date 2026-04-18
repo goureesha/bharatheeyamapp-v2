@@ -176,6 +176,8 @@ class _PrashnaDashboardScreenState extends State<PrashnaDashboardScreen>
             chartSize: chartSize,
             textScale: textScale,
           ),
+          const SizedBox(height: 16),
+          _buildYogaSection(),
           const SizedBox(height: 24),
         ],
       ),
@@ -525,6 +527,320 @@ class _PrashnaDashboardScreenState extends State<PrashnaDashboardScreen>
         ],
       ),
     );
+  }
+
+  // ═══════════════════════════════════════════
+  // YOGA SECTION (in Kundali tab)
+  // ═══════════════════════════════════════════
+  Widget _buildYogaSection() {
+    final yogas = _detectYogas();
+    if (yogas.isEmpty) {
+      return Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        child: AppCard(
+          child: Center(child: Text('ಯೋಗಗಳು ಕಂಡುಬಂದಿಲ್ಲ', style: TextStyle(color: kMuted, fontWeight: FontWeight.w600))),
+        ),
+      );
+    }
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: Column(
+        children: [
+          // Title
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 16),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(colors: [kTeal.withOpacity(0.15), kPurple2.withOpacity(0.08)]),
+              borderRadius: const BorderRadius.only(
+                topLeft: Radius.circular(14), topRight: Radius.circular(14),
+              ),
+              border: Border(bottom: BorderSide(color: kTeal.withOpacity(0.4), width: 2)),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.auto_awesome, size: 18, color: kTeal),
+                const SizedBox(width: 8),
+                Text('ಯೋಗಗಳು', style: TextStyle(
+                  fontWeight: FontWeight.w900, fontSize: 16, color: kTeal,
+                )),
+                const SizedBox(width: 8),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: kTeal.withOpacity(0.2),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Text('${yogas.length}', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w900, color: kTeal)),
+                ),
+              ],
+            ),
+          ),
+          // Yoga list
+          Container(
+            width: double.infinity,
+            decoration: BoxDecoration(
+              color: kCard,
+              borderRadius: const BorderRadius.only(
+                bottomLeft: Radius.circular(14), bottomRight: Radius.circular(14),
+              ),
+              border: Border.all(color: kBorder),
+            ),
+            child: Column(
+              children: yogas.asMap().entries.map((entry) {
+                final y = entry.value;
+                final isEven = entry.key % 2 == 0;
+                final isShubha = y['shubha'] == true;
+                return Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                  decoration: BoxDecoration(
+                    color: isEven ? kBg.withOpacity(0.4) : kCard,
+                    border: Border(bottom: BorderSide(color: kBorder.withOpacity(0.5))),
+                  ),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Icon(
+                        isShubha ? Icons.check_circle : Icons.warning_amber_rounded,
+                        size: 16,
+                        color: isShubha ? const Color(0xFF2F855A) : const Color(0xFFE53E3E),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(y['name'] as String, style: TextStyle(
+                              fontWeight: FontWeight.w900, fontSize: 13,
+                              color: isShubha ? const Color(0xFF2F855A) : const Color(0xFFE53E3E),
+                            )),
+                            const SizedBox(height: 2),
+                            Text(y['desc'] as String, style: TextStyle(
+                              fontSize: 11, color: kMuted, fontWeight: FontWeight.w600,
+                            )),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              }).toList(),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  List<Map<String, dynamic>> _detectYogas() {
+    final r = widget.result;
+    final yogas = <Map<String, dynamic>>[];
+
+    // Helper: get rashi index of a planet
+    int ri(String p) {
+      final info = r.planets[p];
+      return info != null ? (info.longitude / 30).floor() % 12 : -1;
+    }
+
+    // Helper: get bhava of a planet (1-12)
+    int bhava(String p) {
+      final info = r.planets[p];
+      if (info == null) return -1;
+      final lagnaRi = ri('ಲಗ್ನ');
+      final pRi = (info.longitude / 30).floor() % 12;
+      return ((pRi - lagnaRi + 12) % 12) + 1;
+    }
+
+    // Helper: are two planets in kendra (1,4,7,10) from each other?
+    bool inKendra(String p1, String p2) {
+      final r1 = ri(p1), r2 = ri(p2);
+      if (r1 < 0 || r2 < 0) return false;
+      final diff = (r2 - r1 + 12) % 12;
+      return [0, 3, 6, 9].contains(diff);
+    }
+
+    // Helper: are two planets conjunct (same rashi)?
+    bool conjunct(String p1, String p2) => ri(p1) == ri(p2) && ri(p1) >= 0;
+
+    // Helper: is planet in kendra from lagna?
+    bool inKendraFromLagna(String p) {
+      final b = bhava(p);
+      return [1, 4, 7, 10].contains(b);
+    }
+
+    // Helper: is planet in trikona from lagna?
+    bool inTrikonaFromLagna(String p) {
+      final b = bhava(p);
+      return [1, 5, 9].contains(b);
+    }
+
+    final lagnaRi = ri('ಲಗ್ನ');
+    final moonRi = ri('ಚಂದ್ರ');
+    final sunRi = ri('ರವಿ');
+    final marsRi = ri('ಕುಜ');
+    final mercRi = ri('ಬುಧ');
+    final jupRi = ri('ಗುರು');
+    final venRi = ri('ಶುಕ್ರ');
+    final satRi = ri('ಶನಿ');
+
+    // 1. Gaja Kesari Yoga — Jupiter in kendra from Moon
+    if (inKendra('ಚಂದ್ರ', 'ಗುರು')) {
+      yogas.add({'name': 'ಗಜ ಕೇಸರಿ ಯೋಗ', 'desc': 'ಗುರು ಚಂದ್ರನಿಂದ ಕೇಂದ್ರದಲ್ಲಿ — ಕೀರ್ತಿ, ಬುದ್ಧಿ, ಸಂಪತ್ತು', 'shubha': true});
+    }
+
+    // 2. Chandra-Mangala Yoga — Moon conjunct Mars
+    if (conjunct('ಚಂದ್ರ', 'ಕುಜ')) {
+      yogas.add({'name': 'ಚಂದ್ರ-ಮಂಗಳ ಯೋಗ', 'desc': 'ಚಂದ್ರ-ಕುಜ ಸಂಯೋಗ — ಧನ ಲಾಭ, ಸಾಹಸ', 'shubha': true});
+    }
+
+    // 3. Budha-Aditya Yoga — Sun conjunct Mercury
+    if (conjunct('ರವಿ', 'ಬುಧ')) {
+      yogas.add({'name': 'ಬುಧ-ಆದಿತ್ಯ ಯೋಗ', 'desc': 'ರವಿ-ಬುಧ ಸಂಯೋಗ — ಬುದ್ಧಿ, ವಾಕ್ಪಟುತ್ವ', 'shubha': true});
+    }
+
+    // 4. Pancha Mahapurusha Yogas
+    final ownHouses = <String, List<int>>{
+      'ಕುಜ': [0, 7],     // Aries, Scorpio
+      'ಬುಧ': [2, 5],     // Gemini, Virgo
+      'ಗುರು': [8, 11],   // Sagittarius, Pisces
+      'ಶುಕ್ರ': [1, 6],   // Taurus, Libra
+      'ಶನಿ': [9, 10],    // Capricorn, Aquarius
+    };
+    final exaltH = <String, int>{'ಕುಜ': 9, 'ಬುಧ': 5, 'ಗುರು': 3, 'ಶುಕ್ರ': 11, 'ಶನಿ': 6};
+    final yogaNames = <String, String>{'ಕುಜ': 'ರುಚಕ', 'ಬುಧ': 'ಭದ್ರ', 'ಗುರು': 'ಹಂಸ', 'ಶುಕ್ರ': 'ಮಾಲವ್ಯ', 'ಶನಿ': 'ಶಶ'};
+
+    for (final p in ['ಕುಜ', 'ಬುಧ', 'ಗುರು', 'ಶುಕ್ರ', 'ಶನಿ']) {
+      final pRi = ri(p);
+      if (pRi < 0) continue;
+      final inOwn = ownHouses[p]!.contains(pRi);
+      final inExalt = exaltH[p] == pRi;
+      if ((inOwn || inExalt) && inKendraFromLagna(p)) {
+        yogas.add({
+          'name': '${yogaNames[p]} ಯೋಗ (ಪಂಚ ಮಹಾಪುರುಷ)',
+          'desc': '$p ಸ್ವಕ್ಷೇತ್ರ/ಉಚ್ಚದಲ್ಲಿ ಕೇಂದ್ರದಲ್ಲಿ — ಮಹಾ ಫಲ',
+          'shubha': true,
+        });
+      }
+    }
+
+    // 5. Amala Yoga — Benefic in 10th from lagna
+    for (final p in ['ಗುರು', 'ಶುಕ್ರ', 'ಬುಧ']) {
+      if (bhava(p) == 10) {
+        yogas.add({'name': 'ಅಮಲ ಯೋಗ', 'desc': '$p 10ನೇ ಭಾವದಲ್ಲಿ — ಕೀರ್ತಿ, ಶುಭ ಕರ್ಮ', 'shubha': true});
+        break;
+      }
+    }
+
+    // 6. Dhana Yoga — Lord of 2nd/11th in kendra/trikona
+    for (final p in ['ರವಿ', 'ಚಂದ್ರ', 'ಕುಜ', 'ಬುಧ', 'ಗುರು', 'ಶುಕ್ರ', 'ಶನಿ']) {
+      final b = bhava(p);
+      if ((b == 2 || b == 11) && (inKendraFromLagna(p) || inTrikonaFromLagna(p))) {
+        yogas.add({'name': 'ಧನ ಯೋಗ', 'desc': '$p 2/11ನೇ ಭಾವಾಧಿಪತಿ ಕೇಂದ್ರ/ತ್ರಿಕೋಣದಲ್ಲಿ', 'shubha': true});
+        break;
+      }
+    }
+
+    // 7. Kemadruma Yoga — No planet in 2nd/12th from Moon
+    if (moonRi >= 0) {
+      final m2 = (moonRi + 1) % 12;
+      final m12 = (moonRi + 11) % 12;
+      bool hasFlank = false;
+      for (final p in ['ಕುಜ', 'ಬುಧ', 'ಗುರು', 'ಶುಕ್ರ', 'ಶನಿ']) {
+        final pR = ri(p);
+        if (pR == m2 || pR == m12) { hasFlank = true; break; }
+      }
+      if (!hasFlank) {
+        yogas.add({'name': 'ಕೇಮದ್ರುಮ ಯೋಗ', 'desc': 'ಚಂದ್ರನ 2/12ರಲ್ಲಿ ಯಾವ ಗ್ರಹವೂ ಇಲ್ಲ — ಕಷ್ಟ, ಬಡತನ', 'shubha': false});
+      }
+    }
+
+    // 8. Shakata Yoga — Jupiter 6th/8th/12th from Moon
+    if (moonRi >= 0 && jupRi >= 0) {
+      final diff = (jupRi - moonRi + 12) % 12;
+      if ([5, 7, 11].contains(diff)) {
+        yogas.add({'name': 'ಶಕಟ ಯೋಗ', 'desc': 'ಗುರು ಚಂದ್ರನಿಂದ 6/8/12ರಲ್ಲಿ — ಅಸ್ಥಿರ ಭಾಗ್ಯ', 'shubha': false});
+      }
+    }
+
+    // 9. Vipareeta Raja Yoga — Lord of 6/8/12 in 6/8/12
+    final dusthanas = [6, 8, 12];
+    for (final p in ['ರವಿ', 'ಚಂದ್ರ', 'ಕುಜ', 'ಬುಧ', 'ಗುರು', 'ಶುಕ್ರ', 'ಶನಿ']) {
+      final b = bhava(p);
+      if (dusthanas.contains(b)) {
+        // Check if any other dusthana lord is also in a dusthana
+        for (final p2 in ['ರವಿ', 'ಚಂದ್ರ', 'ಕುಜ', 'ಬುಧ', 'ಗುರು', 'ಶುಕ್ರ', 'ಶನಿ']) {
+          if (p2 == p) continue;
+          final b2 = bhava(p2);
+          if (dusthanas.contains(b2) && conjunct(p, p2)) {
+            yogas.add({'name': 'ವಿಪರೀತ ರಾಜಯೋಗ', 'desc': '$p + $p2 ದುಸ್ಥಾನದಲ್ಲಿ ಸಂಯೋಗ — ಕಷ್ಟದಿಂದ ಲಾಭ', 'shubha': true});
+            break;
+          }
+        }
+        break;
+      }
+    }
+
+    // 10. Guru-Chandala Yoga — Jupiter conjunct Rahu
+    if (conjunct('ಗುರು', 'ರಾಹು')) {
+      yogas.add({'name': 'ಗುರು-ಚಾಂಡಾಲ ಯೋಗ', 'desc': 'ಗುರು-ರಾಹು ಸಂಯೋಗ — ಧರ್ಮ ಹಾನಿ, ಭ್ರಷ್ಟ ಬುದ್ಧಿ', 'shubha': false});
+    }
+
+    // 11. Sunapha/Anapha Yoga
+    if (moonRi >= 0) {
+      final m2 = (moonRi + 1) % 12;
+      final m12 = (moonRi + 11) % 12;
+      bool has2 = false, has12 = false;
+      for (final p in ['ಕುಜ', 'ಬುಧ', 'ಗುರು', 'ಶುಕ್ರ', 'ಶನಿ']) {
+        if (ri(p) == m2) has2 = true;
+        if (ri(p) == m12) has12 = true;
+      }
+      if (has2 && has12) {
+        yogas.add({'name': 'ದುರುಧರ ಯೋಗ', 'desc': 'ಚಂದ್ರನ 2 ಮತ್ತು 12ರಲ್ಲಿ ಗ್ರಹ — ಧನವಂತ', 'shubha': true});
+      } else if (has2) {
+        yogas.add({'name': 'ಸುನಫ ಯೋಗ', 'desc': 'ಚಂದ್ರನ 2ರಲ್ಲಿ ಗ್ರಹ — ಸ್ವಯಂ ಸಂಪಾದನೆ', 'shubha': true});
+      } else if (has12) {
+        yogas.add({'name': 'ಅನಫ ಯೋಗ', 'desc': 'ಚಂದ್ರನ 12ರಲ್ಲಿ ಗ್ರಹ — ಪೂರ್ವ ಪುಣ್ಯ', 'shubha': true});
+      }
+    }
+
+    // 12. Shubha Kartari — Benefics in 2nd and 12th from lagna
+    if (lagnaRi >= 0) {
+      final l2 = (lagnaRi + 1) % 12;
+      final l12 = (lagnaRi + 11) % 12;
+      final benefics = ['ಗುರು', 'ಶುಕ್ರ', 'ಬುಧ'];
+      bool ben2 = false, ben12 = false;
+      for (final p in benefics) {
+        if (ri(p) == l2) ben2 = true;
+        if (ri(p) == l12) ben12 = true;
+      }
+      if (ben2 && ben12) {
+        yogas.add({'name': 'ಶುಭ ಕರ್ತರಿ ಯೋಗ', 'desc': 'ಲಗ್ನದ 2/12ರಲ್ಲಿ ಶುಭ ಗ್ರಹ — ರಕ್ಷಣೆ, ಶುಭ', 'shubha': true});
+      }
+      // Papa Kartari
+      final malefics = ['ಕುಜ', 'ಶನಿ', 'ರಾಹು', 'ಕೇತು'];
+      bool mal2 = false, mal12 = false;
+      for (final p in malefics) {
+        if (ri(p) == l2) mal2 = true;
+        if (ri(p) == l12) mal12 = true;
+      }
+      if (mal2 && mal12) {
+        yogas.add({'name': 'ಪಾಪ ಕರ್ತರಿ ಯೋಗ', 'desc': 'ಲಗ್ನದ 2/12ರಲ್ಲಿ ಪಾಪ ಗ್ರಹ — ಅಡಚಣೆ, ಕಷ್ಟ', 'shubha': false});
+      }
+    }
+
+    // 13. Neecha Bhanga Raja Yoga — debilitated planet with cancellation
+    final debil = <String, int>{'ರವಿ': 6, 'ಚಂದ್ರ': 7, 'ಕುಜ': 3, 'ಬುಧ': 11, 'ಗುರು': 9, 'ಶುಕ್ರ': 5, 'ಶನಿ': 0};
+    final exalt = <String, int>{'ರವಿ': 0, 'ಚಂದ್ರ': 1, 'ಕುಜ': 9, 'ಬುಧ': 5, 'ಗುರು': 3, 'ಶುಕ್ರ': 11, 'ಶನಿ': 6};
+    for (final p in debil.keys) {
+      if (ri(p) == debil[p] && inKendraFromLagna(p)) {
+        yogas.add({'name': 'ನೀಚ ಭಂಗ ರಾಜಯೋಗ', 'desc': '$p ನೀಚದಲ್ಲಿ ಕೇಂದ್ರದಲ್ಲಿ — ನೀಚ ಭಂಗ', 'shubha': true});
+        break;
+      }
+    }
+
+    return yogas;
   }
 
   // ═══════════════════════════════════════════
