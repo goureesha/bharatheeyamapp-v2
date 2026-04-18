@@ -13,6 +13,7 @@ import 'settings_screen.dart';
 import 'vedic_clock_screen.dart';
 import 'appointment_screen.dart';
 import 'ashtamangala_screen.dart';
+import 'prashna_input_screen.dart';
 import '../services/tester_service.dart';
 
 class HomeScreen extends StatelessWidget {
@@ -42,6 +43,9 @@ class HomeScreen extends StatelessWidget {
       }),
       _Section(AppLocale.l('appointment'), 'Appointments', Icons.event_note, kTeal, () {
         Navigator.push(context, MaterialPageRoute(builder: (_) => const AppointmentScreen()));
+      }),
+      _Section('ಪ್ರಶ್ನ', 'Prashna', Icons.help_outline_rounded, const Color(0xFF1565C0), () {
+        Navigator.push(context, MaterialPageRoute(builder: (_) => const PrashnaInputScreen()));
       }),
 
       _Section(AppLocale.l('settings'), 'Settings', Icons.settings, kMuted, () {
