@@ -477,31 +477,31 @@ class _PrashnaDashboardScreenState extends State<PrashnaDashboardScreen>
   Widget _buildShadvargaTab() {
     final r = _result;
 
-    // Column headers
-    const hGraha = 'ಗ್ರಹ';
-    const hD3 = 'ದ್ರೇಕ್';
-    const hD2 = 'ಹೋರ';
-    const hD9 = 'ನ';
-    const hD30 = 'ತ್ರಿಶಾಂಸ';
-    const hD12 = 'ದ್ವಾಧ';
-    const hKshetra = 'ಕ್ಷೇಕ್';
+    // Column headers (matching kundali section)
+    final hGraha = 'ಗ್ರಹ';
+    final hD3 = 'ದ್ರೇ';
+    final hD2 = 'ಹೋ';
+    final hD9 = 'ನ';
+    final hD30 = 'ತ್ರಿಂ';
+    final hD12 = 'ದ್ವಾ';
+    final hKshetra = 'ಕ್ಷೇ';
 
     String getRashiLord(String rashiNameKn) {
       int idx = knRashi.indexOf(rashiNameKn);
       if (idx < 0) return rashiNameKn;
       switch (idx) {
-        case 0: return 'ಕುಜ';
-        case 1: return 'ಶುಕ್ರ';
-        case 2: return 'ಬುಧ';
-        case 3: return 'ಚಂ';
-        case 4: return 'ಸೂ';
-        case 5: return 'ಬುಧ';
-        case 6: return 'ಶುಕ್ರ';
-        case 7: return 'ಕುಜ';
-        case 8: return 'ಗುರು';
+        case 0: return 'ಕು';
+        case 1: return 'ಶು';
+        case 2: return 'ಬು';
+        case 3: return 'ಚ';
+        case 4: return 'ರ';
+        case 5: return 'ಬು';
+        case 6: return 'ಶು';
+        case 7: return 'ಕು';
+        case 8: return 'ಗು';
         case 9: return 'ಶ';
         case 10: return 'ಶ';
-        case 11: return 'ಗುರು';
+        case 11: return 'ಗು';
       }
       return '';
     }
@@ -511,7 +511,7 @@ class _PrashnaDashboardScreenState extends State<PrashnaDashboardScreen>
       padding: const EdgeInsets.all(16),
       child: Column(
         children: [
-          // Title
+          // Title with gradient accent
           Container(
             padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 16),
             decoration: BoxDecoration(
@@ -572,12 +572,12 @@ class _PrashnaDashboardScreenState extends State<PrashnaDashboardScreen>
                       Padding(
                         padding: const EdgeInsets.symmetric(vertical: 14),
                         child: Text(h, textAlign: TextAlign.center, style: TextStyle(
-                          fontWeight: FontWeight.w900, fontSize: 13, color: kPurple2,
+                          fontWeight: FontWeight.w900, fontSize: 14, color: kPurple2,
                         )),
                       ),
                     ).toList(),
                   ),
-                  // Data rows
+                  // Data rows with alternating shading
                   ...planetOrder.map((pNameKey) {
                     final pInfo = r.planets[pNameKey];
                     if (pInfo == null) return const TableRow(children: [SizedBox(), SizedBox(), SizedBox(), SizedBox(), SizedBox(), SizedBox(), SizedBox()]);
@@ -591,19 +591,21 @@ class _PrashnaDashboardScreenState extends State<PrashnaDashboardScreen>
                         color: isEvenRow ? kBg.withOpacity(0.5) : kCard,
                       ),
                       children: [
+                        // Planet name column
                         Padding(padding: const EdgeInsets.symmetric(vertical: 12), child: Text(
                           displayName, textAlign: TextAlign.center,
-                          style: TextStyle(fontWeight: FontWeight.w900, fontSize: 13, color: kTeal),
+                          style: TextStyle(fontWeight: FontWeight.w900, fontSize: 14, color: kTeal),
                         )),
+                        // Varga lord columns
                         ...[details['d3'], details['d2'], details['d9'], details['d30'], details['d12'], details['d1']].map((v) =>
                           Padding(padding: const EdgeInsets.symmetric(vertical: 12), child: Text(
                             getRashiLord(v as String), textAlign: TextAlign.center,
-                            style: TextStyle(fontSize: 13, fontWeight: FontWeight.w800, color: kText),
+                            style: TextStyle(fontSize: 14, fontWeight: FontWeight.w800, color: kText),
                           )),
                         ),
                       ],
                     );
-                  }),
+                  }).toList(),
                 ],
               ),
             ),
