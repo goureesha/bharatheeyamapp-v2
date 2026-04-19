@@ -201,20 +201,14 @@ class PrashnaChart extends StatelessWidget {
         degInRashi: degInRashi,
       ));
 
-      // Navamsha label — drekkana within the navamsha rashi
-      // d9Exact = (deg * 9) % 360, degInD9 = d9Exact % 30
+      // Navamsha label — use planet's rashi drekkana so it stays
+      // in the same column/row as the planet inside the chart
       final navRi = _navamshaRashi(info.longitude);
-      final d9Exact = (info.longitude * 9) % 360;
-      final degInD9 = d9Exact % 30;
-      final navDrek = degInD9 < 10 ? 0 : (degInD9 < 20 ? 1 : 2);
-      navLabels[navRi]![navDrek]!.add(_pNameKn[pName] ?? pName);
+      navLabels[navRi]![drek]!.add(_pNameKn[pName] ?? pName);
 
-      // Dvadashamsha label — drekkana within the dvad rashi
-      // degInD12 = (deg % 2.5) * 12
+      // Dvadashamsha label — same drekkana as planet's rashi position
       final dvadRi = _dvadRashi(info.longitude);
-      final degInD12 = (info.longitude % 2.5) * 12;
-      final dvadDrek = degInD12 < 10 ? 0 : (degInD12 < 20 ? 1 : 2);
-      dvadLabels[dvadRi]![dvadDrek]!.add(_pNameHi[pName] ?? pName);
+      dvadLabels[dvadRi]![drek]!.add(_pNameHi[pName] ?? pName);
     }
 
     // Sort planets within each house by degree
@@ -436,13 +430,14 @@ class PrashnaChart extends StatelessWidget {
         final dvadList = dvadLabels[ri]?[drek] ?? [];
         if (navList.isEmpty && dvadList.isEmpty) continue;
 
-        // Each planet on its own line in a column
-        // Nav = Kannada (green), Dvad = Hindi (purple)
+        // Nav (Kannada green) on one line, Dvad (Hindi purple) on next line
+        final navText = navList.join(' ');
+        final dvadText = dvadList.join(' ');
         Widget label = Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            for (final n in navList) Text(n, style: navStyle),
-            for (final d in dvadList) Text(d, style: dvadStyle),
+            if (navText.isNotEmpty) Text(navText, style: navStyle),
+            if (dvadText.isNotEmpty) Text(dvadText, style: dvadStyle),
           ],
         );
 
