@@ -446,28 +446,32 @@ class PrashnaChart extends StatelessWidget {
           children: allLabels,
         );
 
-        final rowH = outerMargin / 3;
-
         switch (edge) {
           case 'top':
-            // 3 rows: I(top), II(mid), III(bottom near house)
+            // 3 columns: I(left), II(mid), III(right)
             widgets.add(Positioned(
-              top: drek * rowH,
-              left: outerMargin + pos.dx,
-              width: cw,
-              height: rowH,
-              child: Center(child: label),
+              top: 0,
+              left: outerMargin + pos.dx + (drek * colW),
+              width: colW,
+              height: outerMargin,
+              child: Align(
+                alignment: Alignment.bottomCenter,
+                child: label,
+              ),
             ));
             break;
 
           case 'bottom':
-            // 3 rows: I(top near house), II(mid), III(bottom)
+            // 3 columns: I(left), II(mid), III(right)
             widgets.add(Positioned(
-              top: outerMargin + pos.dy + cw + (drek * rowH),
-              left: outerMargin + pos.dx,
-              width: cw,
-              height: rowH,
-              child: Center(child: label),
+              top: outerMargin + pos.dy + cw,
+              left: outerMargin + pos.dx + (drek * colW),
+              width: colW,
+              height: outerMargin,
+              child: Align(
+                alignment: Alignment.topCenter,
+                child: label,
+              ),
             ));
             break;
 
