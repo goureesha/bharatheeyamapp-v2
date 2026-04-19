@@ -740,30 +740,51 @@ class _PrashnaDashboardScreenState extends State<PrashnaDashboardScreen>
                         color: isEven ? kBg.withOpacity(0.4) : kCard,
                         border: Border(bottom: BorderSide(color: kBorder.withOpacity(0.5))),
                       ),
-                      child: Row(
+                      child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Icon(
-                            isShubha ? Icons.check_circle : Icons.warning_amber_rounded,
-                            size: 14,
-                            color: isShubha ? const Color(0xFF2F855A) : const Color(0xFFE53E3E),
+                          Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Icon(
+                                isShubha ? Icons.check_circle : Icons.warning_amber_rounded,
+                                size: 14,
+                                color: isShubha ? const Color(0xFF2F855A) : const Color(0xFFE53E3E),
+                              ),
+                              const SizedBox(width: 6),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(y['name'] as String, style: TextStyle(
+                                      fontWeight: FontWeight.w900, fontSize: 12,
+                                      color: isShubha ? const Color(0xFF2F855A) : const Color(0xFFE53E3E),
+                                    )),
+                                    const SizedBox(height: 1),
+                                    Text(y['desc'] as String, style: TextStyle(
+                                      fontSize: 10, color: kMuted, fontWeight: FontWeight.w600,
+                                    )),
+                                  ],
+                                ),
+                              ),
+                            ],
                           ),
-                          const SizedBox(width: 6),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(y['name'] as String, style: TextStyle(
-                                  fontWeight: FontWeight.w900, fontSize: 12,
-                                  color: isShubha ? const Color(0xFF2F855A) : const Color(0xFFE53E3E),
-                                )),
-                                const SizedBox(height: 1),
-                                Text(y['desc'] as String, style: TextStyle(
-                                  fontSize: 10, color: kMuted, fontWeight: FontWeight.w600,
-                                )),
-                              ],
+                          if (y['shloka'] != null && (y['shloka'] as String).isNotEmpty)
+                            Container(
+                              width: double.infinity,
+                              margin: const EdgeInsets.only(top: 4),
+                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFFFF8E1),
+                                borderRadius: BorderRadius.circular(6),
+                                border: Border.all(color: const Color(0xFFFFE082), width: 0.5),
+                              ),
+                              child: Text(y['shloka'] as String, style: const TextStyle(
+                                fontSize: 10, fontStyle: FontStyle.italic,
+                                color: Color(0xFF5D4037), fontWeight: FontWeight.w600,
+                                height: 1.4,
+                              )),
                             ),
-                          ),
                         ],
                       ),
                     );
@@ -829,17 +850,17 @@ class _PrashnaDashboardScreenState extends State<PrashnaDashboardScreen>
 
     // 1. Gaja Kesari Yoga — Jupiter in kendra from Moon
     if (inKendra('ಚಂದ್ರ', 'ಗುರು')) {
-      yogas.add({'name': 'ಗಜ ಕೇಸರಿ ಯೋಗ', 'desc': 'ಗುರು ಚಂದ್ರನಿಂದ ಕೇಂದ್ರದಲ್ಲಿ — ಕೀರ್ತಿ, ಬುದ್ಧಿ, ಸಂಪತ್ತು', 'shubha': true});
+      yogas.add({'name': 'ಗಜ ಕೇಸರಿ ಯೋಗ', 'desc': 'ಗುರು ಚಂದ್ರನಿಂದ ಕೇಂದ್ರದಲ್ಲಿ — ಕೀರ್ತಿ, ಬುದ್ಧಿ, ಸಂಪತ್ತು', 'shubha': true, 'shloka': 'केन्द्रे देवगुरौ शशाङ्कसहिते गोवाजिराजप्रदम् ।\nगजकेसरी योगस्तु चन्द्रात् केन्द्रे बृहस्पतिः ॥ — फलदीपिका'});
     }
 
     // 2. Chandra-Mangala Yoga — Moon conjunct Mars
     if (conjunct('ಚಂದ್ರ', 'ಕುಜ')) {
-      yogas.add({'name': 'ಚಂದ್ರ-ಮಂಗಳ ಯೋಗ', 'desc': 'ಚಂದ್ರ-ಕುಜ ಸಂಯೋಗ — ಧನ ಲಾಭ, ಸಾಹಸ', 'shubha': true});
+      yogas.add({'name': 'ಚಂದ್ರ-ಮಂಗಳ ಯೋಗ', 'desc': 'ಚಂದ್ರ-ಕುಜ ಸಂಯೋಗ — ಧನ ಲಾಭ, ಸಾಹಸ', 'shubha': true, 'shloka': 'चन्द्रमङ्गलयोगोऽयं धनदो मातृसौख्यदः ।\nसाहसी क्रूरकर्मा च भवेज्जातो न संशयः ॥ — फलदीपिका'});
     }
 
     // 3. Budha-Aditya Yoga — Sun conjunct Mercury
     if (conjunct('ರವಿ', 'ಬುಧ')) {
-      yogas.add({'name': 'ಬುಧ-ಆದಿತ್ಯ ಯೋಗ', 'desc': 'ರವಿ-ಬುಧ ಸಂಯೋಗ — ಬುದ್ಧಿ, ವಾಕ್ಪಟುತ್ವ', 'shubha': true});
+      yogas.add({'name': 'ಬುಧ-ಆದಿತ್ಯ ಯೋಗ', 'desc': 'ರವಿ-ಬುಧ ಸಂಯೋಗ — ಬುದ್ಧಿ, ವಾಕ್ಪಟುತ್ವ', 'shubha': true, 'shloka': 'बुधादित्ययोगो भवति यदा रविबुधयोः सहवासः ।\nविद्वान् वक्ता कुशलो राजसभायां प्रियो भवेत् ॥ — बृहत्पाराशरहोराशास्त्र'});
     }
 
     // 4. Pancha Mahapurusha Yogas
@@ -863,6 +884,7 @@ class _PrashnaDashboardScreenState extends State<PrashnaDashboardScreen>
           'name': '${yogaNames[p]} ಯೋಗ (ಪಂಚ ಮಹಾಪುರುಷ)',
           'desc': '$p ಸ್ವಕ್ಷೇತ್ರ/ಉಚ್ಚದಲ್ಲಿ ಕೇಂದ್ರದಲ್ಲಿ — ಮಹಾ ಫಲ',
           'shubha': true,
+          'shloka': 'स्वोच्चे स्वक्षेत्रे वा केन्द्रस्थिते ग्रहे ।\nपञ्चमहापुरुषयोगः स्यात् — बृ.पा.हो.शा.',
         });
       }
     }
@@ -870,7 +892,7 @@ class _PrashnaDashboardScreenState extends State<PrashnaDashboardScreen>
     // 5. Amala Yoga — Benefic in 10th from lagna
     for (final p in ['ಗುರು', 'ಶುಕ್ರ', 'ಬುಧ']) {
       if (bhava(p) == 10) {
-        yogas.add({'name': 'ಅಮಲ ಯೋಗ', 'desc': '$p 10ನೇ ಭಾವದಲ್ಲಿ — ಕೀರ್ತಿ, ಶುಭ ಕರ್ಮ', 'shubha': true});
+        yogas.add({'name': 'ಅಮಲ ಯೋಗ', 'desc': '$p 10ನೇ ಭಾವದಲ್ಲಿ — ಕೀರ್ತಿ, ಶುಭ ಕರ್ಮ', 'shubha': true, 'shloka': 'दशमे शुभग्रहे स्थिते अमलयोगः प्रकीर्तितः ।\nकीर्तिमान् धर्मशीलश्च सुखी चायुष्मान् भवेत् ॥ — सारावली'});
         break;
       }
     }
@@ -879,7 +901,7 @@ class _PrashnaDashboardScreenState extends State<PrashnaDashboardScreen>
     for (final p in ['ರವಿ', 'ಚಂದ್ರ', 'ಕುಜ', 'ಬುಧ', 'ಗುರು', 'ಶುಕ್ರ', 'ಶನಿ']) {
       final b = bhava(p);
       if ((b == 2 || b == 11) && (inKendraFromLagna(p) || inTrikonaFromLagna(p))) {
-        yogas.add({'name': 'ಧನ ಯೋಗ', 'desc': '$p 2/11ನೇ ಭಾವಾಧಿಪತಿ ಕೇಂದ್ರ/ತ್ರಿಕೋಣದಲ್ಲಿ', 'shubha': true});
+        yogas.add({'name': 'ಧನ ಯೋಗ', 'desc': '$p 2/11ನೇ ಭಾವಾಧಿಪತಿ ಕೇಂದ್ರ/ತ್ರಿಕೋಣದಲ್ಲಿ', 'shubha': true, 'shloka': 'धनेशे लाभेशे केन्द्रत्रिकोणगे ।\nधनयोगः समाख्यातो धनधान्यसमृद्धिदः ॥ — बृ.पा.हो.शा.'});
         break;
       }
     }
@@ -894,7 +916,7 @@ class _PrashnaDashboardScreenState extends State<PrashnaDashboardScreen>
         if (pR == m2 || pR == m12) { hasFlank = true; break; }
       }
       if (!hasFlank) {
-        yogas.add({'name': 'ಕೇಮದ್ರುಮ ಯೋಗ', 'desc': 'ಚಂದ್ರನ 2/12ರಲ್ಲಿ ಯಾವ ಗ್ರಹವೂ ಇಲ್ಲ — ಕಷ್ಟ, ಬಡತನ', 'shubha': false});
+        yogas.add({'name': 'ಕೇಮದ್ರುಮ ಯೋಗ', 'desc': 'ಚಂದ್ರನ 2/12ರಲ್ಲಿ ಯಾವ ಗ್ರಹವೂ ಇಲ್ಲ — ಕಷ್ಟ, ಬಡತನ', 'shubha': false, 'shloka': 'चन्द्राद्द्वितीयद्वादशे ग्रहैर्विहीने केमद्रुमः ।\nनिर्धनो दुःखितश्चैव परान्नभोजी भवेन्नरः ॥ — फलदीपिका'});
       }
     }
 
@@ -902,7 +924,7 @@ class _PrashnaDashboardScreenState extends State<PrashnaDashboardScreen>
     if (moonRi >= 0 && jupRi >= 0) {
       final diff = (jupRi - moonRi + 12) % 12;
       if ([5, 7, 11].contains(diff)) {
-        yogas.add({'name': 'ಶಕಟ ಯೋಗ', 'desc': 'ಗುರು ಚಂದ್ರನಿಂದ 6/8/12ರಲ್ಲಿ — ಅಸ್ಥಿರ ಭಾಗ್ಯ', 'shubha': false});
+        yogas.add({'name': 'ಶಕಟ ಯೋಗ', 'desc': 'ಗುರು ಚಂದ್ರನಿಂದ 6/8/12ರಲ್ಲಿ — ಅಸ್ಥಿರ ಭಾಗ್ಯ', 'shubha': false, 'shloka': 'चन्द्राद्षष्ठाष्टमव्यये गुरौ शकटयोगः स्यात् ।\nलब्धं नष्टं पुनर्लब्धं चक्रवत् भवति ध्रुवम् ॥ — फलदीपिका'});
       }
     }
 
@@ -916,7 +938,7 @@ class _PrashnaDashboardScreenState extends State<PrashnaDashboardScreen>
           if (p2 == p) continue;
           final b2 = bhava(p2);
           if (dusthanas.contains(b2) && conjunct(p, p2)) {
-            yogas.add({'name': 'ವಿಪರೀತ ರಾಜಯೋಗ', 'desc': '$p + $p2 ದುಸ್ಥಾನದಲ್ಲಿ ಸಂಯೋಗ — ಕಷ್ಟದಿಂದ ಲಾಭ', 'shubha': true});
+            yogas.add({'name': 'ವಿಪರೀತ ರಾಜಯೋಗ', 'desc': '$p + $p2 ದುಸ್ಥಾನದಲ್ಲಿ ಸಂಯೋಗ — ಕಷ್ಟದಿಂದ ಲಾಭ', 'shubha': true, 'shloka': 'षष्ठाष्टव्ययनाथानां दुःस्थानस्थितिसंयुतेः ।\nविपरीतराजयोगः स्यात् कष्टात् राज्यमवाप्नुयात् ॥ — बृ.पा.हो.शा.'});
             break;
           }
         }
@@ -926,7 +948,7 @@ class _PrashnaDashboardScreenState extends State<PrashnaDashboardScreen>
 
     // 10. Guru-Chandala Yoga — Jupiter conjunct Rahu
     if (conjunct('ಗುರು', 'ರಾಹು')) {
-      yogas.add({'name': 'ಗುರು-ಚಾಂಡಾಲ ಯೋಗ', 'desc': 'ಗುರು-ರಾಹು ಸಂಯೋಗ — ಧರ್ಮ ಹಾನಿ, ಭ್ರಷ್ಟ ಬುದ್ಧಿ', 'shubha': false});
+      yogas.add({'name': 'ಗುರು-ಚಾಂಡಾಲ ಯೋಗ', 'desc': 'ಗುರು-ರಾಹು ಸಂಯೋಗ — ಧರ್ಮ ಹಾನಿ, ಭ್ರಷ್ಟ ಬುದ್ಧಿ', 'shubha': false, 'shloka': 'राहुणा सह संयुक्ते गुरौ चाण्डालयोगकः ।\nधर्महीनो भवेज्जातो गुरुनिन्दाकरो नरः ॥ — बृ.पा.हो.शा.'});
     }
 
     // 11. Sunapha/Anapha Yoga
@@ -939,11 +961,11 @@ class _PrashnaDashboardScreenState extends State<PrashnaDashboardScreen>
         if (ri(p) == m12) has12 = true;
       }
       if (has2 && has12) {
-        yogas.add({'name': 'ದುರುಧರ ಯೋಗ', 'desc': 'ಚಂದ್ರನ 2 ಮತ್ತು 12ರಲ್ಲಿ ಗ್ರಹ — ಧನವಂತ', 'shubha': true});
+        yogas.add({'name': 'ದುರುಧರ ಯೋಗ', 'desc': 'ಚಂದ್ರನ 2 ಮತ್ತು 12ರಲ್ಲಿ ಗ್ರಹ — ಧನವಂತ', 'shubha': true, 'shloka': 'चन्द्राद्द्वादशद्वितीये ग्रहे दुरुधरो भवेत् ।\nधनी दानपरो विद्वान् सुखभाक् सर्वसम्पदा ॥ — फलदीपिका'});
       } else if (has2) {
-        yogas.add({'name': 'ಸುನಫ ಯೋಗ', 'desc': 'ಚಂದ್ರನ 2ರಲ್ಲಿ ಗ್ರಹ — ಸ್ವಯಂ ಸಂಪಾದನೆ', 'shubha': true});
+        yogas.add({'name': 'ಸುನಫ ಯೋಗ', 'desc': 'ಚಂದ್ರನ 2ರಲ್ಲಿ ಗ್ರಹ — ಸ್ವಯಂ ಸಂಪಾದನೆ', 'shubha': true, 'shloka': 'चन्द्राद्द्वितीये ग्रहे सुनफयोगः प्रकीर्तितः ।\nस्वोपार्जितधनो धीमान् यशस्वी राजसम्मतः ॥ — फलदीपिका'});
       } else if (has12) {
-        yogas.add({'name': 'ಅನಫ ಯೋಗ', 'desc': 'ಚಂದ್ರನ 12ರಲ್ಲಿ ಗ್ರಹ — ಪೂರ್ವ ಪುಣ್ಯ', 'shubha': true});
+        yogas.add({'name': 'ಅನಫ ಯೋಗ', 'desc': 'ಚಂದ್ರನ 12ರಲ್ಲಿ ಗ್ರಹ — ಪೂರ್ವ ಪುಣ್ಯ', 'shubha': true, 'shloka': 'चन्द्राद्व्यये ग्रहे जाते अनफयोगः प्रकीर्तितः ।\nवपुष्मान् गुणवान् विद्वान् सत्कीर्तिः सुखभाग् भवेत् ॥ — फलदीपिका'});
       }
     }
 
@@ -958,7 +980,7 @@ class _PrashnaDashboardScreenState extends State<PrashnaDashboardScreen>
         if (ri(p) == l12) ben12 = true;
       }
       if (ben2 && ben12) {
-        yogas.add({'name': 'ಶುಭ ಕರ್ತರಿ ಯೋಗ', 'desc': 'ಲಗ್ನದ 2/12ರಲ್ಲಿ ಶುಭ ಗ್ರಹ — ರಕ್ಷಣೆ, ಶುಭ', 'shubha': true});
+        yogas.add({'name': 'ಶುಭ ಕರ್ತರಿ ಯೋಗ', 'desc': 'ಲಗ್ನದ 2/12ರಲ್ಲಿ ಶುಭ ಗ್ರಹ — ರಕ್ಷಣೆ, ಶುಭ', 'shubha': true, 'shloka': 'शुभग्रहैर्द्वितीयद्वादशे शुभकर्तरी ।\nसुखी धनवान् कीर्तिमान् रक्षितो भवेन्नरः ॥ — फलदीपिका'});
       }
       // Papa Kartari
       final malefics = ['ಕುಜ', 'ಶನಿ', 'ರಾಹು', 'ಕೇತು'];
@@ -968,7 +990,7 @@ class _PrashnaDashboardScreenState extends State<PrashnaDashboardScreen>
         if (ri(p) == l12) mal12 = true;
       }
       if (mal2 && mal12) {
-        yogas.add({'name': 'ಪಾಪ ಕರ್ತರಿ ಯೋಗ', 'desc': 'ಲಗ್ನದ 2/12ರಲ್ಲಿ ಪಾಪ ಗ್ರಹ — ಅಡಚಣೆ, ಕಷ್ಟ', 'shubha': false});
+        yogas.add({'name': 'ಪಾಪ ಕರ್ತರಿ ಯೋಗ', 'desc': 'ಲಗ್ನದ 2/12ರಲ್ಲಿ ಪಾಪ ಗ್ರಹ — ಅಡಚಣೆ, ಕಷ್ಟ', 'shubha': false, 'shloka': 'पापग्रहैर्द्वितीयद्वादशे पापकर्तरी ।\nपीडितो भवेज्जातो दुःखी रोगवान् नराधमः ॥ — फलदीपिका'});
       }
     }
 
@@ -977,7 +999,7 @@ class _PrashnaDashboardScreenState extends State<PrashnaDashboardScreen>
     final exaltMap = <String, int>{'ರವಿ': 0, 'ಚಂದ್ರ': 1, 'ಕುಜ': 9, 'ಬುಧ': 5, 'ಗುರು': 3, 'ಶುಕ್ರ': 11, 'ಶನಿ': 6};
     for (final p in debil.keys) {
       if (ri(p) == debil[p] && inKendraFromLagna(p)) {
-        yogas.add({'name': 'ನೀಚ ಭಂಗ ರಾಜಯೋಗ', 'desc': '$p ನೀಚದಲ್ಲಿ ಕೇಂದ್ರದಲ್ಲಿ — ನೀಚ ಭಂಗ', 'shubha': true});
+        yogas.add({'name': 'ನೀಚ ಭಂಗ ರಾಜಯೋಗ', 'desc': '$p ನೀಚದಲ್ಲಿ ಕೇಂದ್ರದಲ್ಲಿ — ನೀಚ ಭಂಗ', 'shubha': true, 'shloka': 'नीचग्रहे केन्द्रस्थे नीचभङ्गराजयोगकः ।\nभवेत् प्रबलो राजा पूर्वजन्मकृतपुण्यतः ॥ — बृ.पा.हो.शा.'});
         break;
       }
     }
@@ -993,7 +1015,7 @@ class _PrashnaDashboardScreenState extends State<PrashnaDashboardScreen>
         if (pR == m6 || pR == m7 || pR == m8) count++;
       }
       if (count >= 2) {
-        yogas.add({'name': 'ಅಧಿ ಯೋಗ', 'desc': 'ಚಂದ್ರನಿಂದ 6/7/8ರಲ್ಲಿ ಶುಭ ಗ್ರಹಗಳು — ನಾಯಕತ್ವ, ಅಧಿಕಾರ', 'shubha': true});
+        yogas.add({'name': 'ಅಧಿ ಯೋಗ', 'desc': 'ಚಂದ್ರನಿಂದ 6/7/8ರಲ್ಲಿ ಶುಭ ಗ್ರಹಗಳು — ನಾಯಕತ್ವ, ಅಧಿಕಾರ', 'shubha': true, 'shloka': 'चन्द्राच्छष्ठसप्तमाष्टमे शुभग्रहैरधियोगः ।\nनृपतिवत् सुखभाग् भवेत् सर्वसम्पद्भाग् ॥ — सारावली'});
       }
     }
 
@@ -1014,18 +1036,18 @@ class _PrashnaDashboardScreenState extends State<PrashnaDashboardScreen>
         break;
       }
       if (allBetween) {
-        yogas.add({'name': 'ಕಾಲಸರ್ಪ ಯೋಗ', 'desc': 'ಎಲ್ಲ ಗ್ರಹಗಳು ರಾಹು-ಕೇತು ನಡುವೆ — ಅಡಚಣೆ, ವಿಳಂಬ', 'shubha': false});
+        yogas.add({'name': 'ಕಾಲಸರ್ಪ ಯೋಗ', 'desc': 'ಎಲ್ಲ ಗ್ರಹಗಳು ರಾಹು-ಕೇತು ನಡುವೆ — ಅಡಚಣೆ, ವಿಳಂಬ', 'shubha': false, 'shloka': 'राहुकेतुमध्यगताः सर्वग्रहाः कालसर्पयोगकः ।\nविलम्बो विघ्नश्चैव कार्यहानिर्भवेद् ध्रुवम् ॥'});
       }
     }
 
     // 16. Angarak Yoga — Mars conjunct Rahu
     if (conjunct('ಕುಜ', 'ರಾಹು')) {
-      yogas.add({'name': 'ಅಂಗಾರಕ ಯೋಗ', 'desc': 'ಕುಜ-ರಾಹು ಸಂಯೋಗ — ಕ್ರೋಧ, ಅಪಘಾತ ಭಯ', 'shubha': false});
+      yogas.add({'name': 'ಅಂಗಾರಕ ಯೋಗ', 'desc': 'ಕುಜ-ರಾಹು ಸಂಯೋಗ — ಕ್ರೋಧ, ಅಪಘಾತ ಭಯ', 'shubha': false, 'shloka': 'राहुर्कुजसंयोगे अङ्गारकयोगकः ।\nक्रूरबुद्धिर्विवादी दुर्घटनाभयं भवेत् ॥'});
     }
 
     // 17. Shani-Mangala Yoga — Saturn conjunct Mars
     if (conjunct('ಶನಿ', 'ಕುಜ')) {
-      yogas.add({'name': 'ಶನಿ-ಮಂಗಳ ಯೋಗ', 'desc': 'ಶನಿ-ಕುಜ ಸಂಯೋಗ — ಹಿಂಸೆ, ಜಗಳ, ಕಾರ್ಯ ವಿಘ್ನ', 'shubha': false});
+      yogas.add({'name': 'ಶನಿ-ಮಂಗಳ ಯೋಗ', 'desc': 'ಶನಿ-ಕುಜ ಸಂಯೋಗ — ಹಿಂಸೆ, ಜಗಳ, ಕಾರ್ಯ ವಿಘ್ನ', 'shubha': false, 'shloka': 'शनैर्मङ्गलसंयोगे क्रौर्यं हिंसा च जायते ।\nकार्यविघ्नकरो जातो दुःखभाग् भवेन्नरः ॥'});
     }
 
     // 18. Vasumathi Yoga — Benefics in 3, 6, 10, 11 from Lagna
@@ -1036,7 +1058,7 @@ class _PrashnaDashboardScreenState extends State<PrashnaDashboardScreen>
         if (upachaya.contains(ri(p))) upCount++;
       }
       if (upCount >= 2) {
-        yogas.add({'name': 'ವಸುಮತಿ ಯೋಗ', 'desc': 'ಶುಭ ಗ್ರಹ 3/6/10/11ರಲ್ಲಿ — ಸಂಪತ್ತು, ಐಶ್ವರ್ಯ', 'shubha': true});
+        yogas.add({'name': 'ವಸುಮತಿ ಯೋಗ', 'desc': 'ಶುಭ ಗ್ರಹ 3/6/10/11ರಲ್ಲಿ — ಸಂಪತ್ತು, ಐಶ್ವರ್ಯ', 'shubha': true, 'shloka': 'उपचयगताः शुभग्रहा वसुमतीयोगः ।\nसम्पद्भाग् भवेज्जातो धनवान् कीर्तिमान् नरः ॥ — बृ.पा.हो.शा.'});
       }
     }
 
@@ -1056,7 +1078,7 @@ class _PrashnaDashboardScreenState extends State<PrashnaDashboardScreen>
         if ([1,2,4,5,7,9,10].contains(b)) mOk = true;
       }
       if (jOk && vOk && mOk) {
-        yogas.add({'name': 'ಸರಸ್ವತಿ ಯೋಗ', 'desc': 'ಗುರು, ಶುಕ್ರ, ಬುಧ ಕೇಂದ್ರ/ತ್ರಿಕೋಣ/2ರಲ್ಲಿ — ವಿದ್ಯೆ, ಕಲೆ', 'shubha': true});
+        yogas.add({'name': 'ಸರಸ್ವತಿ ಯೋಗ', 'desc': 'ಗುರು, ಶುಕ್ರ, ಬುಧ ಕೇಂದ್ರ/ತ್ರಿಕೋಣ/2ರಲ್ಲಿ — ವಿದ್ಯೆ, ಕಲೆ', 'shubha': true, 'shloka': 'गुरुशुक्रबुधाः केन्द्रत्रिकोणद्वितीयगाः ।\nसरस्वतीयोगे जातो विद्वान् कलाविदो भवेत् ॥ — बृ.पा.हो.शा.'});
       }
     }
 
@@ -1073,7 +1095,7 @@ class _PrashnaDashboardScreenState extends State<PrashnaDashboardScreen>
       // Check if lord is in p1's own sign
       final p1OwnSigns = rashiLords.entries.where((e) => e.value == p1).map((e) => e.key).toList();
       if (p1OwnSigns.contains(lordRi)) {
-        yogas.add({'name': 'ಪರಿವರ್ತನ ಯೋಗ', 'desc': '$p1 ↔ $lordOfP1Rashi ರಾಶಿ ವಿನಿಮಯ — ಪರಸ್ಪರ ಬಲ', 'shubha': true});
+        yogas.add({'name': 'ಪರಿವರ್ತನ ಯೋಗ', 'desc': '$p1 ↔ $lordOfP1Rashi ರಾಶಿ ವಿನಿಮಯ — ಪರಸ್ಪರ ಬಲ', 'shubha': true, 'shloka': 'परस्परक्षेत्रगतौ परिवर्तनयोगकः ।\nउभयोर्बलसम्पन्नो सुखदो भवेन्नरः ॥ — बृ.पा.हो.शा.'});
         foundParivartana = true;
       }
     }
@@ -1085,7 +1107,7 @@ class _PrashnaDashboardScreenState extends State<PrashnaDashboardScreen>
       if (lord11 != null) {
         final lord11Bhava = bhava(lord11);
         if ([6, 8, 12].contains(lord11Bhava)) {
-          yogas.add({'name': 'ದಾರಿದ್ರ ಯೋಗ', 'desc': '11ನೇ ಅಧಿಪತಿ $lord11 ದುಸ್ಥಾನದಲ್ಲಿ — ಧನ ಹಾನಿ', 'shubha': false});
+          yogas.add({'name': 'ದಾರಿದ್ರ ಯೋಗ', 'desc': '11ನೇ ಅಧಿಪತಿ $lord11 ದುಸ್ಥಾನದಲ್ಲಿ — ಧನ ಹಾನಿ', 'shubha': false, 'shloka': 'लाभेशे दुःस्थानगते दारिद्रयोगकः ।\nनिर्धनो दुःखितश्चैव धनहानिर्भवेद् ध्रुवम् ॥ — बृ.पा.हो.शा.'});
         }
       }
     }
@@ -1102,7 +1124,7 @@ class _PrashnaDashboardScreenState extends State<PrashnaDashboardScreen>
         for (final tl in trikonaLords) {
           if (kl == tl) continue; // same planet
           if (conjunct(kl, tl)) {
-            yogas.add({'name': 'ರಾಜಯೋಗ', 'desc': 'ಕೇಂದ್ರಾಧಿಪತಿ $kl + ತ್ರಿಕೋಣಾಧಿಪತಿ $tl ಸಂಯೋಗ — ಅಧಿಕಾರ, ಯಶಸ್ಸು', 'shubha': true});
+            yogas.add({'name': 'ರಾಜಯೋಗ', 'desc': 'ಕೇಂದ್ರಾಧಿಪತಿ $kl + ತ್ರಿಕೋಣಾಧಿಪತಿ $tl ಸಂಯೋಗ — ಅಧಿಕಾರ, ಯಶಸ್ಸು', 'shubha': true, 'shloka': 'केन्द्रत्रिकोणाधिपयोः संयोगे राजयोगकः ।\nअधिकारवान् यशस्वी राजा भवेन्नरः ॥ — बृ.पा.हो.शा.'});
             foundRaja = true;
             break;
           }
@@ -1118,7 +1140,7 @@ class _PrashnaDashboardScreenState extends State<PrashnaDashboardScreen>
       final ninth = (lagnaRi + 8) % 12;
       final lord9 = rashiLords[ninth];
       if (lord9 != null && inKendraFromLagna(lord9)) {
-        yogas.add({'name': 'ಲಕ್ಷ್ಮೀ ಯೋಗ', 'desc': '9ನೇ ಅಧಿಪತಿ $lord9 ಕೇಂದ್ರದಲ್ಲಿ — ಐಶ್ವರ್ಯ, ಭಾಗ್ಯ', 'shubha': true});
+        yogas.add({'name': 'ಲಕ್ಷ್ಮೀ ಯೋಗ', 'desc': '9ನೇ ಅಧಿಪತಿ $lord9 ಕೇಂದ್ರದಲ್ಲಿ — ಐಶ್ವರ್ಯ, ಭಾಗ್ಯ', 'shubha': true, 'shloka': 'धर्मेशे केन्द्रगते लक्ष्मीयोगः प्रकीर्तितः ।\nऐश्वर्यवान् भाग्यवान् सर्वसम्पद्भाग् भवेत् ॥ — बृ.पा.हो.शा.'});
       }
     }
 
@@ -1126,7 +1148,7 @@ class _PrashnaDashboardScreenState extends State<PrashnaDashboardScreen>
     for (final shadow in ['ರಾಹು', 'ಕೇತು']) {
       for (final p in ['ಚಂದ್ರ', 'ಕುಜ', 'ಶುಕ್ರ', 'ಶನಿ']) {
         if (conjunct(shadow, p)) {
-          yogas.add({'name': 'ಚಂಡಾಲ ಯೋಗ', 'desc': '$shadow-$p ಸಂಯೋಗ — ಅಶುದ್ಧ, ದೋಷ', 'shubha': false});
+          yogas.add({'name': 'ಚಂಡಾಲ ಯೋಗ', 'desc': '$shadow-$p ಸಂಯೋಗ — ಅಶುದ್ಧ, ದೋಷ', 'shubha': false, 'shloka': 'राहुकेतुसहग्रहे चाण्डालयोगकः ।\nअशुद्धमना जातो दोषभाग् भवेन्नरः ॥'});
           break;
         }
       }
@@ -1149,7 +1171,7 @@ class _PrashnaDashboardScreenState extends State<PrashnaDashboardScreen>
           }
         }
         if (chain >= 4) {
-          yogas.add({'name': 'ಗ್ರಹ ಮಾಲಿಕಾ ಯೋಗ', 'desc': '$chain ಗ್ರಹಗಳು ಸತತ ರಾಶಿಗಳಲ್ಲಿ — ರಾಜಯೋಗ ಫಲ', 'shubha': true});
+          yogas.add({'name': 'ಗ್ರಹ ಮಾಲಿಕಾ ಯೋಗ', 'desc': '$chain ಗ್ರಹಗಳು ಸತತ ರಾಶಿಗಳಲ್ಲಿ — ರಾಜಯೋಗ ಫಲ', 'shubha': true, 'shloka': 'ग्रहमालिकायोगे सततराशिगताः ग्रहाः ।\nराजयोगफलं लभेत् सर्वसम्पद्भाग् भवेत् ॥ — सारावली'});
           break;
         }
       }
@@ -1170,7 +1192,7 @@ class _PrashnaDashboardScreenState extends State<PrashnaDashboardScreen>
         if (pR == k10) has10 = true;
       }
       if (has1 && has4 && has7 && has10) {
-        yogas.add({'name': 'ಚತುರಸಾಗರ ಯೋಗ', 'desc': 'ಎಲ್ಲ ಕೇಂದ್ರಗಳಲ್ಲಿ ಗ್ರಹ — ಮಹಾ ಅಧಿಕಾರ', 'shubha': true});
+        yogas.add({'name': 'ಚತುರಸಾಗರ ಯೋಗ', 'desc': 'ಎಲ್ಲ ಕೇಂದ್ರಗಳಲ್ಲಿ ಗ್ರಹ — ಮಹಾ ಅಧಿಕಾರ', 'shubha': true, 'shloka': 'चतुर्केन्द्रेषु ग्रहेषु चतुरसागरयोगकः ।\nमहाधिकारवान् राजा सर्वलोकवन्दितः ॥ — सारावली'});
       }
     }
 
@@ -1179,13 +1201,13 @@ class _PrashnaDashboardScreenState extends State<PrashnaDashboardScreen>
       final fourth = (lagnaRi + 3) % 12;
       final lord4 = rashiLords[fourth];
       if (lord4 != null && lord4 != 'ಗುರು' && inKendra(lord4, 'ಗುರು')) {
-        yogas.add({'name': 'ಕಹಲ ಯೋಗ', 'desc': '4ನೇ ಅಧಿಪತಿ $lord4 - ಗುರು ಪರಸ್ಪರ ಕೇಂದ್ರ — ಧೈರ್ಯ, ಸೈನ್ಯ', 'shubha': true});
+        yogas.add({'name': 'ಕಹಲ ಯೋಗ', 'desc': '4ನೇ ಅಧಿಪತಿ $lord4 - ಗುರು ಪರಸ್ಪರ ಕೇಂದ್ರ — ಧೈರ್ಯ, ಸೈನ್ಯ', 'shubha': true, 'shloka': 'चतुर्थेशगुरुकेन्द्रयोगे कहलयोगकः ।\nधैर्यवान् सैन्यपतिश्च भूपतिः सुखभाग् भवेत् ॥ — बृ.पा.हो.शा.'});
       }
     }
 
     // 29. Amavasya Yoga — Sun-Moon conjunction
     if (conjunct('ರವಿ', 'ಚಂದ್ರ')) {
-      yogas.add({'name': 'ಅಮಾವಾಸ್ಯೆ ಯೋಗ', 'desc': 'ರವಿ-ಚಂದ್ರ ಸಂಯೋಗ — ಮನೋ ದೌರ್ಬಲ್ಯ, ಪಿತೃ ದೋಷ', 'shubha': false});
+      yogas.add({'name': 'ಅಮಾವಾಸ್ಯೆ ಯೋಗ', 'desc': 'ರವಿ-ಚಂದ್ರ ಸಂಯೋಗ — ಮನೋ ದೌರ್ಬಲ್ಯ, ಪಿತೃ ದೋಷ', 'shubha': false, 'shloka': 'रविचन्द्रसंयोगे अमावास्यायोगकः ।\nमनोदौर्बल्यमाप्नोति पितृदोषभवेद् ध्रुवम् ॥'});
     }
 
     // 30. Ubhayachari Yoga — Planets on both sides of Sun (2nd and 12th from Sun)
@@ -1198,11 +1220,11 @@ class _PrashnaDashboardScreenState extends State<PrashnaDashboardScreen>
         if (ri(p) == s12) hasBefore = true;
       }
       if (hasBefore && hasAfter) {
-        yogas.add({'name': 'ಉಭಯಚಾರಿ ಯೋಗ', 'desc': 'ರವಿಯ ಎರಡೂ ಬದಿ ಗ್ರಹ — ಕೀರ್ತಿ, ಸಮೃದ್ಧಿ', 'shubha': true});
+        yogas.add({'name': 'ಉಭಯಚಾರಿ ಯೋಗ', 'desc': 'ರವಿಯ ಎರಡೂ ಬದಿ ಗ್ರಹ — ಕೀರ್ತಿ, ಸಮೃದ್ಧಿ', 'shubha': true, 'shloka': 'रवेर्द्वादशद्वितीये ग्रहे उभयचारी ।\nकीर्तिमान् समृद्धश्च सर्वसम्पद्भाग् भवेत् ॥ — फलदीपिका'});
       } else if (hasAfter) {
-        yogas.add({'name': 'ವೇಶಿ ಯೋಗ', 'desc': 'ರವಿಯ 2ರಲ್ಲಿ ಗ್ರಹ — ಪರಾಕ್ರಮ', 'shubha': true});
+        yogas.add({'name': 'ವೇಶಿ ಯೋಗ', 'desc': 'ರವಿಯ 2ರಲ್ಲಿ ಗ್ರಹ — ಪರಾಕ್ರಮ', 'shubha': true, 'shloka': 'रवेर्द्वितीये ग्रहे वेशीयोगः प्रकीर्तितः ।\nपराक्रमवान् धनवान् कीर्तिमान् भवेत् ॥ — फलदीपिका'});
       } else if (hasBefore) {
-        yogas.add({'name': 'ವೋಶಿ ಯೋಗ', 'desc': 'ರವಿಯ 12ರಲ್ಲಿ ಗ್ರಹ — ದಾನ ಗುಣ', 'shubha': true});
+        yogas.add({'name': 'ವೋಶಿ ಯೋಗ', 'desc': 'ರವಿಯ 12ರಲ್ಲಿ ಗ್ರಹ — ದಾನ ಗುಣ', 'shubha': true, 'shloka': 'रवेर्व्यये ग्रहे वोशीयोगः प्रकीर्तितः ।\nदानशीलो गुणवान् सुखभाग् भवेन्नरः ॥ — फलदीपिका'});
       }
     }
 
@@ -1256,7 +1278,7 @@ class _PrashnaDashboardScreenState extends State<PrashnaDashboardScreen>
       final marsNav = navamshaRi('ಕುಜ');
       if ((isSaumyaRashi(satRi) || isSaumyaRashi(satNav)) &&
           (isSaumyaRashi(marsRi) || isSaumyaRashi(marsNav))) {
-        yogas.add({'name': 'ಸದಂತ ಯೋಗ', 'desc': 'ಶನಿ-ಕುಜ ಸೌಮ್ಯ ರಾಶಿ/ಅಂಶದಲ್ಲಿ — ಉತ್ತಮ ದಂತ (ಬೃಹತ್ ಜಾತಕ)', 'shubha': true});
+        yogas.add({'name': 'ಸದಂತ ಯೋಗ', 'desc': 'ಶನಿ-ಕುಜ ಸೌಮ್ಯ ರಾಶಿ/ಅಂಶದಲ್ಲಿ — ಉತ್ತಮ ದಂತ (ಬೃಹತ್ ಜಾತಕ)', 'shubha': true, 'shloka': 'सौम्यर्क्षांशे रविजरुधिरौ चेत्सदन्तोऽत्र जातः । — बृहज्जातक'});
       }
     }
 
@@ -1265,13 +1287,13 @@ class _PrashnaDashboardScreenState extends State<PrashnaDashboardScreen>
     // Moon in own sign in Lagna, aspected by Saturn & Mars → deformity
     if (moonRi == 3 && bhava('ಚಂದ್ರ') == 1) { // Moon in Cancer (own sign) in lagna
       if (aspects('ಶನಿ', moonRi) && aspects('ಕುಜ', moonRi)) {
-        yogas.add({'name': 'ಕುಬ್ಜ ಯೋಗ', 'desc': 'ಚಂದ್ರ ಸ್ವಕ್ಷೇತ್ರ ಲಗ್ನದಲ್ಲಿ, ಶನಿ-ಕುಜ ದೃಷ್ಟಿ — ಕುಬ್ಜತೆ (ಬೃಹತ್ ಜಾತಕ)', 'shubha': false});
+        yogas.add({'name': 'ಕುಬ್ಜ ಯೋಗ', 'desc': 'ಚಂದ್ರ ಸ್ವಕ್ಷೇತ್ರ ಲಗ್ನದಲ್ಲಿ, ಶನಿ-ಕುಜ ದೃಷ್ಟಿ — ಕುಬ್ಜತೆ (ಬೃಹತ್ ಜಾತಕ)', 'shubha': false, 'shloka': 'कुब्जः स्वर्क्षे शशिनि तनुगे मन्दमाहेयदृष्टे ॥ — बृहज्जातक'});
       }
     }
 
     // 33. Gaja Yoga — Jupiter in Lagna/Kendra, unafflicted
     if (bhava('ಗುರು') == 1 && !conjunct('ಗುರು', 'ರಾಹು') && !conjunct('ಗುರು', 'ಕೇತು')) {
-      yogas.add({'name': 'ಗಜ ಯೋಗ', 'desc': 'ಗುರು ಲಗ್ನದಲ್ಲಿ ಅಪೀಡಿತ — ದೊಡ್ಡ ಶರೀರ, ಗೌರವ', 'shubha': true});
+      yogas.add({'name': 'ಗಜ ಯೋಗ', 'desc': 'ಗುರು ಲಗ್ನದಲ್ಲಿ ಅಪೀಡಿತ — ದೊಡ್ಡ ಶರೀರ, ಗೌರವ', 'shubha': true, 'shloka': 'लग्ने गुरौ अपीडिते गजयोगः प्रकीर्तितः ।\nगजवत् शरीरवान् गौरववान् भवेन्नरः ॥ — बृ.पा.हो.शा.'});
     }
 
     // 34. Sunapha/Anapha from Lagna — planets in 2nd/12th from Lagna
@@ -1284,21 +1306,21 @@ class _PrashnaDashboardScreenState extends State<PrashnaDashboardScreen>
         if (ri(p) == l12) has12 = true;
       }
       if (has2 && has12) {
-        yogas.add({'name': 'ಲಗ್ನ ದುರುಧರ ಯೋಗ', 'desc': 'ಲಗ್ನದ 2 ಮತ್ತು 12ರಲ್ಲಿ ಗ್ರಹ — ಸ್ಥಿರ ಸಂಪತ್ತು', 'shubha': true});
+        yogas.add({'name': 'ಲಗ್ನ ದುರುಧರ ಯೋಗ', 'desc': 'ಲಗ್ನದ 2 ಮತ್ತು 12ರಲ್ಲಿ ಗ್ರಹ — ಸ್ಥಿರ ಸಂಪತ್ತು', 'shubha': true, 'shloka': 'लग्नाद्द्वादशद्वितीये ग्रहे लग्नदुरुधरो भवेत् ।\nस्थिरसम्पद्भाग् धनवान् सुखी भवेन्नरः ॥'});
       }
     }
 
     // 35. Hamsa Yoga (specific) — Jupiter in Cancer/Sagittarius/Pisces in Kendra
     if (jupRi >= 0) {
       if ([3, 8, 11].contains(jupRi) && inKendraFromLagna('ಗುರು')) {
-        yogas.add({'name': 'ಹಂಸ ಯೋಗ (ವಿಶೇಷ)', 'desc': 'ಗುರು ಉಚ್ಚ/ಸ್ವಕ್ಷೇತ್ರ ಕೇಂದ್ರದಲ್ಲಿ — ಧರ್ಮ, ಜ್ಞಾನ, ಸನ್ಮಾನ', 'shubha': true});
+        yogas.add({'name': 'ಹಂಸ ಯೋಗ (ವಿಶೇಷ)', 'desc': 'ಗುರು ಉಚ್ಚ/ಸ್ವಕ್ಷೇತ್ರ ಕೇಂದ್ರದಲ್ಲಿ — ಧರ್ಮ, ಜ್ಞಾನ, ಸನ್ಮಾನ', 'shubha': true, 'shloka': 'हंसः कर्कधनुस्वक्षेत्रे केन्द्रस्थिते गुरौ ।\nधर्मज्ञः सन्मानी विद्वान् महापुरुषो भवेत् ॥ — बृ.पा.हो.शा.'});
       }
     }
 
     // 36. Malavya Yoga (specific) — Venus in Taurus/Libra/Pisces in Kendra
     if (venRi >= 0) {
       if ([1, 6, 11].contains(venRi) && inKendraFromLagna('ಶುಕ್ರ')) {
-        yogas.add({'name': 'ಮಾಲವ್ಯ ಯೋಗ (ವಿಶೇಷ)', 'desc': 'ಶುಕ್ರ ಉಚ್ಚ/ಸ್ವಕ್ಷೇತ್ರ ಕೇಂದ್ರದಲ್ಲಿ — ಸೌಂದರ್ಯ, ಸುಖ, ವಾಹನ', 'shubha': true});
+        yogas.add({'name': 'ಮಾಲವ್ಯ ಯೋಗ (ವಿಶೇಷ)', 'desc': 'ಶುಕ್ರ ಉಚ್ಚ/ಸ್ವಕ್ಷೇತ್ರ ಕೇಂದ್ರದಲ್ಲಿ — ಸೌಂದರ್ಯ, ಸುಖ, ವಾಹನ', 'shubha': true, 'shloka': 'मालव्यः वृषतुलामीनस्वक्षेत्रे केन्द्रस्थिते शुक्रे ।\nसौन्दर्यवान् सुखभाग् वाहनयुतो भवेत् ॥ — बृ.पा.हो.शा.'});
       }
     }
 
@@ -1306,7 +1328,7 @@ class _PrashnaDashboardScreenState extends State<PrashnaDashboardScreen>
     if (moonRi >= 0 && jupRi >= 0) {
       final diff = (jupRi - moonRi + 12) % 12;
       if ([5, 7, 11].contains(diff) && inKendraFromLagna('ಗುರು')) {
-        yogas.add({'name': 'ಶಕಟ ಭಂಗ ಯೋಗ', 'desc': 'ಗುರು 6/8/12 ಚಂದ್ರನಿಂದ ಆದರೆ ಕೇಂದ್ರದಲ್ಲಿ — ಶಕಟ ನಿವಾರಣೆ', 'shubha': true});
+        yogas.add({'name': 'ಶಕಟ ಭಂಗ ಯೋಗ', 'desc': 'ಗುರು 6/8/12 ಚಂದ್ರನಿಂದ ಆದರೆ ಕೇಂದ್ರದಲ್ಲಿ — ಶಕಟ ನಿವಾರಣೆ', 'shubha': true, 'shloka': 'शकटयोगे गुरौ केन्द्रे शकटभङ्गयोगकः ।\nपूर्वभाग्यमाप्नोति सुखी भवेन्नरः ॥ — फलदीपिका'});
       }
     }
 
@@ -1316,7 +1338,7 @@ class _PrashnaDashboardScreenState extends State<PrashnaDashboardScreen>
       final pNav = navamshaRi(p);
       if (pRi >= 0 && pRi == pNav) {
         final pName = {'ಗುರು': 'ಗುರು', 'ಶುಕ್ರ': 'ಶುಕ್ರ', 'ಬುಧ': 'ಬುಧ'}[p]!;
-        yogas.add({'name': 'ಶುಭ ವರ್ಗೋತ್ತಮ', 'desc': '$pName ವರ್ಗೋತ್ತಮ (ರಾಶಿ=ನವಾಂಶ) — ಅತಿ ಬಲ', 'shubha': true});
+        yogas.add({'name': 'ಶುಭ ವರ್ಗೋತ್ತಮ', 'desc': '$pName ವರ್ಗೋತ್ತಮ (ರಾಶಿ=ನವಾಂಶ) — ಅತಿ ಬಲ', 'shubha': true, 'shloka': 'राश्यांशे नवांशे च समराशिगते वर्गोत्तमः ।\nअतिबलवान् शुभग्रहो महाफलप्रदो भवेत् ॥'});
       }
     }
 
@@ -1325,7 +1347,7 @@ class _PrashnaDashboardScreenState extends State<PrashnaDashboardScreen>
       final pRi = ri(p);
       final pNav = navamshaRi(p);
       if (pRi >= 0 && pRi == pNav) {
-        yogas.add({'name': 'ಪಾಪ ವರ್ಗೋತ್ತಮ', 'desc': '$p ವರ್ಗೋತ್ತಮ (ರಾಶಿ=ನವಾಂಶ) — ಪಾಪ ಅತಿಬಲ, ಕಷ್ಟ', 'shubha': false});
+        yogas.add({'name': 'ಪಾಪ ವರ್ಗೋತ್ತಮ', 'desc': '$p ವರ್ಗೋತ್ತಮ (ರಾಶಿ=ನವಾಂಶ) — ಪಾಪ ಅತಿಬಲ, ಕಷ್ಟ', 'shubha': false, 'shloka': 'पापग्रहे वर्गोत्तमे पापबलं वर्धते ।\nकष्टभाग् भवेज्जातो दुःखी पीडितो नरः ॥'});
       }
     }
 
@@ -1333,7 +1355,7 @@ class _PrashnaDashboardScreenState extends State<PrashnaDashboardScreen>
     final exaltSigns = <String, int>{'ರವಿ': 0, 'ಚಂದ್ರ': 1, 'ಕುಜ': 9, 'ಬುಧ': 5, 'ಗುರು': 3, 'ಶುಕ್ರ': 11, 'ಶನಿ': 6};
     for (final p in exaltSigns.keys) {
       if (ri(p) == exaltSigns[p] && inKendraFromLagna(p)) {
-        yogas.add({'name': 'ಉಚ್ಚ ಗ್ರಹ ಯೋಗ', 'desc': '$p ಉಚ್ಚ ರಾಶಿಯಲ್ಲಿ ಕೇಂದ್ರದಲ್ಲಿ — ಮಹಾ ಶುಭ', 'shubha': true});
+        yogas.add({'name': 'ಉಚ್ಚ ಗ್ರಹ ಯೋಗ', 'desc': '$p ಉಚ್ಚ ರಾಶಿಯಲ್ಲಿ ಕೇಂದ್ರದಲ್ಲಿ — ಮಹಾ ಶುಭ', 'shubha': true, 'shloka': 'उच्चराशौ केन्द्रस्थिते उच्चग्रहयोगकः ।\nमहाशुभफलं लभेत् सर्वसम्पद्भाग् भवेत् ॥'});
       }
     }
 
@@ -1345,7 +1367,7 @@ class _PrashnaDashboardScreenState extends State<PrashnaDashboardScreen>
         final lordOfDebSign = rashiLords[debilSigns[p]!];
         final hasCancellation = lordOfDebSign != null && (aspects(lordOfDebSign, ri(p)) || conjunct(lordOfDebSign, p));
         if (!hasCancellation) {
-          yogas.add({'name': 'ನೀಚ ಗ್ರಹ ದೋಷ', 'desc': '$p ನೀಚ ರಾಶಿಯಲ್ಲಿ ಕೇಂದ್ರ — ಕಷ್ಟ, ಅವಮಾನ', 'shubha': false});
+          yogas.add({'name': 'ನೀಚ ಗ್ರಹ ದೋಷ', 'desc': '$p ನೀಚ ರಾಶಿಯಲ್ಲಿ ಕೇಂದ್ರ — ಕಷ್ಟ, ಅವಮಾನ', 'shubha': false, 'shloka': 'नीचराशौ केन्द्रस्थिते नीचग्रहदोषकः ।\nकष्टभाग् अवमानी दुःखी दुर्भाग्यो भवेत् ॥'});
         }
       }
     }
@@ -1360,7 +1382,7 @@ class _PrashnaDashboardScreenState extends State<PrashnaDashboardScreen>
         final owns = rashiLords.entries.where((e) => e.value == p).map((e) => e.key).toList();
         bool ownsKendra = owns.any((s) => kendraRashis.contains(s));
         if (ownsKendra && inKendraFromLagna(p)) {
-          yogas.add({'name': 'ಕೇಂದ್ರಾಧಿಪತಿ ದೋಷ', 'desc': '$p ಶುಭ ಗ್ರಹ ಕೇಂದ್ರಾಧಿಪತಿ — ಶುಭ ಫಲ ಕ್ಷೀಣ', 'shubha': false});
+          yogas.add({'name': 'ಕೇಂದ್ರಾಧಿಪತಿ ದೋಷ', 'desc': '$p ಶುಭ ಗ್ರಹ ಕೇಂದ್ರಾಧಿಪತಿ — ಶುಭ ಫಲ ಕ್ಷೀಣ', 'shubha': false, 'shloka': 'केन्द्राधिपतिदोषे शुभग्रहः कार्यक्षमो भवेत् ।\nशुभफलक्षीणो भवेत् निष्फलो भवेन्नरः ॥ — बृ.पा.हो.शा.'});
         }
       }
     }
@@ -1372,10 +1394,10 @@ class _PrashnaDashboardScreenState extends State<PrashnaDashboardScreen>
       final lord5 = rashiLords[fifth];
       final lord9 = rashiLords[ninth];
       if (lord5 != null && inKendraFromLagna(lord5)) {
-        yogas.add({'name': 'ತ್ರಿಕೋಣಾಧಿಪತಿ ಯೋಗ', 'desc': '5ನೇ ಅಧಿಪತಿ $lord5 ಕೇಂದ್ರದಲ್ಲಿ — ಪೂರ್ವ ಪುಣ್ಯ ಫಲ', 'shubha': true});
+        yogas.add({'name': 'ತ್ರಿಕೋಣಾಧಿಪತಿ ಯೋಗ', 'desc': '5ನೇ ಅಧಿಪತಿ $lord5 ಕೇಂದ್ರದಲ್ಲಿ — ಪೂರ್ವ ಪುಣ್ಯ ಫಲ', 'shubha': true, 'shloka': 'त्रिकोणाधिपतेः केन्द्रगते पूर्वपुण्यफलं लभेत् ।\nसुखी भाग्यवान् विद्वान् सर्वसम्पद्भाग् भवेत् ॥ — बृ.पा.हो.शा.'});
       }
       if (lord9 != null && lord9 != lord5 && inKendraFromLagna(lord9)) {
-        yogas.add({'name': 'ಭಾಗ್ಯಾಧಿಪತಿ ಯೋಗ', 'desc': '9ನೇ ಅಧಿಪತಿ $lord9 ಕೇಂದ್ರದಲ್ಲಿ — ಭಾಗ್ಯ ವೃದ್ಧಿ', 'shubha': true});
+        yogas.add({'name': 'ಭಾಗ್ಯಾಧಿಪತಿ ಯೋಗ', 'desc': '9ನೇ ಅಧಿಪತಿ $lord9 ಕೇಂದ್ರದಲ್ಲಿ — ಭಾಗ್ಯ ವೃದ್ಧಿ', 'shubha': true, 'shloka': 'भाग्याधिपतेः केन्द्रगते भाग्यवृद्धिर्भवेत् ।\nधर्मार्थकाममोक्षेषु सर्वसिद्धिर्भवेत् ॥ — बृ.पा.हो.शा.'});
       }
     }
 
@@ -1386,7 +1408,7 @@ class _PrashnaDashboardScreenState extends State<PrashnaDashboardScreen>
       if (lord10 != null) {
         final b10 = bhava(lord10);
         if ([6, 8, 12].contains(b10)) {
-          yogas.add({'name': 'ದುರ್ಯೋಗ', 'desc': '10ನೇ ಅಧಿಪತಿ $lord10 ದುಸ್ಥಾನದಲ್ಲಿ — ವೃತ್ತಿ ಕಷ್ಟ', 'shubha': false});
+          yogas.add({'name': 'ದುರ್ಯೋಗ', 'desc': '10ನೇ ಅಧಿಪತಿ $lord10 ದುಸ್ಥಾನದಲ್ಲಿ — ವೃತ್ತಿ ಕಷ್ಟ', 'shubha': false, 'shloka': 'कर्मेशे दुःस्थानगते दुर्योगः प्रकीर्तितः ।\nवृत्तिकष्टमाप्नोति दुर्भाग्यो भवेन्नरः ॥ — बृ.पा.हो.शा.'});
         }
       }
     }
@@ -1400,7 +1422,7 @@ class _PrashnaDashboardScreenState extends State<PrashnaDashboardScreen>
         if (p1 == null || p2 == null) continue;
         final diff = (p1.longitude - p2.longitude).abs();
         if (diff < 1.0 || diff > 359.0) {
-          yogas.add({'name': 'ಗ್ರಹ ಯುದ್ಧ', 'desc': '${planets5[i]} - ${planets5[j]} ಒಂದು ಅಂಶದಲ್ಲಿ — ಸಂಘರ್ಷ', 'shubha': false});
+          yogas.add({'name': 'ಗ್ರಹ ಯುದ್ಧ', 'desc': '${planets5[i]} - ${planets5[j]} ಒಂದು ಅಂಶದಲ್ಲಿ — ಸಂಘರ್ಷ', 'shubha': false, 'shloka': 'ग्रहयुद्धे समीपस्थितौ ग्रहौ संघर्षफलदौ ।\nदुर्बलो पराजितो भवेत् बलवान् जयी भवेत् ॥ — सारावली'});
         }
       }
     }
