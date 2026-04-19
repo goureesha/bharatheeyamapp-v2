@@ -43,6 +43,7 @@ class _PrashnaDashboardScreenState extends State<PrashnaDashboardScreen>
   late int _minute;
   late String _ampm;
   bool _recalculating = false;
+  int _yogaTab = 0; // 0 = detected, 1 = all yogas catalog
 
   static const _tabs = ['ಕುಂಡಲಿ', 'ಸ್ಫುಟ', 'ಪಂಚಾಂಗ', 'ಷಡ್ವರ್ಗ'];
 
@@ -631,22 +632,13 @@ class _PrashnaDashboardScreenState extends State<PrashnaDashboardScreen>
       }
     }
 
-    if (allYogas.isEmpty) {
-      return Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16),
-        child: AppCard(
-          child: Center(child: Text('ಯೋಗಗಳು ಕಂಡುಬಂದಿಲ್ಲ', style: TextStyle(color: kMuted, fontWeight: FontWeight.w600))),
-        ),
-      );
-    }
-
     final lagnaRi = (_result.planets['ಲಗ್ನ']?.longitude ?? 0) ~/ 30 % 12;
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
       child: Column(
         children: [
-          // Title
+          // Title + Tab Toggle
           Container(
             width: double.infinity,
             padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 16),
@@ -657,27 +649,75 @@ class _PrashnaDashboardScreenState extends State<PrashnaDashboardScreen>
               ),
               border: Border(bottom: BorderSide(color: kTeal.withOpacity(0.4), width: 2)),
             ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
+            child: Column(
               children: [
-                Icon(Icons.auto_awesome, size: 18, color: kTeal),
-                const SizedBox(width: 8),
-                Text('ಯೋಗಗಳು (ಎಲ್ಲ ರಾಶಿ)', style: TextStyle(
-                  fontWeight: FontWeight.w900, fontSize: 16, color: kTeal,
-                )),
-                const SizedBox(width: 8),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(Icons.auto_awesome, size: 18, color: kTeal),
+                    const SizedBox(width: 8),
+                    Text('ಯೋಗಗಳು', style: TextStyle(
+                      fontWeight: FontWeight.w900, fontSize: 16, color: kTeal,
+                    )),
+                    const SizedBox(width: 8),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: kTeal.withOpacity(0.2),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Text(_yogaTab == 0 ? '$totalCount' : '${_allYogaCatalog().length}', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w900, color: kTeal)),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                // Tab toggle buttons
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                   decoration: BoxDecoration(
-                    color: kTeal.withOpacity(0.2),
+                    color: kBg.withOpacity(0.5),
                     borderRadius: BorderRadius.circular(10),
                   ),
-                  child: Text('$totalCount', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w900, color: kTeal)),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: GestureDetector(
+                          onTap: () => setState(() => _yogaTab = 0),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(vertical: 8),
+                            decoration: BoxDecoration(
+                              color: _yogaTab == 0 ? kTeal : Colors.transparent,
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            child: Center(child: Text('ಪತ್ತೆಯಾದ ಯೋಗ', style: TextStyle(
+                              fontSize: 13, fontWeight: FontWeight.w800,
+                              color: _yogaTab == 0 ? Colors.white : kMuted,
+                            ))),
+                          ),
+                        ),
+                      ),
+                      Expanded(
+                        child: GestureDetector(
+                          onTap: () => setState(() => _yogaTab = 1),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(vertical: 8),
+                            decoration: BoxDecoration(
+                              color: _yogaTab == 1 ? kTeal : Colors.transparent,
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            child: Center(child: Text('ಎಲ್ಲಾ ಯೋಗ ಪಟ್ಟಿ', style: TextStyle(
+                              fontSize: 13, fontWeight: FontWeight.w800,
+                              color: _yogaTab == 1 ? Colors.white : kMuted,
+                            ))),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ],
             ),
           ),
-          // Per-rashi yoga list
+          // Content
           Container(
             width: double.infinity,
             decoration: BoxDecoration(
@@ -687,115 +727,311 @@ class _PrashnaDashboardScreenState extends State<PrashnaDashboardScreen>
               ),
               border: Border.all(color: kBorder),
             ),
-            child: Column(
-              children: List.generate(12, (rIdx) {
-                final yogas = allYogas[rIdx];
-                if (yogas == null || yogas.isEmpty) return const SizedBox.shrink();
-                final rashiName = knRashi[rIdx];
-                final isLagna = rIdx == lagnaRi;
-                final bhavaNum = ((rIdx - lagnaRi + 12) % 12) + 1;
-
-                return ExpansionTile(
-                  initiallyExpanded: isLagna,
-                  tilePadding: const EdgeInsets.symmetric(horizontal: 12),
-                  childrenPadding: EdgeInsets.zero,
-                  backgroundColor: kBg.withOpacity(0.3),
-                  title: Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                        decoration: BoxDecoration(
-                          color: isLagna ? kTeal : kPurple2.withOpacity(0.15),
-                          borderRadius: BorderRadius.circular(6),
-                        ),
-                        child: Text('$bhavaNum', style: TextStyle(
-                          fontSize: 15, fontWeight: FontWeight.w900,
-                          color: isLagna ? Colors.white : kPurple2,
-                        )),
-                      ),
-                      const SizedBox(width: 8),
-                      Text(rashiName, style: TextStyle(
-                        fontWeight: FontWeight.w900, fontSize: 17,
-                        color: isLagna ? kTeal : kText,
-                      )),
-                      if (isLagna) Text(' (ಲಗ್ನ)', style: TextStyle(fontSize: 14, color: kTeal, fontWeight: FontWeight.w700)),
-                      const Spacer(),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                        decoration: BoxDecoration(
-                          color: kTeal.withOpacity(0.15),
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: Text('${yogas.length}', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w900, color: kTeal)),
-                      ),
-                    ],
-                  ),
-                  children: yogas.asMap().entries.map((entry) {
-                    final y = entry.value;
-                    final isEven = entry.key % 2 == 0;
-                    final isShubha = y['shubha'] == true;
-                    return Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                      decoration: BoxDecoration(
-                        color: isEven ? kBg.withOpacity(0.4) : kCard,
-                        border: Border(bottom: BorderSide(color: kBorder.withOpacity(0.5))),
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Icon(
-                                isShubha ? Icons.check_circle : Icons.warning_amber_rounded,
-                                size: 18,
-                                color: isShubha ? const Color(0xFF2F855A) : const Color(0xFFE53E3E),
-                              ),
-                              const SizedBox(width: 6),
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(y['name'] as String, style: TextStyle(
-                                      fontWeight: FontWeight.w900, fontSize: 16,
-                                      color: isShubha ? const Color(0xFF2F855A) : const Color(0xFFE53E3E),
-                                    )),
-                                    const SizedBox(height: 3),
-                                    Text(y['desc'] as String, style: TextStyle(
-                                      fontSize: 13, color: kMuted, fontWeight: FontWeight.w600,
-                                    )),
-                                  ],
-                                ),
-                              ),
-                            ],
-                          ),
-                          if (y['shloka'] != null && (y['shloka'] as String).isNotEmpty)
-                            Container(
-                              width: double.infinity,
-                              margin: const EdgeInsets.only(top: 6),
-                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                              decoration: BoxDecoration(
-                                color: const Color(0xFFFFF8E1),
-                                borderRadius: BorderRadius.circular(6),
-                                border: Border.all(color: const Color(0xFFFFE082), width: 0.5),
-                              ),
-                              child: Text(y['shloka'] as String, style: const TextStyle(
-                                fontSize: 13, fontStyle: FontStyle.italic,
-                                color: Color(0xFF5D4037), fontWeight: FontWeight.w600,
-                                height: 1.4,
-                              )),
-                            ),
-                        ],
-                      ),
-                    );
-                  }).toList(),
-                );
-              }),
-            ),
+            child: _yogaTab == 0
+                ? _buildDetectedYogasContent(allYogas, lagnaRi, totalCount)
+                : _buildAllYogasCatalog(),
           ),
         ],
       ),
     );
+  }
+
+  // --- Tab 0: Detected Yogas (existing per-rashi view) ---
+  Widget _buildDetectedYogasContent(Map<int, List<Map<String, dynamic>>> allYogas, int lagnaRi, int totalCount) {
+    if (allYogas.isEmpty) {
+      return Padding(
+        padding: const EdgeInsets.all(24),
+        child: Center(child: Text('ಯೋಗಗಳು ಕಂಡುಬಂದಿಲ್ಲ', style: TextStyle(color: kMuted, fontWeight: FontWeight.w600))),
+      );
+    }
+    return Column(
+      children: List.generate(12, (rIdx) {
+        final yogas = allYogas[rIdx];
+        if (yogas == null || yogas.isEmpty) return const SizedBox.shrink();
+        final rashiName = knRashi[rIdx];
+        final isLagna = rIdx == lagnaRi;
+        final bhavaNum = ((rIdx - lagnaRi + 12) % 12) + 1;
+
+        return ExpansionTile(
+          initiallyExpanded: isLagna,
+          tilePadding: const EdgeInsets.symmetric(horizontal: 12),
+          childrenPadding: EdgeInsets.zero,
+          backgroundColor: kBg.withOpacity(0.3),
+          title: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                decoration: BoxDecoration(
+                  color: isLagna ? kTeal : kPurple2.withOpacity(0.15),
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                child: Text('$bhavaNum', style: TextStyle(
+                  fontSize: 15, fontWeight: FontWeight.w900,
+                  color: isLagna ? Colors.white : kPurple2,
+                )),
+              ),
+              const SizedBox(width: 8),
+              Text(rashiName, style: TextStyle(
+                fontWeight: FontWeight.w900, fontSize: 17,
+                color: isLagna ? kTeal : kText,
+              )),
+              if (isLagna) Text(' (ಲಗ್ನ)', style: TextStyle(fontSize: 14, color: kTeal, fontWeight: FontWeight.w700)),
+              const Spacer(),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                decoration: BoxDecoration(
+                  color: kTeal.withOpacity(0.15),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Text('${yogas.length}', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w900, color: kTeal)),
+              ),
+            ],
+          ),
+          children: yogas.asMap().entries.map((entry) {
+            final y = entry.value;
+            final isEven = entry.key % 2 == 0;
+            final isShubha = y['shubha'] == true;
+            return _buildYogaCard(y, isEven, isShubha);
+          }).toList(),
+        );
+      }),
+    );
+  }
+
+  // --- Tab 1: All Yogas Catalog ---
+  Widget _buildAllYogasCatalog() {
+    final catalog = _allYogaCatalog();
+    // Group by chapter
+    final chapters = <String, List<Map<String, dynamic>>>{};
+    for (final y in catalog) {
+      final ch = y['chapter'] as String;
+      chapters.putIfAbsent(ch, () => []);
+      chapters[ch]!.add(y);
+    }
+    return Column(
+      children: chapters.entries.map((chEntry) {
+        return ExpansionTile(
+          initiallyExpanded: false,
+          tilePadding: const EdgeInsets.symmetric(horizontal: 12),
+          childrenPadding: EdgeInsets.zero,
+          backgroundColor: kBg.withOpacity(0.3),
+          title: Row(
+            children: [
+              Icon(Icons.menu_book_rounded, size: 18, color: kPurple2),
+              const SizedBox(width: 8),
+              Expanded(child: Text(chEntry.key, style: TextStyle(
+                fontWeight: FontWeight.w900, fontSize: 15, color: kPurple2,
+              ))),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                decoration: BoxDecoration(
+                  color: kPurple2.withOpacity(0.15),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Text('${chEntry.value.length}', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w900, color: kPurple2)),
+              ),
+            ],
+          ),
+          children: chEntry.value.asMap().entries.map((entry) {
+            final y = entry.value;
+            final isEven = entry.key % 2 == 0;
+            final isShubha = y['shubha'] == true;
+            return _buildYogaCard(y, isEven, isShubha);
+          }).toList(),
+        );
+      }).toList(),
+    );
+  }
+
+  // --- Shared yoga card widget ---
+  Widget _buildYogaCard(Map<String, dynamic> y, bool isEven, bool isShubha) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+      decoration: BoxDecoration(
+        color: isEven ? kBg.withOpacity(0.4) : kCard,
+        border: Border(bottom: BorderSide(color: kBorder.withOpacity(0.5))),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Icon(
+                isShubha ? Icons.check_circle : Icons.warning_amber_rounded,
+                size: 18,
+                color: isShubha ? const Color(0xFF2F855A) : const Color(0xFFE53E3E),
+              ),
+              const SizedBox(width: 6),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(y['name'] as String, style: TextStyle(
+                      fontWeight: FontWeight.w900, fontSize: 16,
+                      color: isShubha ? const Color(0xFF2F855A) : const Color(0xFFE53E3E),
+                    )),
+                    const SizedBox(height: 3),
+                    Text(y['desc'] as String, style: TextStyle(
+                      fontSize: 13, color: kMuted, fontWeight: FontWeight.w600,
+                    )),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          if (y['shloka'] != null && (y['shloka'] as String).isNotEmpty)
+            Container(
+              width: double.infinity,
+              margin: const EdgeInsets.only(top: 6),
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+              decoration: BoxDecoration(
+                color: const Color(0xFFFFF8E1),
+                borderRadius: BorderRadius.circular(6),
+                border: Border.all(color: const Color(0xFFFFE082), width: 0.5),
+              ),
+              child: Text(y['shloka'] as String, style: const TextStyle(
+                fontSize: 13, fontStyle: FontStyle.italic,
+                color: Color(0xFF5D4037), fontWeight: FontWeight.w600,
+                height: 1.4,
+              )),
+            ),
+          if (y['rule'] != null)
+            Container(
+              width: double.infinity,
+              margin: const EdgeInsets.only(top: 4),
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+              decoration: BoxDecoration(
+                color: kPurple2.withOpacity(0.06),
+                borderRadius: BorderRadius.circular(6),
+              ),
+              child: Text('📐 ${y['rule']}', style: TextStyle(
+                fontSize: 12, color: kPurple2, fontWeight: FontWeight.w600,
+              )),
+            ),
+        ],
+      ),
+    );
+  }
+
+  // ═══════════════════════════════════════════
+  // ALL YOGA CATALOG (static reference list)
+  // ═══════════════════════════════════════════
+  List<Map<String, dynamic>> _allYogaCatalog() {
+    return [
+      // ── BPHS / Phala Deepika / Saravali (Original 45) ──
+      {'chapter': '೧. ಬೃ.ಪಾ.ಹೋ.ಶಾ / ಫಲದೀಪಿಕಾ', 'name': 'ಗಜ ಕೇಸರಿ ಯೋಗ', 'desc': 'ಗುರು ಚಂದ್ರನಿಂದ ಕೇಂದ್ರದಲ್ಲಿ — ಕೀರ್ತಿ, ಬುದ್ಧಿ, ಸಂಪತ್ತು', 'shubha': true, 'shloka': 'केन्द्रे देवगुरौ शशाङ्कसहिते गोवाजिराजप्रदम् ।', 'rule': 'Jupiter in kendra (1/4/7/10) from Moon'},
+      {'chapter': '೧. ಬೃ.ಪಾ.ಹೋ.ಶಾ / ಫಲದೀಪಿಕಾ', 'name': 'ಚಂದ್ರ ಮಂಗಲ ಯೋಗ', 'desc': 'ಚಂದ್ರ+ಕುಜ ಸಂಯೋಗ — ಧನ, ಸಾಹಸ', 'shubha': true, 'shloka': 'चन्द्रकुजयोः संयोगे धनवान् साहसी भवेत् ।', 'rule': 'Moon conjunct Mars (same rashi)'},
+      {'chapter': '೧. ಬೃ.ಪಾ.ಹೋ.ಶಾ / ಫಲದೀಪಿಕಾ', 'name': 'ಬುಧ ಆದಿತ್ಯ ಯೋಗ', 'desc': 'ಬುಧ+ರವಿ ಸಂಯೋಗ — ಬುದ್ಧಿ, ವಾಕ್ಚಾತುರ್ಯ', 'shubha': true, 'shloka': 'बुधादित्ययोगे बुद्धिमान् वाक्पटुर्भवेत् ।', 'rule': 'Mercury conjunct Sun (same rashi)'},
+      {'chapter': '೧. ಬೃ.ಪಾ.ಹೋ.ಶಾ / ಫಲದೀಪಿಕಾ', 'name': 'ಅಮಲ ಯೋಗ', 'desc': 'ಶುಭ ಗ್ರಹ 10ನೇ ಭಾವ — ಶುದ್ಧ ಕೀರ್ತಿ', 'shubha': true, 'shloka': 'दशमे शुभग्रहे अमलयोगः ।', 'rule': 'Benefic planet in 10th house from lagna'},
+      {'chapter': '೧. ಬೃ.ಪಾ.ಹೋ.ಶಾ / ಫಲದೀಪಿಕಾ', 'name': 'ಸುನಫಾ ಯೋಗ', 'desc': 'ಚಂದ್ರನಿಂದ 2ರಲ್ಲಿ ಗ್ರಹ — ಸ್ವಯಂ ಸಂಪಾದನೆ', 'shubha': true, 'shloka': 'चन्द्राद् द्वितीये सुनफायोगः ।', 'rule': 'Any planet (not Sun) in 2nd from Moon'},
+      {'chapter': '೧. ಬೃ.ಪಾ.ಹೋ.ಶಾ / ಫಲದೀಪಿಕಾ', 'name': 'ಅನಫಾ ಯೋಗ', 'desc': 'ಚಂದ್ರನಿಂದ 12ರಲ್ಲಿ ಗ್ರಹ — ಸಂಪತ್ತು', 'shubha': true, 'shloka': 'चन्द्राद् द्वादशे अनफायोगः ।', 'rule': 'Any planet (not Sun) in 12th from Moon'},
+      {'chapter': '೧. ಬೃ.ಪಾ.ಹೋ.ಶಾ / ಫಲದೀಪಿಕಾ', 'name': 'ದುರುಧರ ಯೋಗ', 'desc': 'ಚಂದ್ರನ 2+12ರಲ್ಲಿ ಗ್ರಹ — ಸಂಪತ್ತು, ವಾಹನ', 'shubha': true, 'shloka': 'चन्द्राद् द्वितीयद्वादशे दुरुधरयोगः ।', 'rule': 'Planets in both 2nd and 12th from Moon'},
+      {'chapter': '೧. ಬೃ.ಪಾ.ಹೋ.ಶಾ / ಫಲದೀಪಿಕಾ', 'name': 'ಕೇಮದ್ರುಮ ಯೋಗ', 'desc': 'ಚಂದ್ರನ 2-12 ಖಾಲಿ — ಕಷ್ಟ, ಬಡತನ', 'shubha': false, 'shloka': 'केमद्रुमे दरिद्रो भवेत् ।', 'rule': 'No planets in 2nd or 12th from Moon'},
+      {'chapter': '೧. ಬೃ.ಪಾ.ಹೋ.ಶಾ / ಫಲದೀಪಿಕಾ', 'name': 'ಲಕ್ಷ್ಮೀ ಯೋಗ', 'desc': '9ನೇ ಅಧಿಪತಿ ಉಚ್ಚ/ಸ್ವ ಕೇಂದ್ರ, ಲಗ್ನೇಶ ಬಲಿ', 'shubha': true, 'shloka': 'लक्ष्मीयोगे धनवान् सुखी भवेत् ।', 'rule': '9th lord in kendra exalted/own + strong lagna lord'},
+      {'chapter': '೧. ಬೃ.ಪಾ.ಹೋ.ಶಾ / ಫಲದೀಪಿಕಾ', 'name': 'ಗುರು-ರಾಹು ಚಾಂಡಾಲ ಯೋಗ', 'desc': 'ಗುರು-ರಾಹು ಸಂಯೋಗ — ಧಾರ್ಮಿಕ ಗೊಂದಲ', 'shubha': false, 'shloka': 'गुरुराहुसंयोगे चाण्डालयोगः ।', 'rule': 'Jupiter conjunct Rahu (same rashi)'},
+      {'chapter': '೧. ಬೃ.ಪಾ.ಹೋ.ಶಾ / ಫಲದೀಪಿಕಾ', 'name': 'ಶಕಟ ಯೋಗ', 'desc': 'ಗುರು 6/8/12 ಚಂದ್ರನಿಂದ — ಸಂಕಟ', 'shubha': false, 'shloka': 'शकटयोगे कष्टं संकटं भवेत् ।', 'rule': 'Jupiter in 6/8/12 from Moon'},
+      {'chapter': '೧. ಬೃ.ಪಾ.ಹೋ.ಶಾ / ಫಲದೀಪಿಕಾ', 'name': 'ಹಂಸ ಮಹಾಪುರುಷ ಯೋಗ', 'desc': 'ಗುರು ಸ್ವ/ಉಚ್ಚ ಕೇಂದ್ರ — ಧರ್ಮ, ಜ್ಞಾನ', 'shubha': true, 'shloka': 'हंसयोगे धार्मिको ज्ञानी भवेत् ।', 'rule': 'Jupiter in Cancer/Sagittarius/Pisces in kendra'},
+      {'chapter': '೧. ಬೃ.ಪಾ.ಹೋ.ಶಾ / ಫಲದೀಪಿಕಾ', 'name': 'ಮಾಲವ್ಯ ಮಹಾಪುರುಷ ಯೋಗ', 'desc': 'ಶುಕ್ರ ಸ್ವ/ಉಚ್ಚ ಕೇಂದ್ರ — ಸೌಂದರ್ಯ', 'shubha': true, 'shloka': 'मालव्ययोगे सुन्दरो सुखी भवेत् ।', 'rule': 'Venus in Taurus/Libra/Pisces in kendra'},
+      {'chapter': '೧. ಬೃ.ಪಾ.ಹೋ.ಶಾ / ಫಲದೀಪಿಕಾ', 'name': 'ರುಚಕ ಮಹಾಪುರುಷ ಯೋಗ', 'desc': 'ಕುಜ ಸ್ವ/ಉಚ್ಚ ಕೇಂದ್ರ — ಪರಾಕ್ರಮ', 'shubha': true, 'shloka': 'रुचकयोगे पराक्रमी भवेत् ।', 'rule': 'Mars in Aries/Scorpio/Capricorn in kendra'},
+      {'chapter': '೧. ಬೃ.ಪಾ.ಹೋ.ಶಾ / ಫಲದೀಪಿಕಾ', 'name': 'ಭದ್ರ ಮಹಾಪುರುಷ ಯೋಗ', 'desc': 'ಬುಧ ಸ್ವ/ಉಚ್ಚ ಕೇಂದ್ರ — ವಾಕ್ಚಾತುರ್ಯ', 'shubha': true, 'shloka': 'भद्रयोगे वाक्पटुर्भवेत् ।', 'rule': 'Mercury in Gemini/Virgo in kendra'},
+      {'chapter': '೧. ಬೃ.ಪಾ.ಹೋ.ಶಾ / ಫಲದೀಪಿಕಾ', 'name': 'ಶಶ ಮಹಾಪುರುಷ ಯೋಗ', 'desc': 'ಶನಿ ಸ್ವ/ಉಚ್ಚ ಕೇಂದ್ರ — ಅಧಿಕಾರ', 'shubha': true, 'shloka': 'शशयोगे अधिकारवान् भवेत् ।', 'rule': 'Saturn in Capricorn/Aquarius/Libra in kendra'},
+      {'chapter': '೧. ಬೃ.ಪಾ.ಹೋ.ಶಾ / ಫಲದೀಪಿಕಾ', 'name': 'ನೀಚಭಂಗ ರಾಜಯೋಗ', 'desc': 'ನೀಚ ಗ್ರಹ ರಾಶ್ಯಾಧಿಪತಿ ಕೇಂದ್ರ — ರಾಜಯೋಗ', 'shubha': true, 'shloka': 'नीचभङ्गे राजयोगो भवेत् ।', 'rule': 'Debilitated planet + lord of debil sign in kendra from lagna/Moon'},
+      {'chapter': '೧. ಬೃ.ಪಾ.ಹೋ.ಶಾ / ಫಲದೀಪಿಕಾ', 'name': 'ವಿಪರೀತ ರಾಜಯೋಗ', 'desc': '6/8/12 ಅಧಿಪತಿ 6/8/12ರಲ್ಲಿ — ಅನಿರೀಕ್ಷಿತ ಲಾಭ', 'shubha': true, 'shloka': 'विपरीतराजयोगे अनिरीक्षितलाभः ।', 'rule': '6th/8th/12th lord in 6th/8th/12th house'},
+      {'chapter': '೧. ಬೃ.ಪಾ.ಹೋ.ಶಾ / ಫಲದೀಪಿಕಾ', 'name': 'ಧನ ಯೋಗ', 'desc': '2/11 ಅಧಿಪತಿ ಕೇಂದ್ರ — ಧನ ಲಾಭ', 'shubha': true, 'shloka': 'धने लाभे च केन्द्रे धनयोगः ।', 'rule': '2nd/11th lord in kendra from lagna'},
+      {'chapter': '೧. ಬೃ.ಪಾ.ಹೋ.ಶಾ / ಫಲದೀಪಿಕಾ', 'name': 'ರಾಜಯೋಗ', 'desc': 'ಕೇಂದ್ರ+ತ್ರಿಕೋಣ ಅಧಿಪತಿ ಸಂಬಂಧ', 'shubha': true, 'shloka': 'केन्द्रत्रिकोणेशयोः संबन्धे राजयोगः ।', 'rule': 'Kendra lord conjunct trikona lord'},
+      {'chapter': '೧. ಬೃ.ಪಾ.ಹೋ.ಶಾ / ಫಲದೀಪಿಕಾ', 'name': 'ಚತುಸ್ಸಾಗರ ಯೋಗ', 'desc': 'ಎಲ್ಲ ಕೇಂದ್ರ ಗ್ರಹಯುತ — ಚಕ್ರವರ್ತಿ', 'shubha': true, 'shloka': 'सर्वकेन्द्रे ग्रहयुते चतुस्सागरयोगः ।', 'rule': 'Planets in all 4 kendras (1,4,7,10)'},
+      {'chapter': '೧. ಬೃ.ಪಾ.ಹೋ.ಶಾ / ಫಲದೀಪಿಕಾ', 'name': 'ಪಂಚ ಮಹಾಪುರುಷ ಯೋಗ', 'desc': '2+ ಮಹಾಪುರುಷ ಯೋಗ — ಅಸಾಧಾರಣ', 'shubha': true, 'shloka': 'द्वयोः महापुरुषयोगयोः ।', 'rule': '2+ of Hamsa/Malavya/Ruchaka/Bhadra/Shasha active'},
+      {'chapter': '೧. ಬೃ.ಪಾ.ಹೋ.ಶಾ / ಫಲದೀಪಿಕಾ', 'name': 'ಕಾಲ ಸರ್ಪ ಯೋಗ', 'desc': 'ಎಲ್ಲ ಗ್ರಹ ರಾಹು-ಕೇತು ನಡುವೆ', 'shubha': false, 'shloka': 'कालसर्पयोगे कष्टं भवेत् ।', 'rule': 'All planets between Rahu-Ketu axis'},
+      {'chapter': '೧. ಬೃ.ಪಾ.ಹೋ.ಶಾ / ಫಲದೀಪಿಕಾ', 'name': 'ಗ್ರಹಣ ದೋಷ', 'desc': 'ರವಿ/ಚಂದ್ರ ರಾಹು/ಕೇತುವಿನ ಜೊತೆ', 'shubha': false, 'shloka': 'ग्रहणदोषे पीडा भवेत् ।', 'rule': 'Sun/Moon conjunct Rahu/Ketu'},
+      {'chapter': '೧. ಬೃ.ಪಾ.ಹೋ.ಶಾ / ಫಲದೀಪಿಕಾ', 'name': 'ಕುಜ ದೋಷ', 'desc': 'ಕುಜ 1/4/7/8/12 — ವಿವಾಹ ದೋಷ', 'shubha': false, 'shloka': 'कुजदोषे विवाहे कष्टं भवेत् ।', 'rule': 'Mars in 1/4/7/8/12 from lagna'},
+      {'chapter': '೧. ಬೃ.ಪಾ.ಹೋ.ಶಾ / ಫಲದೀಪಿಕಾ', 'name': 'ಶುಭ ಕರ್ತರಿ ಯೋಗ', 'desc': 'ಲಗ್ನ 2+12ರಲ್ಲಿ ಶುಭ — ಸಂಪತ್ತು', 'shubha': true, 'shloka': 'शुभकर्तरीयोगे सुखं सम्पत् ।', 'rule': 'Benefics in 2nd and 12th from lagna'},
+      {'chapter': '೧. ಬೃ.ಪಾ.ಹೋ.ಶಾ / ಫಲದೀಪಿಕಾ', 'name': 'ಪಾಪ ಕರ್ತರಿ ಯೋಗ', 'desc': 'ಲಗ್ನ 2+12ರಲ್ಲಿ ಪಾಪ — ಕಷ್ಟ', 'shubha': false, 'shloka': 'पापकर्तरीयोगे कष्टं भवेत् ।', 'rule': 'Malefics in 2nd and 12th from lagna'},
+      {'chapter': '೧. ಬೃ.ಪಾ.ಹೋ.ಶಾ / ಫಲದೀಪಿಕಾ', 'name': 'ಚಂದ್ರ ಅಧಿ ಯೋಗ', 'desc': 'ಶುಭ ಗ್ರಹ 6/7/8 ಚಂದ್ರನಿಂದ — ನಾಯಕ', 'shubha': true, 'shloka': 'अधियोगे नायको भवेत् ।', 'rule': 'Benefics in 6/7/8 from Moon'},
+      {'chapter': '೧. ಬೃ.ಪಾ.ಹೋ.ಶಾ / ಫಲದೀಪಿಕಾ', 'name': 'ಸದಂತ ಯೋಗ', 'desc': 'ಶನಿ-ಕುಜ ಸೌಮ್ಯ ರಾಶಿ — ಉತ್ತಮ ದಂತ', 'shubha': true, 'shloka': 'सौम्यर्क्षांशे रविजरुधिरौ चेत्सदन्तोऽत्र जातः ।', 'rule': 'Saturn+Mars in benefic signs/navamsha'},
+      {'chapter': '೧. ಬೃ.ಪಾ.ಹೋ.ಶಾ / ಫಲದೀಪಿಕಾ', 'name': 'ಕುಬ್ಜ ಯೋಗ', 'desc': 'ಚಂದ್ರ ಸ್ವಕ್ಷೇತ್ರ ಲಗ್ನದಲ್ಲಿ ಶನಿ-ಕುಜ ದೃಷ್ಟಿ', 'shubha': false, 'shloka': 'कुब्जः स्वर्क्षे शशिनि तनुगे मन्दमाहेयदृष्टे ॥', 'rule': 'Moon in own sign in lagna + Saturn+Mars aspect'},
+      // More from original...
+      {'chapter': '೧. ಬೃ.ಪಾ.ಹೋ.ಶಾ / ಫಲದೀಪಿಕಾ', 'name': 'ಗಜ ಯೋಗ', 'desc': 'ಗುರು ಲಗ್ನದಲ್ಲಿ ಅಪೀಡಿತ', 'shubha': true, 'shloka': '', 'rule': 'Jupiter in lagna, unafflicted by Rahu/Ketu'},
+      {'chapter': '೧. ಬೃ.ಪಾ.ಹೋ.ಶಾ / ಫಲದೀಪಿಕಾ', 'name': 'ಲಗ್ನ ದುರುಧರ ಯೋಗ', 'desc': 'ಗ್ರಹ ಲಗ್ನದ 2+12ರಲ್ಲಿ', 'shubha': true, 'shloka': '', 'rule': 'Planets in 2nd and 12th from lagna'},
+      {'chapter': '೧. ಬೃ.ಪಾ.ಹೋ.ಶಾ / ಫಲದೀಪಿಕಾ', 'name': 'ಶಕಟ ಭಂಗ ಯೋಗ', 'desc': 'ಗುರು 6/8/12 ಚಂದ್ರ ಆದರೆ ಕೇಂದ್ರ', 'shubha': true, 'shloka': '', 'rule': 'Jupiter in 6/8/12 from Moon but in kendra from lagna'},
+      {'chapter': '೧. ಬೃ.ಪಾ.ಹೋ.ಶಾ / ಫಲದೀಪಿಕಾ', 'name': 'ಶುಭ ವರ್ಗೋತ್ತಮ', 'desc': 'ಶುಭ ಗ್ರಹ ರಾಶಿ=ನವಾಂಶ', 'shubha': true, 'shloka': '', 'rule': 'Benefic in same sign in rashi & navamsha'},
+      {'chapter': '೧. ಬೃ.ಪಾ.ಹೋ.ಶಾ / ಫಲದೀಪಿಕಾ', 'name': 'ಪಾಪ ವರ್ಗೋತ್ತಮ', 'desc': 'ಪಾಪ ಗ್ರಹ ರಾಶಿ=ನವಾಂಶ — ಪಾಪ ಅತಿಬಲ', 'shubha': false, 'shloka': '', 'rule': 'Malefic in same sign in rashi & navamsha'},
+      {'chapter': '೧. ಬೃ.ಪಾ.ಹೋ.ಶಾ / ಫಲದೀಪಿಕಾ', 'name': 'ಉಚ್ಚ ಗ್ರಹ ಯೋಗ', 'desc': 'ಉಚ್ಚ ಗ್ರಹ ಕೇಂದ್ರದಲ್ಲಿ', 'shubha': true, 'shloka': '', 'rule': 'Exalted planet in kendra'},
+      {'chapter': '೧. ಬೃ.ಪಾ.ಹೋ.ಶಾ / ಫಲದೀಪಿಕಾ', 'name': 'ನೀಚ ಗ್ರಹ ದೋಷ', 'desc': 'ನೀಚ ಗ್ರಹ ಕೇಂದ್ರ ನಿವಾರಣೆ ಇಲ್ಲದೆ', 'shubha': false, 'shloka': '', 'rule': 'Debilitated planet in kendra without cancellation'},
+      {'chapter': '೧. ಬೃ.ಪಾ.ಹೋ.ಶಾ / ಫಲದೀಪಿಕಾ', 'name': 'ಕೇಂದ್ರಾಧಿಪತಿ ದೋಷ', 'desc': 'ಶುಭ ಗ್ರಹ ಕೇಂದ್ರಾಧಿಪತಿ', 'shubha': false, 'shloka': '', 'rule': 'Benefic planet owning kendra becomes functional malefic'},
+      {'chapter': '೧. ಬೃ.ಪಾ.ಹೋ.ಶಾ / ಫಲದೀಪಿಕಾ', 'name': 'ತ್ರಿಕೋಣಾಧಿಪತಿ ಯೋಗ', 'desc': '5ನೇ ಅಧಿಪತಿ ಕೇಂದ್ರ', 'shubha': true, 'shloka': '', 'rule': '5th lord in kendra'},
+      {'chapter': '೧. ಬೃ.ಪಾ.ಹೋ.ಶಾ / ಫಲದೀಪಿಕಾ', 'name': 'ಭಾಗ್ಯಾಧಿಪತಿ ಯೋಗ', 'desc': '9ನೇ ಅಧಿಪತಿ ಕೇಂದ್ರ', 'shubha': true, 'shloka': '', 'rule': '9th lord in kendra'},
+      {'chapter': '೧. ಬೃ.ಪಾ.ಹೋ.ಶಾ / ಫಲದೀಪಿಕಾ', 'name': 'ದುರ್ಯೋಗ', 'desc': '10ನೇ ಅಧಿಪತಿ ದುಸ್ಥಾನದಲ್ಲಿ', 'shubha': false, 'shloka': '', 'rule': '10th lord in 6/8/12'},
+      {'chapter': '೧. ಬೃ.ಪಾ.ಹೋ.ಶಾ / ಫಲದೀಪಿಕಾ', 'name': 'ಗ್ರಹ ಯುದ್ಧ', 'desc': 'ಎರಡು ಗ್ರಹ 1° ಒಳಗೆ', 'shubha': false, 'shloka': '', 'rule': 'Two non-luminary planets within 1 degree'},
+
+      // ── CHAPTER 11: राजयोग ──
+      {'chapter': '೨. ಬೃಹಜ್ಜಾತಕ — ಅ.11 ರಾಜಯೋಗ', 'name': 'ಕ್ರೂರ ರಾಜಯೋಗ', 'desc': '2+ ಪಾಪ ಗ್ರಹ ಉಚ್ಚದಲ್ಲಿ — ಕ್ರೂರ ಅಧಿಕಾರ', 'shubha': true, 'shloka': 'प्राहुर्यवनाः स्वतुङ्गगैः क्रूरैः क्रूरमतिर्महीपतिः ॥ ११.१', 'rule': '2+ malefics (Sun/Mars/Saturn) exalted'},
+      {'chapter': '೨. ಬೃಹಜ್ಜಾತಕ — ಅ.11 ರಾಜಯೋಗ', 'name': 'ಶುಭ ರಾಜಯೋಗ', 'desc': 'ಎಲ್ಲ ಶುಭ ಗ್ರಹ ಉಚ್ಚ/ಸ್ವಕ್ಷೇತ್ರ', 'shubha': true, 'shloka': 'शुभैस्तु स्वतुङ्गगैः शुभमतिर्महीपतिः ॥ ११.१', 'rule': 'All 3 benefics (Jup/Ven/Merc) in exalt/own'},
+      {'chapter': '೨. ಬೃಹಜ್ಜಾತಕ — ಅ.11 ರಾಜಯೋಗ', 'name': 'ಬಹು ಉಚ್ಚ ರಾಜಯೋಗ', 'desc': '3+ ಗ್ರಹ ಉಚ್ಚದಲ್ಲಿ', 'shubha': true, 'shloka': 'बहवः ग्रहाः स्वतुङ्गे ॥ ११.३', 'rule': '3+ planets simultaneously exalted'},
+      {'chapter': '೨. ಬೃಹಜ್ಜಾತಕ — ಅ.11 ರಾಜಯೋಗ', 'name': 'ಪಂಚಗ್ರಹ ಏಕರಾಶಿ ಯೋಗ', 'desc': '5+ ಗ್ರಹ ಒಂದೇ ರಾಶಿ', 'shubha': true, 'shloka': 'एकराशौ पञ्चग्रहाः ॥ ११.५', 'rule': '5+ planets in same sign'},
+      {'chapter': '೨. ಬೃಹಜ್ಜಾತಕ — ಅ.11 ರಾಜಯೋಗ', 'name': 'ಲಗ್ನೇಶ ಬಲ ಯೋಗ', 'desc': 'ಲಗ್ನಾಧಿಪತಿ ಉಚ್ಚ/ಸ್ವಕ್ಷೇತ್ರ', 'shubha': true, 'shloka': 'लग्नेशे बलिनि ॥ ११.६', 'rule': 'Lagna lord exalted or in own sign'},
+      {'chapter': '೨. ಬೃಹಜ್ಜಾತಕ — ಅ.11 ರಾಜಯೋಗ', 'name': 'ಶುಕ್ರ-ಗುರು ಕೇಂದ್ರ ಯೋಗ', 'desc': 'ಶುಕ್ರ+ಗುರು ಕೇಂದ್ರ ಒಟ್ಟಿಗೆ', 'shubha': true, 'shloka': 'शुक्रगुरू केन्द्रगतौ ॥ ११.७', 'rule': 'Venus+Jupiter conjunct in kendra'},
+      {'chapter': '೨. ಬೃಹಜ್ಜಾತಕ — ಅ.11 ರಾಜಯೋಗ', 'name': 'ತ್ರಿಶುಭ ಲಗ್ನ ಯೋಗ', 'desc': 'ಬುಧ+ಗುರು+ಶುಕ್ರ ಲಗ್ನದಲ್ಲಿ', 'shubha': true, 'shloka': 'बुधगुरुशुक्राः लग्ने ॥ ११.८', 'rule': 'Mercury+Jupiter+Venus in 1st house'},
+      {'chapter': '೨. ಬೃಹಜ್ಜಾತಕ — ಅ.11 ರಾಜಯೋಗ', 'name': 'ರವಿ-ಕುಜ ಬಲೀ ಯೋಗ', 'desc': 'ರವಿ+ಕುಜ ಕೇಂದ್ರದಲ್ಲಿ', 'shubha': true, 'shloka': 'रवि कुजौ केन्द्रगतौ ॥ ११.९', 'rule': 'Both Sun and Mars in kendras'},
+
+      // ── CHAPTER 12: नाभसयोग ──
+      {'chapter': '೩. ಬೃಹಜ್ಜಾತಕ — ಅ.12 ನಾಭಸಯೋಗ', 'name': 'ರಜ್ಜು ಯೋಗ (ಆಶ್ರಯ)', 'desc': 'ಎಲ್ಲ ಗ್ರಹ ಚರ ರಾಶಿ — ಪ್ರವಾಸ ಪ್ರಿಯ', 'shubha': true, 'shloka': 'चरराशिगतैः सर्वैः रज्जुयोगः ॥ १२.३', 'rule': 'All 7 planets in movable signs (Ar/Cn/Li/Cp)'},
+      {'chapter': '೩. ಬೃಹಜ್ಜಾತಕ — ಅ.12 ನಾಭಸಯೋಗ', 'name': 'ಮುಸಲ ಯೋಗ (ಆಶ್ರಯ)', 'desc': 'ಎಲ್ಲ ಗ್ರಹ ಸ್ಥಿರ ರಾಶಿ — ಸ್ಥಿರ ಸಂಪತ್ತು', 'shubha': true, 'shloka': 'स्थिरराशिगतैः सर्वैः मुसलयोगः ॥ १२.३', 'rule': 'All 7 planets in fixed signs (Ta/Le/Sc/Aq)'},
+      {'chapter': '೩. ಬೃಹಜ್ಜಾತಕ — ಅ.12 ನಾಭಸಯೋಗ', 'name': 'ನಲ ಯೋಗ (ಆಶ್ರಯ)', 'desc': 'ಎಲ್ಲ ಗ್ರಹ ಉಭಯ ರಾಶಿ — ಬಹುಮುಖ', 'shubha': true, 'shloka': 'उभयराशिगतैः सर्वैः नलयोगः ॥ १२.३', 'rule': 'All 7 planets in dual signs (Ge/Vi/Sg/Pi)'},
+      {'chapter': '೩. ಬೃಹಜ್ಜಾತಕ — ಅ.12 ನಾಭಸಯೋಗ', 'name': 'ಮಾಲಾ ಯೋಗ (ದಲ)', 'desc': 'ಶುಭ ಕೇಂದ್ರ, ಪಾಪ ಉಪಚಯ', 'shubha': true, 'shloka': 'केन्द्रे शुभाः पापा उपचये ॥ १२.५', 'rule': 'Benefics in kendras + malefics in 3/6/11'},
+      {'chapter': '೩. ಬೃಹಜ್ಜಾತಕ — ಅ.12 ನಾಭಸಯೋಗ', 'name': 'ಸರ್ಪ ಯೋಗ (ದಲ)', 'desc': 'ಪಾಪ ಗ್ರಹ ಕೇಂದ್ರದಲ್ಲಿ — ಕಷ್ಟ', 'shubha': false, 'shloka': 'केन्द्रे पापाः सर्पयोगः ॥ १२.५', 'rule': 'All 3 malefics (Sun/Mars/Saturn) in kendras'},
+      {'chapter': '೩. ಬೃಹಜ್ಜಾತಕ — ಅ.12 ನಾಭಸಯೋಗ', 'name': 'ವೀಣಾ ಯೋಗ (ಸಂಖ್ಯಾ)', 'desc': '7 ಗ್ರಹ 7 ರಾಶಿಯಲ್ಲಿ — ಸಂಗೀತ, ಕಲೆ', 'shubha': true, 'shloka': 'सप्तराशिगतैः ॥ १२.१०', 'rule': '7 planets spread across 7 different signs'},
+      {'chapter': '೩. ಬೃಹಜ್ಜಾತಕ — ಅ.12 ನಾಭಸಯೋಗ', 'name': 'ದಾಮಿನೀ ಯೋಗ (ಸಂಖ್ಯಾ)', 'desc': '7 ಗ್ರಹ 6 ರಾಶಿ — ದಾನಶೀಲ', 'shubha': true, 'shloka': 'षड्राशिगतैः ॥ १२.१०', 'rule': '7 planets in 6 signs'},
+      {'chapter': '೩. ಬೃಹಜ್ಜಾತಕ — ಅ.12 ನಾಭಸಯೋಗ', 'name': 'ಪಾಶ ಯೋಗ (ಸಂಖ್ಯಾ)', 'desc': '7 ಗ್ರಹ 5 ರಾಶಿ — ಬಂಧನ', 'shubha': false, 'shloka': 'पञ्चराशिगतैः ॥ १२.१०', 'rule': '7 planets in 5 signs'},
+      {'chapter': '೩. ಬೃಹಜ್ಜಾತಕ — ಅ.12 ನಾಭಸಯೋಗ', 'name': 'ಕೇದಾರ ಯೋಗ (ಸಂಖ್ಯಾ)', 'desc': '7 ಗ್ರಹ 4 ರಾಶಿ — ಕೃಷಿ, ಭೂಮಿ', 'shubha': true, 'shloka': 'चतुर्राशिगतैः ॥ १२.१०', 'rule': '7 planets in 4 signs'},
+      {'chapter': '೩. ಬೃಹಜ್ಜಾತಕ — ಅ.12 ನಾಭಸಯೋಗ', 'name': 'ಶೂಲ ಯೋಗ (ಸಂಖ್ಯಾ)', 'desc': '7 ಗ್ರಹ 3 ರಾಶಿ — ಕ್ರೂರ, ಬಡತನ', 'shubha': false, 'shloka': 'त्रिराशिगतैः ॥ १२.१०', 'rule': '7 planets in 3 signs'},
+      {'chapter': '೩. ಬೃಹಜ್ಜಾತಕ — ಅ.12 ನಾಭಸಯೋಗ', 'name': 'ಯುಗ ಯೋಗ (ಸಂಖ್ಯಾ)', 'desc': '7 ಗ್ರಹ 2 ರಾಶಿ — ಧರ್ಮಹೀನ', 'shubha': false, 'shloka': 'द्विराशिगतैः ॥ १२.१०', 'rule': '7 planets in only 2 signs'},
+      {'chapter': '೩. ಬೃಹಜ್ಜಾತಕ — ಅ.12 ನಾಭಸಯೋಗ', 'name': 'ಗೋಲ ಯೋಗ (ಸಂಖ್ಯಾ)', 'desc': 'ಎಲ್ಲ ಗ್ರಹ 1 ರಾಶಿ', 'shubha': false, 'shloka': 'एकराशिगतैः ॥ १२.१०', 'rule': 'All 7 planets in 1 sign'},
+      {'chapter': '೩. ಬೃಹಜ್ಜಾತಕ — ಅ.12 ನಾಭಸಯೋಗ', 'name': 'ಯೂಪ ಯೋಗ (ಆಕೃತಿ)', 'desc': 'ಎಲ್ಲ ಗ್ರಹ 1-4 ಭಾವ', 'shubha': true, 'shloka': '॥ १२.७', 'rule': 'All planets in houses 1 to 4'},
+      {'chapter': '೩. ಬೃಹಜ್ಜಾತಕ — ಅ.12 ನಾಭಸಯೋಗ', 'name': 'ಶರ ಯೋಗ (ಆಕೃತಿ)', 'desc': 'ಎಲ್ಲ ಗ್ರಹ 4-7 ಭಾವ', 'shubha': false, 'shloka': '॥ १२.७', 'rule': 'All planets in houses 4 to 7'},
+      {'chapter': '೩. ಬೃಹಜ್ಜಾತಕ — ಅ.12 ನಾಭಸಯೋಗ', 'name': 'ಶಕ್ತಿ ಯೋಗ (ಆಕೃತಿ)', 'desc': 'ಎಲ್ಲ ಗ್ರಹ 7-10 ಭಾವ', 'shubha': false, 'shloka': '॥ १२.७', 'rule': 'All planets in houses 7 to 10'},
+      {'chapter': '೩. ಬೃಹಜ್ಜಾತಕ — ಅ.12 ನಾಭಸಯೋಗ', 'name': 'ದಂಡ ಯೋಗ (ಆಕೃತಿ)', 'desc': 'ಎಲ್ಲ ಗ್ರಹ 10-1 ಭಾವ', 'shubha': false, 'shloka': '॥ १२.７', 'rule': 'All planets in houses 10 to 1'},
+      {'chapter': '೩. ಬೃಹಜ್ಜಾತಕ — ಅ.12 ನಾಭಸಯೋಗ', 'name': 'ಗದಾ ಯೋಗ (ಆಕೃತಿ)', 'desc': 'ಗ್ರಹ 2 ಪಕ್ಕದ ಕೇಂದ್ರದಲ್ಲಿ', 'shubha': true, 'shloka': '॥ १२.６', 'rule': 'All planets in 2 adjacent kendra quadrants'},
+      {'chapter': '೩. ಬೃಹಜ್ಜಾತಕ — ಅ.12 ನಾಭಸಯೋಗ', 'name': 'ಚಕ್ರ ಯೋಗ (ಆಕೃತಿ)', 'desc': 'ಎಲ್ಲ ಗ್ರಹ ಓಜ ರಾಶಿ — ಚಕ್ರವರ್ತಿ', 'shubha': true, 'shloka': '॥ १２.８', 'rule': 'All planets in odd signs only'},
+      {'chapter': '೩. ಬೃಹಜ್ಜಾತಕ — ಅ.12 ನಾಭಸಯೋಗ', 'name': 'ಸಮುದ್ರ ಯೋಗ (ಆಕೃತಿ)', 'desc': 'ಎಲ್ಲ ಗ್ರಹ ಯುಗ್ಮ ರಾಶಿ', 'shubha': true, 'shloka': '॥ १२.８', 'rule': 'All planets in even signs only'},
+      {'chapter': '೩. ಬೃಹಜ್ಜಾತಕ — ಅ.12 ನಾಭಸಯೋಗ', 'name': 'ಅರ್ಧಚಂದ್ರ ಯೋಗ (ಆಕೃತಿ)', 'desc': '7 ಸತತ ಭಾವ ಕೇಂದ್ರದಿಂದ', 'shubha': true, 'shloka': '॥ १२.８', 'rule': 'Planets in 7 consecutive houses from a kendra'},
+
+      // ── CHAPTER 13: चन्द्रयोग ──
+      {'chapter': '೪. ಬೃಹಜ್ಜಾತಕ — ಅ.13 ಚಂದ್ರಯೋಗ', 'name': 'ಚಂದ್ರ ವರಿಷ್ಠ ಯೋಗ', 'desc': 'ಚಂದ್ರ 10ನೇ ಭಾವ — ವರಿಷ್ಠ ಫಲ', 'shubha': true, 'shloka': '॥ १३.१', 'rule': 'Moon in 10th house'},
+      {'chapter': '೪. ಬೃಹಜ್ಜಾತಕ — ಅ.13 ಚಂದ್ರಯೋಗ', 'name': 'ಪೂರ್ಣ ಚಂದ್ರ ಲಗ್ನ ಯೋಗ', 'desc': 'ಪೂರ್ಣ ಚಂದ್ರ ಲಗ್ನ — ಸುಂದರ, ಕೀರ್ತಿ', 'shubha': true, 'shloka': '॥ १३.２', 'rule': 'Full Moon (4-8 signs from Sun) in lagna'},
+      {'chapter': '೪. ಬೃಹಜ್ಜಾತಕ — ಅ.13 ಚಂದ್ರಯೋಗ', 'name': 'ಕ್ಷೀಣ ಚಂದ್ರ ದುಸ್ಥಾನ', 'desc': 'ಕ್ಷೀಣ ಚಂದ್ರ 6/8/12 — ಆರೋಗ್ಯ ಕ್ಲೇಶ', 'shubha': false, 'shloka': '॥ १३.３', 'rule': 'Waning Moon in 6th/8th/12th house'},
+      {'chapter': '೪. ಬೃಹಜ್ಜಾತಕ — ಅ.13 ಚಂದ್ರಯೋಗ', 'name': 'ಚಂದ್ರ-ಶನಿ ದೃಷ್ಟಿ ಯೋಗ', 'desc': 'ಚಂದ್ರಗೆ ಶನಿ ಮಾತ್ರ ದೃಷ್ಟಿ — ವಿಷಾದ', 'shubha': false, 'shloka': '॥ १３.４', 'rule': 'Saturn alone aspects Moon (no benefic aspect)'},
+      {'chapter': '೪. ಬೃಹಜ್ಜಾತಕ — ಅ.13 ಚಂದ್ರಯೋಗ', 'name': 'ಚಂದ್ರ ಉಚ್ಚಾಂಶ ಯೋಗ', 'desc': 'ಚಂದ್ರ ಉಚ್ಚ ನವಾಂಶ — ಮಾನಸಿಕ ಬಲ', 'shubha': true, 'shloka': '॥ १３.５', 'rule': 'Moon in Taurus navamsha (exalted)'},
+      {'chapter': '೪. ಬೃಹಜ್ಜಾತಕ — ಅ.13 ಚಂದ್ರಯೋಗ', 'name': 'ಶುಕ್ಲ ಪಕ್ಷ ಶುಭ ಯೋಗ', 'desc': 'ಶುಕ್ಲ ಪಕ್ಷ ಚಂದ್ರ + ಶುಭ ದೃಷ್ಟಿ', 'shubha': true, 'shloka': '॥ १३.६', 'rule': 'Waxing Moon aspected by Jupiter/Venus'},
+
+      // ── CHAPTER 14: द्विग्रहयोग ──
+      {'chapter': '೫. ಬೃಹಜ್ಜಾತಕ — ಅ.14 ದ್ವಿಗ್ರಹಯೋಗ', 'name': 'ರವಿ-ಕುಜ ಸಂಯೋಗ', 'desc': 'ಸೈನ್ಯ/ಪೊಲೀಸ್, ಶಸ್ತ್ರಪ್ರಿಯ', 'shubha': false, 'shloka': '॥ १४', 'rule': 'Sun conjunct Mars'},
+      {'chapter': '೫. ಬೃಹಜ್ಜಾತಕ — ಅ.14 ದ್ವಿಗ್ರಹಯೋಗ', 'name': 'ರವಿ-ಶುಕ್ರ ಸಂಯೋಗ', 'desc': 'ಕಲಾವಿದ, ರಾಜನೀತಿಜ್ಞ', 'shubha': true, 'shloka': '॥ १४', 'rule': 'Sun conjunct Venus'},
+      {'chapter': '೫. ಬೃಹಜ್ಜಾತಕ — ಅ.14 ದ್ವಿಗ್ರಹಯೋಗ', 'name': 'ರವಿ-ಶನಿ ಸಂಯೋಗ', 'desc': 'ಪಿತೃ ಕಷ್ಟ, ಅಧಿಕಾರ ಸಂಘರ್ಷ', 'shubha': false, 'shloka': '॥ १४', 'rule': 'Sun conjunct Saturn'},
+      {'chapter': '೫. ಬೃಹಜ್ಜಾತಕ — ಅ.14 ದ್ವಿಗ್ರಹಯೋಗ', 'name': 'ಚಂದ್ರ-ಬುಧ ಸಂಯೋಗ', 'desc': 'ಬುದ್ಧಿವಂತ, ವ್ಯಾಪಾರಿ', 'shubha': true, 'shloka': '॥ १४', 'rule': 'Moon conjunct Mercury'},
+      {'chapter': '೫. ಬೃಹಜ್ಜಾತಕ — ಅ.14 ದ್ವಿಗ್ರಹಯೋಗ', 'name': 'ಚಂದ್ರ-ಶುಕ್ರ ಸಂಯೋಗ', 'desc': 'ಸುಂದರ, ಕಲಾಪ್ರಿಯ', 'shubha': true, 'shloka': '॥ १४', 'rule': 'Moon conjunct Venus'},
+      {'chapter': '೫. ಬೃಹಜ್ಜಾತಕ — ಅ.14 ದ್ವಿಗ್ರಹಯೋಗ', 'name': 'ಕುಜ-ಬುಧ ಸಂಯೋಗ', 'desc': 'ವಾದಚತುರ, ಗಣಿತಜ್ಞ', 'shubha': true, 'shloka': '॥ १४', 'rule': 'Mars conjunct Mercury'},
+      {'chapter': '೫. ಬೃಹಜ್ಜಾತಕ — ಅ.14 ದ್ವಿಗ್ರಹಯೋಗ', 'name': 'ಕುಜ-ಶುಕ್ರ ಸಂಯೋಗ', 'desc': 'ಕಾಮಿ, ಪ್ರಯತ್ನ ಐಶ್ವರ್ಯ', 'shubha': true, 'shloka': '॥ १४', 'rule': 'Mars conjunct Venus'},
+      {'chapter': '೫. ಬೃಹಜ್ಜಾತಕ — ಅ.14 ದ್ವಿಗ್ರಹಯೋಗ', 'name': 'ಕುಜ-ಗುರು ಸಂಯೋಗ', 'desc': 'ಧಾರ್ಮಿಕ ಯೋಧ, ನಾಯಕ', 'shubha': true, 'shloka': '॥ १४', 'rule': 'Mars conjunct Jupiter'},
+      {'chapter': '೫. ಬೃಹಜ್ಜಾತಕ — ಅ.14 ದ್ವಿಗ್ರಹಯೋಗ', 'name': 'ಗುರು-ಶುಕ್ರ ಸಂಯೋಗ', 'desc': 'ಮಹಾ ಸಂಪತ್ತು, ಕಲಾಪ್ರಿಯ', 'shubha': true, 'shloka': '॥ १४', 'rule': 'Jupiter conjunct Venus'},
+      {'chapter': '೫. ಬೃಹಜ್ಜಾತಕ — ಅ.14 ದ್ವಿಗ್ರಹಯೋಗ', 'name': 'ಗುರು-ಶನಿ ಸಂಯೋಗ', 'desc': 'ಶಿಸ್ತು+ಜ್ಞಾನ, ನ್ಯಾಯಾಧೀಶ', 'shubha': true, 'shloka': '॥ १४', 'rule': 'Jupiter conjunct Saturn'},
+      {'chapter': '೫. ಬೃಹಜ್ಜಾತಕ — ಅ.14 ದ್ವಿಗ್ರಹಯೋಗ', 'name': 'ಶುಕ್ರ-ಶನಿ ಸಂಯೋಗ', 'desc': 'ಕಷ್ಟದಿಂದ ಕಲೆ, ಚಿಂತಕ', 'shubha': false, 'shloka': '॥ १४', 'rule': 'Venus conjunct Saturn'},
+      {'chapter': '೫. ಬೃಹಜ್ಜಾತಕ — ಅ.14 ದ್ವಿಗ್ರಹಯೋಗ', 'name': 'ಬುಧ-ಶನಿ ಸಂಯೋಗ', 'desc': 'ವಿಶ್ಲೇಷಣಾತ್ಮಕ, ತಾಂತ್ರಿಕ', 'shubha': true, 'shloka': '॥ १४', 'rule': 'Mercury conjunct Saturn'},
+      {'chapter': '೫. ಬೃಹಜ್ಜಾತಕ — ಅ.14 ದ್ವಿಗ್ರಹಯೋಗ', 'name': 'ಚಂದ್ರ-ಗುರು ಸಂಯೋಗ', 'desc': 'ಜ್ಞಾನಿ, ಧಾರ್ಮಿಕ, ಉಪಕಾರಿ', 'shubha': true, 'shloka': '॥ १４', 'rule': 'Moon conjunct Jupiter'},
+      {'chapter': '೫. ಬೃಹಜ್ಜಾತಕ — ಅ.14 ದ್ವಿಗ್ರಹಯೋಗ', 'name': 'ಬುಧ-ಗುರು ಸಂಯೋಗ', 'desc': 'ವಿದ್ವಾಂಸ, ಲೇಖಕ', 'shubha': true, 'shloka': '॥ १४', 'rule': 'Mercury conjunct Jupiter'},
+
+      // ── CHAPTER 15: प्रव्रज्या ──
+      {'chapter': '೬. ಬೃಹಜ್ಜಾತಕ — ಅ.15 ಪ್ರವ್ರಜ್ಯಾ', 'name': 'ಪ್ರವ್ರಜ್ಯಾ ಯೋಗ', 'desc': '4+ ಗ್ರಹ ಒಂದೇ ರಾಶಿ — ಸಂನ್ಯಾಸ ಸೂಚನೆ', 'shubha': false, 'shloka': '॥ १५.১', 'rule': '4+ planets in one sign'},
+      {'chapter': '೬. ಬೃಹಜ್ಜಾತಕ — ಅ.15 ಪ್ರವ್ರಜ್ಯಾ', 'name': 'ವೈರಾಗ್ಯ ಯೋಗ', 'desc': 'ಲಗ್ನೇಶ 12ರಲ್ಲಿ ಶನಿ ದೃಷ್ಟಿ', 'shubha': false, 'shloka': '॥ १५.３', 'rule': 'Lagna lord in 12th + Saturn aspect'},
+      {'chapter': '೬. ಬೃಹಜ್ಜಾತಕ — ಅ.15 ಪ್ರವ್ರಜ್ಯಾ', 'name': 'ತಪಸ್ವೀ ಯೋಗ', 'desc': 'ರವಿ ಬಲಿ + ಶನಿ 9/12 — ಆಧ್ಯಾತ್ಮ', 'shubha': true, 'shloka': '॥ १५.５', 'rule': 'Sun exalted/own + Saturn in 9th/12th'},
+
+      // ── CHAPTER 17-18: देहलक्षण ──
+      {'chapter': '೭. ಬೃಹಜ್ಜಾತಕ — ಅ.17-18 ದೇಹಲಕ್ಷಣ', 'name': 'ದೀರ್ಘ ದೇಹ ಯೋಗ', 'desc': 'ಅಗ್ನಿ ರಾಶಿ ಲಗ್ನ + ರವಿ/ಕುಜ — ಎತ್ತರ', 'shubha': true, 'shloka': '॥ १७', 'rule': 'Sun/Mars in lagna in a fire sign'},
+      {'chapter': '೭. ಬೃಹಜ್ಜಾತಕ — ಅ.17-18 ದೇಹಲಕ್ಷಣ', 'name': 'ಸ್ಥೂಲ ದೇಹ ಯೋಗ', 'desc': 'ಜಲ ರಾಶಿ ಲಗ್ನ + ಗುರು/ಚಂದ್ರ — ದಪ್ಪ', 'shubha': true, 'shloka': '॥ १７', 'rule': 'Jupiter/Moon in lagna in a water sign'},
+      {'chapter': '೭. ಬೃಹಜ್ಜಾತಕ — ಅ.17-18 ದೇಹಲಕ್ಷಣ', 'name': 'ಸುಂದರ ದೇಹ ಯೋಗ', 'desc': 'ಶುಕ್ರ ಲಗ್ನದಲ್ಲಿ — ಸೌಂದರ್ಯ', 'shubha': true, 'shloka': '॥ １７', 'rule': 'Venus in lagna'},
+      {'chapter': '೭. ಬೃಹಜ್ಜಾತಕ — ಅ.17-18 ದೇಹಲಕ್ಷಣ', 'name': 'ಕೃಶ ದೇಹ ಯೋಗ', 'desc': 'ಶನಿ ಲಗ್ನದಲ್ಲಿ — ಕೃಶ, ಕಪ್ಪು', 'shubha': false, 'shloka': '॥ １７', 'rule': 'Saturn in lagna'},
+      {'chapter': '೭. ಬೃಹಜ್ಜಾತಕ — ಅ.17-18 ದೇಹಲಕ್ಷಣ', 'name': 'ವ್ರಣ ಯೋಗ', 'desc': 'ಕುಜ ಲಗ್ನ ದೃಷ್ಟಿ — ಗಾಯ, ವ್ರಣ', 'shubha': false, 'shloka': '॥ १８', 'rule': 'Mars aspects lagna (not in lagna)'},
+    ];
   }
 
   List<Map<String, dynamic>> _detectYogas({required int virtualLagnaRi}) {
