@@ -709,16 +709,16 @@ class _PrashnaDashboardScreenState extends State<PrashnaDashboardScreen>
                           borderRadius: BorderRadius.circular(6),
                         ),
                         child: Text('$bhavaNum', style: TextStyle(
-                          fontSize: 12, fontWeight: FontWeight.w900,
+                          fontSize: 15, fontWeight: FontWeight.w900,
                           color: isLagna ? Colors.white : kPurple2,
                         )),
                       ),
                       const SizedBox(width: 8),
                       Text(rashiName, style: TextStyle(
-                        fontWeight: FontWeight.w900, fontSize: 14,
+                        fontWeight: FontWeight.w900, fontSize: 17,
                         color: isLagna ? kTeal : kText,
                       )),
-                      if (isLagna) Text(' (ಲಗ್ನ)', style: TextStyle(fontSize: 11, color: kTeal, fontWeight: FontWeight.w700)),
+                      if (isLagna) Text(' (ಲಗ್ನ)', style: TextStyle(fontSize: 14, color: kTeal, fontWeight: FontWeight.w700)),
                       const Spacer(),
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
@@ -726,7 +726,7 @@ class _PrashnaDashboardScreenState extends State<PrashnaDashboardScreen>
                           color: kTeal.withOpacity(0.15),
                           borderRadius: BorderRadius.circular(8),
                         ),
-                        child: Text('${yogas.length}', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w900, color: kTeal)),
+                        child: Text('${yogas.length}', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w900, color: kTeal)),
                       ),
                     ],
                   ),
@@ -735,7 +735,7 @@ class _PrashnaDashboardScreenState extends State<PrashnaDashboardScreen>
                     final isEven = entry.key % 2 == 0;
                     final isShubha = y['shubha'] == true;
                     return Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                       decoration: BoxDecoration(
                         color: isEven ? kBg.withOpacity(0.4) : kCard,
                         border: Border(bottom: BorderSide(color: kBorder.withOpacity(0.5))),
@@ -748,7 +748,7 @@ class _PrashnaDashboardScreenState extends State<PrashnaDashboardScreen>
                             children: [
                               Icon(
                                 isShubha ? Icons.check_circle : Icons.warning_amber_rounded,
-                                size: 14,
+                                size: 18,
                                 color: isShubha ? const Color(0xFF2F855A) : const Color(0xFFE53E3E),
                               ),
                               const SizedBox(width: 6),
@@ -757,12 +757,12 @@ class _PrashnaDashboardScreenState extends State<PrashnaDashboardScreen>
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     Text(y['name'] as String, style: TextStyle(
-                                      fontWeight: FontWeight.w900, fontSize: 12,
+                                      fontWeight: FontWeight.w900, fontSize: 16,
                                       color: isShubha ? const Color(0xFF2F855A) : const Color(0xFFE53E3E),
                                     )),
-                                    const SizedBox(height: 1),
+                                    const SizedBox(height: 3),
                                     Text(y['desc'] as String, style: TextStyle(
-                                      fontSize: 10, color: kMuted, fontWeight: FontWeight.w600,
+                                      fontSize: 13, color: kMuted, fontWeight: FontWeight.w600,
                                     )),
                                   ],
                                 ),
@@ -772,15 +772,15 @@ class _PrashnaDashboardScreenState extends State<PrashnaDashboardScreen>
                           if (y['shloka'] != null && (y['shloka'] as String).isNotEmpty)
                             Container(
                               width: double.infinity,
-                              margin: const EdgeInsets.only(top: 4),
-                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                              margin: const EdgeInsets.only(top: 6),
+                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                               decoration: BoxDecoration(
                                 color: const Color(0xFFFFF8E1),
                                 borderRadius: BorderRadius.circular(6),
                                 border: Border.all(color: const Color(0xFFFFE082), width: 0.5),
                               ),
                               child: Text(y['shloka'] as String, style: const TextStyle(
-                                fontSize: 10, fontStyle: FontStyle.italic,
+                                fontSize: 13, fontStyle: FontStyle.italic,
                                 color: Color(0xFF5D4037), fontWeight: FontWeight.w600,
                                 height: 1.4,
                               )),
