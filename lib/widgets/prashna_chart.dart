@@ -434,21 +434,14 @@ class PrashnaChart extends StatelessWidget {
         final dvadList = dvadLabels[ri]?[drek] ?? [];
         if (navList.isEmpty && dvadList.isEmpty) continue;
 
-        // ONE drekkana = ONE line: nav (Kannada green) + dvad (Hindi purple)
         final allLabels = <Widget>[
           for (final n in navList) Text(n, style: navStyle),
           for (final d in dvadList) Text(d, style: dvadStyle),
         ];
-        Widget label = Wrap(
-          spacing: 3,
-          runSpacing: 0,
-          alignment: WrapAlignment.center,
-          children: allLabels,
-        );
 
         switch (edge) {
           case 'top':
-            // 3 columns: I(left), II(mid), III(right)
+            // 3 columns: labels stacked vertically in each column
             widgets.add(Positioned(
               top: 0,
               left: outerMargin + pos.dx + (drek * colW),
@@ -456,13 +449,16 @@ class PrashnaChart extends StatelessWidget {
               height: outerMargin,
               child: Align(
                 alignment: Alignment.bottomCenter,
-                child: label,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: allLabels,
+                ),
               ),
             ));
             break;
 
           case 'bottom':
-            // 3 columns: I(left), II(mid), III(right)
+            // 3 columns: labels stacked vertically in each column
             widgets.add(Positioned(
               top: outerMargin + pos.dy + cw,
               left: outerMargin + pos.dx + (drek * colW),
@@ -470,31 +466,46 @@ class PrashnaChart extends StatelessWidget {
               height: outerMargin,
               child: Align(
                 alignment: Alignment.topCenter,
-                child: label,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: allLabels,
+                ),
               ),
             ));
             break;
 
           case 'left':
-            // 3 rows: I(top), II(mid), III(bottom)
+            // 3 rows: labels flow horizontally in each row
             widgets.add(Positioned(
               top: outerMargin + pos.dy + (drek * drekZone),
               left: 0,
               width: outerMargin,
               height: drekZone,
-              child: Center(child: label),
+              child: Center(
+                child: Wrap(
+                  spacing: 3,
+                  alignment: WrapAlignment.center,
+                  children: allLabels,
+                ),
+              ),
             ));
             break;
 
           case 'right':
           default:
-            // 3 rows: I(top), II(mid), III(bottom)
+            // 3 rows: labels flow horizontally in each row
             widgets.add(Positioned(
               top: outerMargin + pos.dy + (drek * drekZone),
               left: outerMargin + pos.dx + cw,
               width: outerMargin,
               height: drekZone,
-              child: Center(child: label),
+              child: Center(
+                child: Wrap(
+                  spacing: 3,
+                  alignment: WrapAlignment.center,
+                  children: allLabels,
+                ),
+              ),
             ));
             break;
         }
