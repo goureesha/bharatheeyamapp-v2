@@ -1206,6 +1206,205 @@ class _PrashnaDashboardScreenState extends State<PrashnaDashboardScreen>
       }
     }
 
+    // ═══════════════════════════════════════════
+    // VEDIC DRISHTI (ASPECT) HELPER
+    // ═══════════════════════════════════════════
+    // All planets aspect 7th. Mars: +4,+8. Jupiter: +5,+9. Saturn: +3,+10.
+    bool aspects(String planet, int targetRi) {
+      final pRi = ri(planet);
+      if (pRi < 0) return false;
+      final diff = (targetRi - pRi + 12) % 12;
+      // All planets aspect 7th
+      if (diff == 6) return true;
+      // Special aspects
+      if (planet == 'ಕುಜ' && (diff == 3 || diff == 7)) return true;  // Mars: 4th & 8th
+      if (planet == 'ಗುರು' && (diff == 4 || diff == 8)) return true;  // Jupiter: 5th & 9th
+      if (planet == 'ಶನಿ' && (diff == 2 || diff == 9)) return true;  // Saturn: 3rd & 10th
+      return false;
+    }
+
+    // Helper: is rashi a benefic (saumya) sign?
+    // Saumya rashis = owned by benefics (Mercury, Venus, Jupiter, Moon)
+    bool isSaumyaRashi(int rashi) {
+      return [1, 2, 3, 5, 6, 8, 11].contains(rashi);
+      // Taurus(1), Gemini(2), Cancer(3), Virgo(5), Libra(6), Sagittarius(8), Pisces(11)
+    }
+
+    // Helper: get navamsha rashi of a planet
+    int navamshaRi(String planet) {
+      final info = r.planets[planet];
+      if (info == null) return -1;
+      final deg = info.longitude;
+      final rashiIdx = (deg / 30).floor() % 12;
+      final posInRashi = deg - (rashiIdx * 30);
+      final navPada = (posInRashi / 3.3333).floor() % 9;
+      // Navamsha starts from: Fire signs→Aries, Earth→Cap, Air→Libra, Water→Cancer
+      final starts = [0, 9, 6, 3]; // Aries, Cap, Libra, Cancer
+      final element = rashiIdx % 4;
+      return (starts[element] + navPada) % 12;
+    }
+
+    // ═══════════════════════════════════════════
+    // SHLOKA-BASED YOGAS (Classical Texts)
+    // ═══════════════════════════════════════════
+
+    // 31. Sadanta Yoga (सदन्तः) — Brihat Jataka
+    // सौम्यर्क्षांशे रविजरुधिरौ चेत्सदन्तोऽत्र जातः
+    // Saturn & Mars in benefic rashi/navamsha → good teeth
+    if (satRi >= 0 && marsRi >= 0) {
+      final satNav = navamshaRi('ಶನಿ');
+      final marsNav = navamshaRi('ಕುಜ');
+      if ((isSaumyaRashi(satRi) || isSaumyaRashi(satNav)) &&
+          (isSaumyaRashi(marsRi) || isSaumyaRashi(marsNav))) {
+        yogas.add({'name': 'ಸದಂತ ಯೋಗ', 'desc': 'ಶನಿ-ಕುಜ ಸೌಮ್ಯ ರಾಶಿ/ಅಂಶದಲ್ಲಿ — ಉತ್ತಮ ದಂತ (ಬೃಹತ್ ಜಾತಕ)', 'shubha': true});
+      }
+    }
+
+    // 32. Kubja Yoga (कुब्जः) — Brihat Jataka
+    // कुब्जः स्वर्क्षे शशिनि तनुगे मन्दमाहेयदृष्टे
+    // Moon in own sign in Lagna, aspected by Saturn & Mars → deformity
+    if (moonRi == 3 && bhava('ಚಂದ್ರ') == 1) { // Moon in Cancer (own sign) in lagna
+      if (aspects('ಶನಿ', moonRi) && aspects('ಕುಜ', moonRi)) {
+        yogas.add({'name': 'ಕುಬ್ಜ ಯೋಗ', 'desc': 'ಚಂದ್ರ ಸ್ವಕ್ಷೇತ್ರ ಲಗ್ನದಲ್ಲಿ, ಶನಿ-ಕುಜ ದೃಷ್ಟಿ — ಕುಬ್ಜತೆ (ಬೃಹತ್ ಜಾತಕ)', 'shubha': false});
+      }
+    }
+
+    // 33. Gaja Yoga — Jupiter in Lagna/Kendra, unafflicted
+    if (bhava('ಗುರು') == 1 && !conjunct('ಗುರು', 'ರಾಹು') && !conjunct('ಗುರು', 'ಕೇತು')) {
+      yogas.add({'name': 'ಗಜ ಯೋಗ', 'desc': 'ಗುರು ಲಗ್ನದಲ್ಲಿ ಅಪೀಡಿತ — ದೊಡ್ಡ ಶರೀರ, ಗೌರವ', 'shubha': true});
+    }
+
+    // 34. Sunapha/Anapha from Lagna — planets in 2nd/12th from Lagna
+    {
+      final l2 = (lagnaRi + 1) % 12;
+      final l12 = (lagnaRi + 11) % 12;
+      bool has2 = false, has12 = false;
+      for (final p in ['ಕುಜ', 'ಬುಧ', 'ಗುರು', 'ಶುಕ್ರ', 'ಶನಿ']) {
+        if (ri(p) == l2) has2 = true;
+        if (ri(p) == l12) has12 = true;
+      }
+      if (has2 && has12) {
+        yogas.add({'name': 'ಲಗ್ನ ದುರುಧರ ಯೋಗ', 'desc': 'ಲಗ್ನದ 2 ಮತ್ತು 12ರಲ್ಲಿ ಗ್ರಹ — ಸ್ಥಿರ ಸಂಪತ್ತು', 'shubha': true});
+      }
+    }
+
+    // 35. Hamsa Yoga (specific) — Jupiter in Cancer/Sagittarius/Pisces in Kendra
+    if (jupRi >= 0) {
+      if ([3, 8, 11].contains(jupRi) && inKendraFromLagna('ಗುರು')) {
+        yogas.add({'name': 'ಹಂಸ ಯೋಗ (ವಿಶೇಷ)', 'desc': 'ಗುರು ಉಚ್ಚ/ಸ್ವಕ್ಷೇತ್ರ ಕೇಂದ್ರದಲ್ಲಿ — ಧರ್ಮ, ಜ್ಞಾನ, ಸನ್ಮಾನ', 'shubha': true});
+      }
+    }
+
+    // 36. Malavya Yoga (specific) — Venus in Taurus/Libra/Pisces in Kendra
+    if (venRi >= 0) {
+      if ([1, 6, 11].contains(venRi) && inKendraFromLagna('ಶುಕ್ರ')) {
+        yogas.add({'name': 'ಮಾಲವ್ಯ ಯೋಗ (ವಿಶೇಷ)', 'desc': 'ಶುಕ್ರ ಉಚ್ಚ/ಸ್ವಕ್ಷೇತ್ರ ಕೇಂದ್ರದಲ್ಲಿ — ಸೌಂದರ್ಯ, ಸುಖ, ವಾಹನ', 'shubha': true});
+      }
+    }
+
+    // 37. Shakata Bhanga — Jupiter in Kendra cancels Shakata Yoga
+    if (moonRi >= 0 && jupRi >= 0) {
+      final diff = (jupRi - moonRi + 12) % 12;
+      if ([5, 7, 11].contains(diff) && inKendraFromLagna('ಗುರು')) {
+        yogas.add({'name': 'ಶಕಟ ಭಂಗ ಯೋಗ', 'desc': 'ಗುರು 6/8/12 ಚಂದ್ರನಿಂದ ಆದರೆ ಕೇಂದ್ರದಲ್ಲಿ — ಶಕಟ ನಿವಾರಣೆ', 'shubha': true});
+      }
+    }
+
+    // 38. Shubha Vargottama — Benefic planet in same sign in rashi & navamsha
+    for (final p in ['ಗುರು', 'ಶುಕ್ರ', 'ಬುಧ']) {
+      final pRi = ri(p);
+      final pNav = navamshaRi(p);
+      if (pRi >= 0 && pRi == pNav) {
+        final pName = {'ಗುರು': 'ಗುರು', 'ಶುಕ್ರ': 'ಶುಕ್ರ', 'ಬುಧ': 'ಬುಧ'}[p]!;
+        yogas.add({'name': 'ಶುಭ ವರ್ಗೋತ್ತಮ', 'desc': '$pName ವರ್ಗೋತ್ತಮ (ರಾಶಿ=ನವಾಂಶ) — ಅತಿ ಬಲ', 'shubha': true});
+      }
+    }
+
+    // 39. Papa Vargottama — Malefic in same sign in rashi & navamsha (stronger malefic)
+    for (final p in ['ಕುಜ', 'ಶನಿ']) {
+      final pRi = ri(p);
+      final pNav = navamshaRi(p);
+      if (pRi >= 0 && pRi == pNav) {
+        yogas.add({'name': 'ಪಾಪ ವರ್ಗೋತ್ತಮ', 'desc': '$p ವರ್ಗೋತ್ತಮ (ರಾಶಿ=ನವಾಂಶ) — ಪಾಪ ಅತಿಬಲ, ಕಷ್ಟ', 'shubha': false});
+      }
+    }
+
+    // 40. Uccha Graha Yoga — Exalted planet in kendra
+    final exaltSigns = <String, int>{'ರವಿ': 0, 'ಚಂದ್ರ': 1, 'ಕುಜ': 9, 'ಬುಧ': 5, 'ಗುರು': 3, 'ಶುಕ್ರ': 11, 'ಶನಿ': 6};
+    for (final p in exaltSigns.keys) {
+      if (ri(p) == exaltSigns[p] && inKendraFromLagna(p)) {
+        yogas.add({'name': 'ಉಚ್ಚ ಗ್ರಹ ಯೋಗ', 'desc': '$p ಉಚ್ಚ ರಾಶಿಯಲ್ಲಿ ಕೇಂದ್ರದಲ್ಲಿ — ಮಹಾ ಶುಭ', 'shubha': true});
+      }
+    }
+
+    // 41. Neecha Graha Dosha — Debilitated planet in kendra (without cancellation)
+    final debilSigns = <String, int>{'ರವಿ': 6, 'ಚಂದ್ರ': 7, 'ಕುಜ': 3, 'ಬುಧ': 11, 'ಗುರು': 9, 'ಶುಕ್ರ': 5, 'ಶನಿ': 0};
+    for (final p in debilSigns.keys) {
+      if (ri(p) == debilSigns[p] && inKendraFromLagna(p)) {
+        // Check if cancellation exists (lord of debilitation sign aspects)
+        final lordOfDebSign = rashiLords[debilSigns[p]!];
+        final hasCancellation = lordOfDebSign != null && (aspects(lordOfDebSign, ri(p)) || conjunct(lordOfDebSign, p));
+        if (!hasCancellation) {
+          yogas.add({'name': 'ನೀಚ ಗ್ರಹ ದೋಷ', 'desc': '$p ನೀಚ ರಾಶಿಯಲ್ಲಿ ಕೇಂದ್ರ — ಕಷ್ಟ, ಅವಮಾನ', 'shubha': false});
+        }
+      }
+    }
+
+    // 42. Kendradhipati Dosha — Benefic owning kendra becomes functional malefic
+    {
+      final kendraRashis = [lagnaRi, (lagnaRi + 3) % 12, (lagnaRi + 6) % 12, (lagnaRi + 9) % 12];
+      for (final p in ['ಗುರು', 'ಶುಕ್ರ']) {
+        final pRi = ri(p);
+        if (pRi < 0) continue;
+        // Check if this benefic owns a kendra sign
+        final owns = rashiLords.entries.where((e) => e.value == p).map((e) => e.key).toList();
+        bool ownsKendra = owns.any((s) => kendraRashis.contains(s));
+        if (ownsKendra && inKendraFromLagna(p)) {
+          yogas.add({'name': 'ಕೇಂದ್ರಾಧಿಪತಿ ದೋಷ', 'desc': '$p ಶುಭ ಗ್ರಹ ಕೇಂದ್ರಾಧಿಪತಿ — ಶುಭ ಫಲ ಕ್ಷೀಣ', 'shubha': false});
+        }
+      }
+    }
+
+    // 43. Trikona Adhipati Yoga — Lord of 5th/9th in Kendra
+    {
+      final fifth = (lagnaRi + 4) % 12;
+      final ninth = (lagnaRi + 8) % 12;
+      final lord5 = rashiLords[fifth];
+      final lord9 = rashiLords[ninth];
+      if (lord5 != null && inKendraFromLagna(lord5)) {
+        yogas.add({'name': 'ತ್ರಿಕೋಣಾಧಿಪತಿ ಯೋಗ', 'desc': '5ನೇ ಅಧಿಪತಿ $lord5 ಕೇಂದ್ರದಲ್ಲಿ — ಪೂರ್ವ ಪುಣ್ಯ ಫಲ', 'shubha': true});
+      }
+      if (lord9 != null && lord9 != lord5 && inKendraFromLagna(lord9)) {
+        yogas.add({'name': 'ಭಾಗ್ಯಾಧಿಪತಿ ಯೋಗ', 'desc': '9ನೇ ಅಧಿಪತಿ $lord9 ಕೇಂದ್ರದಲ್ಲಿ — ಭಾಗ್ಯ ವೃದ್ಧಿ', 'shubha': true});
+      }
+    }
+
+    // 44. Duryoga — Lord of 10th in 6th/8th/12th
+    {
+      final tenth = (lagnaRi + 9) % 12;
+      final lord10 = rashiLords[tenth];
+      if (lord10 != null) {
+        final b10 = bhava(lord10);
+        if ([6, 8, 12].contains(b10)) {
+          yogas.add({'name': 'ದುರ್ಯೋಗ', 'desc': '10ನೇ ಅಧಿಪತಿ $lord10 ದುಸ್ಥಾನದಲ್ಲಿ — ವೃತ್ತಿ ಕಷ್ಟ', 'shubha': false});
+        }
+      }
+    }
+
+    // 45. Graha Yuddha — Two non-luminary planets within 1° (planetary war)
+    for (int i = 0; i < 5; i++) {
+      for (int j = i + 1; j < 5; j++) {
+        final planets5 = ['ಕುಜ', 'ಬುಧ', 'ಗುರು', 'ಶುಕ್ರ', 'ಶನಿ'];
+        final p1 = r.planets[planets5[i]];
+        final p2 = r.planets[planets5[j]];
+        if (p1 == null || p2 == null) continue;
+        final diff = (p1.longitude - p2.longitude).abs();
+        if (diff < 1.0 || diff > 359.0) {
+          yogas.add({'name': 'ಗ್ರಹ ಯುದ್ಧ', 'desc': '${planets5[i]} - ${planets5[j]} ಒಂದು ಅಂಶದಲ್ಲಿ — ಸಂಘರ್ಷ', 'shubha': false});
+        }
+      }
+    }
+
     return yogas;
   }
 
