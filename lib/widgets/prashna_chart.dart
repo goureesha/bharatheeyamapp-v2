@@ -201,14 +201,18 @@ class PrashnaChart extends StatelessWidget {
         degInRashi: degInRashi,
       ));
 
-      // Navamsha label — use planet's rashi drekkana so it stays
-      // in the same column/row as the planet inside the chart
+      // Navamsha label — drekkana within the navamsha rashi
       final navRi = _navamshaRashi(info.longitude);
-      navLabels[navRi]![drek]!.add(_pNameKn[pName] ?? pName);
+      final d9Exact = (info.longitude * 9) % 360;
+      final degInD9 = d9Exact % 30;
+      final navDrek = degInD9 < 10 ? 0 : (degInD9 < 20 ? 1 : 2);
+      navLabels[navRi]![navDrek]!.add(_pNameKn[pName] ?? pName);
 
-      // Dvadashamsha label — same drekkana as planet's rashi position
+      // Dvadashamsha label — drekkana within the dvad rashi
       final dvadRi = _dvadRashi(info.longitude);
-      dvadLabels[dvadRi]![drek]!.add(_pNameHi[pName] ?? pName);
+      final degInD12 = (info.longitude % 2.5) * 12;
+      final dvadDrek = degInD12 < 10 ? 0 : (degInD12 < 20 ? 1 : 2);
+      dvadLabels[dvadRi]![dvadDrek]!.add(_pNameHi[pName] ?? pName);
     }
 
     // Sort planets within each house by degree
@@ -430,15 +434,16 @@ class PrashnaChart extends StatelessWidget {
         final dvadList = dvadLabels[ri]?[drek] ?? [];
         if (navList.isEmpty && dvadList.isEmpty) continue;
 
-        // Nav (Kannada green) on one line, Dvad (Hindi purple) on next line
-        final navText = navList.join(' ');
-        final dvadText = dvadList.join(' ');
-        Widget label = Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            if (navText.isNotEmpty) Text(navText, style: navStyle),
-            if (dvadText.isNotEmpty) Text(dvadText, style: dvadStyle),
-          ],
+        // ONE drekkana = ONE line: nav (Kannada green) + dvad (Hindi purple)
+        final allLabels = <Widget>[
+          for (final n in navList) Text(n, style: navStyle),
+          for (final d in dvadList) Text(d, style: dvadStyle),
+        ];
+        Widget label = Wrap(
+          spacing: 3,
+          runSpacing: 0,
+          alignment: WrapAlignment.center,
+          children: allLabels,
         );
 
         switch (edge) {
@@ -498,54 +503,6 @@ class PrashnaChart extends StatelessWidget {
       }
     }
 
-    // Add divider lines between drekkana zones for each house
-    final divColor = Colors.grey.shade600;
-    for (final ri in positions.keys) {
-      final pos = positions[ri]!;
-      final edge = _outerEdge(ri);
-
-      switch (edge) {
-        case 'top':
-          for (int d = 1; d < 3; d++) {
-            widgets.add(Positioned(
-              top: 0, left: outerMargin + pos.dx + (d * colW),
-              width: 1.5, height: outerMargin,
-              child: Container(color: divColor),
-            ));
-          }
-          break;
-        case 'bottom':
-          for (int d = 1; d < 3; d++) {
-            widgets.add(Positioned(
-              top: outerMargin + pos.dy + cw,
-              left: outerMargin + pos.dx + (d * colW),
-              width: 1.5, height: outerMargin,
-              child: Container(color: divColor),
-            ));
-          }
-          break;
-        case 'left':
-          for (int d = 1; d < 3; d++) {
-            widgets.add(Positioned(
-              top: outerMargin + pos.dy + (d * drekZone),
-              left: 0, width: outerMargin, height: 1.5,
-              child: Container(color: divColor),
-            ));
-          }
-          break;
-        case 'right':
-        default:
-          for (int d = 1; d < 3; d++) {
-            widgets.add(Positioned(
-              top: outerMargin + pos.dy + (d * drekZone),
-              left: outerMargin + pos.dx + cw,
-              width: outerMargin, height: 1.5,
-              child: Container(color: divColor),
-            ));
-          }
-          break;
-      }
-    }
 
     return widgets;
   }
