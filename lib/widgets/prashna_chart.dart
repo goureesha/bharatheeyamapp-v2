@@ -446,41 +446,35 @@ class PrashnaChart extends StatelessWidget {
           children: allLabels,
         );
 
+        final rowH = outerMargin / 3;
+
         switch (edge) {
           case 'top':
-            // 3 columns: I(left), II(mid), III(right)
+            // 3 rows: I(top), II(mid), III(bottom near house)
             widgets.add(Positioned(
-              top: 0,
-              left: outerMargin + pos.dx + (drek * colW),
-              width: colW,
-              height: outerMargin,
-              child: Align(
-                alignment: Alignment.bottomCenter,
-                child: label,
-              ),
+              top: drek * rowH,
+              left: outerMargin + pos.dx,
+              width: cw,
+              height: rowH,
+              child: Center(child: label),
             ));
             break;
 
           case 'bottom':
-            // 3 columns REVERSED: III(left), II(mid), I(right)
-            final revDrek = 2 - drek;
+            // 3 rows: I(top near house), II(mid), III(bottom)
             widgets.add(Positioned(
-              top: outerMargin + pos.dy + cw,
-              left: outerMargin + pos.dx + (revDrek * colW),
-              width: colW,
-              height: outerMargin,
-              child: Align(
-                alignment: Alignment.topCenter,
-                child: label,
-              ),
+              top: outerMargin + pos.dy + cw + (drek * rowH),
+              left: outerMargin + pos.dx,
+              width: cw,
+              height: rowH,
+              child: Center(child: label),
             ));
             break;
 
           case 'left':
-            // 3 rows REVERSED: III(top), II(mid), I(bottom)
-            final revDrek = 2 - drek;
+            // 3 rows: I(top), II(mid), III(bottom)
             widgets.add(Positioned(
-              top: outerMargin + pos.dy + (revDrek * drekZone),
+              top: outerMargin + pos.dy + (drek * drekZone),
               left: 0,
               width: outerMargin,
               height: drekZone,
