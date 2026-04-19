@@ -309,15 +309,17 @@ class PrashnaChart extends StatelessWidget {
         border: Border.all(color: const Color(0xFFCBD5E0), width: 1.0),
         borderRadius: BorderRadius.circular(4),
       ),
-      child: Column(
-        children: [
-          // Drekkana 1 (0°-10°)
-          Expanded(child: _drekkanaZone(drek0)),
-          // Drekkana 2 (10°-20°)
-          Expanded(child: _drekkanaZone(drek1)),
-          // Drekkana 3 (20°-30°)
-          Expanded(child: _drekkanaZone(drek2)),
-        ],
+      child: SingleChildScrollView(
+        child: Column(
+          children: [
+            // Drekkana 1 (0°-10°)
+            _drekkanaZone(drek0),
+            // Drekkana 2 (10°-20°)
+            _drekkanaZone(drek1),
+            // Drekkana 3 (20°-30°)
+            _drekkanaZone(drek2),
+          ],
+        ),
       ),
     );
   }
