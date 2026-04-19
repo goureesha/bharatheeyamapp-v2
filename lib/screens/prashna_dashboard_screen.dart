@@ -620,8 +620,18 @@ class _PrashnaDashboardScreenState extends State<PrashnaDashboardScreen>
   // YOGA SECTION (in Kundali tab)
   // ═══════════════════════════════════════════
   Widget _buildYogaSection() {
-    final yogas = _detectYogas();
-    if (yogas.isEmpty) {
+    // Detect yogas for all 12 rashis
+    final allYogas = <int, List<Map<String, dynamic>>>{};
+    int totalCount = 0;
+    for (int r = 0; r < 12; r++) {
+      final yogas = _detectYogas(virtualLagnaRi: r);
+      if (yogas.isNotEmpty) {
+        allYogas[r] = yogas;
+        totalCount += yogas.length;
+      }
+    }
+
+    if (allYogas.isEmpty) {
       return Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16),
         child: AppCard(
@@ -629,6 +639,8 @@ class _PrashnaDashboardScreenState extends State<PrashnaDashboardScreen>
         ),
       );
     }
+
+    final lagnaRi = (_result.planets['ಲಗ್ನ']?.longitude ?? 0) ~/ 30 % 12;
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -650,7 +662,7 @@ class _PrashnaDashboardScreenState extends State<PrashnaDashboardScreen>
               children: [
                 Icon(Icons.auto_awesome, size: 18, color: kTeal),
                 const SizedBox(width: 8),
-                Text('ಯೋಗಗಳು', style: TextStyle(
+                Text('ಯೋಗಗಳು (ಎಲ್ಲ ರಾಶಿ)', style: TextStyle(
                   fontWeight: FontWeight.w900, fontSize: 16, color: kTeal,
                 )),
                 const SizedBox(width: 8),
@@ -660,12 +672,12 @@ class _PrashnaDashboardScreenState extends State<PrashnaDashboardScreen>
                     color: kTeal.withOpacity(0.2),
                     borderRadius: BorderRadius.circular(10),
                   ),
-                  child: Text('${yogas.length}', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w900, color: kTeal)),
+                  child: Text('$totalCount', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w900, color: kTeal)),
                 ),
               ],
             ),
           ),
-          // Yoga list
+          // Per-rashi yoga list
           Container(
             width: double.infinity,
             decoration: BoxDecoration(
@@ -676,44 +688,88 @@ class _PrashnaDashboardScreenState extends State<PrashnaDashboardScreen>
               border: Border.all(color: kBorder),
             ),
             child: Column(
-              children: yogas.asMap().entries.map((entry) {
-                final y = entry.value;
-                final isEven = entry.key % 2 == 0;
-                final isShubha = y['shubha'] == true;
-                return Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                  decoration: BoxDecoration(
-                    color: isEven ? kBg.withOpacity(0.4) : kCard,
-                    border: Border(bottom: BorderSide(color: kBorder.withOpacity(0.5))),
-                  ),
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+              children: List.generate(12, (rIdx) {
+                final yogas = allYogas[rIdx];
+                if (yogas == null || yogas.isEmpty) return const SizedBox.shrink();
+                final rashiName = knRashi[rIdx];
+                final isLagna = rIdx == lagnaRi;
+                final bhavaNum = ((rIdx - lagnaRi + 12) % 12) + 1;
+
+                return ExpansionTile(
+                  initiallyExpanded: isLagna,
+                  tilePadding: const EdgeInsets.symmetric(horizontal: 12),
+                  childrenPadding: EdgeInsets.zero,
+                  backgroundColor: kBg.withOpacity(0.3),
+                  title: Row(
                     children: [
-                      Icon(
-                        isShubha ? Icons.check_circle : Icons.warning_amber_rounded,
-                        size: 16,
-                        color: isShubha ? const Color(0xFF2F855A) : const Color(0xFFE53E3E),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: isLagna ? kTeal : kPurple2.withOpacity(0.15),
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: Text('$bhavaNum', style: TextStyle(
+                          fontSize: 12, fontWeight: FontWeight.w900,
+                          color: isLagna ? Colors.white : kPurple2,
+                        )),
                       ),
                       const SizedBox(width: 8),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(y['name'] as String, style: TextStyle(
-                              fontWeight: FontWeight.w900, fontSize: 13,
-                              color: isShubha ? const Color(0xFF2F855A) : const Color(0xFFE53E3E),
-                            )),
-                            const SizedBox(height: 2),
-                            Text(y['desc'] as String, style: TextStyle(
-                              fontSize: 11, color: kMuted, fontWeight: FontWeight.w600,
-                            )),
-                          ],
+                      Text(rashiName, style: TextStyle(
+                        fontWeight: FontWeight.w900, fontSize: 14,
+                        color: isLagna ? kTeal : kText,
+                      )),
+                      if (isLagna) Text(' (ಲಗ್ನ)', style: TextStyle(fontSize: 11, color: kTeal, fontWeight: FontWeight.w700)),
+                      const Spacer(),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: kTeal.withOpacity(0.15),
+                          borderRadius: BorderRadius.circular(8),
                         ),
+                        child: Text('${yogas.length}', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w900, color: kTeal)),
                       ),
                     ],
                   ),
+                  children: yogas.asMap().entries.map((entry) {
+                    final y = entry.value;
+                    final isEven = entry.key % 2 == 0;
+                    final isShubha = y['shubha'] == true;
+                    return Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                      decoration: BoxDecoration(
+                        color: isEven ? kBg.withOpacity(0.4) : kCard,
+                        border: Border(bottom: BorderSide(color: kBorder.withOpacity(0.5))),
+                      ),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Icon(
+                            isShubha ? Icons.check_circle : Icons.warning_amber_rounded,
+                            size: 14,
+                            color: isShubha ? const Color(0xFF2F855A) : const Color(0xFFE53E3E),
+                          ),
+                          const SizedBox(width: 6),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(y['name'] as String, style: TextStyle(
+                                  fontWeight: FontWeight.w900, fontSize: 12,
+                                  color: isShubha ? const Color(0xFF2F855A) : const Color(0xFFE53E3E),
+                                )),
+                                const SizedBox(height: 1),
+                                Text(y['desc'] as String, style: TextStyle(
+                                  fontSize: 10, color: kMuted, fontWeight: FontWeight.w600,
+                                )),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  }).toList(),
                 );
-              }).toList(),
+              }),
             ),
           ),
         ],
@@ -721,7 +777,7 @@ class _PrashnaDashboardScreenState extends State<PrashnaDashboardScreen>
     );
   }
 
-  List<Map<String, dynamic>> _detectYogas() {
+  List<Map<String, dynamic>> _detectYogas({required int virtualLagnaRi}) {
     final r = _result;
     final yogas = <Map<String, dynamic>>[];
 
@@ -731,13 +787,12 @@ class _PrashnaDashboardScreenState extends State<PrashnaDashboardScreen>
       return info != null ? (info.longitude / 30).floor() % 12 : -1;
     }
 
-    // Helper: get bhava of a planet (1-12)
+    // Helper: get bhava of a planet (1-12) from virtual lagna
     int bhava(String p) {
       final info = r.planets[p];
       if (info == null) return -1;
-      final lagnaRi = ri('ಲಗ್ನ');
       final pRi = (info.longitude / 30).floor() % 12;
-      return ((pRi - lagnaRi + 12) % 12) + 1;
+      return ((pRi - virtualLagnaRi + 12) % 12) + 1;
     }
 
     // Helper: are two planets in kendra (1,4,7,10) from each other?
@@ -751,19 +806,19 @@ class _PrashnaDashboardScreenState extends State<PrashnaDashboardScreen>
     // Helper: are two planets conjunct (same rashi)?
     bool conjunct(String p1, String p2) => ri(p1) == ri(p2) && ri(p1) >= 0;
 
-    // Helper: is planet in kendra from lagna?
+    // Helper: is planet in kendra from virtual lagna?
     bool inKendraFromLagna(String p) {
       final b = bhava(p);
       return [1, 4, 7, 10].contains(b);
     }
 
-    // Helper: is planet in trikona from lagna?
+    // Helper: is planet in trikona from virtual lagna?
     bool inTrikonaFromLagna(String p) {
       final b = bhava(p);
       return [1, 5, 9].contains(b);
     }
 
-    final lagnaRi = ri('ಲಗ್ನ');
+    final lagnaRi = virtualLagnaRi;
     final moonRi = ri('ಚಂದ್ರ');
     final sunRi = ri('ರವಿ');
     final marsRi = ri('ಕುಜ');
