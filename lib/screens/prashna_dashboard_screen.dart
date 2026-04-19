@@ -919,11 +919,235 @@ class _PrashnaDashboardScreenState extends State<PrashnaDashboardScreen>
 
     // 13. Neecha Bhanga Raja Yoga — debilitated planet with cancellation
     final debil = <String, int>{'ರವಿ': 6, 'ಚಂದ್ರ': 7, 'ಕುಜ': 3, 'ಬುಧ': 11, 'ಗುರು': 9, 'ಶುಕ್ರ': 5, 'ಶನಿ': 0};
-    final exalt = <String, int>{'ರವಿ': 0, 'ಚಂದ್ರ': 1, 'ಕುಜ': 9, 'ಬುಧ': 5, 'ಗುರು': 3, 'ಶುಕ್ರ': 11, 'ಶನಿ': 6};
+    final exaltMap = <String, int>{'ರವಿ': 0, 'ಚಂದ್ರ': 1, 'ಕುಜ': 9, 'ಬುಧ': 5, 'ಗುರು': 3, 'ಶುಕ್ರ': 11, 'ಶನಿ': 6};
     for (final p in debil.keys) {
       if (ri(p) == debil[p] && inKendraFromLagna(p)) {
         yogas.add({'name': 'ನೀಚ ಭಂಗ ರಾಜಯೋಗ', 'desc': '$p ನೀಚದಲ್ಲಿ ಕೇಂದ್ರದಲ್ಲಿ — ನೀಚ ಭಂಗ', 'shubha': true});
         break;
+      }
+    }
+
+    // 14. Adhi Yoga — Benefics in 6th, 7th, 8th from Moon
+    if (moonRi >= 0) {
+      final m6 = (moonRi + 5) % 12;
+      final m7 = (moonRi + 6) % 12;
+      final m8 = (moonRi + 7) % 12;
+      int count = 0;
+      for (final p in ['ಗುರು', 'ಶುಕ್ರ', 'ಬುಧ']) {
+        final pR = ri(p);
+        if (pR == m6 || pR == m7 || pR == m8) count++;
+      }
+      if (count >= 2) {
+        yogas.add({'name': 'ಅಧಿ ಯೋಗ', 'desc': 'ಚಂದ್ರನಿಂದ 6/7/8ರಲ್ಲಿ ಶುಭ ಗ್ರಹಗಳು — ನಾಯಕತ್ವ, ಅಧಿಕಾರ', 'shubha': true});
+      }
+    }
+
+    // 15. Kalasarpa Yoga — All planets between Rahu and Ketu
+    final rahuRi = ri('ರಾಹು');
+    final ketuRi = ri('ಕೇತು');
+    if (rahuRi >= 0 && ketuRi >= 0) {
+      bool allBetween = true;
+      for (final p in ['ರವಿ', 'ಚಂದ್ರ', 'ಕುಜ', 'ಬುಧ', 'ಗುರು', 'ಶುಕ್ರ', 'ಶನಿ']) {
+        final pR = ri(p);
+        if (pR < 0) continue;
+        // Check if planet is between Rahu and Ketu (going clockwise)
+        final span = (ketuRi - rahuRi + 12) % 12;
+        final pSpan = (pR - rahuRi + 12) % 12;
+        if (pSpan > 0 && pSpan < span) continue; // between Rahu→Ketu
+        if (pSpan == 0 || pSpan == span) continue; // on Rahu or Ketu
+        allBetween = false;
+        break;
+      }
+      if (allBetween) {
+        yogas.add({'name': 'ಕಾಲಸರ್ಪ ಯೋಗ', 'desc': 'ಎಲ್ಲ ಗ್ರಹಗಳು ರಾಹು-ಕೇತು ನಡುವೆ — ಅಡಚಣೆ, ವಿಳಂಬ', 'shubha': false});
+      }
+    }
+
+    // 16. Angarak Yoga — Mars conjunct Rahu
+    if (conjunct('ಕುಜ', 'ರಾಹು')) {
+      yogas.add({'name': 'ಅಂಗಾರಕ ಯೋಗ', 'desc': 'ಕುಜ-ರಾಹು ಸಂಯೋಗ — ಕ್ರೋಧ, ಅಪಘಾತ ಭಯ', 'shubha': false});
+    }
+
+    // 17. Shani-Mangala Yoga — Saturn conjunct Mars
+    if (conjunct('ಶನಿ', 'ಕುಜ')) {
+      yogas.add({'name': 'ಶನಿ-ಮಂಗಳ ಯೋಗ', 'desc': 'ಶನಿ-ಕುಜ ಸಂಯೋಗ — ಹಿಂಸೆ, ಜಗಳ, ಕಾರ್ಯ ವಿಘ್ನ', 'shubha': false});
+    }
+
+    // 18. Vasumathi Yoga — Benefics in 3, 6, 10, 11 from Lagna
+    if (lagnaRi >= 0) {
+      final upachaya = [(lagnaRi + 2) % 12, (lagnaRi + 5) % 12, (lagnaRi + 9) % 12, (lagnaRi + 10) % 12];
+      int upCount = 0;
+      for (final p in ['ಗುರು', 'ಶುಕ್ರ', 'ಬುಧ']) {
+        if (upachaya.contains(ri(p))) upCount++;
+      }
+      if (upCount >= 2) {
+        yogas.add({'name': 'ವಸುಮತಿ ಯೋಗ', 'desc': 'ಶುಭ ಗ್ರಹ 3/6/10/11ರಲ್ಲಿ — ಸಂಪತ್ತು, ಐಶ್ವರ್ಯ', 'shubha': true});
+      }
+    }
+
+    // 19. Saraswati Yoga — Jupiter, Venus, Mercury in kendra/trikona/2nd
+    {
+      bool jOk = false, vOk = false, mOk = false;
+      for (final p in ['ಗುರು']) {
+        final b = bhava(p);
+        if ([1,2,4,5,7,9,10].contains(b)) jOk = true;
+      }
+      for (final p in ['ಶುಕ್ರ']) {
+        final b = bhava(p);
+        if ([1,2,4,5,7,9,10].contains(b)) vOk = true;
+      }
+      for (final p in ['ಬುಧ']) {
+        final b = bhava(p);
+        if ([1,2,4,5,7,9,10].contains(b)) mOk = true;
+      }
+      if (jOk && vOk && mOk) {
+        yogas.add({'name': 'ಸರಸ್ವತಿ ಯೋಗ', 'desc': 'ಗುರು, ಶುಕ್ರ, ಬುಧ ಕೇಂದ್ರ/ತ್ರಿಕೋಣ/2ರಲ್ಲಿ — ವಿದ್ಯೆ, ಕಲೆ', 'shubha': true});
+      }
+    }
+
+    // 20. Parivartana Yoga — Two planets exchange signs
+    final rashiLords = <int, String>{0: 'ಕುಜ', 1: 'ಶುಕ್ರ', 2: 'ಬುಧ', 3: 'ಚಂದ್ರ', 4: 'ರವಿ', 5: 'ಬುಧ', 6: 'ಶುಕ್ರ', 7: 'ಕುಜ', 8: 'ಗುರು', 9: 'ಶನಿ', 10: 'ಶನಿ', 11: 'ಗುರು'};
+    bool foundParivartana = false;
+    for (final p1 in ['ರವಿ', 'ಚಂದ್ರ', 'ಕುಜ', 'ಬುಧ', 'ಗುರು', 'ಶುಕ್ರ', 'ಶನಿ']) {
+      if (foundParivartana) break;
+      final p1Ri = ri(p1);
+      if (p1Ri < 0) continue;
+      final lordOfP1Rashi = rashiLords[p1Ri];
+      if (lordOfP1Rashi == null || lordOfP1Rashi == p1) continue;
+      final lordRi = ri(lordOfP1Rashi);
+      // Check if lord is in p1's own sign
+      final p1OwnSigns = rashiLords.entries.where((e) => e.value == p1).map((e) => e.key).toList();
+      if (p1OwnSigns.contains(lordRi)) {
+        yogas.add({'name': 'ಪರಿವರ್ತನ ಯೋಗ', 'desc': '$p1 ↔ $lordOfP1Rashi ರಾಶಿ ವಿನಿಮಯ — ಪರಸ್ಪರ ಬಲ', 'shubha': true});
+        foundParivartana = true;
+      }
+    }
+
+    // 21. Daridra Yoga — Lord of 11th in 6th/8th/12th
+    if (lagnaRi >= 0) {
+      final lord11Ri = (lagnaRi + 10) % 12;
+      final lord11 = rashiLords[lord11Ri];
+      if (lord11 != null) {
+        final lord11Bhava = bhava(lord11);
+        if ([6, 8, 12].contains(lord11Bhava)) {
+          yogas.add({'name': 'ದಾರಿದ್ರ ಯೋಗ', 'desc': '11ನೇ ಅಧಿಪತಿ $lord11 ದುಸ್ಥಾನದಲ್ಲಿ — ಧನ ಹಾನಿ', 'shubha': false});
+        }
+      }
+    }
+
+    // 22. Raja Yoga — Kendra lord + Trikona lord conjunction
+    if (lagnaRi >= 0) {
+      final kendraHouses = [0, 3, 6, 9].map((d) => (lagnaRi + d) % 12).toList();
+      final trikonaHouses = [0, 4, 8].map((d) => (lagnaRi + d) % 12).toList();
+      final kendraLords = kendraHouses.map((h) => rashiLords[h]).whereType<String>().toSet();
+      final trikonaLords = trikonaHouses.map((h) => rashiLords[h]).whereType<String>().toSet();
+      bool foundRaja = false;
+      for (final kl in kendraLords) {
+        if (foundRaja) break;
+        for (final tl in trikonaLords) {
+          if (kl == tl) continue; // same planet
+          if (conjunct(kl, tl)) {
+            yogas.add({'name': 'ರಾಜಯೋಗ', 'desc': 'ಕೇಂದ್ರಾಧಿಪತಿ $kl + ತ್ರಿಕೋಣಾಧಿಪತಿ $tl ಸಂಯೋಗ — ಅಧಿಕಾರ, ಯಶಸ್ಸು', 'shubha': true});
+            foundRaja = true;
+            break;
+          }
+        }
+      }
+    }
+
+    // 23. Viparita Yoga (enhanced) — Lord of 6 in 8 or 12, or lord of 8 in 6 or 12
+    // (already partially covered in #9, this adds specific cases)
+
+    // 24. Lakshmi Yoga — Lord of 9th in kendra, strong
+    if (lagnaRi >= 0) {
+      final ninth = (lagnaRi + 8) % 12;
+      final lord9 = rashiLords[ninth];
+      if (lord9 != null && inKendraFromLagna(lord9)) {
+        yogas.add({'name': 'ಲಕ್ಷ್ಮೀ ಯೋಗ', 'desc': '9ನೇ ಅಧಿಪತಿ $lord9 ಕೇಂದ್ರದಲ್ಲಿ — ಐಶ್ವರ್ಯ, ಭಾಗ್ಯ', 'shubha': true});
+      }
+    }
+
+    // 25. Chandal Yoga — Rahu/Ketu conjunct any planet (except Guru-Chandala already covered)
+    for (final shadow in ['ರಾಹು', 'ಕೇತು']) {
+      for (final p in ['ಚಂದ್ರ', 'ಕುಜ', 'ಶುಕ್ರ', 'ಶನಿ']) {
+        if (conjunct(shadow, p)) {
+          yogas.add({'name': 'ಚಂಡಾಲ ಯೋಗ', 'desc': '$shadow-$p ಸಂಯೋಗ — ಅಶುದ್ಧ, ದೋಷ', 'shubha': false});
+          break;
+        }
+      }
+    }
+
+    // 26. Graha Malika Yoga — 4+ planets in consecutive houses
+    if (lagnaRi >= 0) {
+      for (int start = 0; start < 12; start++) {
+        int chain = 0;
+        for (int h = 0; h < 12; h++) {
+          final houseRi = (start + h) % 12;
+          bool hasPlanet = false;
+          for (final p in ['ರವಿ', 'ಚಂದ್ರ', 'ಕುಜ', 'ಬುಧ', 'ಗುರು', 'ಶುಕ್ರ', 'ಶನಿ']) {
+            if (ri(p) == houseRi) { hasPlanet = true; break; }
+          }
+          if (hasPlanet) {
+            chain++;
+          } else {
+            break;
+          }
+        }
+        if (chain >= 4) {
+          yogas.add({'name': 'ಗ್ರಹ ಮಾಲಿಕಾ ಯೋಗ', 'desc': '$chain ಗ್ರಹಗಳು ಸತತ ರಾಶಿಗಳಲ್ಲಿ — ರಾಜಯೋಗ ಫಲ', 'shubha': true});
+          break;
+        }
+      }
+    }
+
+    // 27. Chaturasagara Yoga — Planets in all 4 kendras
+    if (lagnaRi >= 0) {
+      final k1 = lagnaRi;
+      final k4 = (lagnaRi + 3) % 12;
+      final k7 = (lagnaRi + 6) % 12;
+      final k10 = (lagnaRi + 9) % 12;
+      bool has1 = false, has4 = false, has7 = false, has10 = false;
+      for (final p in ['ರವಿ', 'ಚಂದ್ರ', 'ಕುಜ', 'ಬುಧ', 'ಗುರು', 'ಶುಕ್ರ', 'ಶನಿ']) {
+        final pR = ri(p);
+        if (pR == k1) has1 = true;
+        if (pR == k4) has4 = true;
+        if (pR == k7) has7 = true;
+        if (pR == k10) has10 = true;
+      }
+      if (has1 && has4 && has7 && has10) {
+        yogas.add({'name': 'ಚತುರಸಾಗರ ಯೋಗ', 'desc': 'ಎಲ್ಲ ಕೇಂದ್ರಗಳಲ್ಲಿ ಗ್ರಹ — ಮಹಾ ಅಧಿಕಾರ', 'shubha': true});
+      }
+    }
+
+    // 28. Kahala Yoga — 4th lord and Jupiter in mutual kendra
+    if (lagnaRi >= 0) {
+      final fourth = (lagnaRi + 3) % 12;
+      final lord4 = rashiLords[fourth];
+      if (lord4 != null && lord4 != 'ಗುರು' && inKendra(lord4, 'ಗುರು')) {
+        yogas.add({'name': 'ಕಹಲ ಯೋಗ', 'desc': '4ನೇ ಅಧಿಪತಿ $lord4 - ಗುರು ಪರಸ್ಪರ ಕೇಂದ್ರ — ಧೈರ್ಯ, ಸೈನ್ಯ', 'shubha': true});
+      }
+    }
+
+    // 29. Amavasya Yoga — Sun-Moon conjunction
+    if (conjunct('ರವಿ', 'ಚಂದ್ರ')) {
+      yogas.add({'name': 'ಅಮಾವಾಸ್ಯೆ ಯೋಗ', 'desc': 'ರವಿ-ಚಂದ್ರ ಸಂಯೋಗ — ಮನೋ ದೌರ್ಬಲ್ಯ, ಪಿತೃ ದೋಷ', 'shubha': false});
+    }
+
+    // 30. Ubhayachari Yoga — Planets on both sides of Sun (2nd and 12th from Sun)
+    if (sunRi >= 0) {
+      final s2 = (sunRi + 1) % 12;
+      final s12 = (sunRi + 11) % 12;
+      bool hasBefore = false, hasAfter = false;
+      for (final p in ['ಕುಜ', 'ಬುಧ', 'ಗುರು', 'ಶುಕ್ರ', 'ಶನಿ']) {
+        if (ri(p) == s2) hasAfter = true;
+        if (ri(p) == s12) hasBefore = true;
+      }
+      if (hasBefore && hasAfter) {
+        yogas.add({'name': 'ಉಭಯಚಾರಿ ಯೋಗ', 'desc': 'ರವಿಯ ಎರಡೂ ಬದಿ ಗ್ರಹ — ಕೀರ್ತಿ, ಸಮೃದ್ಧಿ', 'shubha': true});
+      } else if (hasAfter) {
+        yogas.add({'name': 'ವೇಶಿ ಯೋಗ', 'desc': 'ರವಿಯ 2ರಲ್ಲಿ ಗ್ರಹ — ಪರಾಕ್ರಮ', 'shubha': true});
+      } else if (hasBefore) {
+        yogas.add({'name': 'ವೋಶಿ ಯೋಗ', 'desc': 'ರವಿಯ 12ರಲ್ಲಿ ಗ್ರಹ — ದಾನ ಗುಣ', 'shubha': true});
       }
     }
 
