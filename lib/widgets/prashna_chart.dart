@@ -460,10 +460,11 @@ class PrashnaChart extends StatelessWidget {
             break;
 
           case 'bottom':
-            // 3 columns: labels stacked vertically in each column
+            // 3 columns REVERSED: III(left), II(mid), I(right)
+            final revDrekB = 2 - drek;
             widgets.add(Positioned(
               top: outerMargin + pos.dy + cw,
-              left: outerMargin + pos.dx + (drek * colW),
+              left: outerMargin + pos.dx + (revDrekB * colW),
               width: colW,
               height: outerMargin,
               child: Align(
@@ -477,9 +478,10 @@ class PrashnaChart extends StatelessWidget {
             break;
 
           case 'left':
-            // 3 rows: labels flow horizontally in each row
+            // 3 rows REVERSED: III(top), II(mid), I(bottom)
+            final revDrekL = 2 - drek;
             widgets.add(Positioned(
-              top: outerMargin + pos.dy + (drek * drekZone),
+              top: outerMargin + pos.dy + (revDrekL * drekZone),
               left: 0,
               width: outerMargin,
               height: drekZone,
