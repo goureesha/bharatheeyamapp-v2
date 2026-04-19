@@ -291,16 +291,20 @@ class PrashnaChart extends StatelessWidget {
       return Positioned(
         top: pos.dy, left: pos.dx,
         width: cw, height: cw,
-        child: _rashiBox(ri, boxData[ri] ?? []),
+        child: _rashiBox(ri, boxData[ri] ?? [], _outerEdge(ri)),
       );
     }).toList();
   }
 
-  Widget _rashiBox(int rashiIdx, List<_PlanetEntry> planets) {
+  Widget _rashiBox(int rashiIdx, List<_PlanetEntry> planets, String edge) {
     // Group by drekkana
     final drek0 = planets.where((p) => p.drekkana == 0).toList();
     final drek1 = planets.where((p) => p.drekkana == 1).toList();
     final drek2 = planets.where((p) => p.drekkana == 2).toList();
+
+    // Reverse order for bottom/left edges
+    final bool reversed = (edge == 'bottom' || edge == 'left');
+    final zones = reversed ? [drek2, drek1, drek0] : [drek0, drek1, drek2];
 
     return Container(
       margin: const EdgeInsets.all(1.0),
@@ -312,12 +316,9 @@ class PrashnaChart extends StatelessWidget {
       child: SingleChildScrollView(
         child: Column(
           children: [
-            // Drekkana 1 (0°-10°)
-            _drekkanaZone(drek0),
-            // Drekkana 2 (10°-20°)
-            _drekkanaZone(drek1),
-            // Drekkana 3 (20°-30°)
-            _drekkanaZone(drek2),
+            _drekkanaZone(zones[0]),
+            _drekkanaZone(zones[1]),
+            _drekkanaZone(zones[2]),
           ],
         ),
       ),
