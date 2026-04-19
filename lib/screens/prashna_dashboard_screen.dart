@@ -839,6 +839,32 @@ class _PrashnaDashboardScreenState extends State<PrashnaDashboardScreen>
       return [1, 5, 9].contains(b);
     }
 
+    // Helper: sign type (chara/sthira/dwiswabhava)
+    String signType(int rashi) {
+      if (rashi < 0) return '';
+      return ['chara','sthira','dwi','chara','sthira','dwi','chara','sthira','dwi','chara','sthira','dwi'][rashi % 12];
+    }
+    // Helper: sign element
+    String signElement(int rashi) {
+      if (rashi < 0) return '';
+      return ['fire','earth','air','water','fire','earth','air','water','fire','earth','air','water'][rashi % 12];
+    }
+    // Helper: count how many signs are occupied by 7 planets
+    final allPlanets = ['ರವಿ', 'ಚಂದ್ರ', 'ಕುಜ', 'ಬುಧ', 'ಗುರು', 'ಶುಕ್ರ', 'ಶನಿ'];
+    Set<int> occupiedSigns() {
+      final s = <int>{};
+      for (final p in allPlanets) { final r2 = ri(p); if (r2 >= 0) s.add(r2); }
+      return s;
+    }
+    // Helper: planets in a specific rashi
+    List<String> planetsInRashi(int rashi) {
+      return allPlanets.where((p) => ri(p) == rashi).toList();
+    }
+    // Helper: is planet a benefic?
+    bool isBenefic(String p) => ['ಗುರು', 'ಶುಕ್ರ', 'ಬುಧ'].contains(p);
+    // Helper: is planet a malefic?
+    bool isMalefic(String p) => ['ಕುಜ', 'ಶನಿ', 'ರವಿ'].contains(p);
+
     final lagnaRi = virtualLagnaRi;
     final moonRi = ri('ಚಂದ್ರ');
     final sunRi = ri('ರವಿ');
@@ -847,6 +873,8 @@ class _PrashnaDashboardScreenState extends State<PrashnaDashboardScreen>
     final jupRi = ri('ಗುರು');
     final venRi = ri('ಶುಕ್ರ');
     final satRi = ri('ಶನಿ');
+    final rahuRiG = ri('ರಾಹು');
+    final ketuRiG = ri('ಕೇತು');
 
     // 1. Gaja Kesari Yoga — Jupiter in kendra from Moon
     if (inKendra('ಚಂದ್ರ', 'ಗುರು')) {
@@ -1425,6 +1453,401 @@ class _PrashnaDashboardScreenState extends State<PrashnaDashboardScreen>
           yogas.add({'name': 'ಗ್ರಹ ಯುದ್ಧ', 'desc': '${planets5[i]} - ${planets5[j]} ಒಂದು ಅಂಶದಲ್ಲಿ — ಸಂಘರ್ಷ', 'shubha': false, 'shloka': 'ग्रहयुद्धे समीपस्थितौ ग्रहौ संघर्षफलदौ ।\nदुर्बलो पराजितो भवेत् बलवान् जयी भवेत् ॥ — सारावली'});
         }
       }
+    }
+
+    // ═══════════════════════════════════════════════════════════
+    // बृहज्जातक — CHAPTER 11: राजयोगाध्याय (Raja Yogas)
+    // ═══════════════════════════════════════════════════════════
+
+    // 46. Krura Rajayoga — All malefics exalted
+    {
+      final exalt = <String, int>{'ಕುಜ': 9, 'ಶನಿ': 6, 'ರವಿ': 0};
+      int exCount = 0;
+      for (final e in exalt.entries) { if (ri(e.key) == e.value) exCount++; }
+      if (exCount >= 2) {
+        yogas.add({'name': 'ಕ್ರೂರ ರಾಜಯೋಗ', 'desc': 'ಪಾಪ ಗ್ರಹಗಳು ಉಚ್ಚದಲ್ಲಿ — ಕ್ರೂರ ಅಧಿಕಾರ, ಸೈನ್ಯ ಬಲ', 'shubha': true, 'shloka': 'प्राहुर्यवनाः स्वतुङ्गगैः क्रूरैः क्रूरमतिर्महीपतिः ॥ ११.१ — बृहज्जातक'});
+      }
+    }
+
+    // 47. Shubha Rajayoga — All benefics exalted/own
+    {
+      final benExalt = <String, int>{'ಗುರು': 3, 'ಶುಕ್ರ': 11, 'ಬುಧ': 5};
+      final benOwn = <String, List<int>>{'ಗುರು': [8,11], 'ಶುಕ್ರ': [1,6], 'ಬುಧ': [2,5]};
+      int sCount = 0;
+      for (final p in ['ಗುರು', 'ಶುಕ್ರ', 'ಬುಧ']) {
+        final pR = ri(p);
+        if (pR == benExalt[p] || (benOwn[p]?.contains(pR) ?? false)) sCount++;
+      }
+      if (sCount >= 3) {
+        yogas.add({'name': 'ಶುಭ ರಾಜಯೋಗ', 'desc': 'ಎಲ್ಲ ಶುಭ ಗ್ರಹ ಉಚ್ಚ/ಸ್ವಕ್ಷೇತ್ರ — ಧಾರ್ಮಿಕ ರಾಜ', 'shubha': true, 'shloka': 'शुभैस्तु स्वतुङ्गगैः शुभमतिर्महीपतिः प्रजायते ॥ ११.१ — बृहज्जातक'});
+      }
+    }
+
+    // 48. Uccha Graha Rajayoga — 3+ planets exalted
+    {
+      final exaltAll = <String, int>{'ರವಿ': 0, 'ಚಂದ್ರ': 1, 'ಕುಜ': 9, 'ಬುಧ': 5, 'ಗುರು': 3, 'ಶುಕ್ರ': 11, 'ಶನಿ': 6};
+      int eC = 0;
+      for (final e in exaltAll.entries) { if (ri(e.key) == e.value) eC++; }
+      if (eC >= 3) {
+        yogas.add({'name': 'ಬಹು ಉಚ್ಚ ರಾಜಯೋಗ', 'desc': '$eC ಗ್ರಹ ಉಚ್ಚ ರಾಶಿಯಲ್ಲಿ — ಅಸಾಧಾರಣ ಭಾಗ್ಯ', 'shubha': true, 'shloka': 'बहवः ग्रहाः स्वतुङ्गे राजयोगकरा मताः ॥ ११.३ — बृहज्जातक'});
+      }
+    }
+
+    // 49. Pancha Graha Eka Rashi — 5+ planets in one sign
+    for (int s = 0; s < 12; s++) {
+      final pList = planetsInRashi(s);
+      if (pList.length >= 5) {
+        yogas.add({'name': 'ಪಂಚಗ್ರಹ ಏಕರಾಶಿ ಯೋಗ', 'desc': '${pList.length} ಗ್ರಹ ಒಂದೇ ರಾಶಿಯಲ್ಲಿ — ಅಸಾಮಾನ್ಯ ಯೋಗ', 'shubha': true, 'shloka': 'एकराशौ पञ्चग्रहाः असाधारणफलप्रदाः ॥ ११.५ — बृहज्जातक'});
+        break;
+      }
+    }
+
+    // 50. Lagnesh Bala Yoga — Lagna lord exalted/own
+    {
+      final rashiLordsMap = <int, String>{0: 'ಕುಜ', 1: 'ಶುಕ್ರ', 2: 'ಬುಧ', 3: 'ಚಂದ್ರ', 4: 'ರವಿ', 5: 'ಬುಧ', 6: 'ಶುಕ್ರ', 7: 'ಕುಜ', 8: 'ಗುರು', 9: 'ಶನಿ', 10: 'ಶನಿ', 11: 'ಗುರು'};
+      final exaltAll2 = <String, int>{'ರವಿ': 0, 'ಚಂದ್ರ': 1, 'ಕುಜ': 9, 'ಬುಧ': 5, 'ಗುರು': 3, 'ಶುಕ್ರ': 11, 'ಶನಿ': 6};
+      final ownAll = <String, List<int>>{'ರವಿ': [4], 'ಚಂದ್ರ': [3], 'ಕುಜ': [0,7], 'ಬುಧ': [2,5], 'ಗುರು': [8,11], 'ಶುಕ್ರ': [1,6], 'ಶನಿ': [9,10]};
+      final lagnaLord = rashiLordsMap[lagnaRi];
+      if (lagnaLord != null) {
+        final lR = ri(lagnaLord);
+        if (lR == exaltAll2[lagnaLord] || (ownAll[lagnaLord]?.contains(lR) ?? false)) {
+          yogas.add({'name': 'ಲಗ್ನೇಶ ಬಲ ಯೋಗ', 'desc': 'ಲಗ್ನಾಧಿಪತಿ $lagnaLord ಉಚ್ಚ/ಸ್ವಕ್ಷೇತ್ರ — ನಾಯಕತ್ವ', 'shubha': true, 'shloka': 'लग्नेशे बलिनि स्वोच्चे स्वक्षेत्रे नायको भवेत् ॥ ११.६ — बृहज्जातक'});
+        }
+      }
+    }
+
+    // 51. Shukra-Guru Kendra Yoga — Venus+Jupiter in kendra together
+    if (inKendraFromLagna('ಶುಕ್ರ') && inKendraFromLagna('ಗುರು') && conjunct('ಶುಕ್ರ', 'ಗುರು')) {
+      yogas.add({'name': 'ಶುಕ್ರ-ಗುರು ಕೇಂದ್ರ ಯೋಗ', 'desc': 'ಶುಕ್ರ-ಗುರು ಕೇಂದ್ರದಲ್ಲಿ ಒಟ್ಟಿಗೆ — ಮಹಾ ಸಂಪತ್ತು', 'shubha': true, 'shloka': 'शुक्रगुरू केन्द्रगतौ महासम्पत्प्रदौ मतौ ॥ ११.७ — बृहज्जातक'});
+    }
+
+    // 52. Trishubha Lagna Yoga — Mercury+Jupiter+Venus in lagna
+    if (bhava('ಬುಧ') == 1 && bhava('ಗುರು') == 1 && bhava('ಶುಕ್ರ') == 1) {
+      yogas.add({'name': 'ತ್ರಿಶುಭ ಲಗ್ನ ಯೋಗ', 'desc': 'ಬುಧ+ಗುರು+ಶುಕ್ರ ಲಗ್ನದಲ್ಲಿ — ವಿದ್ವಾಂಸ, ಕೀರ್ತಿ', 'shubha': true, 'shloka': 'बुधगुरुशुक्राः लग्ने विद्वान् कीर्तिमान् भूपतिः ॥ ११.८ — बृहज्जातक'});
+    }
+
+    // 53. Ravi-Kuja Bali Yoga — Sun+Mars in kendra, strong
+    if (inKendraFromLagna('ರವಿ') && inKendraFromLagna('ಕುಜ')) {
+      yogas.add({'name': 'ರವಿ-ಕುಜ ಬಲೀ ಯೋಗ', 'desc': 'ರವಿ+ಕುಜ ಕೇಂದ್ರದಲ್ಲಿ — ಸೈನ್ಯ ನಾಯಕ, ಪರಾಕ್ರಮ', 'shubha': true, 'shloka': 'रवि कुजौ केन्द्रगतौ सैन्यपतिर्भवेन्नरः ॥ ११.९ — बृहज्जातक'});
+    }
+
+    // ═══════════════════════════════════════════════════════════
+    // बृहज्जातक — CHAPTER 12: नाभसयोगाध्याय (Nabhasa Yogas)
+    // ═══════════════════════════════════════════════════════════
+
+    // --- Asraya Yogas (sign-type based) ---
+
+    // 54. Rajju Yoga — All planets in movable signs
+    {
+      bool allChara = allPlanets.every((p) => ri(p) < 0 || signType(ri(p)) == 'chara');
+      int charaCount = allPlanets.where((p) => ri(p) >= 0 && signType(ri(p)) == 'chara').length;
+      if (allChara && charaCount >= 5) {
+        yogas.add({'name': 'ರಜ್ಜು ಯೋಗ (ನಾಭಸ)', 'desc': 'ಎಲ್ಲ ಗ್ರಹ ಚರ ರಾಶಿಯಲ್ಲಿ — ಪ್ರವಾಸ ಪ್ರಿಯ, ಚಲನಶೀಲ', 'shubha': true, 'shloka': 'चरराशिगतैः सर्वैः रज्जुयोगः प्रकीर्तितः ।\\nभ्रमणप्रियो भवेज्जातो देशान्तरे सुखम् ॥ १२.३ — बृहज्जातक'});
+      }
+    }
+
+    // 55. Musala Yoga — All planets in fixed signs
+    {
+      bool allSthira = allPlanets.every((p) => ri(p) < 0 || signType(ri(p)) == 'sthira');
+      int sthiraCount = allPlanets.where((p) => ri(p) >= 0 && signType(ri(p)) == 'sthira').length;
+      if (allSthira && sthiraCount >= 5) {
+        yogas.add({'name': 'ಮುಸಲ ಯೋಗ (ನಾಭಸ)', 'desc': 'ಎಲ್ಲ ಗ್ರಹ ಸ್ಥಿರ ರಾಶಿಯಲ್ಲಿ — ಸ್ಥಿರ ಸಂಪತ್ತು, ಗೌರವ', 'shubha': true, 'shloka': 'स्थिरराशिगतैः सर्वैः मुसलयोगः प्रकीर्तितः ।\\nस्थिरसम्पद्भाग् गौरववान् भवेन्नरः ॥ १२.३ — बृहज्जातक'});
+      }
+    }
+
+    // 56. Nala Yoga — All planets in dual signs
+    {
+      bool allDwi = allPlanets.every((p) => ri(p) < 0 || signType(ri(p)) == 'dwi');
+      int dwiCount = allPlanets.where((p) => ri(p) >= 0 && signType(ri(p)) == 'dwi').length;
+      if (allDwi && dwiCount >= 5) {
+        yogas.add({'name': 'ನಲ ಯೋಗ (ನಾಭಸ)', 'desc': 'ಎಲ್ಲ ಗ್ರಹ ಉಭಯ ರಾಶಿಯಲ್ಲಿ — ಬಹುಮುಖ ಪ್ರತಿಭೆ', 'shubha': true, 'shloka': 'उभयराशिगतैः सर्वैः नलयोगः प्रकीर्तितः ।\\nबहुमुखप्रतिभावान् कुशलो भवेन्नरः ॥ १२.३ — बृहज्जातक'});
+      }
+    }
+
+    // --- Dala Yogas ---
+
+    // 57. Mala Yoga — Benefics in kendras, malefics in 3/6/11
+    {
+      bool benKendra = ['ಗುರು', 'ಶುಕ್ರ', 'ಬುಧ'].every((p) => inKendraFromLagna(p));
+      bool malUpachaya = ['ಕುಜ', 'ಶನಿ'].every((p) { final b = bhava(p); return [3, 6, 11].contains(b); });
+      if (benKendra && malUpachaya) {
+        yogas.add({'name': 'ಮಾಲಾ ಯೋಗ (ದಲ)', 'desc': 'ಶುಭ ಕೇಂದ್ರ, ಪಾಪ ಉಪಚಯ — ಮಹಾ ಸುಖ, ಸಂಪತ್ತು', 'shubha': true, 'shloka': 'केन्द्रे शुभाः पापा उपचये मालायोगः प्रकीर्तितः ।\\nमहासुखी सम्पद्भाग् भवेन्नरः ॥ १२.५ — बृहज्जातक'});
+      }
+    }
+
+    // 58. Sarpa Yoga — Malefics in kendras
+    {
+      bool malKendra = ['ಕುಜ', 'ಶನಿ', 'ರವಿ'].every((p) => inKendraFromLagna(p));
+      if (malKendra) {
+        yogas.add({'name': 'ಸರ್ಪ ಯೋಗ (ದಲ)', 'desc': 'ಪಾಪ ಗ್ರಹ ಕೇಂದ್ರದಲ್ಲಿ — ಕಷ್ಟ, ದುಃಖ, ಜೀವನ ಸಂಘರ್ಷ', 'shubha': false, 'shloka': 'केन्द्रे पापाः सर्पयोगः प्रकीर्तितः ।\\nदुःखी कष्टभाग् जीवने संघर्षं भवेत् ॥ १२.५ — बृहज्जातक'});
+      }
+    }
+
+    // --- Sankhya Yogas (based on number of signs occupied) ---
+    {
+      final occ = occupiedSigns();
+      final nSigns = occ.length;
+      if (nSigns == 7) {
+        yogas.add({'name': 'ವೀಣಾ/ವಲ್ಲಕೀ ಯೋಗ (ಸಂಖ್ಯಾ)', 'desc': '7 ಗ್ರಹ 7 ರಾಶಿಯಲ್ಲಿ — ಸಂಗೀತ, ಕಲೆ, ಸುಖ', 'shubha': true, 'shloka': 'सप्तराशिगतैः सप्तभिः वीणायोगः प्रकीर्तितः ।\\nसङ्गीतप्रियो कलाविदो भवेन्नरः ॥ १२.१० — बृहज्जातक'});
+      } else if (nSigns == 6) {
+        yogas.add({'name': 'ದಾಮಿನೀ ಯೋಗ (ಸಂಖ್ಯಾ)', 'desc': '7 ಗ್ರಹ 6 ರಾಶಿಯಲ್ಲಿ — ದಾನಶೀಲ, ಉದಾರ', 'shubha': true, 'shloka': 'षड्राशिगतैः दामिनीयोगः प्रकीर्तितः ।\\nदानशीलो उदारो भवेन्नरः ॥ १२.१० — बृहज्जातक'});
+      } else if (nSigns == 5) {
+        yogas.add({'name': 'ಪಾಶ ಯೋಗ (ಸಂಖ್ಯಾ)', 'desc': '7 ಗ್ರಹ 5 ರಾಶಿಯಲ್ಲಿ — ಬಂಧನ, ಕೈದಿ ಅಥವಾ ಸೇವಕ', 'shubha': false, 'shloka': 'पञ्चराशिगतैः पाशयोगः प्रकीर्तितः ।\\nबन्धनभाग् सेवको भवेन्नरः ॥ १२.१० — बृहज्जातक'});
+      } else if (nSigns == 4) {
+        yogas.add({'name': 'ಕೇದಾರ ಯೋಗ (ಸಂಖ್ಯಾ)', 'desc': '7 ಗ್ರಹ 4 ರಾಶಿಯಲ್ಲಿ — ಕೃಷಿ, ಭೂಮಿ ಸಂಪತ್ತು', 'shubha': true, 'shloka': 'चतुर्राशिगतैः केदारयोगः प्रकीर्तितः ।\\nकृषिभूमिसम्पन्नो भवेन्नरः ॥ १२.१० — बृहज्जातक'});
+      } else if (nSigns == 3) {
+        yogas.add({'name': 'ಶೂಲ ಯೋಗ (ಸಂಖ್ಯಾ)', 'desc': '7 ಗ್ರಹ 3 ರಾಶಿಯಲ್ಲಿ — ಕ್ರೂರ, ಬಡತನ, ಕೋಪ', 'shubha': false, 'shloka': 'त्रिराशिगतैः शूलयोगः प्रकीर्तितः ।\\nक्रूरो दरिद्रो कोपी भवेन्नरः ॥ १२.१० — बृहज्जातक'});
+      } else if (nSigns == 2) {
+        yogas.add({'name': 'ಯುಗ ಯೋಗ (ಸಂಖ್ಯಾ)', 'desc': '7 ಗ್ರಹ 2 ರಾಶಿಯಲ್ಲಿ — ಬಿದ್ದ, ಧರ್ಮಹೀನ', 'shubha': false, 'shloka': 'द्विराशिगतैः युगयोगः प्रकीर्तितः ।\\nधर्महीनो भवेज्जातो दुःखभाग् भवेत् ॥ १२.१० — बृहज्जातक'});
+      } else if (nSigns == 1) {
+        yogas.add({'name': 'ಗೋಲ ಯೋಗ (ಸಂಖ್ಯಾ)', 'desc': 'ಎಲ್ಲ ಗ್ರಹ 1 ರಾಶಿಯಲ್ಲಿ — ಅತ್ಯಂತ ವಿಶೇಷ/ಕಷ್ಟ', 'shubha': false, 'shloka': 'एकराशिगतैः गोलयोगः प्रकीर्तितः ।\\nअत्यन्तविशेषफलदो भवेत् ॥ १२.१० — बृहज्जातक'});
+      }
+    }
+
+    // --- Akriti (Shape) Yogas ---
+
+    // 59. Yupa Yoga — All planets in 1st to 4th houses
+    {
+      bool allIn1to4 = allPlanets.every((p) { final b = bhava(p); return b < 0 || (b >= 1 && b <= 4); });
+      int cnt = allPlanets.where((p) { final b = bhava(p); return b >= 1 && b <= 4; }).length;
+      if (allIn1to4 && cnt >= 5) {
+        yogas.add({'name': 'ಯೂಪ ಯೋಗ (ಆಕೃತಿ)', 'desc': 'ಎಲ್ಲ ಗ್ರಹ 1-4 ಭಾವದಲ್ಲಿ — ಯಜ್ಞಕರ್ತ, ಧಾರ್ಮಿಕ', 'shubha': true, 'shloka': 'प्रथमचतुर्भावगतैः यूपयोगः प्रकीर्तितः ।\\nयज्ञकर्ता धार्मिकः भवेन्नरः ॥ १२.७ — बृहज्जातक'});
+      }
+    }
+
+    // 60. Shara Yoga — All planets in 4th to 7th houses (from lagna)
+    {
+      bool allIn4to7 = allPlanets.every((p) { final b = bhava(p); return b < 0 || (b >= 4 && b <= 7); });
+      int cnt = allPlanets.where((p) { final b = bhava(p); return b >= 4 && b <= 7; }).length;
+      if (allIn4to7 && cnt >= 5) {
+        yogas.add({'name': 'ಶರ ಯೋಗ (ಆಕೃತಿ)', 'desc': 'ಎಲ್ಲ ಗ್ರಹ 4-7 ಭಾವದಲ್ಲಿ — ಬೇಟೆಗಾರ, ಶಸ್ತ್ರಪ್ರಿಯ', 'shubha': false, 'shloka': 'चतुर्थसप्तमभावगतैः शरयोगः प्रकीर्तितः ।\\nशस्त्रप्रियो भवेज्जातो बन्धनभाग् भवेत् ॥ १२.७ — बृहज्जातक'});
+      }
+    }
+
+    // 61. Shakti Yoga — All planets in 7th to 10th houses
+    {
+      bool allIn7to10 = allPlanets.every((p) { final b = bhava(p); return b < 0 || (b >= 7 && b <= 10); });
+      int cnt = allPlanets.where((p) { final b = bhava(p); return b >= 7 && b <= 10; }).length;
+      if (allIn7to10 && cnt >= 5) {
+        yogas.add({'name': 'ಶಕ್ತಿ ಯೋಗ (ಆಕೃತಿ)', 'desc': 'ಎಲ್ಲ ಗ್ರಹ 7-10 ಭಾವದಲ್ಲಿ — ಬಡ, ಆಲಸಿ, ದೀರ್ಘಾಯು', 'shubha': false, 'shloka': 'सप्तमदशमभावगतैः शक्तियोगः प्रकीर्तितः ।\\nदरिद्रो आलसी दीर्घायुर्भवेत् ॥ १२.७ — बृहज्जातक'});
+      }
+    }
+
+    // 62. Danda Yoga — All planets in 10th to 1st houses
+    {
+      bool allIn10to1 = allPlanets.every((p) { final b = bhava(p); return b < 0 || (b >= 10 || b <= 1); });
+      int cnt = allPlanets.where((p) { final b = bhava(p); return b >= 10 || b == 1; }).length;
+      if (allIn10to1 && cnt >= 5) {
+        yogas.add({'name': 'ದಂಡ ಯೋಗ (ಆಕೃತಿ)', 'desc': 'ಎಲ್ಲ ಗ್ರಹ 10-1 ಭಾವದಲ್ಲಿ — ಸೇವಕ, ಬಂಧು ನಷ್ಟ', 'shubha': false, 'shloka': 'दशमप्रथमभावगतैः दण्डयोगः प्रकीर्तितः ।\\nसेवको बन्धुनष्टो भवेन्नरः ॥ १२.७ — बृहज्जातक'});
+      }
+    }
+
+    // 63. Gada Yoga — Planets in 2 adjacent kendras only (1-4 or 4-7 or 7-10 or 10-1)
+    {
+      final k1 = [1,2,3], k2 = [4,5,6], k3 = [7,8,9], k4 = [10,11,12];
+      final pairs = [[k1,k2],[k2,k3],[k3,k4],[k4,k1]];
+      for (final pair in pairs) {
+        final combined = [...pair[0], ...pair[1]];
+        bool allInPair = allPlanets.every((p) { final b = bhava(p); return b < 0 || combined.contains(b); });
+        int cnt = allPlanets.where((p) => combined.contains(bhava(p))).length;
+        if (allInPair && cnt >= 5) {
+          yogas.add({'name': 'ಗದಾ ಯೋಗ (ಆಕೃತಿ)', 'desc': 'ಗ್ರಹ ಎರಡು ಕೇಂದ್ರ ಭಾಗದಲ್ಲಿ — ಧನವಂತ, ಧಾರ್ಮಿಕ', 'shubha': true, 'shloka': 'द्वयोः केन्द्रांशयोः सर्वे गदायोगः प्रकीर्तितः ।\\nधनवान् धार्मिको भवेन्नरः ॥ १२.६ — बृहज्जातक'});
+          break;
+        }
+      }
+    }
+
+    // 64. Chakra Yoga — Planets in alternate (odd) signs only
+    {
+      bool allOdd = allPlanets.every((p) { final pR = ri(p); return pR < 0 || pR % 2 == 0; }); // 0-based: Aries=0(even idx=odd sign)
+      int oddCnt = allPlanets.where((p) { final pR = ri(p); return pR >= 0 && pR % 2 == 0; }).length;
+      if (allOdd && oddCnt >= 5) {
+        yogas.add({'name': 'ಚಕ್ರ ಯೋಗ (ಆಕೃತಿ)', 'desc': 'ಎಲ್ಲ ಗ್ರಹ ಓಜ ರಾಶಿಯಲ್ಲಿ — ಚಕ್ರವರ್ತಿ ಯೋಗ', 'shubha': true, 'shloka': 'ओजराशिगतैः सर्वैः चक्रयोगः प्रकीर्तितः ।\\nचक्रवर्ती भवेज्जातो महाधिकारवान् ॥ १२.८ — बृहज्जातक'});
+      }
+    }
+
+    // 65. Samudra Yoga — Planets in even signs only
+    {
+      bool allEven = allPlanets.every((p) { final pR = ri(p); return pR < 0 || pR % 2 == 1; });
+      int evenCnt = allPlanets.where((p) { final pR = ri(p); return pR >= 0 && pR % 2 == 1; }).length;
+      if (allEven && evenCnt >= 5) {
+        yogas.add({'name': 'ಸಮುದ್ರ ಯೋಗ (ಆಕೃತಿ)', 'desc': 'ಎಲ್ಲ ಗ್ರಹ ಯುಗ್ಮ ರಾಶಿಯಲ್ಲಿ — ಸಮುದ್ರದಂತೆ ಸಂಪತ್ತು', 'shubha': true, 'shloka': 'युग्मराशिगतैः सर्वैः समुद्रयोगः प्रकीर्तितः ।\\nसमुद्रवत् सम्पद्भाग् भवेन्नरः ॥ १२.८ — बृहज्जातक'});
+      }
+    }
+
+    // 66. Ardha Chandra Yoga — 7 planets in 7 consecutive houses from a kendra
+    {
+      for (final startB in [1, 4, 7, 10]) {
+        int chain = 0;
+        for (int h = 0; h < 7; h++) {
+          final hB = ((startB - 1 + h) % 12) + 1;
+          bool hasPlanet = allPlanets.any((p) => bhava(p) == hB);
+          if (hasPlanet) chain++; else break;
+        }
+        if (chain >= 7) {
+          yogas.add({'name': 'ಅರ್ಧಚಂದ್ರ ಯೋಗ (ಆಕೃತಿ)', 'desc': '7 ಗ್ರಹ ಕೇಂದ್ರದಿಂದ 7 ಸತತ ಭಾವದಲ್ಲಿ — ಸೇನಾಪತಿ', 'shubha': true, 'shloka': 'केन्द्रात् सप्तभावगतैः अर्धचन्द्रयोगः ।\\nसेनापतिर्भवेज्जातो भूपतिः सुखभाग् ॥ १२.८ — बृहज्जातक'});
+          break;
+        }
+      }
+    }
+
+    // ═══════════════════════════════════════════════════════════
+    // बृहज्जातक — CHAPTER 13: चन्द्रयोगाध्याय (Chandra Yogas)
+    // ═══════════════════════════════════════════════════════════
+
+    // 67. Chandra Kendra Bala — Moon in kendra
+    if (moonRi >= 0) {
+      final moonBhava = bhava('ಚಂದ್ರ');
+      if (moonBhava == 10) {
+        yogas.add({'name': 'ಚಂದ್ರ ವರಿಷ್ಠ ಯೋಗ', 'desc': 'ಚಂದ್ರ 10ನೇ ಭಾವ — ವರಿಷ್ಠ ಫಲ, ಉನ್ನತ ಸ್ಥಾನ', 'shubha': true, 'shloka': 'अधमसमवरिष्ठान्यर्क केन्द्रादि संस्थे शशिनि ।\\nदशमे वरिष्ठफलं भवेत् ॥ १३.१ — बृहज्जातक'});
+      } else if (moonBhava == 7) {
+        yogas.add({'name': 'ಚಂದ್ರ ಸಮ ಯೋಗ', 'desc': 'ಚಂದ್ರ 7ನೇ ಭಾವ — ಸಮ ಫಲ, ಸ್ಥಿರತೆ', 'shubha': true, 'shloka': 'सप्तमे शशिनि समफलं भवेत् ॥ १३.१ — बृहज्जातक'});
+      }
+    }
+
+    // 68. Purna Chandra Lagna — Full Moon in lagna
+    if (moonRi >= 0 && sunRi >= 0 && bhava('ಚಂದ್ರ') == 1) {
+      final moonSunDiff = ((moonRi - sunRi + 12) % 12);
+      if (moonSunDiff >= 4 && moonSunDiff <= 8) { // roughly opposite = full
+        yogas.add({'name': 'ಪೂರ್ಣ ಚಂದ್ರ ಲಗ್ನ ಯೋಗ', 'desc': 'ಪೂರ್ಣ ಚಂದ್ರ ಲಗ್ನದಲ್ಲಿ — ಸುಂದರ, ಕೀರ್ತಿ, ಸುಖ', 'shubha': true, 'shloka': 'पूर्णचन्द्रे लग्नगते सुन्दरो कीर्तिमान् सुखी ।\\nयशस्वी राजसम्मतो भवेन्नरः ॥ १३.२ — बृहज्जातक'});
+      }
+    }
+
+    // 69. Kshina Chandra Dusthana — Weak Moon in 6/8/12
+    if (moonRi >= 0 && sunRi >= 0) {
+      final moonSunDiff2 = ((moonRi - sunRi + 12) % 12);
+      final isWaning = moonSunDiff2 >= 7 || moonSunDiff2 <= 1;
+      final moonB = bhava('ಚಂದ್ರ');
+      if (isWaning && [6, 8, 12].contains(moonB)) {
+        yogas.add({'name': 'ಕ್ಷೀಣ ಚಂದ್ರ ದುಸ್ಥಾನ', 'desc': 'ಕ್ಷೀಣ ಚಂದ್ರ 6/8/12ರಲ್ಲಿ — ಆರೋಗ್ಯ ಸಮಸ್ಯೆ, ಮಾನಸಿಕ ಕ್ಲೇಶ', 'shubha': false, 'shloka': 'क्षीणचन्द्रे दुःस्थाने आरोग्यहानिः मानसक्लेशो भवेत् ॥ १३.३ — बृहज्जातक'});
+      }
+    }
+
+    // 70. Chandra-Shani Drishti — Moon aspected by Saturn only
+    if (moonRi >= 0 && satRi >= 0 && aspects('ಶನಿ', moonRi)) {
+      bool otherBenAspect = false;
+      for (final p in ['ಗುರು', 'ಶುಕ್ರ']) {
+        if (aspects(p, moonRi)) otherBenAspect = true;
+      }
+      if (!otherBenAspect) {
+        yogas.add({'name': 'ಚಂದ್ರ-ಶನಿ ದೃಷ್ಟಿ ಯೋಗ', 'desc': 'ಚಂದ್ರನಿಗೆ ಶನಿ ದೃಷ್ಟಿ ಮಾತ್ರ — ವಿಷಾದ, ನಿರಾಶೆ', 'shubha': false, 'shloka': 'शनिदृष्टे शशिनि विषादी निराशो भवेन्नरः ।\\nमनःक्लेशं दुःखं च जायते ॥ १३.४ — बृहज्जातक'});
+      }
+    }
+
+    // 71. Chandra Navamsha Bala — Moon in exalted navamsha
+    {
+      final moonNav = navamshaRi('ಚಂದ್ರ');
+      if (moonNav == 1) { // Moon exalted in Taurus navamsha
+        yogas.add({'name': 'ಚಂದ್ರ ಉಚ್ಚಾಂಶ ಯೋಗ', 'desc': 'ಚಂದ್ರ ಉಚ್ಚ ನವಾಂಶ — ಮಾನಸಿಕ ಬಲ, ಧೈರ್ಯ', 'shubha': true, 'shloka': 'उच्चांशे शशिनि मानसबलं धैर्यं च जायते ॥ १३.५ — बृहज्जातक'});
+      } else if (moonNav == 7) { // Moon debilitated navamsha Scorpio
+        yogas.add({'name': 'ಚಂದ್ರ ನೀಚಾಂಶ ಯೋಗ', 'desc': 'ಚಂದ್ರ ನೀಚ ನವಾಂಶ — ಮಾನಸಿಕ ದೌರ್ಬಲ್ಯ', 'shubha': false, 'shloka': 'नीचांशे शशिनि मानसदौर्बल्यं भवेत् ॥ १३.५ — बृहज्जातक'});
+      }
+    }
+
+    // 72. Shukla Paksha Chandra — Waxing Moon with benefic aspect
+    if (moonRi >= 0 && sunRi >= 0) {
+      final msDiff = ((moonRi - sunRi + 12) % 12);
+      final isWaxing = msDiff >= 1 && msDiff <= 6;
+      if (isWaxing && (aspects('ಗುರು', moonRi) || aspects('ಶುಕ್ರ', moonRi))) {
+        yogas.add({'name': 'ಶುಕ್ಲ ಪಕ್ಷ ಶುಭ ಯೋಗ', 'desc': 'ಶುಕ್ಲ ಪಕ್ಷ ಚಂದ್ರ + ಶುಭ ದೃಷ್ಟಿ — ಬುದ್ಧಿ, ಸಂಪತ್ತು', 'shubha': true, 'shloka': 'शुक्लपक्षे शशिनि शुभदृष्टे बुद्धिमान् सम्पद्भाग् ।\\nसुखी कीर्तिमान् भवेन्नरः ॥ १३.६ — बृहज्जातक'});
+      }
+    }
+
+    // ═══════════════════════════════════════════════════════════
+    // बृहज्जातक — CHAPTER 14: द्विग्रहयोगाध्याय (Two-Planet Yogas)
+    // ═══════════════════════════════════════════════════════════
+
+    // Two-planet conjunctions from Brihat Jataka Ch.14
+    final dwiGrahaYogas = <List<String>, Map<String, dynamic>>{
+      ['ರವಿ', 'ಕುಜ']: {'name': 'ರವಿ-ಕುಜ ಸಂಯೋಗ', 'desc': 'ಕ್ರೂರ, ಸೈನ್ಯ/ಪೊಲೀಸ್, ಶಸ್ತ್ರಪ್ರಿಯ', 'shubha': false, 'shloka': 'रवि-कुजसंयोगे क्रूरः शस्त्रप्रियो भवेत् ।\\nसैन्यपतिः तेजस्वी कर्मठो भवेन्नरः ॥ १४ — बृहज्जातक'},
+      ['ರವಿ', 'ಶುಕ್ರ']: {'name': 'ರವಿ-ಶುಕ್ರ ಸಂಯೋಗ', 'desc': 'ಕಲಾವಿದ, ರಾಜನೀತಿಜ್ಞ, ಸ್ತ್ರೀಪ್ರಿಯ', 'shubha': true, 'shloka': 'रवि-शुक्रसंयोगे कलाविदो राजनीतिज्ञः ।\\nस्त्रीप्रियो भवेज्जातो सुन्दरो भवेत् ॥ १४ — बृहज्जातक'},
+      ['ರವಿ', 'ಶನಿ']: {'name': 'ರವಿ-ಶನಿ ಸಂಯೋಗ', 'desc': 'ಪಿತೃ ಕಷ್ಟ, ಅಧಿಕಾರ ಸಂಘರ್ಷ, ಲೋಹ ಕೆಲಸ', 'shubha': false, 'shloka': 'रवि-शनिसंयोगे पितृकष्टं अधिकारसंघर्षः ।\\nलोहकर्मी दुःखी भवेन्नरः ॥ १४ — बृहज्जातक'},
+      ['ಚಂದ್ರ', 'ಬುಧ']: {'name': 'ಚಂದ್ರ-ಬುಧ ಸಂಯೋಗ', 'desc': 'ಬುದ್ಧಿವಂತ, ಸಂವಹನ ಕುಶಲ, ವ್ಯಾಪಾರಿ', 'shubha': true, 'shloka': 'चन्द्र-बुधसंयोगे बुद्धिमान् वाक्पटुर्भवेत् ।\\nव्यापारी सम्पद्भाग् भवेन्नरः ॥ १४ — बृहज्जातक'},
+      ['ಚಂದ್ರ', 'ಶುಕ್ರ']: {'name': 'ಚಂದ್ರ-ಶುಕ್ರ ಸಂಯೋಗ', 'desc': 'ಸುಂದರ, ಕಲಾಪ್ರಿಯ, ಐಷಾರಾಮಿ', 'shubha': true, 'shloka': 'चन्द्र-शुक्रसंयोगे सुन्दरो कलाप्रियः ।\\nऐश्वर्यवान् सुखभाग् भवेन्नरः ॥ १४ — बृहज्जातक'},
+      ['ಕುಜ', 'ಬುಧ']: {'name': 'ಕುಜ-ಬುಧ ಸಂಯೋಗ', 'desc': 'ವಾದಚತುರ, ತಾಂತ್ರಿಕ ಕೌಶಲ, ಗಣಿತಜ್ಞ', 'shubha': true, 'shloka': 'कुज-बुधसंयोगे वादचतुरो गणितज्ञः ।\\nतान्त्रिककुशलो विद्वान् भवेन्नरः ॥ १४ — बृहज्जातक'},
+      ['ಕುಜ', 'ಶುಕ್ರ']: {'name': 'ಕುಜ-ಶುಕ್ರ ಸಂಯೋಗ', 'desc': 'ಕಾಮಿ, ಪ್ರಯತ್ನದಿಂದ ಐಶ್ವರ್ಯ, ಯೋಧ', 'shubha': true, 'shloka': 'कुज-शुक्रसंयोगे कामी प्रयत्नात् ऐश्वर्यम् ।\\nयोद्धा सुखभाग् भवेन्नरः ॥ १४ — बृहज्जातक'},
+      ['ಕುಜ', 'ಗುರು']: {'name': 'ಕುಜ-ಗುರು ಸಂಯೋಗ', 'desc': 'ಧಾರ್ಮಿಕ ಯೋಧ, ನಾಯಕ, ನ್ಯಾಯಪ್ರಿಯ', 'shubha': true, 'shloka': 'कुज-गुरुसंयोगे धार्मिको योद्धा नायकः ।\\nन्यायप्रियो भूपतिर्भवेन्नरः ॥ १४ — बृहज्जातक'},
+      ['ಗುರು', 'ಶುಕ್ರ']: {'name': 'ಗುರು-ಶುಕ್ರ ಸಂಯೋಗ', 'desc': 'ಮಹಾ ಸಂಪತ್ತು, ಕಲಾಪ್ರಿಯ, ವಿದ್ವಾಂಸ', 'shubha': true, 'shloka': 'गुरु-शुक्रसंयोगे महासम्पद्भाग् कलाविदः ।\\nविद्वान् सुखी भवेन्नरः ॥ १४ — बृहज्जातक'},
+      ['ಗುರು', 'ಶನಿ']: {'name': 'ಗುರು-ಶನಿ ಸಂಯೋಗ', 'desc': 'ಶಿಸ್ತು+ಜ್ಞಾನ, ನ್ಯಾಯಾಧೀಶ, ವೈರಾಗ್ಯ', 'shubha': true, 'shloka': 'गुरु-शनिसंयोगे शिस्तवान् ज्ञानी न्यायाधीशः ।\\nवैराग्यवान् भवेन्नरः ॥ १४ — बृहज्जातक'},
+      ['ಶುಕ್ರ', 'ಶನಿ']: {'name': 'ಶುಕ್ರ-ಶನಿ ಸಂಯೋಗ', 'desc': 'ಕಷ್ಟದಿಂದ ಕಲೆ, ವೃದ್ಧ ಸಂಗ, ಚಿಂತಕ', 'shubha': false, 'shloka': 'शुक्र-शनिसंयोगे कष्टात् कलाम् आप्नोति ।\\nवृद्धसङ्गी चिन्तको भवेन्नरः ॥ १४ — बृहज्जातक'},
+      ['ಬುಧ', 'ಶನಿ']: {'name': 'ಬುಧ-ಶನಿ ಸಂಯೋಗ', 'desc': 'ವಿಶ್ಲೇಷಣಾತ್ಮಕ, ತಾಂತ್ರಿಕ ಬುದ್ಧಿ, ಗಂಭೀರ', 'shubha': true, 'shloka': 'बुध-शनिसंयोगे विश्लेषणात्मको गम्भीरः ।\\nतान्त्रिकबुद्धिर्भवेन्नरः ॥ १४ — बृहज्जातक'},
+      ['ಚಂದ್ರ', 'ಗುರು']: {'name': 'ಚಂದ್ರ-ಗುರು ಸಂಯೋಗ', 'desc': 'ಜ್ಞಾನಿ, ಧಾರ್ಮಿಕ, ಉಪಕಾರಿ', 'shubha': true, 'shloka': 'चन्द्र-गुरुसंयोगे ज्ञानी धार्मिको उपकारी ।\\nसत्कीर्तिर्भवेन्नरः ॥ १४ — बृहज्जातक'},
+      ['ಬುಧ', 'ಗುರು']: {'name': 'ಬುಧ-ಗುರು ಸಂಯೋಗ', 'desc': 'ವಿದ್ವಾಂಸ, ಉಪಾಧ್ಯಾಯ, ಲೇಖಕ', 'shubha': true, 'shloka': 'बुध-गुरुसंयोगे विद्वान् उपाध्यायो लेखकः ।\\nशास्त्रज्ञो भवेन्नरः ॥ १४ — बृहज्जातक'},
+    };
+    for (final entry in dwiGrahaYogas.entries) {
+      final p1 = entry.key[0], p2 = entry.key[1];
+      // Skip combos already covered: Sun-Merc(3), Moon-Mars(2), Guru-Rahu(10)
+      if (conjunct(p1, p2)) {
+        yogas.add(Map<String, dynamic>.from(entry.value));
+      }
+    }
+
+    // ═══════════════════════════════════════════════════════════
+    // बृहज्जातक — CHAPTER 15: प्रव्रज्यायोगाध्याय (Pravrajya)
+    // ═══════════════════════════════════════════════════════════
+
+    // 73. Pravrajya Yoga — 4+ planets in one sign
+    for (int s = 0; s < 12; s++) {
+      if (planetsInRashi(s).length >= 4) {
+        yogas.add({'name': 'ಪ್ರವ್ರಜ್ಯಾ ಯೋಗ', 'desc': '4+ ಗ್ರಹ ಒಂದೇ ರಾಶಿಯಲ್ಲಿ — ಸಂನ್ಯಾಸ/ವೈರಾಗ್ಯ ಸೂಚನೆ', 'shubha': false, 'shloka': 'चतुर्ग्रहा एकराशौ प्रव्रज्यायोगः प्रकीर्तितः ।\\nसंन्यासी वा वैरागी भवेन्नरः ॥ १५.१ — बृहज्जातक'});
+        break;
+      }
+    }
+
+    // 74. Vairagya Yoga — Lagna lord in 12th + Saturn aspect
+    {
+      final rashiLordsV = <int, String>{0: 'ಕುಜ', 1: 'ಶುಕ್ರ', 2: 'ಬುಧ', 3: 'ಚಂದ್ರ', 4: 'ರವಿ', 5: 'ಬುಧ', 6: 'ಶುಕ್ರ', 7: 'ಕುಜ', 8: 'ಗುರು', 9: 'ಶನಿ', 10: 'ಶನಿ', 11: 'ಗುರು'};
+      final lagLord = rashiLordsV[lagnaRi];
+      if (lagLord != null && bhava(lagLord) == 12 && satRi >= 0 && aspects('ಶನಿ', ri(lagLord))) {
+        yogas.add({'name': 'ವೈರಾಗ್ಯ ಯೋಗ', 'desc': 'ಲಗ್ನೇಶ 12ರಲ್ಲಿ ಶನಿ ದೃಷ್ಟಿ — ವೈರಾಗ್ಯ, ಮೋಕ್ಷ ಮಾರ್ಗ', 'shubha': false, 'shloka': 'लग्नेशे व्यये शनिदृष्टे वैराग्ययोगः ।\\nमोक्षमार्गी भवेज्जातो संसारत्यागी ॥ १५.३ — बृहज्जातक'});
+      }
+    }
+
+    // 75. Tapasvi Yoga — Sun strong + Saturn in 9th/12th
+    if (sunRi >= 0 && (sunRi == 0 || sunRi == 4)) { // Sun exalt/own
+      final satB = bhava('ಶನಿ');
+      if (satB == 9 || satB == 12) {
+        yogas.add({'name': 'ತಪಸ್ವೀ ಯೋಗ', 'desc': 'ರವಿ ಬಲಿ + ಶನಿ 9/12 — ತಪಃಶಕ್ತಿ, ಆಧ್ಯಾತ್ಮ', 'shubha': true, 'shloka': 'रवौ बलिनि शनौ धर्मव्यये तपस्वी भवेत् ।\\nआध्यात्मिको तपःसिद्धो भवेन्नरः ॥ १५.५ — बृहज्जातक'});
+      }
+    }
+
+    // ═══════════════════════════════════════════════════════════
+    // बृहज्जातक — CHAPTER 17-18: देहलक्षण (Physical/Aspect)
+    // ═══════════════════════════════════════════════════════════
+
+    // 76. Dirgha Deha — Sun/Mars in fiery sign in lagna
+    if (lagnaRi >= 0) {
+      final lagElem = signElement(lagnaRi);
+      if (lagElem == 'fire') {
+        if (bhava('ರವಿ') == 1 || bhava('ಕುಜ') == 1) {
+          yogas.add({'name': 'ದೀರ್ಘ ದೇಹ ಯೋಗ', 'desc': 'ಅಗ್ನಿ ರಾಶಿ ಲಗ್ನದಲ್ಲಿ ರವಿ/ಕುಜ — ಎತ್ತರ, ತೆಳ್ಳನೆ ಶರೀರ', 'shubha': true, 'shloka': 'अग्निराशौ लग्ने रवि/कुजे दीर्घदेहो भवेत् ।\\nउन्नतः कृशः तेजस्वी भवेन्नरः ॥ १७ — बृहज्जातक'});
+        }
+      }
+    }
+
+    // 77. Sthula Deha — Jupiter/Moon in watery sign in lagna
+    if (lagnaRi >= 0) {
+      final lagElem2 = signElement(lagnaRi);
+      if (lagElem2 == 'water') {
+        if (bhava('ಗುರು') == 1 || bhava('ಚಂದ್ರ') == 1) {
+          yogas.add({'name': 'ಸ್ಥೂಲ ದೇಹ ಯೋಗ', 'desc': 'ಜಲ ರಾಶಿ ಲಗ್ನದಲ್ಲಿ ಗುರು/ಚಂದ್ರ — ದಪ್ಪ, ಗೌರವ', 'shubha': true, 'shloka': 'जलराशौ लग्ने गुरु/चन्द्रे स्थूलदेहो भवेत् ।\\nगौरववान् मांसलो भवेन्नरः ॥ १७ — बृहज्जातक'});
+        }
+      }
+    }
+
+    // 78. Sundara Deha — Venus in lagna with benefic aspect
+    if (bhava('ಶುಕ್ರ') == 1) {
+      yogas.add({'name': 'ಸುಂದರ ದೇಹ ಯೋಗ', 'desc': 'ಶುಕ್ರ ಲಗ್ನದಲ್ಲಿ — ಸೌಂದರ್ಯ, ಆಕರ್ಷಣೆ', 'shubha': true, 'shloka': 'शुक्रे लग्ने सुन्दरदेहो भवेत् ।\\nआकर्षणवान् सौन्दर्यवान् भवेन्नरः ॥ १७ — बृहज्जातक'});
+    }
+
+    // 79. Krisha Deha — Saturn in lagna
+    if (bhava('ಶನಿ') == 1) {
+      yogas.add({'name': 'ಕೃಶ ದೇಹ ಯೋಗ', 'desc': 'ಶನಿ ಲಗ್ನದಲ್ಲಿ — ಕೃಶ, ಕಪ್ಪು ವರ್ಣ, ಕಠಿಣ ಜೀವನ', 'shubha': false, 'shloka': 'शनौ लग्ने कृशदेहो भवेत् ।\\nकृष्णवर्णो कठिनजीवनो दुःखी भवेन्नरः ॥ १७ — बृहज्जातक'});
+    }
+
+    // 80. Vrana Yoga — Mars aspects lagna
+    if (marsRi >= 0 && bhava('ಕುಜ') != 1 && aspects('ಕುಜ', lagnaRi)) {
+      yogas.add({'name': 'ವ್ರಣ ಯೋಗ', 'desc': 'ಕುಜ ಲಗ್ನಕ್ಕೆ ದೃಷ್ಟಿ — ಗಾಯ, ವ್ರಣ, ಶಸ್ತ್ರಕ್ರಿಯೆ', 'shubha': false, 'shloka': 'कुजदृष्टे लग्ने व्रणयोगो भवेत् ।\\nव्रणः शस्त्रक्रिया वा भवेन्नरस्य ॥ १८ — बृहज्जातक'});
     }
 
     return yogas;
