@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'screens/home_screen.dart';
-import 'screens/paywall_screen.dart';
 import 'widgets/common.dart';
 import 'services/subscription_service.dart';
 import 'services/trusted_time_service.dart';
@@ -102,7 +101,6 @@ class _BharatheeyamAppState extends State<BharatheeyamApp> with WidgetsBindingOb
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
-    SubscriptionService.dispose();
     super.dispose();
   }
 
@@ -111,8 +109,6 @@ class _BharatheeyamAppState extends State<BharatheeyamApp> with WidgetsBindingOb
     if (state == AppLifecycleState.resumed) {
       // Re-sync NTP clock on resume (updates offset if internet is now available)
       TrustedTimeService.syncWithNtp();
-      // Re-verify subscription when app comes back to foreground
-      SubscriptionService.checkOnReconnect();
     }
   }
 
@@ -240,109 +236,9 @@ class _BharatheeyamAppState extends State<BharatheeyamApp> with WidgetsBindingOb
               indicatorSize: TabBarIndicatorSize.tab,
             ),
           ),
-          home: SubscriptionService.needsInternetVerification
-              ? const _InternetRequiredScreen()
-              : SubscriptionService.hasAccess ? const HomeScreen() : const PaywallScreen(),
+          home: const HomeScreen(),
         );
       },
-    );
-  }
-}
-
-// ============================================================
-// BLOCKED SCREENS
-// ============================================================
-
-/// Shown when subscription needs internet verification (offline > 2 days)
-class _InternetRequiredScreen extends StatefulWidget {
-  const _InternetRequiredScreen();
-  @override
-  State<_InternetRequiredScreen> createState() => _InternetRequiredScreenState();
-}
-
-class _InternetRequiredScreenState extends State<_InternetRequiredScreen> {
-  bool _checking = false;
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: kBg,
-      body: Center(child: Padding(
-        padding: const EdgeInsets.all(32),
-        child: Column(mainAxisSize: MainAxisSize.min, children: [
-          Icon(Icons.wifi_off_rounded, size: 80, color: Colors.orange[400]),
-          const SizedBox(height: 24),
-          Text('ಇಂಟರ್ನೆಟ್ ಅಗತ್ಯವಿದೆ', style: TextStyle(fontSize: 22, fontWeight: FontWeight.w800, color: kText)),
-          const SizedBox(height: 8),
-          Text('Internet Connection Required', style: TextStyle(fontSize: 16, color: kMuted)),
-          const SizedBox(height: 24),
-          Text(
-            'ನಿಮ್ಮ ಚಂದಾದಾರಿಕೆ ಸ್ಥಿತಿಯನ್ನು ಪರಿಶೀಲಿಸಲು ಇಂಟರ್ನೆಟ್ ಸಂಪರ್ಕ ಅಗತ್ಯವಿದೆ.\nPlay Store ನೊಂದಿಗೆ ಪರಿಶೀಲಿಸಲು ಇಂಟರ್ನೆಟ್ ಸಂಪರ್ಕಿಸಿ ಮತ್ತು ಕೆಳಗಿನ ಬಟನ್ ಒತ್ತಿ.',
-            textAlign: TextAlign.center,
-            style: TextStyle(fontSize: 14, color: kText, height: 1.6),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            'Please connect to the internet to verify your subscription status with Google Play.',
-            textAlign: TextAlign.center,
-            style: TextStyle(fontSize: 12, color: kMuted, height: 1.5),
-          ),
-          const SizedBox(height: 12),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-            decoration: BoxDecoration(
-              color: Colors.orange.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: Colors.orange.withOpacity(0.3)),
-            ),
-            child: Column(children: [
-              Text(SubscriptionService.statusText,
-                style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: kText)),
-              const SizedBox(height: 4),
-              Text(SubscriptionService.graceStatusText,
-                style: TextStyle(fontSize: 12, color: kMuted)),
-            ]),
-          ),
-          const SizedBox(height: 24),
-          if (_checking)
-            CircularProgressIndicator(color: kPurple2)
-          else
-            ElevatedButton.icon(
-              icon: const Icon(Icons.refresh, color: Colors.white),
-              label: const Text('ಪರಿಶೀಲಿಸಿ / Verify Now'),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: kPurple2,
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
-              ),
-              onPressed: () async {
-                setState(() => _checking = true);
-                await SubscriptionService.reVerify();
-                if (mounted) {
-                  if (SubscriptionService.hasAccess) {
-                    Navigator.of(context).pushAndRemoveUntil(
-                      MaterialPageRoute(builder: (_) => const HomeScreen()),
-                      (_) => false,
-                    );
-                  } else if (!SubscriptionService.needsInternetVerification) {
-                    // Verified but no subscription — show paywall
-                    Navigator.of(context).pushAndRemoveUntil(
-                      MaterialPageRoute(builder: (_) => const PaywallScreen()),
-                      (_) => false,
-                    );
-                  } else {
-                    setState(() => _checking = false);
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text('ಇಂಟರ್ನೆಟ್ ಸಂಪರ್ಕ ಸಾಧ್ಯವಾಗಲಿಲ್ಲ. ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ.'),
-                        backgroundColor: Colors.red,
-                      ),
-                    );
-                  }
-                }
-              },
-            ),
-        ]),
-      )),
     );
   }
 }
