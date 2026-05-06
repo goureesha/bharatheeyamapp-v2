@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../core/calculator.dart';
+import '../core/viyoni_janma.dart';
 import '../constants/strings.dart';
 import '../widgets/common.dart';
 import '../widgets/prashna_chart.dart';
@@ -621,18 +622,53 @@ class _PrashnaDashboardScreenState extends State<PrashnaDashboardScreen>
   // YOGA SECTION (in Kundali tab)
   // ═══════════════════════════════════════════
   Widget _buildYogaSection() {
-    // TODO: Yoga section will be rebuilt with new yogas and shlokas
-    return const SizedBox.shrink();
-  }
-
-  List<Map<String, dynamic>> _allYogaCatalog() {
-    // TODO: Will be populated with new yogas and shlokas
-    return [];
-  }
-
-  List<Map<String, dynamic>> _detectYogas({required int virtualLagnaRi}) {
-    // TODO: Will be rebuilt with new yoga detection rules
-    return [];
+    final yogas = ViyoniJanma.detect(_result);
+    if (yogas.isEmpty) {
+      return Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        child: AppCard(child: Row(children: [
+          Icon(Icons.check_circle, color: Colors.green, size: 20),
+          const SizedBox(width: 8),
+          Expanded(child: Text('ವಿಯೋನಿ ಜನ್ಮ ಯೋಗ ಕಂಡುಬಂದಿಲ್ಲ',
+            style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: kMuted))),
+        ])),
+      );
+    }
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('ಯೋಗಗಳು', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 15, color: kPurple2)),
+          const SizedBox(height: 8),
+          ...yogas.map((y) => AppCard(child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(children: [
+                Icon(Icons.auto_awesome, size: 16, color: kOrange),
+                const SizedBox(width: 6),
+                Expanded(child: Text(y.name, style: TextStyle(fontSize: 14, fontWeight: FontWeight.w900, color: kOrange))),
+              ]),
+              const SizedBox(height: 6),
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: kPurple2.withOpacity(0.05),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: kPurple2.withOpacity(0.15)),
+                ),
+                child: Text(y.shloka, style: TextStyle(fontSize: 12, fontStyle: FontStyle.italic, color: kText, height: 1.5)),
+              ),
+              const SizedBox(height: 6),
+              Text(y.description, style: TextStyle(fontSize: 11, color: kMuted)),
+              const SizedBox(height: 4),
+              Text(y.result, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: kTeal)),
+            ],
+          ))),
+        ],
+      ),
+    );
   }
 
 
