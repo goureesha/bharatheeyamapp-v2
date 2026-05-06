@@ -3,8 +3,6 @@ import 'package:flutter/services.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'screens/home_screen.dart';
 import 'widgets/common.dart';
-import 'services/subscription_service.dart';
-import 'services/trusted_time_service.dart';
 import 'services/google_auth_service.dart';
 import 'services/firebase_service.dart';
 
@@ -25,17 +23,13 @@ Future<void> main() async {
     DeviceOrientation.landscapeRight,
   ]);
 
-  // NTP must init BEFORE SubscriptionService so trusted time is available
-  await TrustedTimeService.init();
-
-  // Firebase must init BEFORE auth/binding/tester because sign-in triggers
+  // Firebase must init BEFORE auth/tester because sign-in triggers
   // TesterService.checkTesterStatus() which uses FirebaseFirestore.instance
   await FirebaseService.init();
 
   // Run ALL critical startup tasks in PARALLEL (not sequentially)
   await Future.wait([
     _initEphemeris(),
-    SubscriptionService.initialize(),
     AppThemes.loadTheme(),
     ChartStyle.loadStyle(),
     AppLocale.loadLang(),
@@ -104,11 +98,11 @@ class _BharatheeyamAppState extends State<BharatheeyamApp> with WidgetsBindingOb
     super.dispose();
   }
 
+
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed) {
-      // Re-sync NTP clock on resume (updates offset if internet is now available)
-      TrustedTimeService.syncWithNtp();
+      // No-op for now, lifecycle tasks can be added here
     }
   }
 

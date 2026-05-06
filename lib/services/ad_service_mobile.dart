@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
-import 'subscription_service.dart';
 
 class AdService {
   // ── Ad Unit IDs (test IDs — replace with real ones from AdMob dashboard) ──
@@ -17,7 +16,6 @@ class AdService {
   // ───────────────────────────────────────────────────────────────────────────
 
   static Future<void> initialize() async {
-    if (SubscriptionService.hasAdFree) return;
     if (kIsWeb) return; // AdMob not supported on web
     await MobileAds.instance.initialize();
   }
@@ -26,7 +24,6 @@ class AdService {
   /// Call before/after an action (generate, tab switch).
   static Future<void> showInterstitialAd(BuildContext context,
       {VoidCallback? onDismissed}) async {
-    if (SubscriptionService.hasAdFree) return;
     if (kIsWeb) {
       onDismissed?.call();
       return;
@@ -60,10 +57,6 @@ class AdService {
   /// Used on the Save button. Calls [onCompleted] after the ad finishes.
   static Future<void> showRewardedInterstitialAd(BuildContext context,
       {required VoidCallback onCompleted}) async {
-    if (SubscriptionService.hasAdFree) {
-      onCompleted();
-      return;
-    }
     if (kIsWeb) {
       onCompleted();
       return;
@@ -96,7 +89,7 @@ class AdService {
   }
 }
 
-// ── Banner widget (unchanged) ─────────────────────────────────────────────────
+// ── Banner widget ─────────────────────────────────────────────────
 
 class BannerAdWidget extends StatefulWidget {
   const BannerAdWidget({super.key});
@@ -116,7 +109,7 @@ class _BannerAdWidgetState extends State<BannerAdWidget> {
   }
 
   void _loadAd() {
-    if (SubscriptionService.hasAdFree || kIsWeb) return;
+    if (kIsWeb) return;
 
     _bannerAd = BannerAd(
       adUnitId: AdService.bannerAdUnitId,
@@ -142,7 +135,7 @@ class _BannerAdWidgetState extends State<BannerAdWidget> {
 
   @override
   Widget build(BuildContext context) {
-    if (SubscriptionService.hasAdFree || kIsWeb || !_isLoaded || _bannerAd == null) {
+    if (kIsWeb || !_isLoaded || _bannerAd == null) {
       return const SizedBox.shrink();
     }
     return Container(
