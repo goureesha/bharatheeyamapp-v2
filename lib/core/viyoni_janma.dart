@@ -209,6 +209,108 @@ class ViyoniJanma {
         planets: ['ಶನಿ','ಚಂದ್ರ', ...strongInLagList],
       ));
     }
+    // ═══ Shloka 6: Tree birth (Vriksha Janma) ═══
+    // Lagna lord, Moon, Jupiter, Sun all weak → tree birth
+    const rashiLords = ['Mars','Venus','Mercury','Moon','Sun','Mercury','Venus','Mars','Jupiter','Saturn','Saturn','Jupiter'];
+    final lagLord = rashiLords[lagRashi];
+    final lagLordWeak = isWeak(lagLord);
+    final moonWeak = isWeak('Moon');
+    final jupWeak = isWeak('Jupiter');
+    final sunWeak = isWeak('Sun');
+
+    if (lagLordWeak && moonWeak && jupWeak && sunWeak) {
+      // Water or land based on lagna navamsha
+      final lagNavR = _d9Rashi(lag);
+      const waterSigns = {3, 7, 11}; // Cancer, Scorpio, Pisces
+      final treePlace = waterSigns.contains(lagNavR) ? 'ನೀರಿನಲ್ಲಿ ಬೆಳೆಯುವ ಮರ' : 'ನೆಲದಲ್ಲಿ ಬೆಳೆಯುವ ಮರ';
+
+      // Count: house position of strongest planet from lagna
+      final allPlanetLons = {'ರವಿ':sun,'ಚಂದ್ರ':moon,'ಕುಜ':mars,'ಬುಧ':mer,'ಗುರು':jup,'ಶುಕ್ರ':ven,'ಶನಿ':sat};
+      final treeCounts = <String>[];
+      for (final e in allPlanetLons.entries) {
+        final houseFrom = ((_rashiOf(e.value) - lagRashi) % 12) + 1;
+        treeCounts.add('${e.key}: ${houseFrom}ನೇ ಮನೆ → $houseFrom ಮರ');
+      }
+
+      yogas.add(Yoga(
+        shloka: 'ಹೋರೇಂದುಸೂರಿರವಿಭಿರ್ವಿಬಲೈಸ್ತರೂಣಾಂ ತೋಯಸ್ಥಲೇ ತರುಭವೋsಂಶಕೃತಃ ಪ್ರಭೇದಃ ।\nಲಗ್ನಾದ್ ಗ್ರಹಃ ಸ್ಥಲಜಲರ್ಕ್ಷಪತಿಸ್ತು ಯಾವಾಂಸ್ತಾವಂತ ಏವ ತರವಃ ಸ್ಥಲತೋಯಜಾತಾಃ',
+        name: 'ವೃಕ್ಷ ಜನ್ಮ ಯೋಗ',
+        description: 'ಲಗ್ನ: ${_rashiNames[lagRashi]} | ಲಗ್ನೇಶ (${_knPlanets[lagLord]}): ಬಲಹೀನ | ಚಂದ್ರ: ಬಲಹೀನ | ಗುರು: ಬಲಹೀನ | ರವಿ: ಬಲಹೀನ\nನವಾಂಶ: ${_rashiNames[lagNavR]} → $treePlace\n${treeCounts.join('\n')}',
+        result: '$treePlace',
+        rashi: lagRashi,
+        planets: [_knPlanets[lagLord]!, 'ಚಂದ್ರ', 'ಗುರು', 'ರವಿ'],
+      ));
+
+      // ═══ Shloka 7: Tree type by planet ═══
+      // Sun→hardwood, Saturn→dry, Moon→milky/sap, Mars→thorny, Jupiter→soft
+      const treeTypes = {
+        'Sun': 'ಒಳಗಡೆ ಗಟ್ಟಿಯಾದ ಮರ (ಅಂತಸ್ಸಾರ)',
+        'Saturn': 'ಒಣಗಿದ/ದುರ್ಭಾಗ್ಯ ಮರ',
+        'Moon': 'ಹಾಲಿನಂತ ರಸವುಳ್ಳ ಮರ (ಸ್ನಿಗ್ಧ)',
+        'Mars': 'ಮುಳ್ಳುಳ್ಳ ಮರ (ಕಂಟಕ)',
+        'Jupiter': 'ಹಣ್ಣು/ಹೂ ಮೃದು ಮರ',
+      };
+      const benefics = {'Jupiter','Venus','Mercury','Moon'};
+      const malefics = {'Sun','Mars','Saturn','Rahu','Ketu'};
+      // Odd signs = benefic rashis, even = malefic (simplified Vedic grouping)
+      const shubhaRashis = {1, 2, 4, 5, 8, 11}; // Taurus, Gemini, Leo, Virgo, Sagittarius, Pisces
+
+      final treeDetails = <String>[];
+      final treePlanets = <String>[];
+      for (final e in treeTypes.entries) {
+        final pLon = allPlanetLons[_knPlanets[e.key]] ?? 0.0;
+        final pRashi = _rashiOf(pLon);
+        final isBeneficPlanet = benefics.contains(e.key);
+        final inShubhaRashi = shubhaRashis.contains(pRashi);
+
+        String quality = '';
+        if (isBeneficPlanet && !inShubhaRashi) {
+          quality = ' → ಕೆಟ್ಟ ಜಾಗದಲ್ಲಿ ಒಳ್ಳೆಯ ಮರ';
+        } else if (!isBeneficPlanet && inShubhaRashi) {
+          quality = ' → ಒಳ್ಳೆಯ ಜಾಗದಲ್ಲಿ ಕೆಟ್ಟ ಮರ';
+        }
+
+        treeDetails.add('${_knPlanets[e.key]} (${_rashiNames[pRashi]}): ${e.value}$quality');
+        treePlanets.add(_knPlanets[e.key]!);
+      }
+
+      yogas.add(Yoga(
+        shloka: 'ಅಂತಸ್ಸಾರಾನ್ ಜನಯತಿ ರವಿರ್ದುರ್ಭಗಾನ್ ಸೂರ್ಯಸೂನು ಕೀರೋಪೇತಾಂಸುಹಿನಕಿರಣ ಕಂಟಕಾರಾಂಶ ಭೌಮ: ।\nಸ್ನಿಗ್ದಾನಿಂದುಃ ಕಟುಕವಿಟಪಾನ್ ಭೂಮಿಪುತ್ರಶ್ಚ ಭೂಯಃ ಶುಭೋಽಶುಭರ್ಕ್ಷೆ ರುಚಿರಂ ಕುಭೂತಲೇ ಕರೋತಿ ವೃಕ್ಷಂ ವಿಪರೀತಮನ್ಯಥಾ ।',
+        name: 'ವೃಕ್ಷ ಪ್ರಕಾರ ಯೋಗ',
+        description: '${treeDetails.join('\n')}',
+        result: 'ಗ್ರಹ-ಮರ ಸಂಬಂಧ ನಿರ್ಣಯ',
+        rashi: lagRashi,
+        planets: treePlanets,
+      ));
+
+      // ═══ Shloka 8: Tree count by navamsha distance ═══
+      final navDistDetails = <String>[];
+      final navDistPlanets = <String>[];
+      for (final e in allPlanetLons.entries) {
+        final engName = _knPlanets.entries.where((kv) => kv.value == e.key).firstOrNull?.key;
+        if (engName == null) continue;
+        final currentNav = _d9Rashi(e.value);
+        // Own navamsha = rashi lord's sign
+        final ownNavList = <int>[];
+        for (int i = 0; i < 12; i++) {
+          if (rashiLords[i] == engName) ownNavList.add(i);
+        }
+        if (ownNavList.isEmpty) continue;
+        final ownNav = ownNavList.first;
+        final dist = ((currentNav - ownNav) % 12).abs();
+        navDistDetails.add('${e.key}: ನವಾಂಶ ${_rashiNames[currentNav]}, ಸ್ವನವಾಂಶ ${_rashiNames[ownNav]} → $dist ಮರ');
+        navDistPlanets.add(e.key);
+      }
+
+      yogas.add(Yoga(
+        shloka: 'ಪರಾಂಶಕೇ ಯಾವತಿ ವಿಚ್ಯುತಃ ಸ್ವಕಾದ್ಭವಂತಿ ತುಲ್ಯಾಸ್ತರವಸ್ತಥಾವಿಧಾಃ',
+        name: 'ನವಾಂಶ ವೃಕ್ಷ ಸಂಖ್ಯೆ',
+        description: '${navDistDetails.join('\n')}',
+        result: 'ನವಾಂಶ ದೂರದಿಂದ ಮರಗಳ ಸಂಖ್ಯೆ ನಿರ್ಣಯ',
+        rashi: lagRashi,
+        planets: navDistPlanets,
+      ));
+    }
 
     return yogas;
   }
