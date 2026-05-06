@@ -42,13 +42,14 @@ class ViyoniJanma {
     return enemies[planet]?.contains(d9) ?? false;
   }
 
-  /// Detect all active Viyoni yogas for the given chart
-  static List<Yoga> detect(KundaliResult chart) {
+  /// Detect all active yogas for the given chart.
+  /// If [lagnaRashi] is provided, use it as virtual lagna (0-11).
+  static List<Yoga> detect(KundaliResult chart, {int? lagnaRashi}) {
     final p = chart.planets;
     final bhavas = chart.bhavas;
     final shadbala = chart.shadbala;
     final lag = bhavas.isNotEmpty ? bhavas[0] : 0.0;
-    final lagRashi = _rashiOf(lag);
+    final lagRashi = lagnaRashi ?? _rashiOf(lag);
     final moonLon = p['ಚಂದ್ರ']?.longitude ?? 0.0;
 
     final sun = p['ರವಿ']?.longitude ?? 0.0;
