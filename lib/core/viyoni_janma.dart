@@ -81,34 +81,52 @@ class ViyoniJanma {
 
     final yogas = <Yoga>[];
 
+    // Helper: Kannada planet names
+    const _knPlanets = {'Sun':'ರವಿ','Mars':'ಕುಜ','Saturn':'ಶನಿ','Rahu':'ರಾಹು','Ketu':'ಕೇತು',
+                        'Jupiter':'ಗುರು','Venus':'ಶುಕ್ರ','Mercury':'ಬುಧ','Moon':'ಚಂದ್ರ'};
+
     // ═══ Shloka 1: Basic Viyoni ═══
     if (malStrong && benWeak && (malInKendra || malAspKendra)) {
       final d12 = _d12Rashi(moonLon);
+      // Which malefics are in which kendras
+      final malKendraDetail = <String>[];
+      for (final e in malLons.entries) {
+        final r = _rashiOf(e.value);
+        if (kendras.contains(r)) malKendraDetail.add('${_knPlanets[e.key]} → ${_rashiNames[r]} (ಕೇಂದ್ರ)');
+      }
       yogas.add(Yoga(
         shloka: 'ಕ್ರೂರಗ್ರಹೈಃ ಸುಬಲಿಭಿರ್ವಿಬಲೈಶ್ಚ ಸೌಮ್ಯಃ ಕ್ಲೀದೇ ಚತುಷ್ಟಯಗತೇ ತದವೇಕ್ಷಣಾದ್ವಾ ।\nಚಂದ್ರೋಪಗದ್ವಿರಸಭಾಗಸಮಾನರೂಪಂ ಸಂ ವದೇದ್ಯದಿ ಭವೇತ್ಸ ವಿಯೋನಿಸಂಜ್ಞ ॥',
         name: 'ವಿಯೋನಿ ಜನ್ಮ ಯೋಗ',
-        description: 'ಪಾಪಗ್ರಹರು ಬಲಶಾಲಿ, ಶುಭಗ್ರಹರು ಬಲಹೀನ, ಪಾಪರು ಕೇಂದ್ರದಲ್ಲಿ/ಕೇಂದ್ರ ದೃಷ್ಟಿ',
-        result: 'ಪ್ರಾಣಿ ರೂಪ: ${_rashiNames[d12]} → ${_bodyParts[d12]}',
+        description: 'ಲಗ್ನ: ${_rashiNames[lagRashi]} | ಪಾಪರು ಬಲಶಾಲಿ (ರವಿ,ಕುಜ,ಶನಿ) | ಶುಭರು ಬಲಹೀನ (ಗುರು,ಶುಕ್ರ,ಬುಧ,ಚಂದ್ರ)\n${malKendraDetail.join('\n')}',
+        result: 'ಚಂದ್ರ ದ್ವಾದಶಾಂಶ: ${_rashiNames[d12]} → ಪ್ರಾಣಿ ರೂಪ: ${_bodyParts[d12]}',
       ));
     }
 
     // ═══ Shloka 2: Navamsha-based Viyoni ═══
     bool malOwnNav = true;
+    final malNavDetail = <String>[];
     for (final e in malLons.entries) {
       if (e.key == 'Rahu' || e.key == 'Ketu') continue;
-      if (!_isOwnNavamsha(e.key, _d9Rashi(e.value))) malOwnNav = false;
+      final d9 = _d9Rashi(e.value);
+      final own = _isOwnNavamsha(e.key, d9);
+      if (!own) malOwnNav = false;
+      malNavDetail.add('${_knPlanets[e.key]} ನವಾಂಶ: ${_rashiNames[d9]} ${own ? "✓ ಸ್ವ" : "✗"}');
     }
     final benLons = {'Jupiter':jup,'Venus':ven,'Mercury':mer,'Moon':moon};
     bool benEnemyNav = true;
+    final benNavDetail = <String>[];
     for (final e in benLons.entries) {
-      if (!_isEnemyNavamsha(e.key, _d9Rashi(e.value))) benEnemyNav = false;
+      final d9 = _d9Rashi(e.value);
+      final enemy = _isEnemyNavamsha(e.key, d9);
+      if (!enemy) benEnemyNav = false;
+      benNavDetail.add('${_knPlanets[e.key]} ನವಾಂಶ: ${_rashiNames[d9]} ${enemy ? "✓ ಶತ್ರು" : "✗"}');
     }
     if (malStrong && malOwnNav && benWeak && benEnemyNav && _animalSigns.contains(lagRashi)) {
       yogas.add(Yoga(
         shloka: 'ಪಾಪಾ ಬಲಿನಃ ಸ್ವಭಾಗಗಾಃ ಪಾರಕ್ಕೇ ವಿಬಲಾಶ್ಚ ಶೋಭನಾಃ ।\nಲಗ್ನಂ ಚ ವಿಯೋನಿಸಂಭವಂ ದೃಷ್ಟಾತಾಪಿ ವಿಯೋನಿಮಾದಿಶೇತ್ ॥',
         name: 'ನವಾಂಶ ವಿಯೋನಿ ಯೋಗ',
-        description: 'ಪಾಪರು ಬಲಶಾಲಿ+ಸ್ವನವಾಂಶ, ಶುಭರು ಬಲಹೀನ+ಶತ್ರುನವಾಂಶ, ಲಗ್ನ ವಿಯೋನಿ ರಾಶಿ',
-        result: 'ಲಗ್ನ ರಾಶಿ: ${_rashiNames[lagRashi]}',
+        description: 'ಲಗ್ನ: ${_rashiNames[lagRashi]} (ವಿಯೋನಿ ರಾಶಿ)\n${malNavDetail.join(' | ')}\n${benNavDetail.join(' | ')}',
+        result: 'ಲಗ್ನ ವಿಯೋನಿ ರಾಶಿ: ${_rashiNames[lagRashi]}',
       ));
     }
 
@@ -118,8 +136,8 @@ class ViyoniJanma {
       yogas.add(Yoga(
         shloka: 'ಕ್ರಿಯಃ ಶಿರೋ ವಕ್ತಗಲೇ ದ್ವಿತೀಯಃ...',
         name: 'ಚತುಷ್ಪಾದ ಅಂಗ ನಿರ್ಣಯ',
-        description: 'ಚಂದ್ರನ ರಾಶಿಯಿಂದ ಪ್ರಾಣಿಯ ದೇಹ ಭಾಗ ನಿರ್ಣಯ',
-        result: 'ಚಂದ್ರ ${_rashiNames[moonRashi]} → ${_bodyParts[moonRashi]}',
+        description: 'ಚಂದ್ರ ರಾಶಿ: ${_rashiNames[moonRashi]}',
+        result: 'ದೇಹ ಭಾಗ: ${_bodyParts[moonRashi]}',
       ));
     }
 
@@ -128,12 +146,12 @@ class ViyoniJanma {
       final lagNav = _d9Rashi(lag);
       final color = _rashiColors[lagNav];
       final allLons = [sun,moon,mars,mer,jup,ven,sat,rahu,ketu];
-      int aspCount = 0;
-      for (final l in allLons) {
-        if ((_rashiOf(l)+6)%12 == lagRashi) aspCount++;
+      final names = ['ರವಿ','ಚಂದ್ರ','ಕುಜ','ಬುಧ','ಗುರು','ಶುಕ್ರ','ಶನಿ','ರಾಹು','ಕೇತು'];
+      final aspecting = <String>[];
+      for (int i = 0; i < allLons.length; i++) {
+        if ((_rashiOf(allLons[i])+6)%12 == lagRashi) aspecting.add(names[i]);
       }
       final h7 = (lagRashi+6)%12;
-      final names = ['ರವಿ','ಚಂದ್ರ','ಕುಜ','ಬುಧ','ಗುರು','ಶುಕ್ರ','ಶನಿ','ರಾಹು','ಕೇತು'];
       final in7 = <String>[];
       for (int i = 0; i < allLons.length; i++) {
         if (_rashiOf(allLons[i]) == h7) in7.add(names[i]);
@@ -141,26 +159,26 @@ class ViyoniJanma {
       yogas.add(Yoga(
         shloka: 'ಲಗ್ನಾಂಶಕಾದ್ ಗ್ರಹಯೋಗೇಕ್ಷಣಾದ್ವಾ...',
         name: 'ವರ್ಣ-ಸಂಖ್ಯಾ-ಚಿಹ್ನೆ ಯೋಗ',
-        description: 'ಬಣ್ಣ/ಪ್ರಾಣಿ ಸಂಖ್ಯೆ/ಬೆನ್ನ ಗುರುತು',
-        result: 'ಬಣ್ಣ: $color, ಸಂಖ್ಯೆ: $aspCount, ಗುರುತು: ${in7.isEmpty ? "ಇಲ್ಲ" : in7.join(",")}',
+        description: 'ಲಗ್ನ ನವಾಂಶ: ${_rashiNames[lagNav]} | ಲಗ್ನ ದೃಷ್ಟಿ: ${aspecting.isEmpty ? "ಇಲ್ಲ" : aspecting.join(",")}\n7ನೇ ಭಾವ (${_rashiNames[h7]}): ${in7.isEmpty ? "ಖಾಲಿ" : in7.join(",")}',
+        result: 'ಬಣ್ಣ: $color | ಸಂಖ್ಯೆ: ${aspecting.length} | ಬೆನ್ನ ಗುರುತು: ${in7.isEmpty ? "ಇಲ್ಲ" : in7.join(",")}',
       ));
     }
 
     // ═══ Shloka 5: Bird birth ═══
     final lagDrek = _drekkanaNum(lag);
     final isBirdDrek = _birdDrekkanas.contains((lagRashi, lagDrek));
-    bool strongInLag = false;
+    final strongInLagList = <String>[];
     for (final e in malLons.entries) {
-      if (_rashiOf(e.value) == lagRashi && isStrong(e.key)) strongInLag = true;
+      if (_rashiOf(e.value) == lagRashi && isStrong(e.key)) strongInLagList.add(_knPlanets[e.key]!);
     }
     for (final e in benLons.entries) {
-      if (_rashiOf(e.value) == lagRashi && isStrong(e.key)) strongInLag = true;
+      if (_rashiOf(e.value) == lagRashi && isStrong(e.key)) strongInLagList.add(_knPlanets[e.key]!);
     }
     final lagNav = _d9Rashi(lag);
     final isChara = _charaRashis.contains(lagNav);
     final isMerNav = lagNav == 2 || lagNav == 5;
 
-    if ((isBirdDrek && strongInLag) || isChara || isMerNav) {
+    if ((isBirdDrek && strongInLagList.isNotEmpty) || isChara || isMerNav) {
       final satR = _rashiOf(sat); final moonR = _rashiOf(moon);
       final satMoon = (satR-moonR).abs()%12 == 0 || (satR+6)%12 == moonR;
       String bType = 'ಸಾಮಾನ್ಯ ಪಕ್ಷಿ';
@@ -168,10 +186,16 @@ class ViyoniJanma {
         final water = {3,7,11};
         bType = (water.contains(moonR) || water.contains(satR)) ? 'ಜಲಪಕ್ಷಿ' : 'ಭೂಚರ ಪಕ್ಷಿ';
       }
+      // Build trigger reason
+      final triggers = <String>[];
+      if (isBirdDrek && strongInLagList.isNotEmpty) triggers.add('ಪಕ್ಷಿ ದ್ರೇಕ್ಕಾಣ (${_rashiNames[lagRashi]}-$lagDrek) + ಬಲಶಾಲಿ: ${strongInLagList.join(",")}');
+      if (isChara) triggers.add('ಚರ ನವಾಂಶ ಲಗ್ನ: ${_rashiNames[lagNav]}');
+      if (isMerNav) triggers.add('ಬುಧ ನವಾಂಶ ಲಗ್ನ: ${_rashiNames[lagNav]}');
+
       yogas.add(Yoga(
         shloka: 'ಖಗೇ ದೃಗಾಣೇ ಬಲಸಂಯುತೇನ ವಾ...',
         name: 'ಪಕ್ಷಿ ಜನ್ಮ ಯೋಗ',
-        description: 'ಪಕ್ಷಿ ದ್ರೇಕ್ಕಾಣ/ಚರ ನವಾಂಶ/ಬುಧ ನವಾಂಶ ಲಗ್ನ',
+        description: 'ಲಗ್ನ: ${_rashiNames[lagRashi]} | ಶನಿ: ${_rashiNames[satR]} | ಚಂದ್ರ: ${_rashiNames[moonR]}\n${triggers.join('\n')}',
         result: 'ಪಕ್ಷಿ ಪ್ರಕಾರ: $bType',
       ));
     }
