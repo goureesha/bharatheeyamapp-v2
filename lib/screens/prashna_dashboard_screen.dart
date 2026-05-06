@@ -622,66 +622,50 @@ class _PrashnaDashboardScreenState extends State<PrashnaDashboardScreen>
   // YOGA SECTION (in Kundali tab)
   // ═══════════════════════════════════════════
   Widget _buildYogaSection() {
-    const rashiNames = ['ಮೇಷ','ವೃಷಭ','ಮಿಥುನ','ಕರ್ಕ','ಸಿಂಹ','ಕನ್ಯಾ','ತುಲಾ','ವೃಶ್ಚಿಕ','ಧನು','ಮಕರ','ಕುಂಭ','ಮೀನ'];
-    final allYogas = <int, List<Yoga>>{};
-    for (int i = 0; i < 12; i++) {
-      final yogas = ViyoniJanma.detect(_result, lagnaRashi: i);
-      if (yogas.isNotEmpty) allYogas[i] = yogas;
+    final yogas = ViyoniJanma.detect(_result);
+    if (yogas.isEmpty) {
+      return Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        child: AppCard(child: Row(children: [
+          Icon(Icons.check_circle, color: Colors.green, size: 20),
+          const SizedBox(width: 8),
+          Expanded(child: Text('ಯಾವುದೇ ಯೋಗ ಕಂಡುಬಂದಿಲ್ಲ',
+            style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: kMuted))),
+        ])),
+      );
     }
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('ಯೋಗಗಳು', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 15, color: kPurple2)),
+          Text('ಯೋಗಗಳು (${yogas.length})', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 15, color: kPurple2)),
           const SizedBox(height: 8),
-          if (allYogas.isEmpty)
-            AppCard(child: Row(children: [
-              Icon(Icons.check_circle, color: Colors.green, size: 20),
-              const SizedBox(width: 8),
-              Expanded(child: Text('ಯಾವುದೇ ಯೋಗ ಕಂಡುಬಂದಿಲ್ಲ',
-                style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: kMuted))),
-            ]))
-          else
-            ...allYogas.entries.map((entry) {
-              final ri = entry.key;
-              final yogas = entry.value;
-              return AppCard(
-                padding: EdgeInsets.zero,
-                child: ExpansionTile(
-                  tilePadding: const EdgeInsets.symmetric(horizontal: 12),
-                  childrenPadding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
-                  leading: CircleAvatar(
-                    radius: 14,
-                    backgroundColor: kOrange.withOpacity(0.15),
-                    child: Text('${ri + 1}', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w900, color: kOrange)),
-                  ),
-                  title: Text('${rashiNames[ri]} ಲಗ್ನ', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w900, color: kText)),
-                  subtitle: Text('${yogas.length} ಯೋಗ', style: TextStyle(fontSize: 11, color: kMuted)),
-                  children: yogas.map((y) => Container(
-                    margin: const EdgeInsets.only(top: 8),
-                    padding: const EdgeInsets.all(10),
-                    decoration: BoxDecoration(
-                      color: kBg,
-                      borderRadius: BorderRadius.circular(10),
-                      border: Border.all(color: kBorder),
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(y.name, style: TextStyle(fontSize: 13, fontWeight: FontWeight.w900, color: kOrange)),
-                        const SizedBox(height: 4),
-                        Text(y.shloka, style: TextStyle(fontSize: 11, fontStyle: FontStyle.italic, color: kMuted, height: 1.4)),
-                        const SizedBox(height: 4),
-                        Text(y.description, style: TextStyle(fontSize: 11, color: kText)),
-                        const SizedBox(height: 2),
-                        Text(y.result, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: kTeal)),
-                      ],
-                    ),
-                  )).toList(),
+          ...yogas.map((y) => AppCard(child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(children: [
+                Icon(Icons.auto_awesome, size: 16, color: kOrange),
+                const SizedBox(width: 6),
+                Expanded(child: Text(y.name, style: TextStyle(fontSize: 14, fontWeight: FontWeight.w900, color: kOrange))),
+              ]),
+              const SizedBox(height: 6),
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: kPurple2.withOpacity(0.05),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: kPurple2.withOpacity(0.15)),
                 ),
-              );
-            }),
+                child: Text(y.shloka, style: TextStyle(fontSize: 12, fontStyle: FontStyle.italic, color: kText, height: 1.5)),
+              ),
+              const SizedBox(height: 6),
+              Text(y.description, style: TextStyle(fontSize: 11, color: kMuted)),
+              const SizedBox(height: 4),
+              Text(y.result, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: kTeal)),
+            ],
+          ))),
         ],
       ),
     );
