@@ -464,6 +464,195 @@ class ViyoniJanma {
         planets: ['ರವಿ', 'ಚಂದ್ರ', 'ಕುಜ', 'ಶನಿ'],
       ));
     }
+    // ═══ Nisheka Shloka 5: Parent karakas (day/night) ═══
+    // Determine if birth time is day or night using Sun position
+    // Sun above horizon (houses 7-12 from lagna) = day, else night
+    final isDay = sunHouse >= 7 && sunHouse <= 12;
+    final fatherK = isDay ? 'ರವಿ' : 'ಶನಿ';
+    final motherK = isDay ? 'ಶುಕ್ರ' : 'ಚಂದ್ರ';
+    final uncleK = isDay ? 'ಶನಿ' : 'ರವಿ';
+    final auntK = isDay ? 'ಚಂದ್ರ' : 'ಶುಕ್ರ';
+
+    // Check odd/even rashi for shubha phala
+    final fatherLon = isDay ? sun : sat;
+    final motherLon = isDay ? ven : moon;
+    final fR = _rashiOf(fatherLon);
+    final mR = _rashiOf(motherLon);
+    final fOdd = fR % 2 == 0; // 0-indexed: Aries=0(even idx=odd sign)
+    final mEven = mR % 2 == 1; // odd idx = even sign
+    final shubha = fOdd && mEven;
+
+    yogas.add(Yoga(
+      shloka: 'ದಿವಾರ್ಕಶುಕ್ರ ಪಿತೃಮಾತೃಸಂಜ್ಜಿ ಶನೈಶ್ಚರೇಂದೂ ನಿಶಿ ತದ್ವಿಪರ್ಯಯಾತ್ ।\nಪಿತೃವ್ಯಮಾತೃಷ್ಟಸೃಸಂಜ್ಜಿತೌ ತು ತಾವಫೌಜಯುಗ್ಧರ್ಕ್ಷಗತೌ ತಯೋಃ ಶುಭೌ',
+      name: 'ಪಿತೃ-ಮಾತೃ ಕಾರಕ ಯೋಗ',
+      description: '${isDay ? "ಹಗಲು" : "ರಾತ್ರಿ"} ಜನನ\nತಂದೆ ಕಾರಕ: $fatherK (${_rashiNames[fR]}) | ತಾಯಿ ಕಾರಕ: $motherK (${_rashiNames[mR]})\nಚಿಕ್ಕಪ್ಪ: $uncleK | ಚಿಕ್ಕಮ್ಮ: $auntK',
+      result: shubha ? 'ಶುಭ ಫಲ (ಬೆಸ/ಸಮ ರಾಶಿ ✓)' : 'ಶುಭ ಫಲ ಅನಿಶ್ಚಿತ',
+      rashi: lagRashi,
+      planets: [fatherK, motherK, uncleK, auntK],
+    ));
+
+    // ═══ Nisheka Shloka 6: Pregnant woman death (malefics in lagna) ═══
+    final malInLag = <String>[];
+    final benAspLag = <String>[];
+    for (final e in allPLons.entries) {
+      final pr = _rashiOf(e.value);
+      final isBen = {'Jupiter','Venus','Mercury','Moon'}.contains(e.key);
+      if (pr == lagRashi && !isBen) malInLag.add(_knPlanets[e.key]!);
+      if ((pr + 6) % 12 == lagRashi && isBen) benAspLag.add(_knPlanets[e.key]!);
+    }
+    if (malInLag.isNotEmpty && benAspLag.isEmpty) {
+      yogas.add(Yoga(
+        shloka: 'ಅಭಿಲಷದ್ಧಿರುದಯರ್ಕ್ಷಮಸದ್ಧಿರ್ಮರಣಮೇತಿ ಶುಭದೃಷ್ಟಿಮಯಾತೇ',
+        name: 'ಗರ್ಭಿಣಿ ಮರಣ ಯೋಗ (೬)',
+        description: 'ಲಗ್ನ (${_rashiNames[lagRashi]}) ಪಾಪರು: ${malInLag.join(",")}\nಶುಭ ದೃಷ್ಟಿ: ಇಲ್ಲ',
+        result: 'ಗರ್ಭಿಣಿ ಮರಣ ಸಂಭವ',
+        rashi: lagRashi,
+        planets: malInLag,
+      ));
+    }
+
+    // ═══ Nisheka Shloka 7: Saturn in lagna + waning Moon & Mars aspect ═══
+    final satInLag = _rashiOf(sat) == lagRashi;
+    final moonWaning = moonLon > sun; // simplified waning check
+    final marsAspLag = (marsR + 6) % 12 == lagRashi || (marsR + 3) % 12 == lagRashi || (marsR + 7) % 12 == lagRashi;
+    final moonAspLag = (moonR2 + 6) % 12 == lagRashi;
+    if (satInLag && moonWaning && (marsAspLag || moonAspLag)) {
+      yogas.add(Yoga(
+        shloka: 'ಉದಯರಾಶಿಸಹಿತೇ ಚ ಯಮೇ ಸ್ತ್ರೀ ಎಗಲಿತೋಡುಪತಿಭೂಸುತದೃಷ್ಟೇ',
+        name: 'ಗರ್ಭಿಣಿ ಮರಣ ಯೋಗ (೭)',
+        description: 'ಶನಿ ಲಗ್ನದಲ್ಲಿ (${_rashiNames[lagRashi]})\nಕ್ಷೀಣ ಚಂದ್ರ: ${moonWaning ? "✓" : "✗"}\nಕುಜ ದೃಷ್ಟಿ: ${marsAspLag ? "✓" : "✗"}',
+        result: 'ಗರ್ಭಿಣಿ ಮರಣ ಸಂಭವ',
+        rashi: lagRashi,
+        planets: ['ಶನಿ', 'ಚಂದ್ರ', 'ಕುಜ'],
+      ));
+    }
+
+    // ═══ Nisheka Shloka 8: Papa Kartari on lagna & Moon ═══
+    // Check if lagna/Moon hemmed between malefics without benefic aspect
+    bool _isPapaKartari(int rashi) {
+      final prev = (rashi - 1 + 12) % 12;
+      final next = (rashi + 1) % 12;
+      bool malPrev = false, malNext = false;
+      for (final e in allPLons.entries) {
+        if ({'Sun','Mars','Saturn','Rahu','Ketu'}.contains(e.key)) {
+          if (_rashiOf(e.value) == prev) malPrev = true;
+          if (_rashiOf(e.value) == next) malNext = true;
+        }
+      }
+      return malPrev && malNext;
+    }
+    bool _hasBenAsp(int rashi) {
+      for (final e in allPLons.entries) {
+        if ({'Jupiter','Venus','Mercury','Moon'}.contains(e.key)) {
+          if ((_rashiOf(e.value) + 6) % 12 == rashi) return true;
+        }
+      }
+      return false;
+    }
+    final lagPK = _isPapaKartari(lagRashi);
+    final moonPK = _isPapaKartari(moonR2);
+    final lagNoBen = !_hasBenAsp(lagRashi);
+    final moonNoBen = !_hasBenAsp(moonR2);
+    if ((lagPK && lagNoBen) || (moonPK && moonNoBen)) {
+      yogas.add(Yoga(
+        shloka: 'ಅಶುಭದ್ವಯಮಧ್ಯಸಂಸ್ಥಿತೌ ಲಗ್ನಂದೂ ನ ಚ ಸೌಮ್ಯವೀಕ್ಷಿತ್ ।\nಯುಗಪತ್ ಪೃಥಗೇವ ವಾ ವದೇನ್ನಾರೀ ಗರ್ಭಯುತಾ ವಿಪದ್ಯತೇ',
+        name: 'ಪಾಪಕರ್ತರಿ ಮರಣ ಯೋಗ (೮)',
+        description: 'ಲಗ್ನ ಪಾಪಕರ್ತರಿ: ${lagPK ? "✓" : "✗"} | ಶುಭ ದೃಷ್ಟಿ: ${lagNoBen ? "ಇಲ್ಲ" : "ಇದೆ"}\nಚಂದ್ರ ಪಾಪಕರ್ತರಿ: ${moonPK ? "✓" : "✗"} | ಶುಭ ದೃಷ್ಟಿ: ${moonNoBen ? "ಇಲ್ಲ" : "ಇದೆ"}',
+        result: 'ಗರ್ಭಿಣಿ ಮರಣ ಸಂಭವ (ಒಟ್ಟಿಗೆ/ಪ್ರತ್ಯೇಕ)',
+        rashi: lagRashi,
+        planets: ['ಚಂದ್ರ'],
+      ));
+    }
+
+    // ═══ Nisheka Shloka 9: Mars in 4/8 from lagna or Moon ═══
+    final marsFromLag = ((marsR - lagRashi) % 12) + 1;
+    final marsFromMoon = ((marsR - moonR2) % 12) + 1;
+    final marsIn48 = marsFromLag == 4 || marsFromLag == 8 || marsFromMoon == 4 || marsFromMoon == 8;
+    // Mars+Sun in 4th and 12th with waning Moon
+    final sunFromLag = sunHouse;
+    final marsIn4Sun12 = (marsFromLag == 4 && sunFromLag == 12) || (marsFromLag == 12 && sunFromLag == 4);
+    if (marsIn48 || (marsIn4Sun12 && moonWaning)) {
+      final detail = <String>[];
+      if (marsFromLag == 4 || marsFromLag == 8) detail.add('ಕುಜ ಲಗ್ನದಿಂದ ${marsFromLag}ನೇ ಮನೆ');
+      if (marsFromMoon == 4 || marsFromMoon == 8) detail.add('ಕುಜ ಚಂದ್ರನಿಂದ ${marsFromMoon}ನೇ ಮನೆ');
+      if (marsIn4Sun12 && moonWaning) detail.add('ಕುಜ+ರವಿ 4/12 ಸ್ಥಾನ, ಕ್ಷೀಣ ಚಂದ್ರ');
+      yogas.add(Yoga(
+        shloka: 'ಶಶಿನಶ್ಚತುರ್ಥಗೇ ಲಗ್ನಾದ್ವಾ ನಿಧನಾಶ್ರಿತೇ ಕುಚೇ ।\nಬಂಧಂತ್ಯಗಯೋ ಕುಜಾರ್ಕಯೋಃ ಕ್ಷೀಣೇಂದೌ ನಿಧನಾಯ ಪೂರ್ವವತ್',
+        name: 'ಕುಜ ಸ್ಥಾನ ಮರಣ ಯೋಗ (೯)',
+        description: '${detail.join('\n')}',
+        result: 'ಗರ್ಭಿಣಿ ಮರಣ ಸಂಭವ',
+        rashi: marsR,
+        planets: ['ಕುಜ', 'ರವಿ', 'ಚಂದ್ರ'],
+      ));
+    }
+
+    // ═══ Nisheka Shloka 10: Mars+Sun in 1/7 → weapon death; month lord afflicted → miscarriage ═══
+    final marsIn1 = marsFromLag == 1;
+    final marsIn7 = marsFromLag == 7;
+    final sunIn1 = sunHouse == 1;
+    final sunIn7 = sunHouse == 7;
+    if ((marsIn1 && sunIn7) || (marsIn7 && sunIn1)) {
+      yogas.add(Yoga(
+        shloka: 'ಉದಯಾಸ್ತಗಯೋಃ ಕುಚಾರ್ಕಯೋರ್ನಿಧನಂ ಶಸ್ತ್ರಕೃತಂ ವದೇತ್ತದಾ ।\nಮಾಸಾಧಿಪತೌ ನಿಪೀಡಿತೇ ತತ್ಕಾಲೇ ಸ್ರವಣಂ ಸಮಾದಿಶೇತ್',
+        name: 'ಶಸ್ತ್ರ ಮರಣ ಯೋಗ (೧೦)',
+        description: 'ಕುಜ ${marsFromLag}ನೇ ಮನೆ | ರವಿ ${sunHouse}ನೇ ಮನೆ\nಲಗ್ನ-7 ಅಕ್ಷದಲ್ಲಿ ಕುಜ+ರವಿ',
+        result: 'ಶಸ್ತ್ರಾಸ್ತ್ರಗಳಿಂದ ಮರಣ ಸಂಭವ',
+        rashi: lagRashi,
+        planets: ['ಕುಜ', 'ರವಿ'],
+      ));
+    }
+
+    // Month lord affliction check (pregnancy months: 1-Sun,2-Moon,3-Mars,4-Mer,5-Jup,6-Ven,7-Sat)
+    const monthLords = ['Sun','Moon','Mars','Mercury','Jupiter','Venus','Saturn'];
+    const monthLordKn = ['ರವಿ','ಚಂದ್ರ','ಕುಜ','ಬುಧ','ಗುರು','ಶುಕ್ರ','ಶನಿ'];
+    final afflictedMonths = <String>[];
+    for (int m = 0; m < 7; m++) {
+      final mLord = monthLords[m];
+      final mLon = allPLons[mLord] ?? 0.0;
+      final mRashi = _rashiOf(mLon);
+      bool afflicted = false;
+      for (final mal in ['Sun','Mars','Saturn','Rahu','Ketu']) {
+        if (mal == mLord) continue;
+        final malR2 = _rashiOf(allPLons[mal] ?? 0.0);
+        if (malR2 == mRashi) afflicted = true; // conjunction
+        if ((malR2 + 6) % 12 == mRashi) afflicted = true; // 7th aspect
+      }
+      if (afflicted) afflictedMonths.add('${m+1}ನೇ ತಿಂಗಳು (${monthLordKn[m]})');
+    }
+    if (afflictedMonths.isNotEmpty) {
+      yogas.add(Yoga(
+        shloka: 'ಮಾಸಾಧಿಪತೌ ನಿಪೀಡಿತೇ ತತ್ಕಾಲೇ ಸ್ರವಣಂ ಸಮಾದಿಶೇತ್',
+        name: 'ಗರ್ಭಸ್ರಾವ ಯೋಗ (೧೦)',
+        description: 'ಪೀಡಿತ ಮಾಸಾಧಿಪತಿ:\n${afflictedMonths.join('\n')}',
+        result: 'ಗರ್ಭಸ್ರಾವ ಸಂಭವ',
+        rashi: lagRashi,
+        planets: afflictedMonths.map((s) => s.split('(').last.replaceAll(')', '')).toList(),
+      ));
+    }
+
+    // ═══ Nisheka Shloka 11: Comfortable pregnancy ═══
+    // Benefics in lagna, Moon, 5,9,2,4,10 AND malefics in 3,11 AND Sun aspect
+    const benHouses = {1, 2, 4, 5, 9, 10};
+    const malHousesGood = {3, 11};
+    final benInGood = <String>[];
+    final malInGoodH = <String>[];
+    for (final e in allPLons.entries) {
+      final h = ((_rashiOf(e.value) - lagRashi) % 12) + 1;
+      final isBen = {'Jupiter','Venus','Mercury','Moon'}.contains(e.key);
+      if (isBen && benHouses.contains(h)) benInGood.add('${_knPlanets[e.key]} ${h}ನೇ');
+      if (!isBen && malHousesGood.contains(h)) malInGoodH.add('${_knPlanets[e.key]} ${h}ನೇ');
+    }
+    final sunAspLag = (sunR + 6) % 12 == lagRashi;
+    if (benInGood.isNotEmpty && malInGoodH.isNotEmpty && sunAspLag) {
+      yogas.add(Yoga(
+        shloka: 'ಶಶಾಂಕಲಗೋಪಗತೈ: ಶುಭಗ್ರಹೈಸ್ತಿಕೋಣಚಾಯಾರ್ಥಸುಖಾಸ್ಪದಸ್ಥಿತೈಃ ।\nತೃತೀಯಲಾಭರ್ಕ್ಷಗತೈರಶೋಭನೈ: ಸುಖೀ ಚ ಗರ್ಭೋ ರವಿಣಾಭಿವೀಕ್ಷಿತಃ',
+        name: 'ಸುಖ ಗರ್ಭ ಯೋಗ (೧೧)',
+        description: 'ಶುಭರು ಶುಭ ಸ್ಥಾನ: ${benInGood.join(", ")}\nಪಾಪರು 3/11: ${malInGoodH.join(", ")}\nರವಿ ದೃಷ್ಟಿ: ${sunAspLag ? "✓" : "✗"}',
+        result: 'ಗರ್ಭ ಸುಖಕರ',
+        rashi: lagRashi,
+        planets: ['ರವಿ', ...benInGood.map((s) => s.split(' ').first), ...malInGoodH.map((s) => s.split(' ').first)],
+      ));
+    }
 
     return yogas;
   }
