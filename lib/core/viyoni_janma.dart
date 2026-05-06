@@ -311,6 +311,159 @@ class ViyoniJanma {
         planets: navDistPlanets,
       ));
     }
+    // ══════════════════════════════════════════════════════
+    // ನಿಷೇಕಾಧ್ಯಾಯ (Chapter 4) — Conception rules
+    // ══════════════════════════════════════════════════════
+
+    // ═══ Nisheka Shloka 1: Menstruation & Union timing ═══
+    // Moon in anupachaya (1,2,4,5,7,8) → menstruation
+    // Moon in upachaya (3,6,10,11) + benefic/male aspect → union
+    final moonHouse = ((_rashiOf(moonLon) - lagRashi) % 12) + 1;
+    const upachaya = {3, 6, 10, 11};
+    const anupachaya = {1, 2, 4, 5, 7, 8};
+    final moonInUpachaya = upachaya.contains(moonHouse);
+    final moonInAnupachaya = anupachaya.contains(moonHouse);
+
+    // Check benefic/male planet aspects on Moon
+    final moonR = _rashiOf(moonLon);
+    final beneficAspMoon = <String>[];
+    final malePlanets = {'Sun', 'Mars', 'Jupiter'}; // Male grahas
+    for (final e in {'Jupiter':jup,'Venus':ven,'Mercury':mer}.entries) {
+      if ((_rashiOf(e.value) + 6) % 12 == moonR) beneficAspMoon.add(_knPlanets[e.key]!);
+    }
+    final maleAspMoon = <String>[];
+    for (final e in {'Sun':sun,'Mars':mars,'Jupiter':jup}.entries) {
+      if ((_rashiOf(e.value) + 6) % 12 == moonR) maleAspMoon.add(_knPlanets[e.key]!);
+    }
+
+    if (moonInAnupachaya) {
+      yogas.add(Yoga(
+        shloka: 'ಕುಜೇಂದುಹೇತು ಪ್ರತಿಮಾಸಮಾರ್ತವಂ ಗತೇ ತು ಪೀಡರ್ಕ್ಷಮನುಷ್ಣದೀಧಿತೌ ।\nಅತೋsನ್ಯಥಾಸ್ಥ ಶುಭಪುಂಗ್ರಹೇಕ್ಷಿತೇ ನರೇಣ ಸಂಯೋಗಮುಪೈತಿ ಕಾಮಿನೀ',
+        name: 'ಋತುದರ್ಶನ ಯೋಗ',
+        description: 'ಚಂದ್ರ ${moonHouse}ನೇ ಮನೆ (ಅನುಪಚಯ) → ಋತುದರ್ಶನ ಸೂಚನೆ',
+        result: 'ಚಂದ್ರ ಅನುಪಚಯ ಸ್ಥಾನ: ಋತುಮತಿ ಸಂಭವ',
+        rashi: moonR,
+        planets: ['ಚಂದ್ರ', 'ಕುಜ'],
+      ));
+    }
+    if (moonInUpachaya && (beneficAspMoon.isNotEmpty || maleAspMoon.isNotEmpty)) {
+      yogas.add(Yoga(
+        shloka: 'ಕುಜೇಂದುಹೇತು ಪ್ರತಿಮಾಸಮಾರ್ತವಂ ಗತೇ ತು ಪೀಡರ್ಕ್ಷಮನುಷ್ಣದೀಧಿತೌ ।\nಅತೋsನ್ಯಥಾಸ್ಥ ಶುಭಪುಂಗ್ರಹೇಕ್ಷಿತೇ ನರೇಣ ಸಂಯೋಗಮುಪೈತಿ ಕಾಮಿನೀ',
+        name: 'ಮಿಲನ ಯೋಗ',
+        description: 'ಚಂದ್ರ ${moonHouse}ನೇ ಮನೆ (ಉಪಚಯ)\nಶುಭ ದೃಷ್ಟಿ: ${beneficAspMoon.isEmpty ? "ಇಲ್ಲ" : beneficAspMoon.join(",")}\nಪುರುಷ ಗ್ರಹ ದೃಷ್ಟಿ: ${maleAspMoon.isEmpty ? "ಇಲ್ಲ" : maleAspMoon.join(",")}',
+        result: 'ಪುರುಷ ಸಂಯೋಗ ಸಂಭವ',
+        rashi: moonR,
+        planets: ['ಚಂದ್ರ', ...beneficAspMoon, ...maleAspMoon],
+      ));
+    }
+
+    // ═══ Nisheka Shloka 2: Nature of union from 7th house ═══
+    final h7Rashi = (lagRashi + 6) % 12;
+    final malAsp7 = <String>[];
+    final benAsp7 = <String>[];
+    final malIn7 = <String>[];
+    final benIn7 = <String>[];
+    final allPLons = {'Sun':sun,'Moon':moon,'Mars':mars,'Mercury':mer,'Jupiter':jup,'Venus':ven,'Saturn':sat,'Rahu':rahu,'Ketu':ketu};
+    for (final e in allPLons.entries) {
+      final pr = _rashiOf(e.value);
+      final isBen = {'Jupiter','Venus','Mercury','Moon'}.contains(e.key);
+      if (pr == h7Rashi) {
+        (isBen ? benIn7 : malIn7).add(_knPlanets[e.key]!);
+      }
+      if ((pr + 6) % 12 == h7Rashi) {
+        (isBen ? benAsp7 : malAsp7).add(_knPlanets[e.key]!);
+      }
+    }
+    if (malIn7.isNotEmpty || malAsp7.isNotEmpty || benIn7.isNotEmpty || benAsp7.isNotEmpty) {
+      String unionType = '';
+      if (malIn7.isNotEmpty || malAsp7.isNotEmpty) unionType += 'ಕೋಪದಿಂದ ಕೂಡಿದ ಮಿಲನ';
+      if (benIn7.isNotEmpty || benAsp7.isNotEmpty) {
+        if (unionType.isNotEmpty) unionType += ' + ';
+        unionType += 'ವಿಲಾಸ ಹಾಸ್ಯದಿಂದ ಕೂಡಿದ ಮಿಲನ';
+      }
+      yogas.add(Yoga(
+        shloka: 'ಯಥಾಸ್ತರಾಶಿರ್ಮಿಥುನಂ ಸಮೇತಿ ತಥೈವ ವಾಚ್ಯ ಮಿಥುನ ಪ್ರಯೋಗಃ ।\nಅಸದ್ಗ್ರಹಾಲೋಕಿತಸಂಯುತೇsಸ್ತೇ ಸರೋಷ ಇಷ್ಟೆ ಸವಿಲಾಸಹಾಸಃ',
+        name: 'ಮಿಲನ ಸ್ವರೂಪ ಯೋಗ',
+        description: '7ನೇ ಮನೆ: ${_rashiNames[h7Rashi]}\nಪಾಪ ಯೋಗ/ದೃಷ್ಟಿ: ${[...malIn7,...malAsp7].isEmpty ? "ಇಲ್ಲ" : [...malIn7,...malAsp7].join(",")}\nಶುಭ ಯೋಗ/ದೃಷ್ಟಿ: ${[...benIn7,...benAsp7].isEmpty ? "ಇಲ್ಲ" : [...benIn7,...benAsp7].join(",")}',
+        result: unionType,
+        rashi: h7Rashi,
+        planets: [...malIn7, ...malAsp7, ...benIn7, ...benAsp7],
+      ));
+    }
+
+    // ═══ Nisheka Shloka 3: Conception yoga ═══
+    // Sun,Moon,Venus,Mars in own navamsha OR Jupiter in 1/5/9
+    final sunOwnNav = _isOwnNavamsha('Sun', _d9Rashi(sun));
+    final moonOwnNav = _isOwnNavamsha('Moon', _d9Rashi(moon));
+    final venOwnNav = _isOwnNavamsha('Venus', _d9Rashi(ven));
+    final marsOwnNav = _isOwnNavamsha('Mars', _d9Rashi(mars));
+    final allOwnNav = sunOwnNav && moonOwnNav && venOwnNav && marsOwnNav;
+
+    final jupHouse = ((_rashiOf(jup) - lagRashi) % 12) + 1;
+    final jupInTrikona = jupHouse == 1 || jupHouse == 5 || jupHouse == 9;
+
+    if (allOwnNav || jupInTrikona) {
+      final details = <String>[];
+      if (allOwnNav) {
+        details.add('ರವಿ ನವಾಂಶ: ${_rashiNames[_d9Rashi(sun)]} ${sunOwnNav ? "✓ ಸ್ವ" : "✗"}');
+        details.add('ಚಂದ್ರ ನವಾಂಶ: ${_rashiNames[_d9Rashi(moon)]} ${moonOwnNav ? "✓ ಸ್ವ" : "✗"}');
+        details.add('ಶುಕ್ರ ನವಾಂಶ: ${_rashiNames[_d9Rashi(ven)]} ${venOwnNav ? "✓ ಸ್ವ" : "✗"}');
+        details.add('ಕುಜ ನವಾಂಶ: ${_rashiNames[_d9Rashi(mars)]} ${marsOwnNav ? "✓ ಸ್ವ" : "✗"}');
+      }
+      if (jupInTrikona) details.add('ಗುರು ${jupHouse}ನೇ ಮನೆ (ತ್ರಿಕೋಣ)');
+
+      yogas.add(Yoga(
+        shloka: 'ರವೀಂದುಶುಕ್ರಾವನಿಜೈಃ ಸ್ವಭಾಗಗೈರ್ಗುರೌ ತ್ರಿಕೋಣೋದಯಧರ್ಮಗೇsಪಿ ವಾ ।\nಭವತ್ಯಪತ್ಯಂ ಹಿ ವಿಬೀಜಿನಾಮಿಮೇ ಕರಾ ಹಿಮಾಂಶೋರ್ವಿದೃಶಾಮಿವಾಫಲಾಃ',
+        name: 'ಗರ್ಭಧಾರಣೆ ಯೋಗ',
+        description: '${details.join('\n')}',
+        result: 'ಗರ್ಭಧಾರಣೆ ಸಂಭವ',
+        rashi: lagRashi,
+        planets: ['ರವಿ', 'ಚಂದ್ರ', 'ಶುಕ್ರ', 'ಕುಜ', 'ಗುರು'],
+      ));
+    }
+
+    // ═══ Nisheka Shloka 4: Disease & Death yoga ═══
+    final sunHouse = ((_rashiOf(sun) - lagRashi) % 12) + 1;
+    final moonHouseN = ((_rashiOf(moonLon) - lagRashi) % 12) + 1;
+    final marsR = _rashiOf(mars);
+    final satR2 = _rashiOf(sat);
+
+    // Mars/Saturn aspect check on Sun & Moon
+    final sunR = _rashiOf(sun);
+    final moonR2 = _rashiOf(moonLon);
+    bool marsAspSun = (marsR + 6) % 12 == sunR || (marsR + 3) % 12 == sunR || (marsR + 7) % 12 == sunR;
+    bool satAspSun = (satR2 + 6) % 12 == sunR || (satR2 + 2) % 12 == sunR || (satR2 + 9) % 12 == sunR;
+    bool marsAspMoon = (marsR + 6) % 12 == moonR2 || (marsR + 3) % 12 == moonR2 || (marsR + 7) % 12 == moonR2;
+    bool satAspMoon = (satR2 + 6) % 12 == moonR2 || (satR2 + 2) % 12 == moonR2 || (satR2 + 9) % 12 == moonR2;
+    final marsSatAsp = (marsAspSun || marsAspMoon) && (satAspSun || satAspMoon);
+
+    // Sun & Moon in 7th → disease
+    if (sunHouse == 7 && moonHouseN == 7 && marsSatAsp) {
+      yogas.add(Yoga(
+        shloka: 'ದಿವಾಕರೇಂದ್ವಃ ಸ್ಮರಗೌ ಕುಜಾರ್ಕಚೌ ಗದಪ್ರದೌ ಪುಂಗಲಯೋಷಿತೋಸ್ತದಾ ।\nವ್ಯಯಸ್ವಗೌ ಮೃತ್ಯುಕರೌ ತಥಾ ಯುತೌ ತದೇಕದೃಷ್ಟಾ ಮರಣಾಯ ಕಲ್ಪಿತೌ',
+        name: 'ರೋಗ ಯೋಗ (ನಿಷೇಕ)',
+        description: 'ರವಿ+ಚಂದ್ರ 7ನೇ ಮನೆ (${_rashiNames[h7Rashi]})\nಕುಜ (${_rashiNames[marsR]}) ದೃಷ್ಟಿ: ${marsAspSun || marsAspMoon ? "✓" : "✗"}\nಶನಿ (${_rashiNames[satR2]}) ದೃಷ್ಟಿ: ${satAspSun || satAspMoon ? "✓" : "✗"}',
+        result: 'ಪುರುಷ ಮತ್ತು ಸ್ತ್ರೀಗೆ ರೋಗ ಸಂಭವ',
+        rashi: h7Rashi,
+        planets: ['ರವಿ', 'ಚಂದ್ರ', 'ಕುಜ', 'ಶನಿ'],
+      ));
+    }
+
+    // Sun in 12th & Moon in 2nd (or vice versa) + Mars/Saturn aspect → death
+    final sunIn12 = sunHouse == 12;
+    final moonIn2 = moonHouseN == 2;
+    final sunIn2 = sunHouse == 2;
+    final moonIn12 = moonHouseN == 12;
+    if (((sunIn12 && moonIn2) || (sunIn2 && moonIn12)) && marsSatAsp) {
+      yogas.add(Yoga(
+        shloka: 'ದಿವಾಕರೇಂದ್ವಃ ಸ್ಮರಗೌ ಕುಜಾರ್ಕಚೌ ಗದಪ್ರದೌ ಪುಂಗಲಯೋಷಿತೋಸ್ತದಾ ।\nವ್ಯಯಸ್ವಗೌ ಮೃತ್ಯುಕರೌ ತಥಾ ಯುತೌ ತದೇಕದೃಷ್ಟಾ ಮರಣಾಯ ಕಲ್ಪಿತೌ',
+        name: 'ಮರಣ ಯೋಗ (ನಿಷೇಕ)',
+        description: 'ರವಿ ${sunHouse}ನೇ ಮನೆ | ಚಂದ್ರ ${moonHouseN}ನೇ ಮನೆ (12+2 ಸ್ಥಾನ)\nಕುಜ (${_rashiNames[marsR]}) ದೃಷ್ಟಿ: ✓ | ಶನಿ (${_rashiNames[satR2]}) ದೃಷ್ಟಿ: ✓',
+        result: 'ಇಬ್ಬರಿಗೂ ಮರಣ ಸಂಭವ',
+        rashi: lagRashi,
+        planets: ['ರವಿ', 'ಚಂದ್ರ', 'ಕುಜ', 'ಶನಿ'],
+      ));
+    }
 
     return yogas;
   }
