@@ -634,6 +634,24 @@ class _PrashnaDashboardScreenState extends State<PrashnaDashboardScreen>
         ])),
       );
     }
+
+    // Group by rashi
+    const rashiNames = ['ಮೇಷ','ವೃಷಭ','ಮಿಥುನ','ಕರ್ಕ','ಸಿಂಹ','ಕನ್ಯಾ','ತುಲಾ','ವೃಶ್ಚಿಕ','ಧನು','ಮಕರ','ಕುಂಭ','ಮೀನ'];
+    final byRashi = <int, List<Yoga>>{};
+    for (final y in yogas) {
+      if (y.rashi >= 0 && y.rashi < 12) {
+        byRashi.putIfAbsent(y.rashi, () => []).add(y);
+      }
+    }
+
+    // Group by planet
+    final byPlanet = <String, int>{};
+    for (final y in yogas) {
+      for (final p in y.planets) {
+        byPlanet[p] = (byPlanet[p] ?? 0) + 1;
+      }
+    }
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
       child: Column(
@@ -641,31 +659,113 @@ class _PrashnaDashboardScreenState extends State<PrashnaDashboardScreen>
         children: [
           Text('ಯೋಗಗಳು (${yogas.length})', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 15, color: kPurple2)),
           const SizedBox(height: 8),
-          ...yogas.map((y) => AppCard(child: Column(
+
+          // ── Rashi summary grid ──
+          AppCard(child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Row(children: [
-                Icon(Icons.auto_awesome, size: 16, color: kOrange),
-                const SizedBox(width: 6),
-                Expanded(child: Text(y.name, style: TextStyle(fontSize: 14, fontWeight: FontWeight.w900, color: kOrange))),
-              ]),
+              Text('ರಾಶಿ ಸಾರಾಂಶ', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w800, color: kText)),
               const SizedBox(height: 6),
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: kPurple2.withOpacity(0.05),
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: kPurple2.withOpacity(0.15)),
-                ),
-                child: Text(y.shloka, style: TextStyle(fontSize: 12, fontStyle: FontStyle.italic, color: kText, height: 1.5)),
+              Wrap(
+                spacing: 6,
+                runSpacing: 6,
+                children: List.generate(12, (i) {
+                  final count = byRashi[i]?.length ?? 0;
+                  return Container(
+                    width: 72,
+                    padding: const EdgeInsets.symmetric(vertical: 6),
+                    decoration: BoxDecoration(
+                      color: count > 0 ? kOrange.withOpacity(0.12) : kBg,
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: count > 0 ? kOrange.withOpacity(0.4) : kBorder),
+                    ),
+                    child: Column(children: [
+                      Text(rashiNames[i], style: TextStyle(fontSize: 10, fontWeight: FontWeight.w800, color: count > 0 ? kOrange : kMuted)),
+                      Text('$count', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w900, color: count > 0 ? kOrange : kMuted)),
+                    ]),
+                  );
+                }),
               ),
-              const SizedBox(height: 6),
-              Text(y.description, style: TextStyle(fontSize: 11, color: kMuted)),
-              const SizedBox(height: 4),
-              Text(y.result, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: kTeal)),
             ],
-          ))),
+          )),
+          const SizedBox(height: 8),
+
+          // ── Planet summary ──
+          if (byPlanet.isNotEmpty)
+            AppCard(child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('ಗ್ರಹ ಸಾರಾಂಶ', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w800, color: kText)),
+                const SizedBox(height: 6),
+                Wrap(
+                  spacing: 6,
+                  runSpacing: 6,
+                  children: byPlanet.entries.map((e) => Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: kTeal.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: kTeal.withOpacity(0.3)),
+                    ),
+                    child: Text('${e.key}: ${e.value}', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: kTeal)),
+                  )).toList(),
+                ),
+              ],
+            )),
+          const SizedBox(height: 8),
+
+          // ── Yoga details grouped by rashi ──
+          ...byRashi.entries.map((entry) {
+            final ri = entry.key;
+            final rYogas = entry.value;
+            return AppCard(
+              padding: EdgeInsets.zero,
+              child: ExpansionTile(
+                tilePadding: const EdgeInsets.symmetric(horizontal: 12),
+                childrenPadding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
+                leading: CircleAvatar(
+                  radius: 14,
+                  backgroundColor: kOrange.withOpacity(0.15),
+                  child: Text('${rYogas.length}', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w900, color: kOrange)),
+                ),
+                title: Text('${rashiNames[ri]}', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w900, color: kText)),
+                subtitle: Text('${rYogas.length} ಯೋಗ | ${rYogas.map((y) => y.planets).expand((p) => p).toSet().join(", ")}',
+                  style: TextStyle(fontSize: 10, color: kMuted)),
+                children: rYogas.map((y) => Container(
+                  margin: const EdgeInsets.only(top: 8),
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: kBg,
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(color: kBorder),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(y.name, style: TextStyle(fontSize: 13, fontWeight: FontWeight.w900, color: kOrange)),
+                      const SizedBox(height: 4),
+                      Text(y.shloka, style: TextStyle(fontSize: 11, fontStyle: FontStyle.italic, color: kMuted, height: 1.4)),
+                      const SizedBox(height: 4),
+                      Text(y.description, style: TextStyle(fontSize: 11, color: kText)),
+                      const SizedBox(height: 2),
+                      Text(y.result, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: kTeal)),
+                      if (y.planets.isNotEmpty) ...[
+                        const SizedBox(height: 4),
+                        Wrap(
+                          spacing: 4,
+                          children: y.planets.map((p) => Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                            decoration: BoxDecoration(color: kTeal.withOpacity(0.1), borderRadius: BorderRadius.circular(4)),
+                            child: Text(p, style: TextStyle(fontSize: 9, fontWeight: FontWeight.w700, color: kTeal)),
+                          )).toList(),
+                        ),
+                      ],
+                    ],
+                  ),
+                )).toList(),
+              ),
+            );
+          }),
         ],
       ),
     );

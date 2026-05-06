@@ -99,6 +99,8 @@ class ViyoniJanma {
         name: 'ವಿಯೋನಿ ಜನ್ಮ ಯೋಗ',
         description: 'ಲಗ್ನ: ${_rashiNames[lagRashi]} | ಪಾಪರು ಬಲಶಾಲಿ (ರವಿ,ಕುಜ,ಶನಿ) | ಶುಭರು ಬಲಹೀನ (ಗುರು,ಶುಕ್ರ,ಬುಧ,ಚಂದ್ರ)\n${malKendraDetail.join('\n')}',
         result: 'ಚಂದ್ರ ದ್ವಾದಶಾಂಶ: ${_rashiNames[d12]} → ಪ್ರಾಣಿ ರೂಪ: ${_bodyParts[d12]}',
+        rashi: lagRashi,
+        planets: ['ರವಿ','ಕುಜ','ಶನಿ','ರಾಹು','ಕೇತು'],
       ));
     }
 
@@ -127,6 +129,8 @@ class ViyoniJanma {
         name: 'ನವಾಂಶ ವಿಯೋನಿ ಯೋಗ',
         description: 'ಲಗ್ನ: ${_rashiNames[lagRashi]} (ವಿಯೋನಿ ರಾಶಿ)\n${malNavDetail.join(' | ')}\n${benNavDetail.join(' | ')}',
         result: 'ಲಗ್ನ ವಿಯೋನಿ ರಾಶಿ: ${_rashiNames[lagRashi]}',
+        rashi: lagRashi,
+        planets: ['ರವಿ','ಕುಜ','ಶನಿ','ಗುರು','ಶುಕ್ರ','ಬುಧ','ಚಂದ್ರ'],
       ));
     }
 
@@ -138,6 +142,8 @@ class ViyoniJanma {
         name: 'ಚತುಷ್ಪಾದ ಅಂಗ ನಿರ್ಣಯ',
         description: 'ಚಂದ್ರ ರಾಶಿ: ${_rashiNames[moonRashi]}',
         result: 'ದೇಹ ಭಾಗ: ${_bodyParts[moonRashi]}',
+        rashi: moonRashi,
+        planets: ['ಚಂದ್ರ'],
       ));
     }
 
@@ -161,6 +167,8 @@ class ViyoniJanma {
         name: 'ವರ್ಣ-ಸಂಖ್ಯಾ-ಚಿಹ್ನೆ ಯೋಗ',
         description: 'ಲಗ್ನ ನವಾಂಶ: ${_rashiNames[lagNav]} | ಲಗ್ನ ದೃಷ್ಟಿ: ${aspecting.isEmpty ? "ಇಲ್ಲ" : aspecting.join(",")}\n7ನೇ ಭಾವ (${_rashiNames[h7]}): ${in7.isEmpty ? "ಖಾಲಿ" : in7.join(",")}',
         result: 'ಬಣ್ಣ: $color | ಸಂಖ್ಯೆ: ${aspecting.length} | ಬೆನ್ನ ಗುರುತು: ${in7.isEmpty ? "ಇಲ್ಲ" : in7.join(",")}',
+        rashi: lagRashi,
+        planets: [...aspecting, ...in7],
       ));
     }
 
@@ -197,6 +205,8 @@ class ViyoniJanma {
         name: 'ಪಕ್ಷಿ ಜನ್ಮ ಯೋಗ',
         description: 'ಲಗ್ನ: ${_rashiNames[lagRashi]} | ಶನಿ: ${_rashiNames[satR]} | ಚಂದ್ರ: ${_rashiNames[moonR]}\n${triggers.join('\n')}',
         result: 'ಪಕ್ಷಿ ಪ್ರಕಾರ: $bType',
+        rashi: lagRashi,
+        planets: ['ಶನಿ','ಚಂದ್ರ', ...strongInLagList],
       ));
     }
 
@@ -209,5 +219,7 @@ class Yoga {
   final String name;
   final String description;
   final String result;
-  const Yoga({required this.shloka, required this.name, required this.description, required this.result});
+  final int rashi; // 0-11 index of the rashi this yoga applies to
+  final List<String> planets; // planet names involved
+  const Yoga({required this.shloka, required this.name, required this.description, required this.result, this.rashi = -1, this.planets = const []});
 }
