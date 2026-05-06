@@ -653,6 +653,202 @@ class ViyoniJanma {
         planets: ['ರವಿ', ...benInGood.map((s) => s.split(' ').first), ...malInGoodH.map((s) => s.split(' ').first)],
       ));
     }
+    // ═══ Nisheka Shlokas 12 & 13: Gender of child ═══
+    bool _isOddSign(int r) => r % 2 == 0; // Aries=0, Gemini=2, Leo=4...
+    bool _isEvenSign(int r) => r % 2 == 1; // Taurus=1, Cancer=3...
+    bool _isDualSign(int r) => r == 2 || r == 5 || r == 8 || r == 11;
+
+    final sunOdd = _isOddSign(sunR);
+    final jupOdd = _isOddSign(jupHouse == 0 ? _rashiOf(jup) : _rashiOf(jup)); // safe fallback
+    final jupR = _rashiOf(jup);
+    final moonOdd = _isOddSign(moonR2);
+    final lagOdd = _isOddSign(lagRashi);
+    
+    final sunEven = _isEvenSign(sunR);
+    final jupEven = _isEvenSign(jupR);
+    final moonEven = _isEvenSign(moonR2);
+    final lagEven = _isEvenSign(lagRashi);
+    
+    final venR = _rashiOf(ven);
+    final venEven = _isEvenSign(venR);
+    final marsEven = _isEvenSign(marsR);
+
+    final sunNavOdd = _isOddSign(_d9Rashi(sun));
+    final jupNavOdd = _isOddSign(_d9Rashi(jup));
+    final moonNavOdd = _isOddSign(_d9Rashi(moonLon));
+    final lagNavOdd = _isOddSign(_d9Rashi(lag));
+    
+    final sunNavEven = _isEvenSign(_d9Rashi(sun));
+    final jupNavEven = _isEvenSign(_d9Rashi(jup));
+    final moonNavEven = _isEvenSign(_d9Rashi(moonLon));
+    final lagNavEven = _isEvenSign(_d9Rashi(lag));
+
+    final sunStr = isStrong('Sun');
+    final jupStr = isStrong('Jupiter');
+    final moonStr = isStrong('Moon');
+    final lagLordStr = isStrong(rashiLords[lagRashi]);
+
+    bool boyYoga1 = lagOdd && sunOdd && jupOdd && moonOdd && lagNavOdd && sunNavOdd && jupNavOdd && moonNavOdd && sunStr && jupStr && moonStr && lagLordStr;
+    bool girlYoga1 = lagEven && sunEven && jupEven && moonEven && lagNavEven && sunNavEven && jupNavEven && moonNavEven && sunStr && jupStr && moonStr && lagLordStr;
+    
+    bool boyYoga2 = jupOdd && sunOdd;
+    bool girlYoga2 = moonEven && venEven && marsEven;
+    
+    final merR = _rashiOf(mer);
+    // Mercury aspect on Lagna/Moon in dual navamsha
+    final lagNavR12 = _d9Rashi(lag);
+    bool lagDual = _isDualSign(lagNavR12);
+    bool merAspLag = (merR + 6) % 12 == lagRashi;
+    bool twinsYoga1 = lagDual && merAspLag; 
+    
+    // Shloka 13: Saturn in odd sign (except Lagna)
+    bool boyYoga3 = _isOddSign(satR2) && satR2 != lagRashi;
+
+    if (boyYoga1 || boyYoga2 || boyYoga3) {
+      final reasons = <String>[];
+      if (boyYoga1) reasons.add('ಲಗ್ನ, ರವಿ, ಗುರು, ಚಂದ್ರ ಬೆಸ ರಾಶಿ & ನವಾಂಶದಲ್ಲಿ ಬಲಶಾಲಿ');
+      if (boyYoga2) reasons.add('ಗುರು, ರವಿ ಬೆಸ ರಾಶಿಯಲ್ಲಿ');
+      if (boyYoga3) reasons.add('ಶನಿ ಬೆಸ ರಾಶಿಯಲ್ಲಿ (ಲಗ್ನ ಹೊರತುಪಡಿಸಿ)');
+      yogas.add(Yoga(
+        shloka: 'ಓಜರ್ಕ್ಷೇ ಪುರುಷಾಂಶಕೇಷು ಬಲಿಭಿರ್ಲಗ್ನಾರ್ಕಗುರ್ವಿಂದುಭಿಃ...\nವಿಹಾಯ ಲಗ್ನಂ ವಿಷಮರ್ಕ್ಷಸಂಸ್ಥಃ ಸೌರೋsಪಿ ಪುಂಜ ಕರೋ ವಿಲಗ್ನಾತ್',
+        name: 'ಪುತ್ರ ಜನನ ಯೋಗ (೧೨,೧೩)',
+        description: reasons.join('\n'),
+        result: 'ಗಂಡು ಮಗುವಿನ ಜನನ',
+        rashi: lagRashi,
+        planets: ['ರವಿ', 'ಗುರು', 'ಚಂದ್ರ', 'ಶನಿ'],
+      ));
+    }
+    
+    if (girlYoga1 || girlYoga2) {
+      final reasons = <String>[];
+      if (girlYoga1) reasons.add('ಲಗ್ನ, ರವಿ, ಗುರು, ಚಂದ್ರ ಸಮ ರಾಶಿ & ನವಾಂಶದಲ್ಲಿ ಬಲಶಾಲಿ');
+      if (girlYoga2) reasons.add('ಚಂದ್ರ, ಶುಕ್ರ, ಕುಜ ಸಮ ರಾಶಿಯಲ್ಲಿ');
+      yogas.add(Yoga(
+        shloka: 'ಸಮಾಂಶಸಹಿತೈರ್ಯುಕ್ಕೇಷು ತೈರ್ಯೋಷಿತಾಮ್...',
+        name: 'ಪುತ್ರಿ ಜನನ ಯೋಗ (೧೨)',
+        description: reasons.join('\n'),
+        result: 'ಹೆಣ್ಣು ಮಗುವಿನ ಜನನ',
+        rashi: lagRashi,
+        planets: ['ಚಂದ್ರ', 'ಶುಕ್ರ', 'ಕುಜ'],
+      ));
+    }
+
+    if (twinsYoga1) {
+      yogas.add(Yoga(
+        shloka: 'ದ್ವಂಶಸ್ಥಾ ಬುಧವೀಕ್ಷಣಾಚ ಯಮಲಂ ಕುರ್ವಂತಿ ಪಕ್ಷೇ ಸಕೇ',
+        name: 'ಅವಳಿ ಜನನ ಯೋಗ (೧೨)',
+        description: 'ಲಗ್ನ ನವಾಂಶ ದ್ವಿಸ್ವಭಾವ (${_rashiNames[lagNavR12]}) + ಬುಧನ ದೃಷ್ಟಿ',
+        result: 'ಅವಳಿ ಮಕ್ಕಳ ಜನನ',
+        rashi: lagRashi,
+        planets: ['ಬುಧ'],
+      ));
+    }
+
+    // ═══ Nisheka Shloka 14: Napumsaka (Eunuch) Yoga ═══
+    bool napumsaka1 = (sunR + 6) % 12 == moonR2 || (moonR2 + 6) % 12 == sunR;
+    bool napumsaka2 = (satR2 + 6) % 12 == merR || (merR + 6) % 12 == satR2;
+    bool marsAspSun14 = (marsR + 6) % 12 == sunR || (marsR + 3) % 12 == sunR || (marsR + 7) % 12 == sunR;
+    bool napumsaka3 = sunEven && marsAspSun14 && moonOdd && lagOdd;
+    final venNavOdd = _isOddSign(_d9Rashi(ven));
+    bool napumsaka4 = moonNavOdd && lagNavOdd && venNavOdd;
+    
+    if (napumsaka1 || napumsaka2 || napumsaka3 || napumsaka4) {
+      final reasons = <String>[];
+      if (napumsaka1) reasons.add('ರವಿ ಮತ್ತು ಚಂದ್ರರ ಪರಸ್ಪರ ದೃಷ್ಟಿ');
+      if (napumsaka2) reasons.add('ಶನಿ ಮತ್ತು ಬುಧರ ಪರಸ್ಪರ ದೃಷ್ಟಿ');
+      if (napumsaka3) reasons.add('ಸಮ ರಾಶಿಯಲ್ಲಿ ರವಿ + ಕುಜನ ದೃಷ್ಟಿ, ಚಂದ್ರ ಮತ್ತು ಲಗ್ನ ಬೆಸ ರಾಶಿಯಲ್ಲಿ');
+      if (napumsaka4) reasons.add('ಚಂದ್ರ, ಲಗ್ನ, ಶುಕ್ರ ಪುರುಷ (ಬೆಸ) ನವಾಂಶದಲ್ಲಿ');
+      yogas.add(Yoga(
+        shloka: 'ಅನ್ನೋ ನ್ಯಂ ಯದಿ ಪಶ್ಯತಃ ಶಶಿರವೀ ಯದ್ವಾರ್ಕಿಸೌಮ್ಯ ತಥಾ...',
+        name: 'ಕ್ಲೀಬ (ನಪುಂಸಕ) ಯೋಗ (೧೪)',
+        description: reasons.join('\n'),
+        result: 'ನಪುಂಸಕ ಜನನ',
+        rashi: lagRashi,
+        planets: ['ರವಿ', 'ಚಂದ್ರ', 'ಶನಿ', 'ಬುಧ', 'ಕುಜ', 'ಶುಕ್ರ'],
+      ));
+    }
+
+    // ═══ Nisheka Shloka 15: Twins Yoga 2 ═══
+    final merOdd = _isOddSign(merR);
+    final marsOdd = _isOddSign(marsR);
+    bool twins15a = moonEven && venEven && sunOdd && merOdd && marsOdd && jupOdd && lagOdd;
+    
+    bool maleAspLagMoon = false;
+    for (int r in [lagRashi, moonR2]) {
+      if ((sunR + 6) % 12 == r || 
+          (marsR + 6) % 12 == r || (marsR + 3) % 12 == r || (marsR + 7) % 12 == r ||
+          (jupR + 6) % 12 == r || (jupR + 4) % 12 == r || (jupR + 8) % 12 == r) {
+        maleAspLagMoon = true;
+      }
+    }
+    bool twins15b = lagEven && moonEven && maleAspLagMoon;
+    
+    if (twins15a || twins15b) {
+      final reasons = <String>[];
+      if (twins15a) reasons.add('ಚಂದ್ರ, ಶುಕ್ರ ಸಮ ರಾಶಿಯಲ್ಲಿ; ರವಿ, ಬುಧ, ಕುಜ, ಗುರು, ಲಗ್ನ ಬೆಸ ರಾಶಿಯಲ್ಲಿ');
+      if (twins15b) reasons.add('ಲಗ್ನ ಮತ್ತು ಚಂದ್ರ ಸಮ ರಾಶಿಯಲ್ಲಿ + ಪುರುಷ ಗ್ರಹರ ದೃಷ್ಟಿ');
+      yogas.add(Yoga(
+        shloka: 'ಯುಗ್ರೇ ಚಂದ್ರಸಿತಾವಫೌಜಭವನೇ ಸುರ್ಜ್ಞಾರಜೀವೋದಯಾ...',
+        name: 'ಅವಳಿ ಜನನ ಯೋಗ (೧೫)',
+        description: reasons.join('\n'),
+        result: 'ಅವಳಿ ಮಕ್ಕಳ ಜನನ',
+        rashi: lagRashi,
+        planets: ['ಚಂದ್ರ', 'ಶುಕ್ರ', 'ರವಿ', 'ಬುಧ', 'ಕುಜ', 'ಗುರು'],
+      ));
+    }
+
+    // ═══ Nisheka Shloka 16: Multiple births & Month Lords ═══
+    final merAspLag16 = (merR + 6) % 12 == lagRashi;
+    final satAspLag16 = (satR2 + 6) % 12 == lagRashi || (satR2 + 2) % 12 == lagRashi || (satR2 + 9) % 12 == lagRashi;
+    if (lagRashi == 8 && merAspLag16 && satAspLag16) {
+      yogas.add(Yoga(
+        shloka: 'ಧನುರ್ಧರಸ್ಯಾಂತ್ಯಗತೇ ವಿಲನ್ನೇ ಗ್ರಹೈಸ್ತದಂಶೋಪಗತೈರ್ಬಲಿಃ...',
+        name: 'ಬಹು ಸಂತಾನ ಯೋಗ (೧೬)',
+        description: 'ಧನುಸ್ಸು ಲಗ್ನ + ಶನಿ ಮತ್ತು ಬುಧರ ದೃಷ್ಟಿ',
+        result: 'ಅನೇಕ ಮಕ್ಕಳ ಜನನ',
+        rashi: 8,
+        planets: ['ಶನಿ', 'ಬುಧ'],
+      ));
+    }
+
+    // Month lords logic:
+    // 1-Venus, 2-Mars, 3-Jupiter, 4-Sun, 5-Moon, 6-Saturn, 7-Mercury, 8-Lagna Lord, 9-Moon, 10-Sun
+    final monthLords16 = [
+      'Venus', 'Mars', 'Jupiter', 'Sun', 'Moon', 'Saturn', 'Mercury', rashiLords[lagRashi], 'Moon', 'Sun'
+    ];
+    final monthLordsKn16 = [
+      'ಶುಕ್ರ', 'ಕುಜ', 'ಗುರು', 'ರವಿ', 'ಚಂದ್ರ', 'ಶನಿ', 'ಬುಧ', _knPlanets[rashiLords[lagRashi]]!, 'ಚಂದ್ರ', 'ರವಿ'
+    ];
+    
+    final monthDetails = <String>[];
+    for (int m = 0; m < 10; m++) {
+      final mLord = monthLords16[m];
+      final mLordNameKn = monthLordsKn16[m];
+      final mLon = allPLons[mLord] ?? 0.0;
+      final mR = _rashiOf(mLon);
+      
+      bool afflicted = false;
+      for (final mal in ['Sun','Mars','Saturn','Rahu','Ketu']) {
+        if (mal == mLord) continue;
+        final malR2 = _rashiOf(allPLons[mal] ?? 0.0);
+        if (malR2 == mR) afflicted = true; // conjunction
+        if ((malR2 + 6) % 12 == mR) afflicted = true; // 7th aspect
+        if (mal == 'Mars' && ((malR2 + 3) % 12 == mR || (malR2 + 7) % 12 == mR)) afflicted = true;
+        if (mal == 'Saturn' && ((malR2 + 2) % 12 == mR || (malR2 + 9) % 12 == mR)) afflicted = true;
+      }
+      
+      bool isGood = !afflicted && isStrong(mLord);
+      monthDetails.add('${m+1}ನೇ ತಿಂಗಳು ($mLordNameKn): ${afflicted ? "ಅಶುಭ (ಪೀಡಿತ)" : isGood ? "ಶುಭ (ಬಲಶಾಲಿ)" : "ಸಾಮಾನ್ಯ"}');
+    }
+    
+    yogas.add(Yoga(
+      shloka: 'ಕಲಲಘನಾಂಕುರಾಸ್ಥಿಚರ್ಮಾಂಗಜಚೇತನದಾಃ ಸಿತಕುಜಜೀವಸೂರ್ಯಚಂದ್ರಾರ್ಕಿಬುಧಾಃ...',
+      name: 'ಗರ್ಭ ಮಾಸಾಧಿಪತಿ ಫಲ (೧೬)',
+      description: monthDetails.join('\n'),
+      result: 'ಮಾಸಾಧಿಪತಿಗಳ ಬಲಾಬಲದಂತೆ ಗರ್ಭಸ್ಥಿತಿ',
+      rashi: lagRashi,
+      planets: monthLordsKn16.toSet().toList(),
+    ));
 
     return yogas;
   }
