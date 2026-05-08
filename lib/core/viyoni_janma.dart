@@ -2336,7 +2336,7 @@ class ViyoniJanma {
     for (final e in allPLons.entries) {
       if (e.key == 'Rahu' || e.key == 'Ketu') continue;
       final r = _rashiOf(e.value);
-      pyRashiCounts.putIfAbsent(r, () => []).add(e.key);
+      pyRashiCounts.putIfAbsent(r, () => <String>[]).add(e.key);
     }
     
     for (final entry in pyRashiCounts.entries) {
@@ -2412,30 +2412,28 @@ class ViyoniJanma {
 
     // ═══ PY Shloka 3: Lagna lord aspects Saturn or Saturn aspects weak Lagna lord ═══
     final pyLagLord = rashiLords[lagRashi];
-    if (pyLagLord != null) {
-      final pyLagLordR = _rashiOf(allPLons[pyLagLord]!);
-      final pySatR = _rashiOf(allPLons['Saturn']!);
-      
-      bool pyLagLordAspected = false;
-      for (final e in allPLons.entries) {
-        if (e.key != pyLagLord && e.key != 'Saturn' && (_rashiOf(e.value) + 6) % 12 == pyLagLordR) pyLagLordAspected = true;
-      }
-      
-      bool pyLagLordAspectsSaturn = (pyLagLordR + 6) % 12 == pySatR;
-      bool pySatAspectsLagLord = (pySatR + 6) % 12 == pyLagLordR;
-      bool pyLagLordWeak = !isStrong(pyLagLord);
-      
-      if ((!pyLagLordAspected && pyLagLordAspectsSaturn) || (pySatAspectsLagLord && pyLagLordWeak)) {
-         yogas.add(Yoga(
-            shloka: 'ಜಗ್ಗೇಶೋsನೈರ್ಯದೃಷ್ಟೋರ್ಕಪುತ್ರಂ ಪಶ್ಯತ್ಯಾರ್ಕಿಜ್ರನ್ಮಪಂ ವಾ ಬಲೋನಮ್',
-            name: 'ಶನಿ ದೃಷ್ಟಿ ಸನ್ಯಾಸ (ಪ್ರ ೩)',
-            description: (!pyLagLordAspected && pyLagLordAspectsSaturn) 
-              ? 'ಲಗ್ನಾಧಿಪತಿಯು ಶನಿಯನ್ನು ನೋಡುತ್ತಿದ್ದಾನೆ (ಇತರ ದೃಷ್ಟಿ ಇಲ್ಲ)' 
-              : 'ಶನಿಯು ಬಲಹೀನ ಲಗ್ನಾಧಿಪತಿಯನ್ನು ನೋಡುತ್ತಿದ್ದಾನೆ',
-            result: 'ಸನ್ಯಾಸ ಯೋಗ',
-            rashi: lagRashi, planets: [_knPlanets[pyLagLord]!, 'ಶನಿ'],
-          ));
-      }
+    final pyLagLordR = _rashiOf(allPLons[pyLagLord]!);
+    final pySatR = _rashiOf(allPLons['Saturn']!);
+    
+    bool pyLagLordAspected = false;
+    for (final e in allPLons.entries) {
+      if (e.key != pyLagLord && e.key != 'Saturn' && (_rashiOf(e.value) + 6) % 12 == pyLagLordR) pyLagLordAspected = true;
+    }
+    
+    bool pyLagLordAspectsSaturn = (pyLagLordR + 6) % 12 == pySatR;
+    bool pySatAspectsLagLord = (pySatR + 6) % 12 == pyLagLordR;
+    bool pyLagLordWeak = !isStrong(pyLagLord);
+    
+    if ((!pyLagLordAspected && pyLagLordAspectsSaturn) || (pySatAspectsLagLord && pyLagLordWeak)) {
+       yogas.add(Yoga(
+          shloka: 'ಜಗ್ಗೇಶೋsನೈರ್ಯದೃಷ್ಟೋರ್ಕಪುತ್ರಂ ಪಶ್ಯತ್ಯಾರ್ಕಿಜ್ರನ್ಮಪಂ ವಾ ಬಲೋನಮ್',
+          name: 'ಶನಿ ದೃಷ್ಟಿ ಸನ್ಯಾಸ (ಪ್ರ ೩)',
+          description: (!pyLagLordAspected && pyLagLordAspectsSaturn) 
+            ? 'ಲಗ್ನಾಧಿಪತಿಯು ಶನಿಯನ್ನು ನೋಡುತ್ತಿದ್ದಾನೆ (ಇತರ ದೃಷ್ಟಿ ಇಲ್ಲ)' 
+            : 'ಶನಿಯು ಬಲಹೀನ ಲಗ್ನಾಧಿಪತಿಯನ್ನು ನೋಡುತ್ತಿದ್ದಾನೆ',
+          result: 'ಸನ್ಯಾಸ ಯೋಗ',
+          rashi: lagRashi, planets: [_knPlanets[pyLagLord]!, 'ಶನಿ'],
+        ));
     }
     
     // Moon in Saturn Drekkana, Mars/Saturn Navamsha, aspected by Saturn
