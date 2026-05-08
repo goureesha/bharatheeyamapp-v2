@@ -2437,7 +2437,9 @@ class ViyoniJanma {
     }
     
     // Moon in Saturn Drekkana, Mars/Saturn Navamsha, aspected by Saturn
-    final pyMoonDrek = _drekRashi(moonLon);
+    // Drekkana rashi: 1st drek = same sign, 2nd = +4, 3rd = +8
+    final pyMoonDrekNum = _drekkanaNum(moonLon);
+    final pyMoonDrek = (moonR2 + (pyMoonDrekNum - 1) * 4) % 12;
     final pyMoonNav = _d9Rashi(moonLon);
     final pySatR2 = _rashiOf(allPLons['Saturn']!);
     final pySatAspMoon = (pySatR2 + 6) % 12 == moonR2 || (pySatR2 + 2) % 12 == moonR2 || (pySatR2 + 9) % 12 == moonR2;
