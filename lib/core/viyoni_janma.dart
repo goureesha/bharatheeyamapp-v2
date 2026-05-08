@@ -2578,7 +2578,174 @@ class ViyoniJanma {
     evaluateCh17Navamsha('Sun', sun);
 
 
-    return yogas;
+
+    // ═══════════════════════════════════════════════════
+    // Chapter 18: ಭಾವಫಲಾಧ್ಯಾಯ (Bhavaphaladhyaya - Results of Planets in Houses)
+    // ═══════════════════════════════════════════════════
+    
+    int getBhava(int pRashi, int lagR) {
+      return ((pRashi - lagR) % 12) + 1;
+    }
+
+    final ch18SunBhava = getBhava(_rashiOf(sun), lagRashi);
+    final ch18SunRashi = _rashiOf(sun);
+    String sunResult = '';
+    if (ch18SunBhava == 1) {
+      if (ch18SunRashi == 0) sunResult = 'ಧನವಂತ ಮತ್ತು ದೃಷ್ಟಿದೋಷವುಳ್ಳವನು';
+      else if (ch18SunRashi == 4) sunResult = 'ರಾತ್ರಿಯಲ್ಲಿ ಕಣ್ಣು ಕಾಣಿಸದವನು (Night-blind)';
+      else if (ch18SunRashi == 3) sunResult = 'ಗುಳ್ಳೆಗಳಂತಹ ಕಣ್ಣುಳ್ಳವನು';
+      else sunResult = 'ಶೂರ, ಜಡಸ್ವಭಾವದವನು, ದೃಷ್ಟಿದೋಷವುಳ್ಳವನು ಮತ್ತು ಕರುಣೆಯಿಲ್ಲದವನು';
+    } else if (ch18SunBhava == 2) sunResult = 'ಬಹಳ ಸಂಪತ್ತುಳ್ಳವನು, ರಾಜನಿಂದ ಹಣವನ್ನು ಕಳೆದುಕೊಳ್ಳುವವನು ಮತ್ತು ಮುಖದ ರೋಗವುಳ್ಳವನು';
+    else if (ch18SunBhava == 3) sunResult = 'ಬುದ್ಧಿವಂತ ಮತ್ತು ಪರಾಕ್ರಮಿ';
+    else if (ch18SunBhava == 4) sunResult = 'ಸುಖವಿಲ್ಲದವನು ಮತ್ತು ಮಾನಸಿಕವಾಗಿ ಪೀಡಿತನಾದವನು';
+    else if (ch18SunBhava == 5) sunResult = 'ಮಕ್ಕಳಿಲ್ಲದವನು ಮತ್ತು ಧನಹೀನನು';
+    else if (ch18SunBhava == 6) sunResult = 'ಬಲಶಾಲಿ ಮತ್ತು ಶತ್ರುಗಳನ್ನು ಸೋಲಿಸುವವನು';
+    else if (ch18SunBhava == 7) sunResult = 'ಸ್ತ್ರೀಯರಿಂದ ಅವಮಾನವನ್ನು ಹೊಂದುವವನು';
+    else if (ch18SunBhava == 8) sunResult = 'ಕಡಿಮೆ ಮಕ್ಕಳುಳ್ಳವನು ಮತ್ತು ದೃಷ್ಟಿದೋಷವುಳ್ಳವನು';
+    else if (ch18SunBhava == 9) sunResult = 'ಮಕ್ಕಳು, ಹಣ ಮತ್ತು ಸುಖವನ್ನು ಹೊಂದುವವನು';
+    else if (ch18SunBhava == 10) sunResult = 'ಶಾಸ್ತ್ರಜ್ಞಾನ ಮತ್ತು ಶೌರ್ಯವುಳ್ಳವನು';
+    else if (ch18SunBhava == 11) sunResult = 'ಬಹಳ ಧನವಂತನು';
+    else if (ch18SunBhava == 12) sunResult = 'ಪತಿತನಾಗುತ್ತಾನೆ (Fallen)';
+
+    if (sunResult.isNotEmpty) {
+      yogas.add(Yoga(
+        shloka: 'ಶೂರಃ ಸ್ತಬ್ಧ ವಿಕಲನಯನೋ... (ಭಾವಫಲಾಧ್ಯಾಯ ೧-೩)',
+        name: 'ಸೂರ್ಯ ಭಾವ ಫಲ (${ch18SunBhava}ನೇ ಮನೆ)',
+        description: '${ch18SunBhava}ನೇ ಮನೆಯಲ್ಲಿ ಸೂರ್ಯ',
+        result: sunResult,
+        rashi: ch18SunRashi, planets: ['ರವಿ'],
+      ));
+    }
+
+    final ch18MoonBhava = getBhava(_rashiOf(moonLon), lagRashi);
+    final ch18MoonRashi = _rashiOf(moonLon);
+    String moonResult = '';
+    if (ch18MoonBhava == 1) {
+      if (ch18MoonRashi == 3 || ch18MoonRashi == 1) moonResult = 'ಧನವಂತ ಮತ್ತು ಬಹಳ ಮಕ್ಕಳುಳ್ಳವನು';
+      else moonResult = 'ಮೂಗ, ಹುಚ್ಚ, ಜಡಬುದ್ಧಿಯವನು, ಕುರುಡ, ನೀಚ, ಕಿವುಡ ಮತ್ತು ಸೇವಕ';
+    } else if (ch18MoonBhava == 2) moonResult = 'ಧನವಂತ ಮತ್ತು ದೊಡ್ಡ ಕುಟುಂಬವುಳ್ಳವನು';
+    else if (ch18MoonBhava == 3) moonResult = 'ಹಿಂಸಕನಾಗುತ್ತಾನೆ';
+    else if (ch18MoonBhava == 4 || ch18MoonBhava == 5) moonResult = 'ಆಯಾ ಭಾವಗಳಿಗೆ ಸಂಬಂಧಿಸಿದ ಉತ್ತಮ ಫಲಗಳು';
+    else if (ch18MoonBhava == 6) moonResult = 'ಅನೇಕ ಶತ್ರುಗಳುಳ್ಳವನು, ಮೃದುವಾದ ಶರೀರವುಳ್ಳವನು, ಕಾಮಾತುರ ಮತ್ತು ಆಲಸಿ';
+    else if (ch18MoonBhava == 7) moonResult = 'ಅಸೂಯೆ ಪಡುವವನು ಮತ್ತು ಸ್ತ್ರೀಯರಲ್ಲಿ ಆಸಕ್ತನು';
+    else if (ch18MoonBhava == 8) moonResult = 'ಬುದ್ಧಿವಂತ ಮತ್ತು ರೋಗದಿಂದ ಪೀಡಿತನು';
+    else if (ch18MoonBhava == 9) moonResult = 'ಸೌಭಾಗ್ಯ, ಮಕ್ಕಳು, ಮಿತ್ರರು, ಬಂಧುಗಳು ಮತ್ತು ಧನವನ್ನು ಹೊಂದುವವನು';
+    else if (ch18MoonBhava == 10) moonResult = 'ಧರ್ಮ, ಧನ, ಬುದ್ಧಿ, ಶೌರ್ಯಗಳಿಂದ ಕೂಡಿ ಕಾರ್ಯಸಿದ್ಧಿಯನ್ನು ಹೊಂದುವವನು';
+    else if (ch18MoonBhava == 11) moonResult = 'ಪ್ರಸಿದ್ಧನೂ ಮತ್ತು ೧೧ನೇ ಭಾವದ ಗುಣಗಳುಳ್ಳವನೂ ಆಗುತ್ತಾನೆ';
+    else if (ch18MoonBhava == 12) moonResult = 'ನೀಚ ಮತ್ತು ಅಂಗಹೀನನಾಗುತ್ತಾನೆ';
+
+    if (moonResult.isNotEmpty) {
+      yogas.add(Yoga(
+        shloka: 'ಮೂಕೋನ್ಮತ್ತಜಡಾಂಧನೀಚ... (ಭಾವಫಲಾಧ್ಯಾಯ ೪-೫)',
+        name: 'ಚಂದ್ರ ಭಾವ ಫಲ (${ch18MoonBhava}ನೇ ಮನೆ)',
+        description: '${ch18MoonBhava}ನೇ ಮನೆಯಲ್ಲಿ ಚಂದ್ರ',
+        result: moonResult,
+        rashi: ch18MoonRashi, planets: ['ಚಂದ್ರ'],
+      ));
+    }
+
+    final ch18MarsRashi = _rashiOf(allPLons['Mars']!);
+    final ch18MarsBhava = getBhava(ch18MarsRashi, lagRashi);
+    String marsResult = '';
+    if (ch18MarsBhava == 1) marsResult = 'ಗಾಯಗೊಂಡ ಶರೀರವುಳ್ಳವನು';
+    else if (ch18MarsBhava == 2) marsResult = 'ಕೆಟ್ಟ ಅನ್ನವನ್ನು ತಿನ್ನುವವನು';
+    else if (ch18MarsBhava == 9) marsResult = 'ಪಾಪಕಾರ್ಯ ಮಾಡುವವನು';
+    else marsResult = sunResult.isNotEmpty ? sunResult : 'ಸೂರ್ಯನಂತೆಯೇ ಫಲ';
+
+    if (marsResult.isNotEmpty) {
+      yogas.add(Yoga(
+        shloka: 'ಲಗ್ನ ಕುಜೇ ಕ್ಷತತನುರ್ಧನಗೇ... (ಭಾವಫಲಾಧ್ಯಾಯ ೬)',
+        name: 'ಮಂಗಳ ಭಾವ ಫಲ (${ch18MarsBhava}ನೇ ಮನೆ)',
+        description: '${ch18MarsBhava}ನೇ ಮನೆಯಲ್ಲಿ ಮಂಗಳ',
+        result: marsResult,
+        rashi: ch18MarsRashi, planets: ['ಕುಜ'],
+      ));
+    }
+
+    final ch18MercRashi = _rashiOf(allPLons['Mercury']!);
+    final ch18MercBhava = getBhava(ch18MercRashi, lagRashi);
+    String mercResult = '';
+    if (ch18MercBhava == 1) mercResult = 'ವಿದ್ವಾಂಸ';
+    else if (ch18MercBhava == 2) mercResult = 'ಧನವಂತ';
+    else if (ch18MercBhava == 3) mercResult = 'ಪ್ರಬಲ';
+    else if (ch18MercBhava == 4) mercResult = 'ಪಂಡಿತ';
+    else if (ch18MercBhava == 5) mercResult = 'ಮಂತ್ರಿ';
+    else if (ch18MercBhava == 6) mercResult = 'ಶತ್ರುವಿಲ್ಲದವನು';
+    else if (ch18MercBhava == 7) mercResult = 'ಹಾಸ್ಯ ಬಲ್ಲವನು';
+    else if (ch18MercBhava == 8) mercResult = 'ಕಡಿಮೆ ಮಕ್ಕಳುಳ್ಳವನು ಮತ್ತು ದೃಷ್ಟಿದೋಷವುಳ್ಳವನು (ಸೂರ್ಯನಂತೆ)';
+    else mercResult = 'ಪ್ರಸಿದ್ಧ ಗುಣವುಳ್ಳವನು';
+
+    if (mercResult.isNotEmpty) {
+      yogas.add(Yoga(
+        shloka: 'ಲಗ್ನ ಕುಜೇ ಕ್ಷತತನುರ್ಧನಗೇ... (ಭಾವಫಲಾಧ್ಯಾಯ ೬)',
+        name: 'ಬುಧ ಭಾವ ಫಲ (${ch18MercBhava}ನೇ ಮನೆ)',
+        description: '${ch18MercBhava}ನೇ ಮನೆಯಲ್ಲಿ ಬುಧ',
+        result: mercResult,
+        rashi: ch18MercRashi, planets: ['ಬುಧ'],
+      ));
+    }
+
+    final ch18JupRashi = _rashiOf(allPLons['Jupiter']!);
+    final ch18JupBhava = getBhava(ch18JupRashi, lagRashi);
+    final jupResultsMap = {
+      1: 'ವಿದ್ವಾಂಸ', 2: 'ಒಳ್ಳೆಯ ಮಾತುಗಾರ', 3: 'ಜಿಪುಣ', 4: 'ಸುಖಿ', 5: 'ಬುದ್ಧಿವಂತ',
+      6: 'ಶತ್ರುವಿಲ್ಲದವನು', 7: 'ತಂದೆಗಿಂತ ಶ್ರೇಷ್ಠನಾದವನು', 8: 'ನೀಚ', 9: 'ತಪಸ್ವಿ',
+      10: 'ಧನವಂತ', 11: 'ಲಾಭವುಳ್ಳವನು', 12: 'ದುಷ್ಟ'
+    };
+    final jupResult = jupResultsMap[ch18JupBhava] ?? '';
+
+    if (jupResult.isNotEmpty) {
+      yogas.add(Yoga(
+        shloka: 'ವಿದ್ವಾನ್ ಸುವಾಕ್ಯಃ ಕೃಪಣಃ... (ಭಾವಫಲಾಧ್ಯಾಯ ೭)',
+        name: 'ಗುರು ಭಾವ ಫಲ (${ch18JupBhava}ನೇ ಮನೆ)',
+        description: '${ch18JupBhava}ನೇ ಮನೆಯಲ್ಲಿ ಗುರು',
+        result: jupResult,
+        rashi: ch18JupRashi, planets: ['ಗುರು'],
+      ));
+    }
+
+    final ch18VenRashi = _rashiOf(allPLons['Venus']!);
+    final ch18VenBhava = getBhava(ch18VenRashi, lagRashi);
+    String venResult = '';
+    if (ch18VenBhava == 1) venResult = 'ಕಾಮಕಾರ್ಯದಲ್ಲಿ ನಿಪುಣ ಮತ್ತು ಸುಖಿ';
+    else if (ch18VenBhava == 5) venResult = 'ಸುಖಿ';
+    else if (ch18VenBhava == 7) venResult = 'ಜಗಳಗಂಟ ಮತ್ತು ರತಿಕ್ರೀಡೆಯಲ್ಲಿ ಆಸಕ್ತ';
+    else venResult = '${jupResultsMap[ch18VenBhava]} ಮತ್ತು ಧನವಂತ';
+
+    if (venResult.isNotEmpty) {
+      yogas.add(Yoga(
+        shloka: 'ಸ್ಮರನಿಪುಣ: ಸುಖವಾಂಶ್ಚ... (ಭಾವಫಲಾಧ್ಯಾಯ ೮)',
+        name: 'ಶುಕ್ರ ಭಾವ ಫಲ (${ch18VenBhava}ನೇ ಮನೆ)',
+        description: '${ch18VenBhava}ನೇ ಮನೆಯಲ್ಲಿ ಶುಕ್ರ',
+        result: venResult,
+        rashi: ch18VenRashi, planets: ['ಶುಕ್ರ'],
+      ));
+    }
+
+    final ch18SatRashi = _rashiOf(allPLons['Saturn']!);
+    final ch18SatBhava = getBhava(ch18SatRashi, lagRashi);
+    String satResult = '';
+    if (ch18SatBhava == 1) {
+      if (ch18SatRashi == 8 || ch18SatRashi == 11 || ch18SatRashi == 9 || ch18SatRashi == 10 || ch18SatRashi == 6) {
+        satResult = 'ರಾಜನಿಗೆ ಸಮಾನನಾದವನು, ಗ್ರಾಮ/ನಗರಗಳಿಗೆ ಒಡೆಯ, ಉತ್ತಮ ವಿದ್ವಾಂಸ ಮತ್ತು ಸುಂದರ ಶರೀರವುಳ್ಳವನು';
+      } else {
+        satResult = 'ದರಿದ್ರ, ರೋಗಿ, ಕಾಮಾತುರ, ಅತ್ಯಂತ ಮಲಿನ, ಬಾಲ್ಯದಲ್ಲಿ ರೋಗಪೀಡಿತ, ಆಲಸ್ಯದ ಮಾತುಗಾರ';
+      }
+    } else {
+      satResult = sunResult.isNotEmpty ? sunResult : 'ಸೂರ್ಯನಂತೆಯೇ ಫಲ';
+    }
+
+    if (satResult.isNotEmpty) {
+      yogas.add(Yoga(
+        shloka: 'ಅದೃಷ್ಟಾರ್ಥೋ ರೋಗೀ ಮದನವಶಗೋ... (ಭಾವಫಲಾಧ್ಯಾಯ ೯)',
+        name: 'ಶನಿ ಭಾವ ಫಲ (${ch18SatBhava}ನೇ ಮನೆ)',
+        description: '${ch18SatBhava}ನೇ ಮನೆಯಲ್ಲಿ ಶನಿ',
+        result: satResult,
+        rashi: ch18SatRashi, planets: ['ಶನಿ'],
+      ));
+    }
+
+        return yogas;
   }
 }
 
