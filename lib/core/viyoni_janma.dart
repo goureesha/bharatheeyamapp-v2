@@ -896,11 +896,12 @@ class ViyoniJanma {
     final satNavR18 = _d9Rashi(sat);
     final marsNavR18 = _d9Rashi(mars);
     final merNavR18 = _d9Rashi(mer);
-    if (satNavR18 == merNavR18 && marsNavR18 == merNavR18) {
+    final mercurySigns18 = {2, 5}; // Gemini, Virgo = Mercury-ruled signs
+    if (mercurySigns18.contains(satNavR18) && mercurySigns18.contains(marsNavR18)) {
       yogas.add(Yoga(
         shloka: 'ಸೌಮ್ಯರ್ಕ್ಷಾಂಶೇ ರವಿಜರುಧಿರೌ ಚೇತ್ಸದಂತೋsತ್ರ ಜಾತಃ',
         name: 'ಸದಂತ ಜನನ ಯೋಗ (೧೮)',
-        description: 'ಶನಿ ಮತ್ತು ಕುಜ ಬುಧನ ನವಾಂಶದಲ್ಲಿ (${_rashiNames[merNavR18]})',
+        description: 'ಶನಿ ನವಾಂಶ: ${_rashiNames[satNavR18]} ಮತ್ತು ಕುಜ ನವಾಂಶ: ${_rashiNames[marsNavR18]} (ಬುಧ ಕ್ಷೇತ್ರ)',
         result: 'ಹಲ್ಲುಗಳೊಂದಿಗೆ ಜನನ',
         rashi: lagRashi,
         planets: ['ಶನಿ', 'ಕುಜ', 'ಬುಧ'],
@@ -935,7 +936,7 @@ class ViyoniJanma {
     }
 
     // ═══ Nisheka Shloka 19: Dwarf & Missing limbs ═══
-    if (lagRashi == 9) {
+    if (lagRashi == 9 || lagRashi == 10) { // Makara (Capricorn) or Kumbha (Aquarius)
       final sACap = satR2 == 9 || (satR2 + 6) % 12 == 9;
       final moACap = moonR2 == 9 || (moonR2 + 6) % 12 == 9;
       final suACap = sunR == 9 || (sunR + 6) % 12 == 9;
@@ -1629,8 +1630,8 @@ class ViyoniJanma {
     }
 
     // ═══ AR Shloka 6: Waning Moon in 12, Malefics in 1/8, No benefics in Kendra ═══
-    final ar6Dist = (moonLon - sun).abs() % 360;
-    final ar6IsWaning = ar6Dist > 180 && ar6Dist < 360;
+    final ar6WaneDiff = (moonLon - sun + 360) % 360;
+    final ar6IsWaning = ar6WaneDiff > 180;
     final ar6MoonIn12 = ((moonR2 - lagRashi) % 12) + 1 == 12;
     bool ar6MalIn8 = false;
     for (final e in malLons.entries) {
