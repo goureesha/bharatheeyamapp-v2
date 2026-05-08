@@ -1897,6 +1897,224 @@ class ViyoniJanma {
        }
     }
 
+    // ═══════════════════════════════════════════════════
+    // Chapter 13: ಚಾಂದ್ರಯೋಗಾಧ್ಯಾಯ (Chandrayogadhyaya - Lunar Yogas)
+    // ═══════════════════════════════════════════════════
+
+    // ═══ CY Shloka 1: Moon in Kendra/Panaphara/Apoklima from Sun ═══
+    final cy1MoonFromSunH = ((moonR2 - sunR) % 12) + 1;
+    String cy1Phala = '';
+    if (cy1MoonFromSunH == 1 || cy1MoonFromSunH == 4 || cy1MoonFromSunH == 7 || cy1MoonFromSunH == 10) {
+      cy1Phala = 'ಅಧಮ';
+    } else if (cy1MoonFromSunH == 2 || cy1MoonFromSunH == 5 || cy1MoonFromSunH == 8 || cy1MoonFromSunH == 11) {
+      cy1Phala = 'ಸಮ';
+    } else {
+      cy1Phala = 'ವರಿಷ್ಠ';
+    }
+    
+    // Day birth vs Night birth
+    final cy1SunFromLagH = ((sunR - lagRashi) % 12) + 1;
+    final cy1IsDay = cy1SunFromLagH >= 7 && cy1SunFromLagH <= 12;
+    
+    final cy1MoonNavLord = rashiLords[_d9Rashi(moonLon)];
+    final cy1MoonNavOwnOrMitra = cy1MoonNavLord == 'Moon' || {'Sun', 'Mercury'}.contains(cy1MoonNavLord); 
+    
+    bool cy1JupAsp = (_rashiOf(jup) + 6) % 12 == moonR2 || (_rashiOf(jup) + 4) % 12 == moonR2 || (_rashiOf(jup) + 8) % 12 == moonR2;
+    bool cy1VenAsp = (_rashiOf(ven) + 6) % 12 == moonR2;
+    
+    String cy1WealthPhala = '';
+    if (cy1IsDay && cy1MoonNavOwnOrMitra && cy1JupAsp) {
+      cy1WealthPhala = '\nಹಗಲು ಜನನ + ಗುರು ದೃಷ್ಟಿ → ಧನವಂತ ಮತ್ತು ಸುಖಿ';
+    } else if (!cy1IsDay && cy1VenAsp) {
+      cy1WealthPhala = '\nರಾತ್ರಿ ಜನನ + ಶುಕ್ರ ದೃಷ್ಟಿ → ಧನವಂತ ಮತ್ತು ಸುಖಿ';
+    }
+
+    yogas.add(Yoga(
+      shloka: 'ಅಧಮಸಮವರಿಷ್ಠಾನ್ಯರ್ಕಕೇಂದ್ರಾದಿಸಂಸ್ಥೆ ಶಶಿನಿ ವಿನಯವಿತ್ತಜ್ಞಾನಧೀನೈಪುಣಾನಿ',
+      name: 'ಚಂದ್ರ-ರವಿ ಯೋಗ (ಚಾ ೧)',
+      description: 'ಚಂದ್ರನು ರವಿಯಿಂದ $cy1MoonFromSunHನೇ ಮನೆಯಲ್ಲಿ ($cy1Phala ಸ್ಥಾನ)$cy1WealthPhala',
+      result: '$cy1Phala ಫಲ: ವಿನಯ, ವಿತ್ತ, ಜ್ಞಾನ, ನೈಪುಣ್ಯ',
+      rashi: moonR2, planets: ['ಚಂದ್ರ', 'ರವಿ'],
+    ));
+
+    // ═══ CY Shloka 2: Adhi Yoga (Benefics in 6, 7, 8 from Moon) ═══
+    bool cy2BenIn6 = false, cy2BenIn7 = false, cy2BenIn8 = false;
+    for (final e in allPLons.entries) {
+      if ({'Jupiter', 'Venus', 'Mercury'}.contains(e.key)) {
+        final h = ((_rashiOf(e.value) - moonR2) % 12) + 1;
+        if (h == 6) cy2BenIn6 = true;
+        if (h == 7) cy2BenIn7 = true;
+        if (h == 8) cy2BenIn8 = true;
+      }
+    }
+    if (cy2BenIn6 || cy2BenIn7 || cy2BenIn8) {
+       final benHouses = <String>[];
+       if (cy2BenIn6) benHouses.add('6');
+       if (cy2BenIn7) benHouses.add('7');
+       if (cy2BenIn8) benHouses.add('8');
+       yogas.add(Yoga(
+        shloka: 'ಸೌಮ್ಯ ಸ್ಮರಾರಿನಿಧನೇಷ್ಟಧಿಯೋಗ ಇಂದೋಸ್ತಸ್ಮಿಂಶ್ಚಮೂಪಸಚಿವಕ್ಷಿತಿಪಾಲಜನ್ಮ',
+        name: 'ಚಂದ್ರ ಅಧಿಯೋಗ (ಚಾ ೨)',
+        description: 'ಚಂದ್ರನಿಂದ ${benHouses.join(',')}ನೇ ಮನೆಯಲ್ಲಿ ಶುಭಗ್ರಹರು',
+        result: 'ಸೇನಾಪತಿ/ಮಂತ್ರಿ/ರಾಜ, ದೀರ್ಘಾಯು, ಶತ್ರುನಾಶ',
+        rashi: moonR2, planets: ['ಚಂದ್ರ'],
+      ));
+    }
+
+    // ═══ CY Shloka 3 & 4: Sunapha, Anapha, Durudhura, Kemadruma Yogas ═══
+    bool cy3PlanetIn2 = false, cy3PlanetIn12 = false;
+    final cy3PlanetsIn2 = <String>[];
+    final cy3PlanetsIn12 = <String>[];
+    bool cy3PlanetInKendra = false;
+    bool cy3PlanetWithMoon = false;
+    
+    for (final e in allPLons.entries) {
+      if (e.key != 'Sun' && e.key != 'Moon' && e.key != 'Rahu' && e.key != 'Ketu') {
+        final hFromMoon = ((_rashiOf(e.value) - moonR2) % 12) + 1;
+        if (hFromMoon == 2) {
+          cy3PlanetIn2 = true;
+          cy3PlanetsIn2.add(_knPlanets[e.key]!);
+        }
+        if (hFromMoon == 12) {
+          cy3PlanetIn12 = true;
+          cy3PlanetsIn12.add(_knPlanets[e.key]!);
+        }
+        if (hFromMoon == 1) cy3PlanetWithMoon = true;
+        
+        final hFromLag = ((_rashiOf(e.value) - lagRashi) % 12) + 1;
+        if (hFromLag == 1 || hFromLag == 4 || hFromLag == 7 || hFromLag == 10) cy3PlanetInKendra = true;
+      }
+    }
+
+    bool hasSunapha = cy3PlanetIn2 && !cy3PlanetIn12;
+    bool hasAnapha = !cy3PlanetIn2 && cy3PlanetIn12;
+    bool hasDurudhura = cy3PlanetIn2 && cy3PlanetIn12;
+    bool hasKemadruma = !cy3PlanetIn2 && !cy3PlanetIn12 && !cy3PlanetInKendra && !cy3PlanetWithMoon;
+    
+    if (hasSunapha) {
+      yogas.add(Yoga(
+        shloka: 'ಸ್ವಯಮಧಿಗತವಿತ್ತಃ ಪಾರ್ಥಿವಸ್ತತ್ಸಮೋ ವಾ ಭವತಿ ಹಿ ಸುನಭಾಯಾಂ ಧೀಧನಖ್ಯಾತಿಮಾಂಶ್ಚ',
+        name: 'ಸುನಫಾ ಯೋಗ (ಚಾ ೩,೪,೫,೭)',
+        description: 'ಚಂದ್ರನಿಂದ 2ನೇ ಮನೆಯಲ್ಲಿ: ${cy3PlanetsIn2.join(', ')}',
+        result: 'ಸ್ವಂತ ಪರಿಶ್ರಮದಿಂದ ಧನ, ರಾಜನ ಸಮಾನ, ಬುದ್ಧಿವಂತ',
+        rashi: moonR2, planets: ['ಚಂದ್ರ'],
+      ));
+    } else if (hasAnapha) {
+      yogas.add(Yoga(
+        shloka: 'ಪ್ರಭುರಗದಶರೀರಃ ಶೀಲವಾನ್ ಖ್ಯಾತಕೀರ್ತಿವಿ್ರಷಯಸುಖಸುವೇಷೋ ನಿರ್ವೃತಶ್ಚಾನಭಾಯಾಮ್',
+        name: 'ಅನಫಾ ಯೋಗ (ಚಾ ೩,೪,೫,೭)',
+        description: 'ಚಂದ್ರನಿಂದ 12ನೇ ಮನೆಯಲ್ಲಿ: ${cy3PlanetsIn12.join(', ')}',
+        result: 'ಪ್ರಭು, ರೋಗವಿಲ್ಲದ ಶರೀರ, ಕೀರ್ತಿ, ನೆಮ್ಮದಿ',
+        rashi: moonR2, planets: ['ಚಂದ್ರ'],
+      ));
+    } else if (hasDurudhura) {
+      yogas.add(Yoga(
+        shloka: 'ಉತ್ಪನ್ನಭೋಗಸುಖಭಾಗ್ ಧನವಾಹನಾಡ್ಯಾಗಾನ್ವಿತೋ ಧುರುಧುರಾಪ್ರಭವಃ ಸುನೃತ್ಯಃ',
+        name: 'ದುರುಧುರಾ ಯೋಗ (ಚಾ ೩,೪,೬)',
+        description: 'ಚಂದ್ರನಿಂದ 2ರಲ್ಲಿ: ${cy3PlanetsIn2.join(', ')}, 12ರಲ್ಲಿ: ${cy3PlanetsIn12.join(', ')}',
+        result: 'ಭೋಗ, ಸುಖ, ವಾಹನ ಸಂಪತ್ತು, ತ್ಯಾಗಗುಣ',
+        rashi: moonR2, planets: ['ಚಂದ್ರ'],
+      ));
+    } else if (hasKemadruma) {
+      yogas.add(Yoga(
+        shloka: 'ಕೇಮದ್ರುಮೇ ಮಲಿನದುಃಖಿತನೀಚನಿಃಸ್ವಃ ಪ್ರೇಷ್ಯಃ ಖಲಶ್ಚ ನೃಪತೇರಪಿ ವಂಶಜಾತಃ',
+        name: 'ಕೇಮದ್ರುಮ ಯೋಗ (ಚಾ ೩,೬)',
+        description: 'ಚಂದ್ರನ ಅಕ್ಕಪಕ್ಕ, ಲಗ್ನಕೇಂದ್ರ, ಮತ್ತು ಜೊತೆಯಲ್ಲಿ ಬೇರೆ ಗ್ರಹರಿಲ್ಲ',
+        result: 'ಮಲಿನ, ದುಃಖಿತ, ದರಿದ್ರ, ಸೇವಕ',
+        rashi: moonR2, planets: ['ಚಂದ್ರ'],
+      ));
+    }
+    
+    if (hasSunapha || hasAnapha || hasDurudhura) {
+      final combinedPlanets = [...cy3PlanetsIn2, ...cy3PlanetsIn12];
+      if (combinedPlanets.contains('ಕುಜ')) {
+        yogas.add(Yoga(
+          shloka: 'ಉತ್ಸಾಹಶೌರ್ಯಧನಸಾಹಸವಾನ್ಮಹೀಜೇ',
+          name: 'ಕುಜ ಸುನಫಾದಿ ಫಲ (ಚಾ ೭)',
+          description: 'ಯೋಗ ಕಾರಕ ಮಂಗಳ',
+          result: 'ಉತ್ಸಾಹ, ಶೌರ್ಯ, ಧನ, ಸಾಹಸ',
+          rashi: moonR2, planets: ['ಕುಜ'],
+        ));
+      }
+      if (combinedPlanets.contains('ಬುಧ')) {
+        yogas.add(Yoga(
+          shloka: 'ಸೌಮ್ಯ ಪಟುಃ ಸುವಚನೋ ನಿಪುಣಃ ಕಲಾಸು',
+          name: 'ಬುಧ ಸುನಫಾದಿ ಫಲ (ಚಾ ೭)',
+          description: 'ಯೋಗ ಕಾರಕ ಬುಧ',
+          result: 'ಚತುರ, ಒಳ್ಳೆಯ ಮಾತುಗಾರ, ಕಲೆಗಳಲ್ಲಿ ನಿಪುಣ',
+          rashi: moonR2, planets: ['ಬುಧ'],
+        ));
+      }
+      if (combinedPlanets.contains('ಗುರು')) {
+        yogas.add(Yoga(
+          shloka: 'ಜೀವೇsರ್ಥಧರ್ಮಸುಖಭಾಜ್ ನೃಪಪೂಜಿತಶ್ಚ',
+          name: 'ಗುರು ಸುನಫಾದಿ ಫಲ (ಚಾ ೭)',
+          description: 'ಯೋಗ ಕಾರಕ ಗುರು',
+          result: 'ಧನ, ಧರ್ಮ, ರಾಜನಿಂದ ಪೂಜೆ',
+          rashi: moonR2, planets: ['ಗುರು'],
+        ));
+      }
+      if (combinedPlanets.contains('ಶುಕ್ರ')) {
+        yogas.add(Yoga(
+          shloka: 'ಕಾಮೀ ನೃಗೌ ಬಹುಧನೋ ವಿಷಯೋಪಭೋಕ್ತಾ',
+          name: 'ಶುಕ್ರ ಸುನಫಾದಿ ಫಲ (ಚಾ ೭)',
+          description: 'ಯೋಗ ಕಾರಕ ಶುಕ್ರ',
+          result: 'ಬಹು ಧನವಂತ, ವಿಷಯ ಸುಖ',
+          rashi: moonR2, planets: ['ಶುಕ್ರ'],
+        ));
+      }
+      if (combinedPlanets.contains('ಶನಿ')) {
+        yogas.add(Yoga(
+          shloka: 'ಪರವಿಭವಪರಿಚ್ಛದೋಪಭೋಕ್ತಾ ರವಿತನಯೇ ಬಹುಕಾರ್ಯಕೃದ್ಗಣೇಶಃ',
+          name: 'ಶನಿ ಸುನಫಾದಿ ಫಲ (ಚಾ ೮)',
+          description: 'ಯೋಗ ಕಾರಕ ಶನಿ',
+          result: 'ಇತರರ ಸಂಪತ್ತು ಅನುಭವಿಸುವವನು, ಗಣನಾಯಕ',
+          rashi: moonR2, planets: ['ಶನಿ'],
+        ));
+      }
+    }
+
+    // ═══ CY Shloka 9: Vasumathi Yoga ═══
+    int cy9BenInUpachayaLag = 0;
+    int cy9BenInUpachayaMoon = 0;
+    for (final e in allPLons.entries) {
+      if ({'Jupiter', 'Venus', 'Mercury'}.contains(e.key)) {
+        final hLag = ((_rashiOf(e.value) - lagRashi) % 12) + 1;
+        if (hLag == 3 || hLag == 6 || hLag == 10 || hLag == 11) cy9BenInUpachayaLag++;
+        
+        final hMoon = ((_rashiOf(e.value) - moonR2) % 12) + 1;
+        if (hMoon == 3 || hMoon == 6 || hMoon == 10 || hMoon == 11) cy9BenInUpachayaMoon++;
+      }
+    }
+    
+    if (cy9BenInUpachayaLag > 0 || cy9BenInUpachayaMoon > 0) {
+      String cy9Desc = '';
+      String cy9Res = '';
+      if (cy9BenInUpachayaLag == 3) {
+        cy9Desc = 'ಎಲ್ಲಾ (3) ಶುಭಗ್ರಹರು ಲಗ್ನದಿಂದ ಉಪಚಯದಲ್ಲಿ (3,6,10,11)';
+        cy9Res = 'ಅತಿಶಯವಾದ ಧನವಂತ (ವಸುಮತೀ ಯೋಗ)';
+      } else if (cy9BenInUpachayaLag == 2) {
+        cy9Desc = '2 ಶುಭಗ್ರಹರು ಲಗ್ನದಿಂದ ಉಪಚಯದಲ್ಲಿ';
+        cy9Res = 'ಮಧ್ಯಮ ಧನವಂತ';
+      } else if (cy9BenInUpachayaLag == 1) {
+        cy9Desc = '1 ಶುಭಗ್ರಹ ಲಗ್ನದಿಂದ ಉಪಚಯದಲ್ಲಿ';
+        cy9Res = 'ಅಲ್ಪ ಧನವಂತ';
+      } else if (cy9BenInUpachayaMoon > 0) {
+        cy9Desc = '$cy9BenInUpachayaMoon ಶುಭಗ್ರಹರು ಚಂದ್ರನಿಂದ ಉಪಚಯದಲ್ಲಿ';
+        cy9Res = 'ಸಾಧಾರಣ ಧನವಂತ';
+      }
+      
+      if (cy9Desc.isNotEmpty) {
+        yogas.add(Yoga(
+          shloka: 'ಲಗ್ನಾದತೀವ ವಸುಮಾನ್ವಸುಮಾಞ್ಞಶಾಂಕಾತ್ಮ್ಯಗ್ರಹೈರುಪಚಯೋಪಗತೈ: ಸಮಸ್ಯೆ:',
+          name: 'ವಸುಮತೀ ಯೋಗ (ಚಾ ೯)',
+          description: cy9Desc,
+          result: cy9Res,
+          rashi: lagRashi, planets: [],
+        ));
+      }
+    }
+
     return yogas;
   }
 }
