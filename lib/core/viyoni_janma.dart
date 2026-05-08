@@ -2745,6 +2745,167 @@ class ViyoniJanma {
       ));
     }
 
+    
+    // ═══════════════════════════════════════════════════
+    // Chapter 19: ಆಶ್ರಯಯೋಗಾಧ್ಯಾಯ (Ashrayayogadhyaya)
+    // ═══════════════════════════════════════════════════
+
+    // Shloka 1 & 2: Planets in own/friend/enemy/exaltation/debilitation
+    for (final pName in _knPlanets.keys) {
+      if (pName == 'Rahu' || pName == 'Ketu') continue;
+      
+      final pLon = allPLons[pName]!;
+      final pR = _rashiOf(pLon);
+      final knP = _knPlanets[pName]!;
+      
+      if (rashiLords[pR] == pName) {
+        yogas.add(Yoga(
+          shloka: 'ಕುಲಸಮಕುಲಮುಖ್ಯ... (ಆಶ್ರಯಯೋಗಾಧ್ಯಾಯ ೧)',
+          name: 'ಸ್ವಕ್ಷೇತ್ರ ಯೋಗ ($knP)',
+          description: '$knP ತನ್ನ ಸ್ವಕ್ಷೇತ್ರದಲ್ಲಿದ್ದಾನೆ (${_rashiNames[pR]})',
+          result: 'ತಮ್ಮ ಕುಲಕ್ಕೆ ಸಮಾನರು, ಕುಲಕ್ಕೆ ಮುಖ್ಯಸ್ಥರು, ಬಂಧುಗಳಿಂದ ಪೂಜಿಸಲ್ಪಡುವವರು, ಧನವಂತರು, ಸುಖಭೋಗಿಗಳು ಮತ್ತು ರಾಜರಾಗುತ್ತಾರೆ',
+          rashi: pR, planets: [knP],
+        ));
+      }
+      
+      final friends = {
+        'Sun': ['Moon', 'Mars', 'Jupiter'],
+        'Moon': ['Sun', 'Mercury'],
+        'Mars': ['Sun', 'Moon', 'Jupiter'],
+        'Mercury': ['Sun', 'Venus'],
+        'Jupiter': ['Sun', 'Moon', 'Mars'],
+        'Venus': ['Mercury', 'Saturn'],
+        'Saturn': ['Mercury', 'Venus']
+      };
+      
+      final enemies = {
+        'Sun': ['Venus', 'Saturn'],
+        'Moon': [],
+        'Mars': ['Mercury'],
+        'Mercury': ['Moon'],
+        'Jupiter': ['Mercury', 'Venus'],
+        'Venus': ['Sun', 'Moon'],
+        'Saturn': ['Sun', 'Moon', 'Mars']
+      };
+
+      if (friends[pName]?.contains(rashiLords[pR]) ?? false) {
+        yogas.add(Yoga(
+          shloka: 'ಪರವಿಭವಸುಹೃತ್ವಬಂಧುಪೋಷ್ಯಾ... (ಆಶ್ರಯಯೋಗಾಧ್ಯಾಯ ೧)',
+          name: 'ಮಿತ್ರಕ್ಷೇತ್ರ ಯೋಗ ($knP)',
+          description: '$knP ಮಿತ್ರನ ಮನೆಯಲ್ಲಿದ್ದಾನೆ (${_rashiNames[pR]})',
+          result: 'ಪರರ ಸಂಪತ್ತನ್ನು ಅನುಭವಿಸುವವರು, ಮಿತ್ರರು ಮತ್ತು ಬಂಧುಗಳನ್ನು ಪೋಷಿಸುವವರು, ಗುಂಪಿಗೆ ಒಡೆಯರು, ಸೈನ್ಯಾಧಿಕಾರಿಗಳು ಮತ್ತು ರಾಜರಾಗುತ್ತಾರೆ',
+          rashi: pR, planets: [knP],
+        ));
+      }
+
+      final exaltations = {'Sun': 0, 'Moon': 1, 'Mars': 9, 'Mercury': 5, 'Jupiter': 3, 'Venus': 11, 'Saturn': 6};
+      final debilitations = {'Sun': 6, 'Moon': 7, 'Mars': 3, 'Mercury': 11, 'Jupiter': 9, 'Venus': 5, 'Saturn': 0};
+      
+      if (exaltations[pName] == pR) {
+        bool aspectedByFriend = false;
+        for (final f in friends[pName] ?? []) {
+          if (ch17Aspects(f.toString(), pR)) {
+            aspectedByFriend = true; break;
+          }
+        }
+        if (aspectedByFriend) {
+          yogas.add(Yoga(
+            shloka: 'ಜನಯತಿ ನೃಪಮೇಕೋ ಪುಚ್ಚಗೋ... (ಆಶ್ರಯಯೋಗಾಧ್ಯಾಯ ೨)',
+            name: 'ಉಚ್ಚ ಮಿತ್ರದೃಷ್ಟಿ ಯೋಗ ($knP)',
+            description: '$knP ಉಚ್ಚಸ್ಥಾನದಲ್ಲಿದ್ದು ಮಿತ್ರಗ್ರಹದಿಂದ ನೋಡಲ್ಪಟ್ಟಿದ್ದಾನೆ',
+            result: 'ರಾಜನನ್ನಾಗಿ ಮಾಡುತ್ತದೆ',
+            rashi: pR, planets: [knP],
+          ));
+        }
+      }
+
+      if (debilitations[pName] == pR || (enemies[pName]?.contains(rashiLords[pR]) ?? false)) {
+        yogas.add(Yoga(
+          shloka: 'ವಿವಸುವಿಸುಖಮೂಢವ್ಯಾಧಿತಾ... (ಆಶ್ರಯಯೋಗಾಧ್ಯಾಯ ೨)',
+          name: 'ನೀಚ/ಶತ್ರುಕ್ಷೇತ್ರ ಯೋಗ ($knP)',
+          description: '$knP ಶತ್ರು ಅಥವಾ ನೀಚ ಸ್ಥಾನದಲ್ಲಿದ್ದಾನೆ (${_rashiNames[pR]})',
+          result: 'ಹಣವಿಲ್ಲದವನು, ಸುಖವಿಲ್ಲದವನು, ಮೂರ್ಖ, ರೋಗಿ, ಬಂಧುಗಳಿಂದ ಪೀಡಿತನಾದವನು ಮತ್ತು ವಧೆ ಮುಂತಾದ ಕಷ್ಟಗಳನ್ನು ಅನುಭವಿಸುವವನು',
+          rashi: pR, planets: [knP],
+        ));
+      }
+    }
+
+    // Shloka 4 & 5: Hora effects
+    final lagHora = (lag % 30 < 15) ? 1 : 2; 
+    final isOddLagna = _isOddSign(lagRashi);
+    final isSunHora = (isOddLagna && lagHora == 1) || (!isOddLagna && lagHora == 2);
+    final isMoonHora = !isSunHora;
+
+    if (isOddLagna && isSunHora) {
+      yogas.add(Yoga(
+        shloka: 'ಯಾತೇಷ್ಟಸತ್ತ್ವಸಮಭೇಷು ದಿನೇಶಹೋರಾಂ... (ಆಶ್ರಯಯೋಗಾಧ್ಯಾಯ ೪)',
+        name: 'ಬೆಸ ರಾಶಿ ಸೂರ್ಯ ಹೋರಾ ಯೋಗ',
+        description: 'ಬೆಸ ರಾಶಿಯಲ್ಲಿದ್ದು ಸೂರ್ಯನ ಹೋರೆಯಲ್ಲಿ ಜನನ',
+        result: 'ಪ್ರಸಿದ್ಧನು, ಮಹಾ ಉದ್ಯಮಿ, ಬಲಶಾಲಿ, ಧನವಂತ ಮತ್ತು ಅತಿ ತೇಜಸ್ವಿಯಾಗುತ್ತಾನೆ (ಪೂರ್ಣ ಗುಣಗಳು)',
+        rashi: lagRashi,
+      ));
+    } else if (!isOddLagna && isMoonHora) {
+      yogas.add(Yoga(
+        shloka: 'ಚಾಂದ್ರೀಂ ಶುಭೇಷು ಯುಜಿ... (ಆಶ್ರಯಯೋಗಾಧ್ಯಾಯ ೪)',
+        name: 'ಸಮ ರಾಶಿ ಚಂದ್ರ ಹೋರಾ ಯೋಗ',
+        description: 'ಸಮ ರಾಶಿಯಲ್ಲಿದ್ದು ಚಂದ್ರನ ಹೋರೆಯಲ್ಲಿ ಜನನ',
+        result: 'ಮೃದು ಸ್ವಭಾವದವನು, ಕಾಂತಿಯುತ, ಸುಖಿ, ಸೌಭಾಗ್ಯವಂತ, ಬುದ್ಧಿವಂತ ಮತ್ತು ಮಧುರವಾದ ಮಾತುಗಳನ್ನಾಡುವವನು (ಪೂರ್ಣ ಗುಣಗಳು)',
+        rashi: lagRashi,
+      ));
+    } else if ((isOddLagna && isMoonHora) || (!isOddLagna && isSunHora)) {
+      yogas.add(Yoga(
+        shloka: 'ತಾನ್ವೇವ ಹೋರಾಸ್ವಪರರ್ಕ್ಷಗಾಸು... (ಆಶ್ರಯಯೋಗಾಧ್ಯಾಯ ೫)',
+        name: 'ಮಿಶ್ರ ಹೋರಾ ಯೋಗ',
+        description: 'ಬೆಸ ರಾಶಿಯಲ್ಲಿ ಚಂದ್ರನ ಹೋರೆ ಅಥವಾ ಸಮ ರಾಶಿಯಲ್ಲಿ ಸೂರ್ಯನ ಹೋರೆ',
+        result: 'ಮೇಲೆ ಹೇಳಿದ (ಸೂರ್ಯ/ಚಂದ್ರ ಹೋರೆಯ) ಗುಣಗಳು ಮಧ್ಯಮ ಪ್ರಮಾಣದಲ್ಲಿರುತ್ತವೆ',
+        rashi: lagRashi,
+      ));
+    }
+
+    // Shloka 7: Vargottama Lagna
+    final lagNav = _d9Rashi(lag);
+    if (lagRashi == lagNav) {
+      final vargResults = {
+        0: 'ಕಳ್ಳ', 1: 'ಭೋಗಿ', 2: 'ಪಂಡಿತ', 3: 'ಧನವಂತ', 4: 'ರಾಜ', 5: 'ನಪುಂಸಕ',
+        6: 'ಶೂರ', 7: 'ಕೂಲಿ ಕೆಲಸಗಾರ', 8: 'ಸೇವಕ', 9: 'ಪಾಪಿ', 10: 'ಹಿಂಸಕ', 11: 'ನಿರ್ಭೀತ'
+      };
+      
+      yogas.add(Yoga(
+        shloka: 'ಸ್ತೇನೋ ಭೋಕ್ತಾ ಪಂಡಿತಾಢ ನರೇಂದ್ರಃ... (ಆಶ್ರಯಯೋಗಾಧ್ಯಾಯ ೭)',
+        name: 'ಲಗ್ನ ವರ್ಗೋತ್ತಮ ಯೋಗ',
+        description: '${_rashiNames[lagRashi]} ಲಗ್ನ ವರ್ಗೋತ್ತಮ ನವಾಂಶದಲ್ಲಿದೆ',
+        result: vargResults[lagRashi] ?? '',
+        rashi: lagRashi,
+      ));
+    }
+
+    // Shloka 8, 9, 10: Planets in own Navamsha
+    for (final pName in _knPlanets.keys) {
+      if (pName == 'Rahu' || pName == 'Ketu') continue;
+      final pLon = allPLons[pName]!;
+      final pNav = _d9Rashi(pLon);
+      final knP = _knPlanets[pName]!;
+      
+      if (rashiLords[pNav] == pName) {
+        String navResult = '';
+        if (pName == 'Mars') navResult = 'ಹೆಂಡತಿಯುಳ್ಳವನು, ಬಲಶಾಲಿ, ಆಭರಣ ಮತ್ತು ಸತ್ತ್ವಗುಣವುಳ್ಳವನು, ತೇಜಸ್ವಿ ಮತ್ತು ಅತಿ ಸಾಹಸಿ';
+        else if (pName == 'Saturn') navResult = 'ರೋಗಿ, ಹೆಂಡತಿಯನ್ನು ಕಳೆದುಕೊಂಡವನು, ಕ್ರೂರ, ಪರಸ್ತ್ರೀರತ, ದುಃಖಿ, ಪರಿವಾರವುಳ್ಳವನು ಮತ್ತು ಮಲಿನನು';
+        else if (pName == 'Jupiter') navResult = 'ಧನ, ಯಶಸ್ಸು, ಸುಖ ಮತ್ತು ಬುದ್ಧಿಯುಳ್ಳವನು, ತೇಜಸ್ವಿ, ಪೂಜ್ಯ, ರೋಗವಿಲ್ಲದವನು, ಉದ್ಯಮಿ ಮತ್ತು ಭೋಗಿ';
+        else if (pName == 'Mercury') navResult = 'ಮೇಧಾವಿ, ಕಲೆ, ಕಪಟ, ಕಾವ್ಯ, ವಿವಾದ, ಶಿಲ್ಪ ಮತ್ತು ಶಾಸ್ತ್ರಗಳಲ್ಲಿ ಬಲ್ಲವನು, ಸಾಹಸಿ ಮತ್ತು ಅತಿ ಮಾನ್ಯನು';
+        else if (pName == 'Venus') navResult = 'ಬಹಳ ಮಕ್ಕಳು, ಸುಖ, ಆರೋಗ್ಯ, ಹೆಂಡತಿ ಮತ್ತು ಧನವುಳ್ಳವನು, ತೀಕ್ಷ್ಣ, ಸುಂದರ ಶರೀರವುಳ್ಳವನು ಮತ್ತು ಇಂದ್ರಿಯ ನಿಗ್ರಹವಿಲ್ಲದವನು';
+        else if (pName == 'Sun') navResult = 'ಶೂರ ಮತ್ತು ಜಡಸ್ವಭಾವದವನು';
+        else if (pName == 'Moon') navResult = 'ಸದ್ಗುಣವಂತ, ಸುಖಿ ಮತ್ತು ಸುಂದರ ಶರೀರವುಳ್ಳವನು';
+        
+        yogas.add(Yoga(
+          shloka: 'ಜಾಯಾನ್ವಿತೋ ಬಲವಿಭೂಷಣಸತ್ತ್ವಯುಕ್ತ... (ಆಶ್ರಯಯೋಗಾಧ್ಯಾಯ ೮-೧೦)',
+          name: 'ಸ್ವನವಾಂಶ ಯೋಗ ($knP)',
+          description: '$knP ತನ್ನದೇ ನವಾಂಶದಲ್ಲಿದ್ದಾನೆ',
+          result: navResult,
+          rashi: _rashiOf(pLon), planets: [knP],
+        ));
+      }
+    }
+
         return yogas;
   }
 }
