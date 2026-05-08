@@ -2115,6 +2115,218 @@ class ViyoniJanma {
       }
     }
 
+    // ═══════════════════════════════════════════════════
+    // Chapter 14: ದ್ವಿಗ್ರಹಯೋಗಾಧ್ಯಾಯ (Dvigraha Yogadhyaya - Two-planet combinations)
+    // ═══════════════════════════════════════════════════
+
+    bool dyAreTogether(String p1, String p2) {
+      if (!allPLons.containsKey(p1) || !allPLons.containsKey(p2)) return false;
+      return _rashiOf(allPLons[p1]!) == _rashiOf(allPLons[p2]!);
+    }
+    
+    int dyTogetherRashi(String p1, String p2) {
+      return _rashiOf(allPLons[p1]!);
+    }
+
+    // ═══ DY Shloka 1: Sun combinations ═══
+    if (dyAreTogether('Sun', 'Moon')) {
+      yogas.add(Yoga(
+        shloka: 'ತಿಗ್ಗಾಂಶುರ್ಜನಯತ್ಯಥೇಂದುಸಹಿತೋ ಯಂತ್ರಾಶ್ಚಕಾರಂ ನರಂ',
+        name: 'ರವಿ-ಚಂದ್ರ ಯೋಗ (ದ್ವಿ ೧)',
+        description: 'ರವಿ ಮತ್ತು ಚಂದ್ರ ಒಟ್ಟಿಗೆ',
+        result: 'ಯಂತ್ರ ಮತ್ತು ಕಲ್ಲುಗಳ ಕೆಲಸ ಮಾಡುವವನು',
+        rashi: dyTogetherRashi('Sun', 'Moon'), planets: ['ರವಿ', 'ಚಂದ್ರ'],
+      ));
+    }
+    if (dyAreTogether('Sun', 'Mars')) {
+      yogas.add(Yoga(
+        shloka: 'ಭೌಮೇನಾಘರತಂ',
+        name: 'ರವಿ-ಕುಜ ಯೋಗ (ದ್ವಿ ೧)',
+        description: 'ರವಿ ಮತ್ತು ಕುಜ ಒಟ್ಟಿಗೆ',
+        result: 'ಪಾಪಕಾರ್ಯಗಳಲ್ಲಿ ನಿರತ',
+        rashi: dyTogetherRashi('Sun', 'Mars'), planets: ['ರವಿ', 'ಕುಜ'],
+      ));
+    }
+    if (dyAreTogether('Sun', 'Mercury')) {
+      yogas.add(Yoga(
+        shloka: 'ಬುಧೇನ ನಿಪುಣಂ ಧೀಕೀರ್ತಿಸೌಖ್ಯಾನ್ವಿತಮ್',
+        name: 'ರವಿ-ಬುಧ ಯೋಗ (ದ್ವಿ ೧)',
+        description: 'ರವಿ ಮತ್ತು ಬುಧ ಒಟ್ಟಿಗೆ',
+        result: 'ನಿಪುಣ, ಬುದ್ಧಿವಂತ, ಕೀರ್ತಿವಂತ, ಸುಖಿ',
+        rashi: dyTogetherRashi('Sun', 'Mercury'), planets: ['ರವಿ', 'ಬುಧ'],
+      ));
+    }
+    if (dyAreTogether('Sun', 'Jupiter')) {
+      yogas.add(Yoga(
+        shloka: 'ಕ್ರೂರಂ ವಾಕೃತಿನಾನ್ಯಕಾರ್ಯನಿರತಂ',
+        name: 'ರವಿ-ಗುರು ಯೋಗ (ದ್ವಿ ೧)',
+        description: 'ರವಿ ಮತ್ತು ಗುರು ಒಟ್ಟಿಗೆ',
+        result: 'ಕ್ರೂರ, ಇತರರ ಕೆಲಸ ಮಾಡುವವನು',
+        rashi: dyTogetherRashi('Sun', 'Jupiter'), planets: ['ರವಿ', 'ಗುರು'],
+      ));
+    }
+    if (dyAreTogether('Sun', 'Venus')) {
+      yogas.add(Yoga(
+        shloka: 'ಶುಕ್ರೇಣ ರಂಗಾಯುಧ್ಯೆ ರ್ಲಸ್ವಂ',
+        name: 'ರವಿ-ಶುಕ್ರ ಯೋಗ (ದ್ವಿ ೧)',
+        description: 'ರವಿ ಮತ್ತು ಶುಕ್ರ ಒಟ್ಟಿಗೆ',
+        result: 'ರಂಗಭೂಮಿ/ಆಯುಧಗಳಿಂದ ಹಣ ಗಳಿಸುವವನು',
+        rashi: dyTogetherRashi('Sun', 'Venus'), planets: ['ರವಿ', 'ಶುಕ್ರ'],
+      ));
+    }
+    if (dyAreTogether('Sun', 'Saturn')) {
+      yogas.add(Yoga(
+        shloka: 'ರವಿಜೇನ ಧಾತುಕುಶಲಂ ಭಾಂಡಪ್ರಕಾರೇಷು ವಾ',
+        name: 'ರವಿ-ಶನಿ ಯೋಗ (ದ್ವಿ ೧)',
+        description: 'ರವಿ ಮತ್ತು ಶನಿ ಒಟ್ಟಿಗೆ',
+        result: 'ಲೋಹ ಅಥವಾ ಮಡಿಕೆಗಳ ಕೆಲಸದಲ್ಲಿ ಕುಶಲ',
+        rashi: dyTogetherRashi('Sun', 'Saturn'), planets: ['ರವಿ', 'ಶನಿ'],
+      ));
+    }
+
+    // ═══ DY Shloka 2: Moon combinations ═══
+    if (dyAreTogether('Moon', 'Mars')) {
+      yogas.add(Yoga(
+        shloka: 'ಕೂಟಾಸವಕುಂಭಪಣ್ಯಮಶಿವಂ ಮಾತುಃ ಸವಕ್ರ ಶಶೀ',
+        name: 'ಚಂದ್ರ-ಕುಜ ಯೋಗ (ದ್ವಿ ೨)',
+        description: 'ಚಂದ್ರ ಮತ್ತು ಕುಜ ಒಟ್ಟಿಗೆ',
+        result: 'ಮೋಸಗಾರ, ಮದ್ಯ/ಮಡಿಕೆ ಮಾರುವವನು, ತಾಯಿಗೆ ಅಶುಭ',
+        rashi: dyTogetherRashi('Moon', 'Mars'), planets: ['ಚಂದ್ರ', 'ಕುಜ'],
+      ));
+    }
+    if (dyAreTogether('Moon', 'Mercury')) {
+      yogas.add(Yoga(
+        shloka: 'ಸಜ್ಞ ಪ್ರಶ್ನಿತವಾಕ್ಯಮರ್ಥನಿಪುಣಂ ಸೌಭಾಗ್ಯಕೀರ್ತ್ಯನ್ವಿತಮ್',
+        name: 'ಚಂದ್ರ-ಬುಧ ಯೋಗ (ದ್ವಿ ೨)',
+        description: 'ಚಂದ್ರ ಮತ್ತು ಬುಧ ಒಟ್ಟಿಗೆ',
+        result: 'ವಿನಯದ ಮಾತು, ಹಣಕಾಸಿನಲ್ಲಿ ನಿಪುಣ, ಸೌಭಾಗ್ಯ, ಕೀರ್ತಿವಂತ',
+        rashi: dyTogetherRashi('Moon', 'Mercury'), planets: ['ಚಂದ್ರ', 'ಬುಧ'],
+      ));
+    }
+    if (dyAreTogether('Moon', 'Jupiter')) {
+      yogas.add(Yoga(
+        shloka: 'ವಿಕ್ರಾಂತಂ ಕುಲಮುಖ್ಯಮಸ್ಥಿರಮತಿಂ ವಿತ್ತೇಶ್ವರಂ ಸಾಂಗಿರಾ',
+        name: 'ಚಂದ್ರ-ಗುರು ಯೋಗ (ದ್ವಿ ೨)',
+        description: 'ಚಂದ್ರ ಮತ್ತು ಗುರು ಒಟ್ಟಿಗೆ',
+        result: 'ಪರಾಕ್ರಮಿ, ಕುಲ ಮುಖ್ಯಸ್ಥ, ಚಂಚಲ ಮನಸ್ಸು, ಧನವಂತ',
+        rashi: dyTogetherRashi('Moon', 'Jupiter'), planets: ['ಚಂದ್ರ', 'ಗುರು'],
+      ));
+    }
+    if (dyAreTogether('Moon', 'Venus')) {
+      yogas.add(Yoga(
+        shloka: 'ವಸ್ತ್ರಾಣಾಂ ಸಸಿತಃ ಕ್ರಯಾದಿಕುಶಲಂ',
+        name: 'ಚಂದ್ರ-ಶುಕ್ರ ಯೋಗ (ದ್ವಿ ೨)',
+        description: 'ಚಂದ್ರ ಮತ್ತು ಶುಕ್ರ ಒಟ್ಟಿಗೆ',
+        result: 'ವಸ್ತ್ರಗಳ ವ್ಯಾಪಾರದಲ್ಲಿ ಕುಶಲ',
+        rashi: dyTogetherRashi('Moon', 'Venus'), planets: ['ಚಂದ್ರ', 'ಶುಕ್ರ'],
+      ));
+    }
+    if (dyAreTogether('Moon', 'Saturn')) {
+      yogas.add(Yoga(
+        shloka: 'ಸಾರ್ಕಿ: ಪುನರ್ಭೂಸುತಮ್',
+        name: 'ಚಂದ್ರ-ಶನಿ ಯೋಗ (ದ್ವಿ ೨)',
+        description: 'ಚಂದ್ರ ಮತ್ತು ಶನಿ ಒಟ್ಟಿಗೆ',
+        result: 'ವಿಧವೆಯ ಮಗ',
+        rashi: dyTogetherRashi('Moon', 'Saturn'), planets: ['ಚಂದ್ರ', 'ಶನಿ'],
+      ));
+    }
+
+    // ═══ DY Shloka 3: Mars combinations ═══
+    if (dyAreTogether('Mars', 'Mercury')) {
+      yogas.add(Yoga(
+        shloka: 'ಮೂಲಾದಿಸ್ನೇಹಕೂಟೈರ್ವ್ಯವಹರತಿ ವಣಿಸ್ಟಾಹುಯೋದ್ಧಾ ಸಸೌಮ್ಯ',
+        name: 'ಕುಜ-ಬುಧ ಯೋಗ (ದ್ವಿ ೩)',
+        description: 'ಕುಜ ಮತ್ತು ಬುಧ ಒಟ್ಟಿಗೆ',
+        result: 'ಬೇರು/ಎಣ್ಣೆ ವ್ಯಾಪಾರಿ, ಮಲ್ಲಯುದ್ಧ ಮಾಡುವವನು',
+        rashi: dyTogetherRashi('Mars', 'Mercury'), planets: ['ಕುಜ', 'ಬುಧ'],
+      ));
+    }
+    if (dyAreTogether('Mars', 'Jupiter')) {
+      yogas.add(Yoga(
+        shloka: 'ಪುರ್ಯಧ್ಯಕ್ಷಃ ಸಜೀವೇ ಭವತಿ ನರಪತಿಪ್ರಾಪ್ತವಿತ್ತೋ ದ್ವಿಜೋ ವಾ',
+        name: 'ಕುಜ-ಗುರು ಯೋಗ (ದ್ವಿ ೩)',
+        description: 'ಕುಜ ಮತ್ತು ಗುರು ಒಟ್ಟಿಗೆ',
+        result: 'ನಗರಾಧ್ಯಕ್ಷ / ರಾಜನಿಂದ ಹಣ ಪಡೆಯುವ ಬ್ರಾಹ್ಮಣ',
+        rashi: dyTogetherRashi('Mars', 'Jupiter'), planets: ['ಕುಜ', 'ಗುರು'],
+      ));
+    }
+    if (dyAreTogether('Mars', 'Venus')) {
+      yogas.add(Yoga(
+        shloka: 'ಗೋಪೋ ಮಲ್ಲೋsಥ ದಕ್ಷಃ ಪರಯುವತಿರತೋ ದ್ಯೋತಕೃತ್ ಸಾಸುರೇ',
+        name: 'ಕುಜ-ಶುಕ್ರ ಯೋಗ (ದ್ವಿ ೩)',
+        description: 'ಕುಜ ಮತ್ತು ಶುಕ್ರ ಒಟ್ಟಿಗೆ',
+        result: 'ಗೋಪಾಲಕ, ಮಲ್ಲ, ದಕ್ಷ, ಪರಸ್ತ್ರೀ ರತ, ಜೂಜುಕೋರ',
+        rashi: dyTogetherRashi('Mars', 'Venus'), planets: ['ಕುಜ', 'ಶುಕ್ರ'],
+      ));
+    }
+    if (dyAreTogether('Mars', 'Saturn')) {
+      yogas.add(Yoga(
+        shloka: 'ದುಃಖಾರ್ತೋsಸತ್ಯಸಂಧಃ ಸಸವಿತೃತನಯೇ ಭೂಮಿಜೇ ನಿಂದಿತಶ್ಚ',
+        name: 'ಕುಜ-ಶನಿ ಯೋಗ (ದ್ವಿ ೩)',
+        description: 'ಕುಜ ಮತ್ತು ಶನಿ ಒಟ್ಟಿಗೆ',
+        result: 'ದುಃಖಿ, ಸುಳ್ಳುಗಾರ, ನಿಂದೆಗೆ ಒಳಗಾಗುವವನು',
+        rashi: dyTogetherRashi('Mars', 'Saturn'), planets: ['ಕುಜ', 'ಶನಿ'],
+      ));
+    }
+
+    // ═══ DY Shloka 4: Mercury & Jupiter combinations ═══
+    if (dyAreTogether('Mercury', 'Jupiter')) {
+      yogas.add(Yoga(
+        shloka: 'ಸೌಮ್ಯ ರಂಗಚರೋ ಬೃಹಸ್ಪತಿಯುತೇ ಗೀತಪ್ರಿಯೋ ನೃತ್ಯವಿ',
+        name: 'ಬುಧ-ಗುರು ಯೋಗ (ದ್ವಿ ೪)',
+        description: 'ಬುಧ ಮತ್ತು ಗುರು ಒಟ್ಟಿಗೆ',
+        result: 'ರಂಗಭೂಮಿಯಲ್ಲಿರುವವನು, ಗೀತಪ್ರಿಯ, ನೃತ್ಯ ಬಲ್ಲವನು',
+        rashi: dyTogetherRashi('Mercury', 'Jupiter'), planets: ['ಬುಧ', 'ಗುರು'],
+      ));
+    }
+    if (dyAreTogether('Mercury', 'Venus')) {
+      yogas.add(Yoga(
+        shloka: 'ದ್ವಾಲ್ಮೀ ಭೂಗಣಪಃ ಸಿತೇನ ಮೃದುನಾ',
+        name: 'ಬುಧ-ಶುಕ್ರ ಯೋಗ (ದ್ವಿ ೪)',
+        description: 'ಬುಧ ಮತ್ತು ಶುಕ್ರ ಒಟ್ಟಿಗೆ',
+        result: 'ವಾಕ್ಚಾತುರ್ಯವುಳ್ಳವನು, ಭೂಮಿ/ಜನರ ಒಡೆಯ',
+        rashi: dyTogetherRashi('Mercury', 'Venus'), planets: ['ಬುಧ', 'ಶುಕ್ರ'],
+      ));
+    }
+    if (dyAreTogether('Mercury', 'Saturn')) {
+      yogas.add(Yoga(
+        shloka: 'ಮಾಯಾಪಟುರ್ಲಂಘಕಃ',
+        name: 'ಬುಧ-ಶನಿ ಯೋಗ (ದ್ವಿ ೪)',
+        description: 'ಬುಧ ಮತ್ತು ಶನಿ ಒಟ್ಟಿಗೆ',
+        result: 'ಮಾಯೆಯಲ್ಲಿ ನಿಪುಣ, ಲಂಘಕ',
+        rashi: dyTogetherRashi('Mercury', 'Saturn'), planets: ['ಬುಧ', 'ಶನಿ'],
+      ));
+    }
+    if (dyAreTogether('Jupiter', 'Venus')) {
+      yogas.add(Yoga(
+        shloka: 'ಸದ್ವಿದ್ಯೋ ಧನದಾರವಾನ್ ಬಹುಗುಣಃ ಶುಕ್ರೇಣ ಯುಕ್ತ ಗುರೌ',
+        name: 'ಗುರು-ಶುಕ್ರ ಯೋಗ (ದ್ವಿ ೪)',
+        description: 'ಗುರು ಮತ್ತು ಶುಕ್ರ ಒಟ್ಟಿಗೆ',
+        result: 'ಒಳ್ಳೆಯ ವಿದ್ಯೆ, ಹಣ, ಹೆಂಡತಿ, ಬಹು ಗುಣ',
+        rashi: dyTogetherRashi('Jupiter', 'Venus'), planets: ['ಗುರು', 'ಶುಕ್ರ'],
+      ));
+    }
+    if (dyAreTogether('Jupiter', 'Saturn')) {
+      yogas.add(Yoga(
+        shloka: 'ಸ್ಮಶುಕರೋsಸಿತೇನ ಘಟಕೃದ್ದಾ ತಾನ್ನ ಕಾರೋsಪಿ ವಾ',
+        name: 'ಗುರು-ಶನಿ ಯೋಗ (ದ್ವಿ ೪)',
+        description: 'ಗುರು ಮತ್ತು ಶನಿ ಒಟ್ಟಿಗೆ',
+        result: 'ಕ್ಷೌರಿಕ, ಮಡಿಕೆ ಮಾಡುವವನು / ಅಡುಗೆ ಮಾಡುವವನು',
+        rashi: dyTogetherRashi('Jupiter', 'Saturn'), planets: ['ಗುರು', 'ಶನಿ'],
+      ));
+    }
+
+    // ═══ DY Shloka 5: Saturn and Venus combination ═══
+    if (dyAreTogether('Saturn', 'Venus')) {
+      yogas.add(Yoga(
+        shloka: 'ಅಸಿತಸಿತಸಮಾಗಮೇಽಲ್ಪಚಕ್ಷುರ್ಯುವತಿಜನಾಶ್ರಯಸಂಪ್ರವೃದ್ಧವಿತ್ತಃ । ಭವತಿ ಚ ಲಿಪಿಪುಸ್ತಚಿತ್ರವೇತ್ತಾ',
+        name: 'ಶನಿ-ಶುಕ್ರ ಯೋಗ (ದ್ವಿ ೫)',
+        description: 'ಶನಿ ಮತ್ತು ಶುಕ್ರ ಒಟ್ಟಿಗೆ',
+        result: 'ಸಣ್ಣ ಕಣ್ಣು, ಸ್ತ್ರೀಯರ ಆಶ್ರಯದಿಂದ ಹಣ, ಬರವಣಿಗೆ/ಪುಸ್ತಕ/ಚಿತ್ರಕಲೆ ಬಲ್ಲವನು',
+        rashi: dyTogetherRashi('Saturn', 'Venus'), planets: ['ಶನಿ', 'ಶುಕ್ರ'],
+      ));
+    }
+
     return yogas;
   }
 }
