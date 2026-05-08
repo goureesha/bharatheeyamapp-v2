@@ -2327,6 +2327,165 @@ class ViyoniJanma {
       ));
     }
 
+    // ═══════════════════════════════════════════════════
+    // Chapter 15: ಪ್ರವ್ರಜ್ಯಾಯೋಗಾಧ್ಯಾಯ (Pravrajya Yogadhyaya - Ascetic Yogas)
+    // ═══════════════════════════════════════════════════
+
+    // ═══ PY Shloka 1 & 2: Four or more strong planets in one Rashi ═══
+    final pyRashiCounts = <int, List<String>>{};
+    for (final e in allPLons.entries) {
+      if (e.key == 'Rahu' || e.key == 'Ketu') continue;
+      final r = _rashiOf(e.value);
+      pyRashiCounts.putIfAbsent(r, () => []).add(e.key);
+    }
+    
+    for (final entry in pyRashiCounts.entries) {
+      if (entry.value.length >= 4) {
+        String? strongestPlanet;
+        for (final p in entry.value) {
+          if (isStrong(p)) {
+            strongestPlanet = p;
+            break;
+          }
+        }
+        
+        if (strongestPlanet != null) {
+          final pyDikshaMap = <String, String>{
+            'Mars': 'ಶಾಕ್ಯ',
+            'Mercury': 'ಆಜೀವಕ',
+            'Jupiter': 'ಭಿಕ್ಷು',
+            'Moon': 'ವೃದ್ಧ ಶ್ರಾವಕ',
+            'Venus': 'ಚರಕ',
+            'Sun': 'ವನ್ಯಾಶನ',
+            'Saturn': 'ನಿರ್ಗ್ರಂಥ'
+          };
+          
+          final sanyasaType = pyDikshaMap[strongestPlanet] ?? 'ಸನ್ಯಾಸ';
+          
+          bool pyCombust = false;
+          if (strongestPlanet != 'Sun') {
+             final pDist = (allPLons[strongestPlanet]! - sun).abs() % 360;
+             final shortestDist = pDist > 180 ? 360 - pDist : pDist;
+             if (shortestDist < 10) pyCombust = true; 
+          }
+          
+          bool pyDefeated = false;
+          if (strongestPlanet != 'Sun' && strongestPlanet != 'Moon') {
+            for (final p2 in entry.value) {
+               if (p2 != strongestPlanet && p2 != 'Sun' && p2 != 'Moon' && isStrong(p2)) {
+                 pyDefeated = true;
+               }
+            }
+          }
+          
+          bool pyAspected = false;
+          for (final pAspect in allPLons.entries) {
+            if (!entry.value.contains(pAspect.key)) {
+               if ((_rashiOf(pAspect.value) + 6) % 12 == entry.key) pyAspected = true;
+            }
+          }
+
+          String pyResult = '$sanyasaType ದೀಕ್ಷೆ';
+          String pyDesc = '${entry.value.map((e) => _knPlanets[e]).join(', ')} ಒಂದೇ ರಾಶಿಯಲ್ಲಿ. ಬಲಶಾಲಿ ${_knPlanets[strongestPlanet]}ನಿಂದ $sanyasaType ಸನ್ಯಾಸ.';
+          
+          if (pyCombust) {
+            pyResult = 'ಸನ್ಯಾಸಿಗಳ ಮೇಲೆ ಭಕ್ತಿ';
+            pyDesc += '\nಗ್ರಹವು ಅಸ್ತಂಗತವಾಗಿರುವುದರಿಂದ, ದೀಕ್ಷೆ ಸಿಗುವುದಿಲ್ಲ, ಭಕ್ತಿ ಮಾತ್ರ.';
+          } else if (pyAspected) {
+            pyResult = 'ದೀಕ್ಷೆಯನ್ನು ಬೇಡುವವನು';
+            pyDesc += '\nಇತರ ಗ್ರಹರ ದೃಷ್ಟಿಯಿರುವುದರಿಂದ ಕೇವಲ ದೀಕ್ಷೆಯನ್ನು ಬೇಡುತ್ತಾನೆ.';
+          } else if (pyDefeated) {
+            pyResult = 'ದೀಕ್ಷೆ ಪಡೆದು ಬಿಡುವವನು';
+            pyDesc += '\nಗ್ರಹಯುದ್ಧದಲ್ಲಿ ಸೋತಿರುವುದರಿಂದ ದೀಕ್ಷೆ ಪಡೆದ ನಂತರ ಸನ್ಯಾಸ ಬಿಡುತ್ತಾನೆ.';
+          }
+
+          yogas.add(Yoga(
+            shloka: 'ಏಕಸ್ಥೆಶ್ಚತುರಾದಿಭಿರ್ಬಲಯುತೈರ್ಜಾತಾಃ ಪೃಥರ್ಯಗೈ... ರವಿಲುಪ್ತಕರದೀಕ್ಷಿತಾ ಬಲಿಭಿಸ್ತತಭಕ್ತಯೋ',
+            name: 'ಪ್ರವ್ರಜ್ಯಾ ಯೋಗ (ಪ್ರ ೧,೨)',
+            description: pyDesc,
+            result: pyResult,
+            rashi: entry.key, planets: entry.value.map((e) => _knPlanets[e]!).toList(),
+          ));
+        }
+      }
+    }
+
+    // ═══ PY Shloka 3: Lagna lord aspects Saturn or Saturn aspects weak Lagna lord ═══
+    final pyLagLord = rashiLords[lagRashi];
+    if (pyLagLord != null) {
+      final pyLagLordR = _rashiOf(allPLons[pyLagLord]!);
+      final pySatR = _rashiOf(allPLons['Saturn']!);
+      
+      bool pyLagLordAspected = false;
+      for (final e in allPLons.entries) {
+        if (e.key != pyLagLord && e.key != 'Saturn' && (_rashiOf(e.value) + 6) % 12 == pyLagLordR) pyLagLordAspected = true;
+      }
+      
+      bool pyLagLordAspectsSaturn = (pyLagLordR + 6) % 12 == pySatR;
+      bool pySatAspectsLagLord = (pySatR + 6) % 12 == pyLagLordR;
+      bool pyLagLordWeak = !isStrong(pyLagLord);
+      
+      if ((!pyLagLordAspected && pyLagLordAspectsSaturn) || (pySatAspectsLagLord && pyLagLordWeak)) {
+         yogas.add(Yoga(
+            shloka: 'ಜಗ್ಗೇಶೋsನೈರ್ಯದೃಷ್ಟೋರ್ಕಪುತ್ರಂ ಪಶ್ಯತ್ಯಾರ್ಕಿಜ್ರನ್ಮಪಂ ವಾ ಬಲೋನಮ್',
+            name: 'ಶನಿ ದೃಷ್ಟಿ ಸನ್ಯಾಸ (ಪ್ರ ೩)',
+            description: (!pyLagLordAspected && pyLagLordAspectsSaturn) 
+              ? 'ಲಗ್ನಾಧಿಪತಿಯು ಶನಿಯನ್ನು ನೋಡುತ್ತಿದ್ದಾನೆ (ಇತರ ದೃಷ್ಟಿ ಇಲ್ಲ)' 
+              : 'ಶನಿಯು ಬಲಹೀನ ಲಗ್ನಾಧಿಪತಿಯನ್ನು ನೋಡುತ್ತಿದ್ದಾನೆ',
+            result: 'ಸನ್ಯಾಸ ಯೋಗ',
+            rashi: lagRashi, planets: [_knPlanets[pyLagLord]!, 'ಶನಿ'],
+          ));
+      }
+    }
+    
+    // Moon in Saturn Drekkana, Mars/Saturn Navamsha, aspected by Saturn
+    final pyMoonDrek = _drekRashi(moonLon);
+    final pyMoonNav = _d9Rashi(moonLon);
+    final pySatR2 = _rashiOf(allPLons['Saturn']!);
+    final pySatAspMoon = (pySatR2 + 6) % 12 == moonR2 || (pySatR2 + 2) % 12 == moonR2 || (pySatR2 + 9) % 12 == moonR2;
+    
+    if (rashiLords[pyMoonDrek] == 'Saturn' && (rashiLords[pyMoonNav] == 'Mars' || rashiLords[pyMoonNav] == 'Saturn') && pySatAspMoon) {
+       yogas.add(Yoga(
+          shloka: 'ದೀಕ್ಷಾಂ ಪ್ರಾಪ್ಪೋತ್ಯಾರ್ಕಿದೃಕ್ಕಾಣಸಂಸ್ಥೆ ಭೌಮಾರ್ಕ್ಯಂಶೇ ಸೌರದೃಷ್ಟೇ ಚ ಚಂದ್ರೇ',
+          name: 'ಚಂದ್ರ-ಶನಿ ಸನ್ಯಾಸ ಯೋಗ (ಪ್ರ ೩)',
+          description: 'ಚಂದ್ರನು ಶನಿಯ ದ್ರೇಕ್ಕಾಣದಲ್ಲಿ, ಕುಜ/ಶನಿಯ ನವಾಂಶದಲ್ಲಿದ್ದು ಶನಿ ದೃಷ್ಟಿ',
+          result: 'ಸನ್ಯಾಸ ದೀಕ್ಷೆ',
+          rashi: moonR2, planets: ['ಚಂದ್ರ', 'ಶನಿ'],
+        ));
+    }
+
+    // ═══ PY Shloka 4: Rajayoga combinations for Ascetics/Pilgrimage makers ═══
+    bool pySatAspJup = (pySatR2 + 6) % 12 == _rashiOf(allPLons['Jupiter']!) || (pySatR2 + 2) % 12 == _rashiOf(allPLons['Jupiter']!) || (pySatR2 + 9) % 12 == _rashiOf(allPLons['Jupiter']!);
+    bool pySatAspMoon2 = pySatAspMoon;
+    bool pySatAspLag = (pySatR2 + 6) % 12 == lagRashi || (pySatR2 + 2) % 12 == lagRashi || (pySatR2 + 9) % 12 == lagRashi;
+    bool pyJupIn9 = ((_rashiOf(allPLons['Jupiter']!) - lagRashi) % 12) + 1 == 9;
+    
+    if (pySatAspJup && pySatAspMoon2 && pySatAspLag && pyJupIn9) {
+      yogas.add(Yoga(
+          shloka: 'ಸುರಗುರುಶಶಿಹೋರಾಸ್ವಾರ್ಕಿದೃಷ್ಟಾಸು ಧರ್ಮೇ ಗುರುರಥ ನೃಪತೀನಾಂ',
+          name: 'ತೀರ್ಥಕ್ಷೇತ್ರ ನಿರ್ಮಾಣ ಯೋಗ (ಪ್ರ ೪)',
+          description: 'ಗುರು, ಚಂದ್ರ, ಲಗ್ನದ ಮೇಲೆ ಶನಿಯ ದೃಷ್ಟಿ + 9ರಲ್ಲಿ ಗುರು',
+          result: 'ತೀರ್ಥಕ್ಷೇತ್ರಗಳನ್ನು ನಿರ್ಮಿಸುವ ಪುಣ್ಯಾತ್ಮ (ರಾಜಯೋಗವಿದ್ದರೆ)',
+          rashi: lagRashi, planets: ['ಗುರು', 'ಚಂದ್ರ', 'ಶನಿ'],
+        ));
+    }
+    
+    bool pySatIn9 = ((pySatR2 - lagRashi) % 12) + 1 == 9;
+    bool pySatUnaspected = true;
+    for (final e in allPLons.entries) {
+      if (e.key != 'Saturn' && (_rashiOf(e.value) + 6) % 12 == pySatR2) pySatUnaspected = false;
+    }
+    
+    if (pySatIn9 && pySatUnaspected) {
+      yogas.add(Yoga(
+          shloka: 'ನವಮಭವನಸಂಸ್ಥೆ ಮಂದೇಗೇsನೈರದೃಷ್ಟೇ ಭವತಿ ನರಪಯೋಗೇ ದೀಕ್ಷಿತಃ',
+          name: 'ರಾಜ ಸನ್ಯಾಸ ಯೋಗ (ಪ್ರ ೪)',
+          description: '9ನೇ ಮನೆಯಲ್ಲಿ ಶನಿ + ಇತರ ಗ್ರಹರ ದೃಷ್ಟಿಯಿಲ್ಲ',
+          result: 'ಮಹಾರಾಜನು ಸನ್ಯಾಸ ದೀಕ್ಷೆಯನ್ನು ಪಡೆಯುತ್ತಾನೆ (ರಾಜಯೋಗವಿದ್ದರೆ)',
+          rashi: pySatR2, planets: ['ಶನಿ'],
+        ));
+    }
+
     return yogas;
   }
 }
