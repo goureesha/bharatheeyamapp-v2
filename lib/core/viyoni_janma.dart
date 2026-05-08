@@ -850,6 +850,184 @@ class ViyoniJanma {
       planets: monthLordsKn16.toSet().toList(),
     ));
 
+    // ═══ Nisheka Shloka 17: Double limbs & Mute child ═══
+    final trik1 = (lagRashi + 4) % 12;
+    final trik2 = (lagRashi + 8) % 12;
+    final weakMalInTrikona = <String>[];
+    for (final e in malLons.entries) {
+      final r = _rashiOf(e.value);
+      if ((r == lagRashi || r == trik1 || r == trik2) && isWeak(e.key)) {
+        weakMalInTrikona.add(_knPlanets[e.key]!);
+      }
+    }
+    if (weakMalInTrikona.isNotEmpty) {
+      yogas.add(Yoga(
+        shloka: 'ತ್ರಿಕೋಣಗೇ ವಿಬಲೈಸ್ತತೋsಪರೈರ್ಮುಖಾಂಫ್ರಿಹಸೊರ್ದ್ವಿಗುಣಸ್ತದಾ ಭವೇತ್',
+        name: 'ದ್ವಿಗುಣ ಅಂಗ ಯೋಗ (೧೭)',
+        description: 'ದುರ್ಬಲ ಪಾಪರು ತ್ರಿಕೋಣದಲ್ಲಿ: ${weakMalInTrikona.join(", ")}',
+        result: 'ಶಿಶುವಿಗೆ ಎರಡು ಮುಖ/ಕೈ/ಕಾಲು',
+        rashi: lagRashi,
+        planets: weakMalInTrikona,
+      ));
+    }
+    if (moonR2 == 1) {
+      bool malAspM17 = false;
+      for (final e in malLons.entries) {
+        if ((_rashiOf(e.value) + 6) % 12 == 1) malAspM17 = true;
+      }
+      bool benAspM17 = false;
+      for (final e in allPLons.entries) {
+        if ({'Jupiter','Venus','Mercury'}.contains(e.key) && (_rashiOf(e.value) + 6) % 12 == 1) benAspM17 = true;
+      }
+      if (malAspM17) {
+        yogas.add(Yoga(
+          shloka: 'ಅವಾಗ್ಗವೀಂದಾವಶುಭೈರ್ಭಸಂಧಿಗೈ: ಶುಭೇಕ್ಷಿತೇ ಚೇತ್ಕುರುತೇ ಗಿರಂ ಚಿರಾತ್',
+          name: 'ಮೂಕ/ವಿಳಂಬ ವಾಕ್ ಯೋಗ (೧೭)',
+          description: 'ಚಂದ್ರ ವೃಷಭದಲ್ಲಿ + ಪಾಪ ದೃಷ್ಟಿ\nಶುಭ ದೃಷ್ಟಿ: ${benAspM17 ? "ಇದೆ → ತಡವಾಗಿ ಮಾತು" : "ಇಲ್ಲ → ಮೂಗ"}',
+          result: benAspM17 ? 'ತಡವಾಗಿ ಮಾತನಾಡುತ್ತಾನೆ' : 'ಮೂಕತ್ವ',
+          rashi: 1,
+          planets: ['ಚಂದ್ರ'],
+        ));
+      }
+    }
+
+    // ═══ Nisheka Shloka 18: Teeth/Hunchback/Lame/Dull ═══
+    final satNavR18 = _d9Rashi(sat);
+    final marsNavR18 = _d9Rashi(mars);
+    final merNavR18 = _d9Rashi(mer);
+    if (satNavR18 == merNavR18 && marsNavR18 == merNavR18) {
+      yogas.add(Yoga(
+        shloka: 'ಸೌಮ್ಯರ್ಕ್ಷಾಂಶೇ ರವಿಜರುಧಿರೌ ಚೇತ್ಸದಂತೋsತ್ರ ಜಾತಃ',
+        name: 'ಸದಂತ ಜನನ ಯೋಗ (೧೮)',
+        description: 'ಶನಿ ಮತ್ತು ಕುಜ ಬುಧನ ನವಾಂಶದಲ್ಲಿ (${_rashiNames[merNavR18]})',
+        result: 'ಹಲ್ಲುಗಳೊಂದಿಗೆ ಜನನ',
+        rashi: lagRashi,
+        planets: ['ಶನಿ', 'ಕುಜ', 'ಬುಧ'],
+      ));
+    }
+    if (lagRashi == 3 && moonR2 == 3) {
+      final sAC = (satR2 + 6) % 12 == 3 || (satR2 + 2) % 12 == 3 || (satR2 + 9) % 12 == 3;
+      final mAC = (marsR + 6) % 12 == 3 || (marsR + 3) % 12 == 3 || (marsR + 7) % 12 == 3;
+      if (sAC && mAC) {
+        yogas.add(Yoga(
+          shloka: 'ಕುಬ್ಬಃ ಸ್ವರ್ಕ್ಷೆ ಶಶಿನಿ ತನುಗೇ ಮಂದಮಾಹೇಯದೃಷ್ಟೇ',
+          name: 'ಕುಬ್ಜ ಯೋಗ (೧೮)',
+          description: 'ಕಟಕ ಲಗ್ನ + ಚಂದ್ರ ಲಗ್ನದಲ್ಲಿ + ಶನಿ ಕುಜ ದೃಷ್ಟಿ',
+          result: 'ಬೆನ್ನು ಬಗ್ಗಿರುವ ಶಿಶು',
+          rashi: 3, planets: ['ಚಂದ್ರ', 'ಶನಿ', 'ಕುಜ'],
+        ));
+      }
+    }
+    if (lagRashi == 11) {
+      final sAP = (satR2 + 6) % 12 == 11 || (satR2 + 2) % 12 == 11 || (satR2 + 9) % 12 == 11;
+      final mAP = (marsR + 6) % 12 == 11 || (marsR + 3) % 12 == 11 || (marsR + 7) % 12 == 11;
+      final moAP = (moonR2 + 6) % 12 == 11;
+      if (sAP && mAP && moAP) {
+        yogas.add(Yoga(
+          shloka: 'ಪಂಗುರ್ಮೀನೇ ಯಮಶಶಿಕುಜೈರ್ವೀಕ್ಷಿತೇ ಲಗ್ನಸಂಸ್ಥೆ',
+          name: 'ಪಂಗು ಯೋಗ (೧೮)',
+          description: 'ಮೀನ ಲಗ್ನ + ಶನಿ, ಚಂದ್ರ, ಕುಜ ದೃಷ್ಟಿ',
+          result: 'ಕುಂಟ ಶಿಶು',
+          rashi: 11, planets: ['ಶನಿ', 'ಚಂದ್ರ', 'ಕುಜ'],
+        ));
+      }
+    }
+
+    // ═══ Nisheka Shloka 19: Dwarf & Missing limbs ═══
+    if (lagRashi == 9) {
+      final sACap = satR2 == 9 || (satR2 + 6) % 12 == 9;
+      final moACap = moonR2 == 9 || (moonR2 + 6) % 12 == 9;
+      final suACap = sunR == 9 || (sunR + 6) % 12 == 9;
+      if (sACap && moACap && suACap) {
+        yogas.add(Yoga(
+          shloka: 'ಸೌರಶಶಾಂಕದಿವಾಕರದೃಷ್ಟೇ ವಾಮನಕೋ ಮಕರಾಂತ್ಯವಿಲಗ್ನ',
+          name: 'ವಾಮನ ಯೋಗ (೧೯)',
+          description: 'ಮಕರ ಲಗ್ನ + ಶನಿ, ಚಂದ್ರ, ರವಿ ದೃಷ್ಟಿ/ಸ್ಥಿತಿ',
+          result: 'ಕುಳ್ಳ ಶಿಶು',
+          rashi: 9, planets: ['ಶನಿ', 'ಚಂದ್ರ', 'ರವಿ'],
+        ));
+      }
+    }
+    final malIn159 = <String>[];
+    for (final e in malLons.entries) {
+      final hFL = ((_rashiOf(e.value) - lagRashi) % 12) + 1;
+      if (hFL == 1) malIn159.add('${_knPlanets[e.key]} 1ನೇ (ತಲೆ)');
+      if (hFL == 5) malIn159.add('${_knPlanets[e.key]} 5ನೇ (ಕೈಗಳು)');
+      if (hFL == 9) malIn159.add('${_knPlanets[e.key]} 9ನೇ (ಕಾಲುಗಳು)');
+    }
+    if (malIn159.length >= 2) {
+      yogas.add(Yoga(
+        shloka: 'ಧೀನವಮೋದಯಗೈಶ್ಚ ದೃಗಾಣೈ: ಪಾಪಯುತೈರಭುಜಾಂಘಿಶಿರಾಃ ಸ್ಯಾತ್',
+        name: 'ಅಂಗಹೀನ ಯೋಗ (೧೯)',
+        description: 'ಪಾಪರು 1/5/9:\n${malIn159.join("\n")}',
+        result: 'ಅಂಗಹೀನ ಶಿಶು',
+        rashi: lagRashi,
+        planets: malIn159.map((s) => s.split(' ').first).toList(),
+      ));
+    }
+
+    // ═══ Nisheka Shloka 20: Blindness & Eye defects ═══
+    if (lagRashi == 4 && sunR == 4 && moonR2 == 4) {
+      final mAL = (marsR + 6) % 12 == 4 || (marsR + 3) % 12 == 4 || (marsR + 7) % 12 == 4;
+      final sAL = (satR2 + 6) % 12 == 4 || (satR2 + 2) % 12 == 4 || (satR2 + 9) % 12 == 4;
+      if (mAL && sAL) {
+        yogas.add(Yoga(
+          shloka: 'ರವಿಶಶಿಯುತೇ ಸಿಂಹೇ ಲಗ್ನ ಕುಜಾರ್ಕಿನಿರೀಕ್ಷಿತೇ ನಯನರಹಿತಃ',
+          name: 'ಅಂಧತ್ವ ಯೋಗ (೨೦)',
+          description: 'ಸಿಂಹ ಲಗ್ನ + ರವಿ,ಚಂದ್ರ ಲಗ್ನದಲ್ಲಿ + ಕುಜ,ಶನಿ ದೃಷ್ಟಿ',
+          result: 'ಶಿಶು ಕುರುಡ',
+          rashi: 4, planets: ['ರವಿ', 'ಚಂದ್ರ', 'ಕುಜ', 'ಶನಿ'],
+        ));
+      }
+    }
+    final moIn12 = ((moonR2 - lagRashi) % 12) + 1 == 12;
+    final suIn12 = ((sunR - lagRashi) % 12) + 1 == 12;
+    if (moIn12 || suIn12) {
+      yogas.add(Yoga(
+        shloka: 'ವ್ಯಯಗೃಹಗತಶ್ಚಂದ್ರೋ ವಾಮಂ ಒನಸ್ತ್ರಪರಂ ರವಿ',
+        name: 'ನೇತ್ರ ದೋಷ ಯೋಗ (೨೦)',
+        description: '${moIn12 ? "ಚಂದ್ರ 12ನೇ → ಎಡಗಣ್ಣು" : ""}${(moIn12 && suIn12) ? "\n" : ""}${suIn12 ? "ರವಿ 12ನೇ → ಬಲಗಣ್ಣು" : ""}',
+        result: '${moIn12 ? "ಎಡ" : ""}${(moIn12 && suIn12) ? "/" : ""}${suIn12 ? "ಬಲ" : ""}ಗಣ್ಣು ದೋಷ',
+        rashi: lagRashi,
+        planets: [if (moIn12) 'ಚಂದ್ರ', if (suIn12) 'ರವಿ'],
+      ));
+    }
+
+    // ═══ Nisheka Shloka 21: Birth timing from Dwadashamsha ═══
+    final moonD12 = ((moonLon % 30) / 2.5).floor();
+    final d12Rashi = (moonR2 + moonD12) % 12;
+    yogas.add(Yoga(
+      shloka: 'ತತ್ಕಾಲ ಇಂದುಸಹಿತೋ ದ್ವಿರಸಾಂಶಕೋ ಯಸ್ತತ್ತುಲ್ಯರಾಶಿಸಹಿತೇ ಪುರತಃ ಶಶಾಂಕೇ',
+      name: 'ಜನನ ಕಾಲ ನಿರ್ಣಯ (೨೧)',
+      description: 'ಗರ್ಭಧಾರಣೆ ಚಂದ್ರ ದ್ವಾದಶಾಂಶ: ${_rashiNames[d12Rashi]}\nಚಂದ್ರ ಈ ರಾಶಿಗೆ ಬಂದಾಗ ಜನನ',
+      result: 'ಜನನ: ಚಂದ್ರ ${_rashiNames[d12Rashi]} ರಾಶಿಯಲ್ಲಿರುವಾಗ',
+      rashi: d12Rashi, planets: ['ಚಂದ್ರ'],
+    ));
+
+    // ═══ Nisheka Shloka 22: Delayed birth ═══
+    final satNav22 = _d9Rashi(sat);
+    final satIn7th = ((satR2 - lagRashi) % 12) + 1 == 7;
+    if (satNav22 == lagRashi && satIn7th) {
+      yogas.add(Yoga(
+        shloka: 'ಉದಯತಿ ಮೃದುಭಾಂಶೇ ಸಪ್ತಮಸೇ ಚ ಮಂದೇ ಯದಿ ಭವತಿ ನಿಷೇಕಃ ಸೂತಿರಬತ್ರಯೇಣ',
+        name: 'ವಿಳಂಬ ಜನನ ಯೋಗ - ಶನಿ (೨೨)',
+        description: 'ಶನಿ ನವಾಂಶ ಲಗ್ನವಾಗಿದ್ದು ಶನಿ 7ನೇ ಮನೆಯಲ್ಲಿ',
+        result: 'ಮೂರು ವರ್ಷಗಳ ನಂತರ ಜನನ',
+        rashi: lagRashi, planets: ['ಶನಿ'],
+      ));
+    }
+    final moonNav22 = _d9Rashi(moonLon);
+    final moonIn7th = ((moonR2 - lagRashi) % 12) + 1 == 7;
+    if (moonNav22 == lagRashi && moonIn7th) {
+      yogas.add(Yoga(
+        shloka: 'ಶಶಿನಿ ತು ವಿಧಿರೇವಂ ದ್ವಾದಶಾದ್ದೇ ಪ್ರಕುರ್ಯಾತ್',
+        name: 'ವಿಳಂಬ ಜನನ ಯೋಗ - ಚಂದ್ರ (೨೨)',
+        description: 'ಚಂದ್ರ ನವಾಂಶ ಲಗ್ನವಾಗಿದ್ದು ಚಂದ್ರ 7ನೇ ಮನೆಯಲ್ಲಿ',
+        result: 'ಹನ್ನೆರಡು ವರ್ಷಗಳ ನಂತರ ಜನನ',
+        rashi: lagRashi, planets: ['ಚಂದ್ರ'],
+      ));
+    }
+
     return yogas;
   }
 }
