@@ -2579,7 +2579,7 @@ class ViyoniJanma {
 
 
 
-    final allPLons = {'Sun': sun, 'Moon': moonLon, 'Mars': mars, 'Mercury': mer, 'Jupiter': jup, 'Venus': ven, 'Saturn': sat, 'Rahu': rahu, 'Ketu': ketu};
+
 
     // ═══════════════════════════════════════════════════
     // Chapter 18: ಭಾವಫಲಾಧ್ಯಾಯ (Bhavaphaladhyaya - Results of Planets in Houses)
@@ -2780,9 +2780,9 @@ class ViyoniJanma {
         'Saturn': ['Mercury', 'Venus']
       };
       
-      final enemies = {
+      final enemies = <String, List<String>>{
         'Sun': ['Venus', 'Saturn'],
-        'Moon': [],
+        'Moon': <String>[],
         'Mars': ['Mercury'],
         'Mercury': ['Moon'],
         'Jupiter': ['Mercury', 'Venus'],
@@ -2806,7 +2806,7 @@ class ViyoniJanma {
       if (exaltations[pName] == pR) {
         bool aspectedByFriend = false;
         for (final f in friends[pName] ?? []) {
-          if (ch17Aspects(f.toString(), pR)) {
+          if (ch17Aspects(f, pR)) {
             aspectedByFriend = true; break;
           }
         }
