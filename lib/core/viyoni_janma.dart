@@ -937,7 +937,7 @@ class ViyoniJanma {
 
     // ═══ Nisheka Shloka 19: Dwarf & Missing limbs ═══
     if (lagRashi == 9 || lagRashi == 10) { // Makara (Capricorn) or Kumbha (Aquarius)
-      final sACap = satR2 == 9 || (satR2 + 6) % 12 == 9;
+      final sACap = satR2 == 9 || (satR2 + 6) % 12 == 9 || (satR2 + 2) % 12 == 9 || (satR2 + 9) % 12 == 9;
       final moACap = moonR2 == 9 || (moonR2 + 6) % 12 == 9;
       final suACap = sunR == 9 || (sunR + 6) % 12 == 9;
       if (sACap && moACap && suACap) {
@@ -1208,10 +1208,10 @@ class ViyoniJanma {
     final jk11Human = {2, 5, 6, 8, 11};
     if (jk11Human.contains(lagRashi)) {
       final jk11Asp = <String, String>{};
-      if ((marsR + 6) % 12 == lagRashi) jk11Asp['ಕುಜ'] = 'ಸ್ಮಶಾನ';
+      if ((marsR + 6) % 12 == lagRashi || (marsR + 3) % 12 == lagRashi || (marsR + 7) % 12 == lagRashi) jk11Asp['ಕುಜ'] = 'ಸ್ಮಶಾನ';
       if ((jk1VenR + 6) % 12 == lagRashi) jk11Asp['ಶುಕ್ರ'] = 'ರಮ್ಯ ಸ್ಥಳ';
       if ((moonR2 + 6) % 12 == lagRashi) jk11Asp['ಚಂದ್ರ'] = 'ರಮ್ಯ ಸ್ಥಳ';
-      if ((jk5JupR + 6) % 12 == lagRashi) jk11Asp['ಗುರು'] = 'ಯಾಗಶಾಲೆ';
+      if ((jk5JupR + 6) % 12 == lagRashi || (jk5JupR + 4) % 12 == lagRashi || (jk5JupR + 8) % 12 == lagRashi) jk11Asp['ಗುರು'] = 'ಯಾಗಶಾಲೆ';
       if ((sunR + 6) % 12 == lagRashi) jk11Asp['ರವಿ'] = 'ರಾಜಮಂದಿರ';
       if ((jk1MerR + 6) % 12 == lagRashi) jk11Asp['ಬುಧ'] = 'ಶಿಲ್ಪಾಲಯ';
       if (jk11Asp.isNotEmpty) {
@@ -1298,7 +1298,7 @@ class ViyoniJanma {
     final jk16MoonNav = _d9Rashi(moonLon);
     final jk16SatNavRashis = [9, 10]; // Capricorn, Aquarius (Saturn's signs)
     final jk16MoonIn4 = ((moonR2 - lagRashi) % 12) + 1 == 4;
-    final jk16SatAspMoon = (satR2 + 6) % 12 == moonR2;
+    final jk16SatAspMoon = (satR2 + 6) % 12 == moonR2 || (satR2 + 2) % 12 == moonR2 || (satR2 + 9) % 12 == moonR2;
     final jk16LagWater = jk7Water.contains(lagRashi) && satR2 == lagRashi;
     if ((jk16SatNavRashis.contains(jk16MoonNav) && jk16MoonIn4 && jk16SatAspMoon) || jk16LagWater) {
       yogas.add(Yoga(
