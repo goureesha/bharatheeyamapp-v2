@@ -513,7 +513,8 @@ class ViyoniJanma {
 
     // ═══ Nisheka Shloka 7: Saturn in lagna + waning Moon & Mars aspect ═══
     final satInLag = _rashiOf(sat) == lagRashi;
-    final moonWaning = moonLon > sun; // simplified waning check
+    final moonWaneDiff = (moonLon - sun + 360) % 360;
+    final moonWaning = moonWaneDiff > 180; // Krishna Paksha = waning
     final marsAspLag = (marsR + 6) % 12 == lagRashi || (marsR + 3) % 12 == lagRashi || (marsR + 7) % 12 == lagRashi;
     final moonAspLag = (moonR2 + 6) % 12 == lagRashi;
     if (satInLag && moonWaning && (marsAspLag || moonAspLag)) {
@@ -659,7 +660,7 @@ class ViyoniJanma {
     bool _isDualSign(int r) => r == 2 || r == 5 || r == 8 || r == 11;
 
     final sunOdd = _isOddSign(sunR);
-    final jupOdd = _isOddSign(jupHouse == 0 ? _rashiOf(jup) : _rashiOf(jup)); // safe fallback
+    final jupOdd = _isOddSign(_rashiOf(jup));
     final jupR = _rashiOf(jup);
     final moonOdd = _isOddSign(moonR2);
     final lagOdd = _isOddSign(lagRashi);
