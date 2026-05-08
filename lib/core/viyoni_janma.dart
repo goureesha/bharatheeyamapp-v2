@@ -1028,6 +1028,215 @@ class ViyoniJanma {
       ));
     }
 
+    // ═══════════════════════════════════════════════════
+    // Chapter 5: ಜನ್ಮಕಾಲಲಕ್ಷಣಾಧ್ಯಾಯ (Birth-time indicators)
+    // ═══════════════════════════════════════════════════
+
+    // ═══ JK Shloka 1: Father absent at birth ═══
+    final jk1MoonAspLag = (moonR2 + 6) % 12 == lagRashi;
+    final jk1IsChara = lagRashi == 0 || lagRashi == 3 || lagRashi == 6 || lagRashi == 9;
+    final jk1SunH = ((sunR - lagRashi) % 12) + 1;
+    final jk1SatInLag = satR2 == lagRashi;
+    final jk1MarsIn7 = ((marsR - lagRashi) % 12) + 1 == 7;
+    final jk1MerR = _rashiOf(mer);
+    final jk1VenR = _rashiOf(ven);
+    final jk1MoonBtw = (moonR2 > jk1MerR && moonR2 < jk1VenR) || (moonR2 > jk1VenR && moonR2 < jk1MerR);
+    if (!jk1MoonAspLag || (jk1SatInLag && jk1MarsIn7) || jk1MoonBtw) {
+      final reasons = <String>[];
+      if (!jk1MoonAspLag) reasons.add('ಚಂದ್ರ ಲಗ್ನ ದೃಷ್ಟಿ ಇಲ್ಲ');
+      if (jk1IsChara) reasons.add('ಚರ ಲಗ್ನ → ತಂದೆ ವಿದೇಶ');
+      if (jk1SunH >= 8 && jk1SunH <= 12) reasons.add('ರವಿ ${jk1SunH}ನೇ ಮನೆ → ತಂದೆ ಊರಿನಲ್ಲಿ ಬೇರೆಡೆ');
+      if (jk1SatInLag && jk1MarsIn7) reasons.add('ಶನಿ ಲಗ್ನ + ಕುಜ 7ನೇ');
+      if (jk1MoonBtw) reasons.add('ಚಂದ್ರ ಬುಧ-ಶುಕ್ರರ ಮಧ್ಯೆ');
+      yogas.add(Yoga(
+        shloka: 'ಪಿತುರ್ಜಾತಃ ಪರೋಕ್ಷಸ್ಯ ಲಗ್ನಮಿಂದಾವಪಶ್ಯತಿ',
+        name: 'ಪಿತೃ ಪರೋಕ್ಷ ಯೋಗ (ಜಕ ೧)',
+        description: reasons.join('\n'),
+        result: 'ತಂದೆ ಪರೋಕ್ಷದಲ್ಲಿರುವಾಗ ಜನನ',
+        rashi: lagRashi, planets: ['ಚಂದ್ರ', 'ರವಿ'],
+      ));
+    }
+
+    // ═══ JK Shloka 2: Born with snake ═══
+    final jk2ScorpDrek = lagRashi == 7 || moonR2 == 7;
+    final jk2BenIn2or11 = <String>[];
+    for (final e in allPLons.entries) {
+      if ({'Jupiter','Venus','Mercury','Moon'}.contains(e.key)) {
+        final h = ((_rashiOf(e.value) - lagRashi) % 12) + 1;
+        if (h == 2 || h == 11) jk2BenIn2or11.add(_knPlanets[e.key]!);
+      }
+    }
+    if (jk2ScorpDrek && jk2BenIn2or11.isNotEmpty) {
+      yogas.add(Yoga(
+        shloka: 'ಶಶಾಂಕೇ ಪಾಪಲಗ್ನ ವಾ ವೃಶ್ಚಿಕೇಶತ್ರಿಭಾಗಗೇ',
+        name: 'ಸರ್ಪ ವೇಷ್ಟಿತ ಯೋಗ (ಜಕ ೨)',
+        description: 'ವೃಶ್ಚಿಕ ದ್ರೇಕ್ಕಾಣ + ಶುಭರು 2/11: ${jk2BenIn2or11.join(",")}',
+        result: 'ಹಾವಿನೊಂದಿಗೆ ಜನನ',
+        rashi: 7, planets: ['ಚಂದ್ರ', ...jk2BenIn2or11],
+      ));
+    }
+
+    // ═══ JK Shloka 3: Twins in membrane ═══
+    final jk3Quad = {0, 1, 4, 9};
+    final jk3Dual = {2, 5, 8, 11};
+    int jk3StrongDual = 0;
+    for (final e in allPLons.entries) {
+      if (e.key == 'Sun') continue;
+      if (jk3Dual.contains(_rashiOf(e.value)) && isStrong(e.key)) jk3StrongDual++;
+    }
+    if (jk3Quad.contains(sunR) && jk3StrongDual >= 2) {
+      yogas.add(Yoga(
+        shloka: 'ಚತುಷ್ಪದಗತೇ ಭಾನೌ ಶೇಪೈರ್ವೀಯ್ರಸಮನ್ವಿತೈಃ',
+        name: 'ಪೊರೆ ಅವಳಿ ಯೋಗ (ಜಕ ೩)',
+        description: 'ರವಿ ಚತುಷ್ಪಾದ ರಾಶಿ (${_rashiNames[sunR]}) + $jk3StrongDual ಬಲಶಾಲಿರು ದ್ವಿಸ್ವಭಾವದಲ್ಲಿ',
+        result: 'ಪೊರೆಯಿಂದ ಸುತ್ತಲ್ಪಟ್ಟ ಅವಳಿ',
+        rashi: sunR, planets: ['ರವಿ'],
+      ));
+    }
+
+    // ═══ JK Shloka 4: Umbilical cord wrapped ═══
+    if ({0, 1, 4}.contains(lagRashi)) {
+      if (marsR == lagRashi || satR2 == lagRashi) {
+        yogas.add(Yoga(
+          shloka: 'ಛಾಗಸಿಂಹವೃಷೇ ಲಗ್ನ ತತ್ ಸೌರೇsಥವಾ ಕುಜೇ',
+          name: 'ನಾಲ ವೇಷ್ಟಿತ ಯೋಗ (ಜಕ ೪)',
+          description: '${_rashiNames[lagRashi]} ಲಗ್ನ + ${marsR == lagRashi ? "ಕುಜ" : "ಶನಿ"} ಲಗ್ನದಲ್ಲಿ',
+          result: 'ಕರುಳಬಳ್ಳಿ ಸುತ್ತಿಕೊಂಡ ಶಿಶು',
+          rashi: lagRashi, planets: [marsR == lagRashi ? 'ಕುಜ' : 'ಶನಿ'],
+        ));
+      }
+    }
+
+    // ═══ JK Shloka 5: Illegitimate birth ═══
+    final jk5JupR = _rashiOf(jup);
+    final jk5JupAspL = (jk5JupR + 6) % 12 == lagRashi || (jk5JupR + 4) % 12 == lagRashi || (jk5JupR + 8) % 12 == lagRashi;
+    final jk5JupAspM = (jk5JupR + 6) % 12 == moonR2 || (jk5JupR + 4) % 12 == moonR2 || (jk5JupR + 8) % 12 == moonR2;
+    final jk5MoonSun = moonR2 == sunR;
+    final jk5MalSun = jk5MoonSun && malLons.entries.any((e) => _rashiOf(e.value) == moonR2);
+    if ((!jk5JupAspL && !jk5JupAspM) || jk5MalSun) {
+      yogas.add(Yoga(
+        shloka: 'ನ ಲಗ್ನಮಿಂದುಂ ಚ ಗುರುರ್ನಿರೀಕ್ಷತೇ',
+        name: 'ಅನ್ಯಜಾತ ಯೋಗ (ಜಕ ೫)',
+        description: '${!jk5JupAspL && !jk5JupAspM ? "ಗುರು ಲಗ್ನ/ಚಂದ್ರ ದೃಷ್ಟಿ ಇಲ್ಲ" : ""}${jk5MalSun ? "\nಚಂದ್ರ+ಪಾಪ+ರವಿ ಒಟ್ಟಿಗೆ" : ""}',
+        result: 'ಅನ್ಯ ಪುರುಷನ ಸಂತಾನ',
+        rashi: lagRashi, planets: ['ಗುರು', 'ಚಂದ್ರ', 'ರವಿ'],
+      ));
+    }
+
+    // ═══ JK Shloka 6: Father in bondage ═══
+    final jk6Mal579 = <String>[];
+    for (final e in malLons.entries) {
+      final hFS = ((_rashiOf(e.value) - sunR) % 12) + 1;
+      if (hFS == 5 || hFS == 7 || hFS == 9) jk6Mal579.add(_knPlanets[e.key]!);
+    }
+    if (jk6Mal579.isNotEmpty) {
+      final jk6R = _rashiOf(malLons.values.first);
+      final jk6Place = (jk6R == 0 || jk6R == 3 || jk6R == 6 || jk6R == 9) ? 'ದಾರಿಯಲ್ಲಿ' : (jk6R == 1 || jk6R == 4 || jk6R == 7 || jk6R == 10) ? 'ತನ್ನ ಊರಿನಲ್ಲಿ' : 'ವಿದೇಶದಲ್ಲಿ';
+      yogas.add(Yoga(
+        shloka: 'ಕ್ರೂರರ್ಕ್ಷಗತಾವಶೋಭನೌ ಸೂರ್ಯಾದ್ ದ್ಯೋನನವಾತ್ಮಜಸ್ಥಿತೌ',
+        name: 'ಪಿತೃ ಬಂಧನ ಯೋಗ (ಜಕ ೬)',
+        description: 'ಪಾಪರು ರವಿಯಿಂದ 5/7/9: ${jk6Mal579.join(",")}\nಸ್ಥಳ: $jk6Place',
+        result: 'ತಂದೆ $jk6Place ಬಂಧನದಲ್ಲಿ',
+        rashi: sunR, planets: ['ರವಿ', ...jk6Mal579],
+      ));
+    }
+
+    // ═══ JK Shloka 7: Birth on ship ═══
+    final jk7Water = {3, 7, 11};
+    final jk7Full = (moonLon - sun).abs() > 150;
+    final jk7MoonCan = moonR2 == 3;
+    final jk7MerLag = jk1MerR == lagRashi;
+    final jk7LagW = jk7Water.contains(lagRashi);
+    final jk7MoonIn7 = ((moonR2 - lagRashi) % 12) + 1 == 7;
+    if ((jk7Full && jk7MoonCan && jk7MerLag) || (jk7LagW && jk7MoonIn7)) {
+      yogas.add(Yoga(
+        shloka: 'ಪೂರ್ಣೇ ಶಶಿನಿ ಸ್ವರಾಶಿಗೇ ಸೌಮ್ಯ ಲಗ್ನಗತೇ ಶುಭೇ ಸುಖೇ',
+        name: 'ಹಡಗು ಜನನ ಯೋಗ (ಜಕ ೭)',
+        description: '${jk7Full && jk7MoonCan ? "ಪೂರ್ಣ ಚಂದ್ರ ಕಟಕದಲ್ಲಿ" : "ಜಲ ಲಗ್ನ + ಚಂದ್ರ 7ನೇ"}',
+        result: 'ಹಡಗಿನಲ್ಲಿ ಜನನ',
+        rashi: lagRashi, planets: ['ಚಂದ್ರ', 'ಬುಧ'],
+      ));
+    }
+
+    // ═══ JK Shloka 8: Birth near water ═══
+    final jk8MoonInLag = moonR2 == lagRashi;
+    final jk8MoonH = ((moonR2 - lagRashi) % 12) + 1;
+    if ((jk7LagW && jk8MoonInLag) || (jk7Full && jk7LagW) || jk8MoonH == 10 || jk8MoonH == 4 || jk8MoonH == 1) {
+      yogas.add(Yoga(
+        shloka: 'ಆಪ್ಪೋದಯಮಾನ್ಯಗಃ ಶಶೀ ಸಂಪೂರ್ಣ: ಸಮವೇಕ್ಷತೇಥವಾ',
+        name: 'ಜಲ ಸಮೀಪ ಜನನ ಯೋಗ (ಜಕ ೮)',
+        description: 'ಚಂದ್ರ ${jk8MoonH}ನೇ ಮನೆ${jk7LagW ? " + ಜಲ ಲಗ್ನ" : ""}',
+        result: 'ನೀರಿನ ಸಮೀಪ ಜನನ',
+        rashi: lagRashi, planets: ['ಚಂದ್ರ'],
+      ));
+    }
+
+    // ═══ JK Shloka 9: Birth in hidden/pit ═══
+    final jk9Sat12L = ((satR2 - lagRashi) % 12) + 1 == 12;
+    final jk9Sat12M = ((satR2 - moonR2) % 12) + 1 == 12;
+    final jk9SatSC = (lagRashi == 7 || lagRashi == 3) && satR2 == lagRashi;
+    if ((jk9Sat12L && jk9Sat12M) || jk9SatSC) {
+      yogas.add(Yoga(
+        shloka: 'ಉದಯೋಡುಪಯೋರ್ವ್ಯಯಸ್ಥಿತೇ ಗುಪ್ತಾಂ ಪಾಪನಿರೀಕ್ಷಿತೇ ಯಮೇ',
+        name: 'ಗುಪ್ತ/ಗುಂಡಿ ಜನನ ಯೋಗ (ಜಕ ೯)',
+        description: '${jk9Sat12L ? "ಶನಿ ಲಗ್ನದಿಂದ 12ನೇ" : "ಶನಿ ${_rashiNames[lagRashi]} ಲಗ್ನದಲ್ಲಿ"}',
+        result: 'ಗುಪ್ತ ಪ್ರದೇಶ/ಗುಂಡಿಯಲ್ಲಿ ಜನನ',
+        rashi: lagRashi, planets: ['ಶನಿ', 'ಚಂದ್ರ'],
+      ));
+    }
+
+    // ═══ JK Shloka 10: Birth place by aspect on water lagna ═══
+    if (jk7LagW && satR2 == lagRashi) {
+      final jk10MerAsp = (jk1MerR + 6) % 12 == lagRashi;
+      final jk10SunAsp = (sunR + 6) % 12 == lagRashi;
+      final jk10MoonAsp = (moonR2 + 6) % 12 == lagRashi;
+      final jk10Place = jk10MerAsp ? 'ಆಟದ ಮೈದಾನ' : jk10SunAsp ? 'ದೇವಸ್ಥಾನ' : jk10MoonAsp ? 'ಬಂಜರು ಭೂಮಿ' : '';
+      if (jk10Place.isNotEmpty) {
+        yogas.add(Yoga(
+          shloka: 'ಮಂದೇsಬ್ಬಗತೇ ವಿಲಗ್ನಗೇ ಬುಧಸೂರ್ಯೇಂದುನಿರೀಕ್ಷಿತೇ ಕ್ರಮಾತ್',
+          name: 'ಜನನ ಸ್ಥಳ ಯೋಗ (ಜಕ ೧೦)',
+          description: 'ಜಲ ಲಗ್ನ + ಶನಿ + ${jk10MerAsp ? "ಬುಧ" : jk10SunAsp ? "ರವಿ" : "ಚಂದ್ರ"} ದೃಷ್ಟಿ',
+          result: '$jk10Place ದಲ್ಲಿ ಜನನ',
+          rashi: lagRashi, planets: ['ಶನಿ'],
+        ));
+      }
+    }
+
+    // ═══ JK Shloka 11: Birth place by planet aspecting human lagna ═══
+    final jk11Human = {2, 5, 6, 8, 11};
+    if (jk11Human.contains(lagRashi)) {
+      final jk11Asp = <String, String>{};
+      if ((marsR + 6) % 12 == lagRashi) jk11Asp['ಕುಜ'] = 'ಸ್ಮಶಾನ';
+      if ((jk1VenR + 6) % 12 == lagRashi) jk11Asp['ಶುಕ್ರ'] = 'ರಮ್ಯ ಸ್ಥಳ';
+      if ((moonR2 + 6) % 12 == lagRashi) jk11Asp['ಚಂದ್ರ'] = 'ರಮ್ಯ ಸ್ಥಳ';
+      if ((jk5JupR + 6) % 12 == lagRashi) jk11Asp['ಗುರು'] = 'ಯಾಗಶಾಲೆ';
+      if ((sunR + 6) % 12 == lagRashi) jk11Asp['ರವಿ'] = 'ರಾಜಮಂದಿರ';
+      if ((jk1MerR + 6) % 12 == lagRashi) jk11Asp['ಬುಧ'] = 'ಶಿಲ್ಪಾಲಯ';
+      if (jk11Asp.isNotEmpty) {
+        yogas.add(Yoga(
+          shloka: 'ನೃಲಗ್ನಗಂ ಪ್ರೇಕ್ಷ್ಯ ಕುಜಃ ಸ್ಮಶಾನೇ ರಮ್ಯ ಸಿತೇಂದೂ ಗುರುರಗ್ನಿಹೋತೇ',
+          name: 'ಜನನ ಸ್ಥಳ ಯೋಗ (ಜಕ ೧೧)',
+          description: jk11Asp.entries.map((e) => '${e.key} → ${e.value}').join('\n'),
+          result: '${jk11Asp.values.first}ದಲ್ಲಿ ಜನನ',
+          rashi: lagRashi, planets: jk11Asp.keys.toList(),
+        ));
+      }
+    }
+
+    // ═══ JK Shloka 12: Birth place from navamsha ═══
+    final jk12Nav = _d9Rashi(lag);
+    final jk12Chara = jk12Nav == 0 || jk12Nav == 3 || jk12Nav == 6 || jk12Nav == 9;
+    final jk12Sthira = jk12Nav == 1 || jk12Nav == 4 || jk12Nav == 7 || jk12Nav == 10;
+    final jk12Own = jk12Nav == lagRashi;
+    final jk12Place = jk12Own ? 'ತನ್ನ ಮನೆ' : jk12Chara ? 'ದಾರಿ' : jk12Sthira ? 'ಮನೆ' : 'ಅನ್ಯ ಸ್ಥಳ';
+    yogas.add(Yoga(
+      shloka: 'ರಾಶ್ಯಂಶಸಮಾನಗೋಚರೇ ಮಾರ್ಗೇ ಜನ್ಮ ಚರೇ ಸ್ಥಿರೇ ಗೃಹೇ',
+      name: 'ಜನನ ಸ್ಥಳ ನವಾಂಶ ಯೋಗ (ಜಕ ೧೨)',
+      description: 'ಲಗ್ನ ನವಾಂಶ: ${_rashiNames[jk12Nav]} (${jk12Chara ? "ಚರ" : jk12Sthira ? "ಸ್ಥಿರ" : "ದ್ವಿಸ್ವಭಾವ"})',
+      result: '${jk12Place}ಯಲ್ಲಿ ಜನನ',
+      rashi: lagRashi, planets: [],
+    ));
+
     return yogas;
   }
 }
