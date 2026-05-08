@@ -2579,6 +2579,8 @@ class ViyoniJanma {
 
 
 
+    final allPLons = {'Sun': sun, 'Moon': moonLon, 'Mars': mars, 'Mercury': mer, 'Jupiter': jup, 'Venus': ven, 'Saturn': sat, 'Rahu': rahu, 'Ketu': ketu};
+
     // ═══════════════════════════════════════════════════
     // Chapter 18: ಭಾವಫಲಾಧ್ಯಾಯ (Bhavaphaladhyaya - Results of Planets in Houses)
     // ═══════════════════════════════════════════════════
