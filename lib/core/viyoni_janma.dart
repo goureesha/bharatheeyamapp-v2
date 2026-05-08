@@ -1516,6 +1516,387 @@ class ViyoniJanma {
       }
     }
 
+    // ═══════════════════════════════════════════════════
+    // Chapter 6: ಅರಿಷ್ಟಾಧ್ಯಾಯ (Arishtadhyaya - Yogas for infant mortality)
+    // ═══════════════════════════════════════════════════
+
+    // ═══ AR Shloka 1: Infant mortality in Sandhya & Hora ═══
+    final ar1MoonInLag = moonR2 == lagRashi;
+    bool ar1MalInKendra = false;
+    for (final e in malLons.entries) {
+      final h = ((_rashiOf(e.value) - lagRashi) % 12) + 1;
+      if (h == 1 || h == 4 || h == 7 || h == 10) {
+        ar1MalInKendra = true;
+        break;
+      }
+    }
+    if (ar1MoonInLag && ar1MalInKendra) {
+      yogas.add(Yoga(
+        shloka: 'ಸಂಧ್ಯಾಯಾಂ ಹಿಮದೀಧಿತಿಹೋರಾ ಪಾಪೈರ್ಭಾಂತಗತೈರ್ನಿಧನಾಯ',
+        name: 'ಅರಿಷ್ಟ ಯೋಗ (ಅರಿ ೧)',
+        description: 'ಲಗ್ನದಲ್ಲಿ ಚಂದ್ರ + ಕೇಂದ್ರದಲ್ಲಿ ಪಾಪಗ್ರಹರು',
+        result: 'ಶಿಶುವಿನ ಮರಣ/ನಾಶ',
+        rashi: lagRashi, planets: ['ಚಂದ್ರ'],
+      ));
+    }
+
+    // ═══ AR Shloka 2: Scorpio Lagna & Malefics in East/West ═══
+    bool ar2MalIn2 = false, ar2MalIn12 = false, ar2MalIn6 = false, ar2MalIn8 = false;
+    for (final e in malLons.entries) {
+      final h = ((_rashiOf(e.value) - lagRashi) % 12) + 1;
+      if (h == 2) ar2MalIn2 = true;
+      if (h == 12) ar2MalIn12 = true;
+      if (h == 6) ar2MalIn6 = true;
+      if (h == 8) ar2MalIn8 = true;
+    }
+    final ar2PapakartariLagna = ar2MalIn2 && ar2MalIn12;
+    final ar2Papakartari7 = ar2MalIn6 && ar2MalIn8;
+    if (ar2PapakartariLagna && ar2Papakartari7) {
+      yogas.add(Yoga(
+        shloka: 'ಚಕ್ರಸ್ಯ ಪೂರ್ವೇತರಭಾಗಗೇಷು ಕ್ರೂರೇಷು ಸೌಮ್ಯಷು ಚ ಕೀಟಲನ್ನೇ',
+        name: 'ಉಭಯ ಪಾಪಕರ್ತರಿ ಯೋಗ (ಅರಿ ೨)',
+        description: 'ಲಗ್ನ (12, 2) ಮತ್ತು 7ನೇ ಮನೆಯ (6, 8) ಎರಡೂ ಕಡೆ ಪಾಪಗ್ರಹರು',
+        result: 'ಶೀಘ್ರ ಮರಣ',
+        rashi: lagRashi, planets: [],
+      ));
+    }
+
+    // ═══ AR Shloka 3: Mars in Lagna without benefic aspect + Saturn in 6/8 ═══
+    final ar3MarsInLag = marsR == lagRashi;
+    bool ar3BenAspLag = false;
+    for (final e in allPLons.entries) {
+      if ({'Jupiter', 'Venus', 'Mercury'}.contains(e.key)) {
+        if ((_rashiOf(e.value) + 6) % 12 == lagRashi) ar3BenAspLag = true;
+      }
+    }
+    final ar3SatH = ((satR2 - lagRashi) % 12) + 1;
+    final ar3SatIn68 = ar3SatH == 6 || ar3SatH == 8;
+    if (ar3MarsInLag && !ar3BenAspLag && ar3SatIn68) {
+      yogas.add(Yoga(
+        shloka: 'ಭೌಮೇ ವಿಲನ್ನೇ ಶುಭದೈರದೃಷ್ಟೇ ಷಷ್ಟೇsಷ್ಟಮೇ ವಾರ್ಕಸುತೇನ ಯುಕ್ತ',
+        name: 'ಬಾಲಾರಿಷ್ಟ ಯೋಗ (ಅರಿ ೩)',
+        description: 'ಲಗ್ನದಲ್ಲಿ ಕುಜ (ಶುಭ ದೃಷ್ಟಿ ಇಲ್ಲ) + ಶನಿ 6/8ನೇ ಮನೆಯಲ್ಲಿ',
+        result: 'ಮರಣ',
+        rashi: lagRashi, planets: ['ಕುಜ', 'ಶನಿ'],
+      ));
+    }
+
+    // ═══ AR Shloka 4: Malefics in Lagna & 7th, Moon with Malefic & no benefic aspect ═══
+    bool ar4MalInLag = false, ar4MalIn7 = false;
+    bool ar4MoonWithMal = false;
+    for (final e in malLons.entries) {
+      final h = ((_rashiOf(e.value) - lagRashi) % 12) + 1;
+      if (h == 1) ar4MalInLag = true;
+      if (h == 7) ar4MalIn7 = true;
+      if (_rashiOf(e.value) == moonR2) ar4MoonWithMal = true;
+    }
+    bool ar4BenAspMoon = false;
+    for (final e in allPLons.entries) {
+      if ({'Jupiter', 'Venus', 'Mercury'}.contains(e.key)) {
+        if ((_rashiOf(e.value) + 6) % 12 == moonR2) ar4BenAspMoon = true;
+      }
+    }
+    if (ar4MalInLag && ar4MalIn7 && ar4MoonWithMal && !ar4BenAspMoon) {
+      yogas.add(Yoga(
+        shloka: 'ಪಾಪಾವುದಯಾಸ್ತಗತೌ ಕ್ರೂರೇಣ ಯುತಶ್ಚ ಶಶೀ',
+        name: 'ಕ್ಷಿಪ್ರ ಮರಣ ಯೋಗ (ಅರಿ ೪)',
+        description: 'ಲಗ್ನ, 7ರಲ್ಲಿ ಪಾಪರು + ಪಾಪನೊಂದಿಗೆ ಚಂದ್ರ + ಶುಭ ದೃಷ್ಟಿ ಇಲ್ಲ',
+        result: 'ಶೀಘ್ರ ಮರಣ',
+        rashi: lagRashi, planets: ['ಚಂದ್ರ'],
+      ));
+    }
+
+    // ═══ AR Shloka 5: Moon with malefic in 1/7/8/12, no kendra benefic aspect ═══
+    final ar5MoonH = ((moonR2 - lagRashi) % 12) + 1;
+    final ar5MoonIn17812 = ar5MoonH == 1 || ar5MoonH == 7 || ar5MoonH == 8 || ar5MoonH == 12;
+    if (ar5MoonIn17812 && ar4MoonWithMal) {
+      bool ar5BenAsp = false;
+      for (final e in allPLons.entries) {
+        if ({'Jupiter', 'Venus', 'Mercury'}.contains(e.key)) {
+          if ((_rashiOf(e.value) + 6) % 12 == moonR2) ar5BenAsp = true;
+        }
+      }
+      if (!ar5BenAsp) {
+        yogas.add(Yoga(
+          shloka: 'ಕ್ರೂರಸಂಯುತಃ ಶಶೀ ಸ್ಮರಾಂತ್ಯಮೃತ್ಯುಲಗ್ನಗಃ',
+          name: 'ಮೃತ್ಯು ಯೋಗ (ಅರಿ ೫)',
+          description: 'ಚಂದ್ರ 1/7/8/12 ರಲ್ಲಿ ಪಾಪನೊಂದಿಗೆ + ಶುಭ ದೃಷ್ಟಿ ಇಲ್ಲ',
+          result: 'ಮರಣ',
+          rashi: moonR2, planets: ['ಚಂದ್ರ'],
+        ));
+      }
+    }
+
+    // ═══ AR Shloka 6: Waning Moon in 12, Malefics in 1/8, No benefics in Kendra ═══
+    final ar6Dist = (moonLon - sun).abs() % 360;
+    final ar6IsWaning = ar6Dist > 180 && ar6Dist < 360;
+    final ar6MoonIn12 = ((moonR2 - lagRashi) % 12) + 1 == 12;
+    bool ar6MalIn8 = false;
+    for (final e in malLons.entries) {
+      if (((_rashiOf(e.value) - lagRashi) % 12) + 1 == 8) ar6MalIn8 = true;
+    }
+    bool ar6BenInKendra = false;
+    for (final e in allPLons.entries) {
+      if ({'Jupiter', 'Venus', 'Mercury'}.contains(e.key)) {
+        final h = ((_rashiOf(e.value) - lagRashi) % 12) + 1;
+        if (h == 1 || h == 4 || h == 7 || h == 10) ar6BenInKendra = true;
+      }
+    }
+    if (ar6IsWaning && ar6MoonIn12 && ar4MalInLag && ar6MalIn8 && !ar6BenInKendra) {
+      yogas.add(Yoga(
+        shloka: 'ಕ್ಷೀಣೇ ಹಿಮಗೌ ವ್ಯಯಗೇ ಪಾಪೈರುದಯಾಷ್ಟಮಗೈಃ',
+        name: 'ಕ್ಷಿಪ್ರ ಮರಣ ಯೋಗ (ಅರಿ ೬)',
+        description: 'ಕ್ಷೀಣ ಚಂದ್ರ 12ರಲ್ಲಿ + ಲಗ್ನ, 8ರಲ್ಲಿ ಪಾಪರು + ಕೇಂದ್ರದಲ್ಲಿ ಶುಭರಿಲ್ಲ',
+        result: 'ಶೀಘ್ರ ಮರಣ',
+        rashi: moonR2, planets: ['ಚಂದ್ರ'],
+      ));
+    }
+
+    // ═══ AR Shloka 7: Moon in 6/8 with Malefic aspect ═══
+    final ar7MoonIn68 = ar5MoonH == 6 || ar5MoonH == 8;
+    if (ar7MoonIn68) {
+      bool ar7MalAsp = false, ar7BenAsp = false, ar7StrongMalAsp = false;
+      for (final e in allPLons.entries) {
+         if ((_rashiOf(e.value) + 6) % 12 == moonR2) {
+           if ({'Sun', 'Mars', 'Saturn', 'Rahu', 'Ketu'}.contains(e.key)) {
+             ar7MalAsp = true;
+             if (isStrong(e.key)) ar7StrongMalAsp = true;
+           } else if ({'Jupiter', 'Venus', 'Mercury'}.contains(e.key)) {
+             ar7BenAsp = true;
+           }
+         }
+      }
+      if (ar7MalAsp || ar7BenAsp) {
+        String ar7Desc = '';
+        String ar7Res = '';
+        if (ar7StrongMalAsp) {
+          ar7Desc = 'ಬಲಶಾಲಿ ಪಾಪಗ್ರಹರ ದೃಷ್ಟಿ';
+          ar7Res = '1 ತಿಂಗಳಲ್ಲಿ ಮರಣ';
+        } else if (ar7MalAsp && ar7BenAsp) {
+          ar7Desc = 'ಪಾಪ ಹಾಗೂ ಶುಭ ದೃಷ್ಟಿ';
+          ar7Res = '4 ವರ್ಷಗಳ ನಂತರ ಮರಣ';
+        } else if (ar7BenAsp) {
+          ar7Desc = 'ಶುಭ ದೃಷ್ಟಿ ಮಾತ್ರ';
+          ar7Res = '8 ವರ್ಷಗಳ ನಂತರ ಮರಣ';
+        } else if (ar7MalAsp) {
+          ar7Desc = 'ಪಾಪಗ್ರಹರ ದೃಷ್ಟಿ';
+          ar7Res = 'ಶೀಘ್ರ ಮರಣ';
+        }
+        yogas.add(Yoga(
+          shloka: 'ಶಶಿನ್ಯರಿವಿನಾಶಗೇ ನಿಧನಮಾಶು ಪಾಪೇಕ್ಷಿತೇ',
+          name: 'ಚಂದ್ರ ಅರಿಷ್ಟ ಯೋಗ (ಅರಿ ೭)',
+          description: 'ಚಂದ್ರ $ar5MoonHನೇ ಮನೆಯಲ್ಲಿ + $ar7Desc',
+          result: ar7Res,
+          rashi: moonR2, planets: ['ಚಂದ್ರ'],
+        ));
+      }
+    }
+    
+    final ar7LagLord = rashiLords[lagRashi];
+    final ar7LagLordIsBen = {'Jupiter', 'Venus', 'Mercury'}.contains(ar7LagLord);
+    final ar7LagLordH = ((_rashiOf(allPLons[ar7LagLord]!) - lagRashi) % 12) + 1;
+    bool ar7LagLordDefeated = false;
+    for (final e in malLons.entries) {
+      if (_rashiOf(e.value) == _rashiOf(allPLons[ar7LagLord]!)) ar7LagLordDefeated = true;
+    }
+    if (ar7LagLordIsBen && ar7LagLordH == 7 && ar7LagLordDefeated) {
+       yogas.add(Yoga(
+          shloka: 'ಶಶಿನ್ಯರಿವಿನಾಶಗೇ ನಿಧನಮಾಶು ಪಾಪೇಕ್ಷಿತೇ',
+          name: 'ಲಗ್ನಾಧಿಪ ಅರಿಷ್ಟ ಯೋಗ (ಅರಿ ೭)',
+          description: 'ಶುಭ ಲಗ್ನಾಧಿಪತಿ 7ರಲ್ಲಿ ಪಾಪಗ್ರಹರೊಂದಿಗೆ',
+          result: 'ಮರಣ',
+          rashi: lagRashi, planets: [_knPlanets[ar7LagLord]!],
+        ));
+    }
+
+    // ═══ AR Shloka 8: Waning Moon in Lagna + Malefics in 8 & Kendra ═══
+    final ar8WaningMoonLag = ar6IsWaning && moonR2 == lagRashi;
+    bool ar8MalInKendra = false;
+    for (final e in malLons.entries) {
+      final h = ((_rashiOf(e.value) - lagRashi) % 12) + 1;
+      if (h == 1 || h == 4 || h == 7 || h == 10) ar8MalInKendra = true;
+    }
+    if (ar8WaningMoonLag && ar6MalIn8 && ar8MalInKendra) {
+      yogas.add(Yoga(
+        shloka: 'ಲಗ್ನ ಕ್ಷೀಣೇ ಶಶಿನಿ ನಿಧನಂ ರಂಧ್ರಕೇಂದ್ರೇಷು ಪಾಪೈ:',
+        name: 'ಬಾಲಾರಿಷ್ಟ ಯೋಗ (ಅರಿ ೮)',
+        description: 'ಕ್ಷೀಣ ಚಂದ್ರ ಲಗ್ನದಲ್ಲಿ + 8ರಲ್ಲಿ ಮತ್ತು ಕೇಂದ್ರದಲ್ಲಿ ಪಾಪರು',
+        result: 'ಮರಣ',
+        rashi: lagRashi, planets: ['ಚಂದ್ರ'],
+      ));
+    }
+    
+    if (ar5MoonH == 4 || ar5MoonH == 7 || ar5MoonH == 8) {
+      bool malBefore = false, malAfter = false;
+      for (final e in malLons.entries) {
+        if (_rashiOf(e.value) == (moonR2 + 11) % 12) malBefore = true;
+        if (_rashiOf(e.value) == (moonR2 + 1) % 12) malAfter = true;
+      }
+      if (malBefore && malAfter) {
+         yogas.add(Yoga(
+          shloka: 'ಪಾಪಾಂತಃಸ್ಟೇ ನಿಧನಹಿಬುಕಮ್ಯೂನಯುಕ್ತ ಚ ಚಂದ್ರೇ',
+          name: 'ಚಂದ್ರ ಪಾಪಕರ್ತರಿ ಯೋಗ (ಅರಿ ೮)',
+          description: 'ಚಂದ್ರ $ar5MoonHನೇ ಮನೆಯಲ್ಲಿ ಪಾಪರ ಮಧ್ಯೆ',
+          result: 'ಮರಣ',
+          rashi: moonR2, planets: ['ಚಂದ್ರ'],
+        ));
+      }
+    }
+    
+    if (ar2PapakartariLagna && ar4MalIn7 && ar6MalIn8) {
+      bool ar8StrongBenAsp = false;
+      for (final e in allPLons.entries) {
+        if ({'Jupiter', 'Venus', 'Mercury'}.contains(e.key) && isStrong(e.key)) {
+           if ((_rashiOf(e.value) + 6) % 12 == lagRashi) ar8StrongBenAsp = true;
+        }
+      }
+      if (!ar8StrongBenAsp) {
+         yogas.add(Yoga(
+          shloka: 'ಏವಂ ಲಗ್ನ ಭವತಿ ಮದನಚ್ಚಿದ್ರಸಂಸ್ಥೆ ಚ ಪಾಪೇ',
+          name: 'ಲಗ್ನ ಪಾಪಕರ್ತರಿ ಅರಿಷ್ಟ ಯೋಗ (ಅರಿ ೮)',
+          description: 'ಲಗ್ನ ಪಾಪರ ಮಧ್ಯೆ + 7,8ರಲ್ಲಿ ಪಾಪರು + ಬಲಶಾಲಿ ಶುಭ ದೃಷ್ಟಿ ಇಲ್ಲ',
+          result: 'ಮರಣ',
+          rashi: lagRashi, planets: [],
+        ));
+      }
+    }
+
+    // ═══ AR Shloka 9: Moon at end of Rashi without Benefic Aspect + Malefics in Trikona ═══
+    final ar9MoonDeg = moonLon % 30;
+    final ar9MoonAtEnd = ar9MoonDeg > 29;
+    bool ar9MalInTrikona = false;
+    for (final e in malLons.entries) {
+      final h = ((_rashiOf(e.value) - lagRashi) % 12) + 1;
+      if (h == 5 || h == 9) ar9MalInTrikona = true;
+    }
+    if (ar9MoonAtEnd && !ar4BenAspMoon && ar9MalInTrikona) {
+       yogas.add(Yoga(
+          shloka: 'ರಾಶ್ಯಂತಗೇ ಸದ್ಧಿರನೀಕ್ಷಮಾಣೇ ಚಂದ್ರ ತ್ರಿಕೋಣೋಪಗತೈಶ್ಚ ಶೇಪೈಃ',
+          name: 'ರಾಶ್ಯಂತ ಚಂದ್ರ ಅರಿಷ್ಟ (ಅರಿ ೯)',
+          description: 'ಚಂದ್ರ ರಾಶಿಯ ಕೊನೆಯಲ್ಲಿ (ಶುಭ ದೃಷ್ಟಿ ಇಲ್ಲ) + ತ್ರಿಕೋಣದಲ್ಲಿ ಪಾಪರು',
+          result: 'ಪ್ರಾಣ ವಿಯೋಗ',
+          rashi: moonR2, planets: ['ಚಂದ್ರ'],
+        ));
+    }
+    if (ar4MalIn7 && moonR2 == lagRashi) {
+      yogas.add(Yoga(
+          shloka: 'ಅಸ್ತೇ ಚ ಪಾಪೈಸ್ತುಹಿನಾಂಶುಲಕ್ಷ್ಮೀ',
+          name: 'ಚಂದ್ರ ಲಗ್ನ ಪಾಪ ಅರಿಷ್ಟ (ಅರಿ ೯)',
+          description: 'ಚಂದ್ರ ಲಗ್ನದಲ್ಲಿ + 7ನೇ ಮನೆಯಲ್ಲಿ ಪಾಪಗ್ರಹರು',
+          result: 'ಮರಣ',
+          rashi: lagRashi, planets: ['ಚಂದ್ರ'],
+        ));
+    }
+
+    // ═══ AR Shloka 10: Eclipsed Moon + Malefic + Mars in 8th ═══
+    final ar10MoonRahu = moonR2 == _rashiOf(allPLons['Rahu']!) || moonR2 == _rashiOf(allPLons['Ketu']!);
+    bool ar10MarsIn8 = ((marsR - lagRashi) % 12) + 1 == 8;
+    if (ar10MoonRahu && ar4MoonWithMal && ar10MarsIn8) {
+       yogas.add(Yoga(
+          shloka: 'ಅಶುಭಸಹಿತೇ ಗ್ರಸ್ತ ಚಂದ್ರ ಕುಜೇ ನಿಧನಾಶ್ರಿತೇ',
+          name: 'ಮಾತೃ-ಶಿಶು ಮರಣ ಯೋಗ (ಅರಿ ೧೦)',
+          description: 'ಗ್ರಹಣ ಚಂದ್ರ ಪಾಪನೊಂದಿಗೆ + ಕುಜ 8ರಲ್ಲಿ',
+          result: 'ತಾಯಿ-ಮಗು ಇಬ್ಬರ ಮರಣ',
+          rashi: moonR2, planets: ['ಚಂದ್ರ', 'ಕುಜ'],
+        ));
+       if (sunR == lagRashi) {
+         yogas.add(Yoga(
+            shloka: 'ಲಗ್ನ ರದೌ ತು ಸ ಶಸ್ತ್ರಜಃ',
+            name: 'ಶಸ್ತ್ರ ಮರಣ ಯೋಗ (ಅರಿ ೧೦)',
+            description: 'ಗ್ರಹಣ ಚಂದ್ರ + ಕುಜ 8ರಲ್ಲಿ + ಲಗ್ನದಲ್ಲಿ ರವಿ',
+            result: 'ಶಸ್ತ್ರದಿಂದ ಮರಣ',
+            rashi: lagRashi, planets: ['ರವಿ', 'ಚಂದ್ರ', 'ಕುಜ'],
+          ));
+       }
+    }
+    if (sunR == lagRashi || moonR2 == lagRashi) {
+      bool ar10StrongMalInTri = false;
+      bool ar10StrongMalIn8 = false;
+      for (final e in malLons.entries) {
+        if (isStrong(e.key)) {
+          final h = ((_rashiOf(e.value) - lagRashi) % 12) + 1;
+          if (h == 5 || h == 9) ar10StrongMalInTri = true;
+          if (h == 8) ar10StrongMalIn8 = true;
+        }
+      }
+      if (ar10StrongMalInTri && ar10StrongMalIn8) {
+         bool ar10BenAsp = false;
+         for (final e in allPLons.entries) {
+           if ({'Jupiter', 'Venus', 'Mercury'}.contains(e.key)) {
+             final h = ((_rashiOf(e.value) - lagRashi) % 12) + 1;
+             if (h == 1 || (_rashiOf(e.value) + 6) % 12 == lagRashi) ar10BenAsp = true;
+           }
+         }
+         if (!ar10BenAsp) {
+           yogas.add(Yoga(
+            shloka: 'ಉದಯತಿ ರವೌ ಶೀತಾಂಶೌ ವಾ ತ್ರಿಕೋಣವಿನಾಶಗೈ…',
+            name: 'ಲಗ್ನ ರವಿ/ಚಂದ್ರ ಅರಿಷ್ಟ (ಅರಿ ೧೦)',
+            description: 'ಲಗ್ನದಲ್ಲಿ ರವಿ/ಚಂದ್ರ + ತ್ರಿಕೋಣ, 8ರಲ್ಲಿ ಬಲಶಾಲಿ ಪಾಪರು + ಶುಭ ದೃಷ್ಟಿ/ಯೋಗ ಇಲ್ಲ',
+            result: 'ಮರಣ',
+            rashi: lagRashi, planets: ['ರವಿ', 'ಚಂದ್ರ'],
+          ));
+         }
+      }
+    }
+
+    // ═══ AR Shloka 11: Saturn, Sun, Moon, Mars in 12, 9, 1, 8 ═══
+    final ar11Sat12 = ((satR2 - lagRashi) % 12) + 1 == 12;
+    final ar11Sun9 = ((sunR - lagRashi) % 12) + 1 == 9;
+    final ar11Moon1 = moonR2 == lagRashi;
+    final ar11Mars8 = ((marsR - lagRashi) % 12) + 1 == 8;
+    if (ar11Sat12 && ar11Sun9 && ar11Moon1 && ar11Mars8) {
+      final ar11JupAsp = (_rashiOf(jup) + 6) % 12 == lagRashi || (_rashiOf(jup) + 4) % 12 == lagRashi || (_rashiOf(jup) + 8) % 12 == lagRashi;
+      if (!ar11JupAsp || !isStrong('Jupiter')) {
+        yogas.add(Yoga(
+            shloka: 'ಅಸಿತರವಿಶಶಾಂಕಭೂಮಿಚೈರ್ವ್ಯಯನವಮೋದಯನೈಧನಾಶ್ರಿತೈ:',
+            name: 'ಚತುರ್ಗ್ರಹ ಅರಿಷ್ಟ ಯೋಗ (ಅರಿ ೧೧)',
+            description: 'ಶನಿ(12), ರವಿ(9), ಚಂದ್ರ(1), ಕುಜ(8) + ಬಲಶಾಲಿ ಗುರು ದೃಷ್ಟಿ ಇಲ್ಲ',
+            result: 'ಶೀಘ್ರ ಮರಣ',
+            rashi: lagRashi, planets: ['ಶನಿ', 'ರವಿ', 'ಚಂದ್ರ', 'ಕುಜ'],
+          ));
+      }
+    }
+
+    // ═══ AR Shloka 12: Moon with malefic in 5/7/9/12/1/8 ═══
+    final ar12MoonInBad = [5, 7, 9, 12, 1, 8].contains(ar5MoonH);
+    if (ar12MoonInBad && ar4MoonWithMal) {
+       bool ar12StrongBenAsp = false;
+       for (final e in allPLons.entries) {
+         if ({'Jupiter', 'Venus', 'Mercury'}.contains(e.key) && isStrong(e.key)) {
+           if (_rashiOf(e.value) == moonR2 || (_rashiOf(e.value) + 6) % 12 == moonR2) ar12StrongBenAsp = true;
+         }
+       }
+       if (!ar12StrongBenAsp) {
+          yogas.add(Yoga(
+            shloka: 'ಸುತಮದನವಮಾಂತ್ಯಲಗ್ನರಂಧೇಷ್ಟಶುಭಯುತೋ ಮರಣಾಯ ಶೀತರಃ',
+            name: 'ಚಂದ್ರ ಪಾಪ ಯೋಗ (ಅರಿ ೧೨)',
+            description: 'ಚಂದ್ರ ಪಾಪನೊಂದಿಗೆ ${ar5MoonH}ನೇ ಮನೆಯಲ್ಲಿ + ಬಲಶಾಲಿ ಶುಕ್ರ/ಬುಧ/ಗುರು ದೃಷ್ಟಿ/ಯೋಗ ಇಲ್ಲ',
+            result: 'ಮರಣ',
+            rashi: moonR2, planets: ['ಚಂದ್ರ'],
+          ));
+       }
+    }
+
+    // ═══ AR Shloka 13: Strong Moon in own house or Lagna with malefic aspect ═══
+    final ar13MoonStrong = isStrong('Moon');
+    final ar13MoonInOwn = moonR2 == 3;
+    final ar13MoonInLag = moonR2 == lagRashi;
+    if (ar13MoonStrong && (ar13MoonInOwn || ar13MoonInLag)) {
+       bool ar13MalAsp = false;
+       for (final e in malLons.entries) {
+         if ((_rashiOf(e.value) + 6) % 12 == moonR2) ar13MalAsp = true;
+       }
+       if (ar13MalAsp) {
+          yogas.add(Yoga(
+            shloka: 'ಯೋಗೇ ಸ್ಥಾನಂ ಗತವತಿ ಬಲಿನಶ್ಚಂದ್ರೆ ಸ್ವಂ ವಾ ತನುಗೃಹಮಥವಾ',
+            name: 'ಬಲಿಷ್ಠ ಚಂದ್ರ ಅರಿಷ್ಟ (ಅರಿ ೧೩)',
+            description: 'ಬಲಶಾಲಿ ಚಂದ್ರ ಸ್ವಕ್ಷೇತ್ರ/ಲಗ್ನದಲ್ಲಿ + ಪಾಪ ದೃಷ್ಟಿ',
+            result: 'ಒಂದು ವರ್ಷದೊಳಗೆ ಮರಣ',
+            rashi: moonR2, planets: ['ಚಂದ್ರ'],
+          ));
+       }
+    }
+
     return yogas;
   }
 }
