@@ -3114,6 +3114,129 @@ class ViyoniJanma {
       yogas.add(Yoga(shloka: 'ಕಾಲಿಗೋಹರಿಸು ಅಲ್ಪಸುತ... (ಸ್ತ್ರೀಜಾತಕ ೧೪)', name: 'ಅಲ್ಪ ಸಂತಾನ (ಸ್ತ್ರೀ ೧೪)', description: 'ಚಂದ್ರ ${_rashiNames[ch21Moon]}ದಲ್ಲಿ', result: 'ಕಡಿಮೆ ಮಕ್ಕಳು', rashi: ch21Moon, planets: ['ಚಂದ್ರ']));
     }
 
+    // ═══════════════════════════════════════════════════
+    // Chapter 23: ನೈರ್ಯಾಣಿಕಾಧ್ಯಾಯ (Nairyanikadhyaya)
+    // ═══════════════════════════════════════════════════
+    final ch23H8 = (lagRashi+7)%12;
+    final ch23H8Lord = rashiLords[ch23H8];
+    final ch23SunH = getBhava(_rashiOf(sun), lagRashi);
+    final ch23MoonH = getBhava(_rashiOf(moonLon), lagRashi);
+    final ch23MarsH = getBhava(_rashiOf(mars), lagRashi);
+    final ch23SatH = getBhava(_rashiOf(sat), lagRashi);
+    final ch23JupH = getBhava(_rashiOf(jup), lagRashi);
+    final ch23SunR = _rashiOf(sun);
+    final ch23MoonR = _rashiOf(moonLon);
+    final ch23MarsR = _rashiOf(mars);
+    final ch23SatR = _rashiOf(sat);
+
+    // Shloka 1: Planet in 8th → death cause
+    final ch23DeathCause = <String,String>{
+      'Sun': 'ಬೆಂಕಿಯಿಂದ ಮರಣ', 'Moon': 'ನೀರಿನಿಂದ ಮರಣ',
+      'Mars': 'ಆಯುಧದಿಂದ ಮರಣ', 'Mercury': 'ಜ್ವರದಿಂದ ಮರಣ',
+      'Jupiter': 'ರೋಗದಿಂದ ಮರಣ', 'Venus': 'ಬಾಯಾರಿಕೆಯಿಂದ ಮರಣ',
+      'Saturn': 'ಹಸಿವಿನಿಂದ ಮರಣ',
+    };
+    for (final pName in ['Sun','Moon','Mars','Mercury','Jupiter','Venus','Saturn']) {
+      final pLon = pName=='Sun'?sun:pName=='Moon'?moonLon:pName=='Mars'?mars:pName=='Mercury'?mer:pName=='Jupiter'?jup:pName=='Venus'?ven:sat;
+      if (_rashiOf(pLon)==ch23H8) {
+        final cause = ch23DeathCause[pName] ?? '';
+        yogas.add(Yoga(shloka: 'ಮೃತ್ಯುರ್ಮೃತ್ಯುಗೃಹೇಕ್ಷಣೇನ... (ನೈರ್ಯಾಣಿಕ ೧)', name: 'ಮೃತ್ಯು ಕಾರಣ (ನೈ ೧)', description: '$pName 8ನೇ ಮನೆಯಲ್ಲಿ', result: cause, rashi: ch23H8, planets: [pName]));
+        break;
+      }
+    }
+
+    // Shloka 1: 8th house rashi type → death location
+    final ch23H8Type = ch23H8 % 3; // 0=chara,1=sthira,2=dvi
+    final ch23Loc = ch23H8Type==0?'ಪರದೇಶದಲ್ಲಿ ಮರಣ':ch23H8Type==1?'ಸ್ವದೇಶದಲ್ಲಿ ಮರಣ':'ದಾರಿಯಲ್ಲಿ ಮರಣ';
+    yogas.add(Yoga(shloka: 'ಚರಾದಿಷು ಪರಸ್ವಾಧ್ವ... (ನೈರ್ಯಾಣಿಕ ೧)', name: 'ಮೃತ್ಯು ಸ್ಥಳ (ನೈ ೧)', description: '8ನೇ ಮನೆ ${_rashiNames[ch23H8]}', result: ch23Loc, rashi: ch23H8, planets: ['8ನೇ ಮನೆ']));
+
+    // Shloka 2: Sun+Mars in 10&4 → fall from hill
+    if ((ch23SunH==10&&ch23MarsH==4)||(ch23SunH==4&&ch23MarsH==10)) {
+      yogas.add(Yoga(shloka: 'ಶೈಲಾಗ್ರಾಭಿಹತಸ್ಯ... (ನೈರ್ಯಾಣಿಕ ೨)', name: 'ಶೈಲಪತನ ಮೃತ್ಯು (ನೈ ೨)', description: 'ಸೂರ್ಯ+ಕುಜ 10/4ರಲ್ಲಿ', result: 'ಬೆಟ್ಟದಿಂದ ಬಿದ್ದು ಮರಣ', rashi: ch23H8, planets: ['ರವಿ','ಕುಜ']));
+    }
+    // Sat+Moon+Mars in 1,4,10 → well death
+    if ((ch23SatH==1||ch23SatH==4||ch23SatH==10)&&(ch23MoonH==1||ch23MoonH==4||ch23MoonH==10)&&(ch23MarsH==1||ch23MarsH==4||ch23MarsH==10)&&ch23SatH!=ch23MoonH&&ch23MoonH!=ch23MarsH&&ch23SatH!=ch23MarsH) {
+      yogas.add(Yoga(shloka: 'ಕೂಪೇ ಮಂದಶಶಾಂಕ... (ನೈರ್ಯಾಣಿಕ ೨)', name: 'ಕೂಪ ಮೃತ್ಯು (ನೈ ೨)', description: 'ಶನಿ+ಚಂದ್ರ+ಕುಜ 1/4/10', result: 'ಬಾವಿಗೆ ಬಿದ್ದು ಮರಣ', rashi: ch23H8, planets: ['ಶನಿ','ಚಂದ್ರ','ಕುಜ']));
+    }
+    // Sun+Moon in 1&7 → drowning
+    if ((ch23SunH==1&&ch23MoonH==7)||(ch23SunH==7&&ch23MoonH==1)) {
+      yogas.add(Yoga(shloka: 'ಉಭಯೋದಯೇsರ್ಕಶಶಿನೌ ತೋಯೇ... (ನೈರ್ಯಾಣಿಕ ೨)', name: 'ಜಲಮರಣ (ನೈ ೨)', description: 'ಸೂರ್ಯ+ಚಂದ್ರ 1/7ರಲ್ಲಿ', result: 'ನೀರಿನಲ್ಲಿ ಮುಳುಗಿ ಮರಣ', rashi: ch23H8, planets: ['ರವಿ','ಚಂದ್ರ']));
+    }
+
+    // Shloka 3: Saturn in Karkata → jalodhara death
+    if (ch23SatR==3) {
+      yogas.add(Yoga(shloka: 'ಮಂದೇ ಕರ್ಕಟಕೇ ಜಲೋದರ... (ನೈರ್ಯಾಣಿಕ ೩)', name: 'ಜಲೋದರ ಮೃತ್ಯು (ನೈ ೩)', description: 'ಶನಿ ಕರ್ಕಟದಲ್ಲಿ', result: 'ಜಲೋದರ ರೋಗದಿಂದ ಮರಣ', rashi: 3, planets: ['ಶನಿ']));
+    }
+    // Moon in Makara → shastra/agni death
+    if (ch23MoonR==9) {
+      yogas.add(Yoga(shloka: 'ಮೃಗಾಂಕೇ ಮೃಗೇ... (ನೈರ್ಯಾಣಿಕ ೩)', name: 'ಶಸ್ತ್ರಾಗ್ನಿ ಮೃತ್ಯು (ನೈ ೩)', description: 'ಚಂದ್ರ ಮಕರದಲ್ಲಿ', result: 'ಬೆಂಕಿ/ಶಸ್ತ್ರದಿಂದ ಮರಣ', rashi: 9, planets: ['ಚಂದ್ರ']));
+    }
+
+    // Shloka 4: Papa in lagna+9th without shubha → bondage death
+    final ch23H9 = (lagRashi+8)%12;
+    final papLag = ch23SunR==lagRashi||ch23MarsR==lagRashi||ch23SatR==lagRashi;
+    final papH9 = ch23SunR==ch23H9||ch23MarsR==ch23H9||ch23SatR==ch23H9;
+    if (papLag && papH9) {
+      final shubLag = _rashiOf(jup)==lagRashi||_rashiOf(ven)==lagRashi||_rashiOf(mer)==lagRashi;
+      final shubH9 = _rashiOf(jup)==ch23H9||_rashiOf(ven)==ch23H9||_rashiOf(mer)==ch23H9;
+      if (!shubLag && !shubH9) {
+        yogas.add(Yoga(shloka: 'ಲಗ್ನಾಧೀನವಮಸ್ಥಯೋಃ... (ನೈರ್ಯಾಣಿಕ ೪)', name: 'ಬಂಧನ ಮೃತ್ಯು (ನೈ ೪)', description: 'ಪಾಪ ಲಗ್ನ+9, ಶುಭ ದೃಷ್ಟಿ ಇಲ್ಲ', result: 'ಬಂಧನದಿಂದ ಮರಣ', rashi: lagRashi, planets: ['ಪಾಪ']));
+      }
+    }
+
+    // Shloka 5: Mars 4th+Sun 10th+Sat lagna → trishula death
+    if (ch23MarsH==4 && ch23SunH==10 && ch23SatH==1) {
+      yogas.add(Yoga(shloka: 'ಶೂಲೋದ್ಧಿನ್ನತನುಃ... (ನೈರ್ಯಾಣಿಕ ೫)', name: 'ಶೂಲ ಮೃತ್ಯು (ನೈ ೫)', description: 'ಕುಜ 4+ಸೂರ್ಯ 10+ಶನಿ ಲಗ್ನ', result: 'ತ್ರಿಶೂಲದಿಂದ ಮರಣ', rashi: ch23H8, planets: ['ಕುಜ','ರವಿ','ಶನಿ']));
+    }
+    // Sun 4th+Mars 10th+waning Moon+Sat aspect → wood beating death
+    if (ch23SunH==4 && ch23MarsH==10) {
+      final ch23MoonWane = moonLon > sun ? (moonLon-sun) : (360+moonLon-sun);
+      if (ch23MoonWane > 180) {
+        yogas.add(Yoga(shloka: 'ಕಾಷ್ಟೇನಾಭಿಹತಃ... (ನೈರ್ಯಾಣಿಕ ೫)', name: 'ಕಾಷ್ಠ ಪ್ರಹಾರ ಮೃತ್ಯು (ನೈ ೫)', description: 'ಸೂರ್ಯ 4+ಕುಜ 10+ಕ್ಷೀಣ ಚಂದ್ರ', result: 'ಕಟ್ಟಿಗೆಯಿಂದ ಮರಣ', rashi: ch23H8, planets: ['ರವಿ','ಕುಜ']));
+      }
+    }
+
+    // Shloka 7: Mars+Sun+Sat in 4,7,10 → weapon/fire/king death
+    if ((ch23MarsH==4||ch23MarsH==7||ch23MarsH==10)&&(ch23SunH==4||ch23SunH==7||ch23SunH==10)&&(ch23SatH==4||ch23SatH==7||ch23SatH==10)) {
+      if (ch23MarsH!=ch23SunH&&ch23SunH!=ch23SatH&&ch23MarsH!=ch23SatH) {
+        yogas.add(Yoga(shloka: 'ಬಂಧಸ್ತಕರ್ಮಸಹಿತೈ... (ನೈರ್ಯಾಣಿಕ ೭)', name: 'ಆಯುಧ/ಅಗ್ನಿ ಮೃತ್ಯು (ನೈ ೭)', description: 'ಕುಜ+ಸೂರ್ಯ+ಶನಿ 4/7/10', result: 'ಆಯುಧ/ಬೆಂಕಿ/ರಾಜಕೋಪ', rashi: ch23H8, planets: ['ಕುಜ','ರವಿ','ಶನಿ']));
+      }
+    }
+
+    // Shloka 8: Sun 10th+Mars 4th → vehicle death
+    if (ch23SunH==10 && ch23MarsH==4) {
+      yogas.add(Yoga(shloka: 'ಖಸ್ಟೇsರ್ಕೇ ಯಾನಪ್ರಪಾತಾತ್... (ನೈರ್ಯಾಣಿಕ ೮)', name: 'ವಾಹನ ಮೃತ್ಯು (ನೈ ೮)', description: 'ಸೂರ್ಯ 10+ಕುಜ 4', result: 'ವಾಹನದಿಂದ ಬಿದ್ದು ಮರಣ', rashi: ch23H8, planets: ['ರವಿ','ಕುಜ']));
+    }
+
+    // Shloka 9: Sat in 8th aspected by strong Mars + waning Moon → guhya roga death
+    if (ch23SatH==8 && ch23MarsR==ch23H8) {
+      yogas.add(Yoga(shloka: 'ನಿಧನಸ್ಥಿತೇsರ್ಕಜೇ... (ನೈರ್ಯಾಣಿಕ ೯)', name: 'ಗುಹ್ಯರೋಗ ಮೃತ್ಯು (ನೈ ೯)', description: 'ಶನಿ 8+ಕುಜ ದೃಷ್ಟಿ', result: 'ಗುಹ್ಯ ರೋಗದಿಂದ ಮರಣ', rashi: ch23H8, planets: ['ಶನಿ','ಕುಜ']));
+    }
+
+    // Shloka 10: 22nd drekkana lord → death nature
+    final ch23Drek22R = ((lagRashi * 30 + 210 + (lag % 30)) % 360);
+    final ch23Drek22Rashi = _rashiOf(ch23Drek22R);
+    final ch23Drek22Lord = rashiLords[ch23Drek22Rashi];
+    final ch23D22Cause = ch23DeathCause[ch23Drek22Lord] ?? 'ಅಜ್ಞಾತ ಕಾರಣ';
+    yogas.add(Yoga(shloka: 'ದ್ವಾವಿಂಶಃ ಕಥಿತಸ್ತು... (ನೈರ್ಯಾಣಿಕ ೧೦)', name: '22ನೇ ದ್ರೇಕ್ಕಾಣ (ನೈ ೧೦)', description: '22ನೇ ದ್ರೇಕ್ಕಾಣ: ${_rashiNames[ch23Drek22Rashi]} ($ch23Drek22Lord)', result: ch23D22Cause, rashi: ch23Drek22Rashi, planets: [ch23Drek22Lord ?? '']));
+
+    // Shloka 13: Afterlife destiny from planet strength
+    final ch23JupStr = ch23JupH==1||ch23JupH==4||ch23JupH==7||ch23JupH==10;
+    final ch23MoonStr = ch23MoonH==1||ch23MoonH==4||ch23MoonH==7||ch23MoonH==10;
+    final ch23SatStr = ch23SatH==1||ch23SatH==4||ch23SatH==7||ch23SatH==10;
+    if (ch23JupStr) {
+      yogas.add(Yoga(shloka: 'ಗುರುರುಡುಪತಿಶುಕ್ರೌ... (ನೈರ್ಯಾಣಿಕ ೧೩)', name: 'ಸ್ವರ್ಗ ಪ್ರಾಪ್ತಿ (ನೈ ೧೩)', description: 'ಗುರು ಕೇಂದ್ರದಲ್ಲಿ ಬಲಶಾಲಿ', result: 'ಸ್ವರ್ಗ ಪ್ರಾಪ್ತಿ', rashi: _rashiOf(jup), planets: ['ಗುರು']));
+    } else if (ch23MoonStr) {
+      yogas.add(Yoga(shloka: 'ಗುರುರುಡುಪತಿಶುಕ್ರೌ... (ನೈರ್ಯಾಣಿಕ ೧೩)', name: 'ಪಿತೃಲೋಕ (ನೈ ೧೩)', description: 'ಚಂದ್ರ ಕೇಂದ್ರದಲ್ಲಿ', result: 'ಪಿತೃಲೋಕ ಪ್ರಾಪ್ತಿ', rashi: ch23MoonR, planets: ['ಚಂದ್ರ']));
+    } else if (ch23SatStr) {
+      yogas.add(Yoga(shloka: 'ಗುರುರುಡುಪತಿಶುಕ್ರೌ... (ನೈರ್ಯಾಣಿಕ ೧೩)', name: 'ನರಕ ಸೂಚನೆ (ನೈ ೧೩)', description: 'ಶನಿ ಕೇಂದ್ರದಲ್ಲಿ ಗುರು ದುರ್ಬಲ', result: 'ನರಕ ಭೀತಿ', rashi: ch23SatR, planets: ['ಶನಿ']));
+    }
+
+    // Shloka 14: Jupiter in 6/kendra/8 exalted → moksha
+    if ((ch23JupH==6||ch23JupH==1||ch23JupH==4||ch23JupH==7||ch23JupH==10||ch23JupH==8)&&_rashiOf(jup)==3) {
+      yogas.add(Yoga(shloka: 'ಗುರುರಥ ರಿಪುಕೇಂದ್ರ... (ನೈರ್ಯಾಣಿಕ ೧೪)', name: 'ಮೋಕ್ಷ ಯೋಗ (ನೈ ೧೪)', description: 'ಗುರು ಉಚ್ಚ + ಕೇಂದ್ರ/6/8', result: 'ಮೋಕ್ಷ ಪ್ರಾಪ್ತಿ', rashi: _rashiOf(jup), planets: ['ಗುರು']));
+    }
+
     return yogas;
   }
 }
