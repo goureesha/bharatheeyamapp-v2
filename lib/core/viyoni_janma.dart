@@ -1482,21 +1482,25 @@ class ViyoniJanma {
     ));
 
     // ═══ JK Shloka 25: Wound or mole marks ═══
-    for (int drek = 0; drek < 3; drek++) {
-      final drekR = (lagRashi + drek * 4) % 12;
-      for (final e in allPLons.entries) {
-        if (_rashiOf(e.value) == drekR) {
+    for (final e in allPLons.entries) {
+      final pRashi = _rashiOf(e.value);
+      final pDrekNum = _drekkanaNum(e.value); // 1, 2, or 3 based on degree
+      final pDrekRashi = (pRashi + (pDrekNum - 1) * 4) % 12;
+      // Check if this drekkana falls within lagna's 3 drekkanas
+      for (int drek = 0; drek < 3; drek++) {
+        final lagDrekR = (lagRashi + drek * 4) % 12;
+        if (pDrekRashi == lagDrekR) {
           final isMal = {'Sun','Mars','Saturn','Rahu','Ketu'}.contains(e.key);
-          final inOwnNav = _d9Rashi(e.value) == _rashiOf(e.value);
-          final isSthira25 = drekR == 1 || drekR == 4 || drekR == 7 || drekR == 10;
+          final inOwnNav = _d9Rashi(e.value) == pRashi;
+          final isSthira25 = pDrekRashi == 1 || pDrekRashi == 4 || pDrekRashi == 7 || pDrekRashi == 10;
           final markType = isMal ? 'ಗಾಯ ಗುರುತು' : 'ಮಚ್ಚೆ';
           final origin = (inOwnNav || isSthira25) ? 'ಹುಟ್ಟಿನಿಂದ' : 'ನಂತರ';
           yogas.add(Yoga(
             shloka: 'ತಸ್ಮಿನ್ ಪಾಪಯುತೇ ವ್ರಣಃ ಶುಭಯುತೇ ದೃಷ್ಟೇ ಲಕ್ಷಾದಿಶೇತ್',
             name: '$markType (ಜಕ ೨೫)',
-            description: '${_knPlanets[e.key]} ${_rashiNames[drekR]} ದ್ರೇಕ್ಕಾಣ (${drek + 1}ನೇ)\n$origin ಬಂದ $markType',
+            description: '${_knPlanets[e.key]} ${_rashiNames[pRashi]} ${pDrekNum}ನೇ ದ್ರೇಕ್ಕಾಣ (${_rashiNames[pDrekRashi]})\n$origin ಬಂದ $markType',
             result: '$origin $markType',
-            rashi: drekR, planets: [_knPlanets[e.key]!],
+            rashi: pDrekRashi, planets: [_knPlanets[e.key]!],
           ));
           break;
         }
