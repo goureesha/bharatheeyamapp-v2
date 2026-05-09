@@ -2108,7 +2108,7 @@ class ViyoniJanma {
     }
     
     int dyTogetherRashi(String p1, String p2) {
-      return lagRashi;
+      return _rashiOf(allPLons[p1]!);
     }
 
     // ═══ DY Shloka 1: Sun combinations ═══
