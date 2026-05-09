@@ -19,7 +19,7 @@ class ViyoniJanma {
     final inSign = lon % 30;
     final navPada = (inSign / (30.0 / 9.0)).floor();
     final rashi = _rashiOf(lon);
-    final startRashi = (rashi % 4) == 0 ? 0 : (rashi % 4) == 1 ? 3 : (rashi % 4) == 2 ? 6 : 9;
+    final startRashi = (rashi % 4) == 0 ? 0 : (rashi % 4) == 1 ? 9 : (rashi % 4) == 2 ? 6 : 3;
     return (startRashi + navPada) % 12;
   }
 
