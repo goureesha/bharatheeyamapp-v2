@@ -42,6 +42,36 @@ class ViyoniJanma {
     return enemies[planet]?.contains(d9) ?? false;
   }
 
+  static const _rashiNamesShort = ['ಮೇಷ','ವೃಷಭ','ಮಿಥುನ','ಕರ್ಕ','ಸಿಂಹ','ಕನ್ಯಾ','ತುಲಾ','ವೃಶ್ಚಿಕ','ಧನು','ಮಕರ','ಕುಂಭ','ಮೀನ'];
+
+  /// Detect yogas from ALL 12 rashis as virtual lagna.
+  /// Each yoga is tagged with [refLagna] indicating which rashi was used as reference.
+  static List<Yoga> detectAll(KundaliResult chart) {
+    final allYogas = <Yoga>[];
+    final seen = <String>{};
+
+    for (int ref = 0; ref < 12; ref++) {
+      final yogas = detect(chart, lagnaRashi: ref);
+      for (final y in yogas) {
+        // Create unique key to avoid exact duplicates
+        final key = '${y.name}|${y.rashi}|$ref';
+        if (!seen.contains(key)) {
+          seen.add(key);
+          allYogas.add(Yoga(
+            shloka: y.shloka,
+            name: y.name,
+            description: '⟪${_rashiNamesShort[ref]} ಲಗ್ನ⟫\n${y.description}',
+            result: y.result,
+            rashi: y.rashi,
+            planets: y.planets,
+            refLagna: ref,
+          ));
+        }
+      }
+    }
+    return allYogas;
+  }
+
   /// Detect all active yogas for the given chart.
   /// If [lagnaRashi] is provided, use it as virtual lagna (0-11).
   static List<Yoga> detect(KundaliResult chart, {int? lagnaRashi}) {
@@ -2499,5 +2529,6 @@ class Yoga {
   final String result;
   final int rashi; // 0-11 index of the rashi this yoga applies to
   final List<String> planets; // planet names involved
-  const Yoga({required this.shloka, required this.name, required this.description, required this.result, this.rashi = -1, this.planets = const []});
+  final int refLagna; // 0-11: which reference lagna this yoga was detected from (-1 = actual lagna)
+  const Yoga({required this.shloka, required this.name, required this.description, required this.result, this.rashi = -1, this.planets = const [], this.refLagna = -1});
 }

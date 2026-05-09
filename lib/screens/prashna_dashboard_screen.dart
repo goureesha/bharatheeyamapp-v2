@@ -622,7 +622,7 @@ class _PrashnaDashboardScreenState extends State<PrashnaDashboardScreen>
   // YOGA SECTION (in Kundali tab)
   // ═══════════════════════════════════════════
   Widget _buildYogaSection() {
-    final yogas = ViyoniJanma.detect(_result);
+    final yogas = ViyoniJanma.detectAll(_result);
     if (yogas.isEmpty) {
       return Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16),
