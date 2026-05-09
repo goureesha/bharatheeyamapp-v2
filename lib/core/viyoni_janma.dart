@@ -77,7 +77,6 @@ class ViyoniJanma {
       for (int ref = 0; ref < 12; ref++) {
         final yogas = detect(navChart, lagnaRashi: ref);
         for (final y in yogas) {
-          // Skip if same yoga already found in rashi pass
           final rashiKey = '${y.name}|${y.result}|${y.rashi}';
           if (seen.contains(rashiKey)) continue;
           final key = 'CHAYA|${y.name}|${y.result}|${y.rashi}';
@@ -85,9 +84,9 @@ class ViyoniJanma {
             navSeen.add(key);
             allYogas.add(Yoga(
               shloka: y.shloka,
-              name: 'ಛಾಯಾ: ${y.name}',
-              description: '⟪${_rashiNamesShort[ref]} ಲಗ್ನ — ನವಾಂಶ ಆಧಾರ⟫\n${y.description}',
-              result: '${y.result} (ಛಾಯಾ)',
+              name: '\u0c9b\u0cbe\u0caf\u0cbe: ${y.name}',
+              description: '\u27ea${_rashiNamesShort[ref]} \u0cb2\u0c97\u0ccd\u0ca8 \u2014 \u0ca8\u0cb5\u0cbe\u0c82\u0cb6 \u0c86\u0ca7\u0cbe\u0cb0\u27eb\n${y.description}',
+              result: '${y.result} (\u0c9b\u0cbe\u0caf\u0cbe)',
               rashi: y.rashi,
               planets: y.planets,
               refLagna: ref,
@@ -100,13 +99,12 @@ class ViyoniJanma {
     return allYogas;
   }
 
+
   /// Convert a chart to navamsha-equivalent longitudes.
-  /// Each planet's longitude is replaced by its navamsha rashi * 30 + original pada offset.
   static KundaliResult _toNavamshaChart(KundaliResult chart) {
     final navPlanets = <String, PlanetInfo>{};
     for (final e in chart.planets.entries) {
       final navR = _d9Rashi(e.value.longitude);
-      // Place planet at midpoint of navamsha sign for consistent house calc
       final navLon = navR * 30.0 + 15.0;
       navPlanets[e.key] = PlanetInfo(
         name: e.value.name,
@@ -123,11 +121,9 @@ class ViyoniJanma {
         isCombust: e.value.isCombust,
       );
     }
-    // Navamsha lagna
     final lagLon = chart.bhavas.isNotEmpty ? chart.bhavas[0] : 0.0;
     final navLagR = _d9Rashi(lagLon);
     final navBhavas = List<double>.generate(12, (i) => ((navLagR + i) * 30.0 + 15.0) % 360);
-
     return KundaliResult(
       planets: navPlanets,
       bhavas: navBhavas,
@@ -296,6 +292,7 @@ class ViyoniJanma {
       if (isChara) triggers.add('ಚರ ನವಾಂಶ ಲಗ್ನ: ${_rashiNames[lagNav]}');
       if (isMerNav) triggers.add('ಬುಧ ನವಾಂಶ ಲಗ್ನ: ${_rashiNames[lagNav]}');
 
+    }
     // ═══ Shloka 6: Tree birth (Vriksha Janma) ═══
     // Lagna lord, Moon, Jupiter, Sun all weak → tree birth
     const rashiLords = ['Mars','Venus','Mercury','Moon','Sun','Mercury','Venus','Mars','Jupiter','Saturn','Saturn','Jupiter'];
@@ -318,6 +315,7 @@ class ViyoniJanma {
         final houseFrom = ((_rashiOf(e.value) - lagRashi) % 12) + 1;
         treeCounts.add('${e.key}: ${houseFrom}ನೇ ಮನೆ → $houseFrom ಮರ');
       }
+
 
       // ═══ Shloka 7: Tree type by planet ═══
       // Sun→hardwood, Saturn→dry, Moon→milky/sap, Mars→thorny, Jupiter→soft
@@ -352,6 +350,7 @@ class ViyoniJanma {
         treePlanets.add(_knPlanets[e.key]!);
       }
 
+
       // ═══ Shloka 8: Tree count by navamsha distance ═══
       final navDistDetails = <String>[];
       final navDistPlanets = <String>[];
@@ -371,6 +370,7 @@ class ViyoniJanma {
         navDistPlanets.add(e.key);
       }
 
+    }
     // ══════════════════════════════════════════════════════
     // ನಿಷೇಕಾಧ್ಯಾಯ (Chapter 4) — Conception rules
     // ══════════════════════════════════════════════════════
@@ -396,6 +396,51 @@ class ViyoniJanma {
       if ((_rashiOf(e.value) + 6) % 12 == moonR) maleAspMoon.add(_knPlanets[e.key]!);
     }
 
+
+    // ═══ Nisheka Shloka 2: Nature of union from 7th house ═══
+    final h7Rashi = (lagRashi + 6) % 12;
+    final malAsp7 = <String>[];
+    final benAsp7 = <String>[];
+    final malIn7 = <String>[];
+    final benIn7 = <String>[];
+    final allPLons = {'Sun':sun,'Moon':moon,'Mars':mars,'Mercury':mer,'Jupiter':jup,'Venus':ven,'Saturn':sat,'Rahu':rahu,'Ketu':ketu};
+    for (final e in allPLons.entries) {
+      final pr = _rashiOf(e.value);
+      final isBen = {'Jupiter','Venus','Mercury','Moon'}.contains(e.key);
+      if (pr == h7Rashi) {
+        (isBen ? benIn7 : malIn7).add(_knPlanets[e.key]!);
+      }
+      if ((pr + 6) % 12 == h7Rashi) {
+        (isBen ? benAsp7 : malAsp7).add(_knPlanets[e.key]!);
+      }
+    }
+    if (malIn7.isNotEmpty || malAsp7.isNotEmpty || benIn7.isNotEmpty || benAsp7.isNotEmpty) {
+      String unionType = '';
+      if (malIn7.isNotEmpty || malAsp7.isNotEmpty) unionType += 'ಕೋಪದಿಂದ ಕೂಡಿದ ಮಿಲನ';
+      if (benIn7.isNotEmpty || benAsp7.isNotEmpty) {
+        if (unionType.isNotEmpty) unionType += ' + ';
+        unionType += 'ವಿಲಾಸ ಹಾಸ್ಯದಿಂದ ಕೂಡಿದ ಮಿಲನ';
+      }
+    }
+
+    // ═══ Nisheka Shloka 3: Conception yoga ═══
+    // Sun,Moon,Venus,Mars in own navamsha OR Jupiter in 1/5/9
+    final sunOwnNav = _isOwnNavamsha('Sun', _d9Rashi(sun));
+    final moonOwnNav = _isOwnNavamsha('Moon', _d9Rashi(moon));
+    final venOwnNav = _isOwnNavamsha('Venus', _d9Rashi(ven));
+    final marsOwnNav = _isOwnNavamsha('Mars', _d9Rashi(mars));
+    final allOwnNav = sunOwnNav && moonOwnNav && venOwnNav && marsOwnNav;
+
+    final jupHouse = ((_rashiOf(jup) - lagRashi) % 12) + 1;
+    final jupInTrikona = jupHouse == 1 || jupHouse == 5 || jupHouse == 9;
+
+    if (allOwnNav || jupInTrikona) {
+      final details = <String>[];
+      if (allOwnNav) {
+        details.add('ರವಿ ನವಾಂಶ: ${_rashiNames[_d9Rashi(sun)]} ${sunOwnNav ? "✓ ಸ್ವ" : "✗"}');
+        details.add('ಚಂದ್ರ ನವಾಂಶ: ${_rashiNames[_d9Rashi(moon)]} ${moonOwnNav ? "✓ ಸ್ವ" : "✗"}');
+        details.add('ಶುಕ್ರ ನವಾಂಶ: ${_rashiNames[_d9Rashi(ven)]} ${venOwnNav ? "✓ ಸ್ವ" : "✗"}');
+        details.add('ಕುಜ ನವಾಂಶ: ${_rashiNames[_d9Rashi(mars)]} ${marsOwnNav ? "✓ ಸ್ವ" : "✗"}');
       }
       if (jupInTrikona) details.add('ಗುರು ${jupHouse}ನೇ ಮನೆ (ತ್ರಿಕೋಣ)');
 
@@ -468,6 +513,7 @@ class ViyoniJanma {
     final fOdd = fR % 2 == 0; // 0-indexed: Aries=0(even idx=odd sign)
     final mEven = mR % 2 == 1; // odd idx = even sign
     final shubha = fOdd && mEven;
+
 
     // ═══ Nisheka Shloka 6: Pregnant woman death (malefics in lagna) ═══
     final malInLag = <String>[];
@@ -683,6 +729,53 @@ class ViyoniJanma {
     // Shloka 13: Saturn in odd sign (except Lagna)
     bool boyYoga3 = _isOddSign(satR2) && satR2 != lagRashi;
 
+    if (boyYoga1 || boyYoga2 || boyYoga3) {
+      final reasons = <String>[];
+      if (boyYoga1) reasons.add('ಲಗ್ನ, ರವಿ, ಗುರು, ಚಂದ್ರ ಬೆಸ ರಾಶಿ & ನವಾಂಶದಲ್ಲಿ ಬಲಶಾಲಿ');
+      if (boyYoga2) reasons.add('ಗುರು, ರವಿ ಬೆಸ ರಾಶಿಯಲ್ಲಿ');
+      if (boyYoga3) reasons.add('ಶನಿ ಬೆಸ ರಾಶಿಯಲ್ಲಿ (ಲಗ್ನ ಹೊರತುಪಡಿಸಿ)');
+    }
+    
+    if (girlYoga1 || girlYoga2) {
+      final reasons = <String>[];
+      if (girlYoga1) reasons.add('ಲಗ್ನ, ರವಿ, ಗುರು, ಚಂದ್ರ ಸಮ ರಾಶಿ & ನವಾಂಶದಲ್ಲಿ ಬಲಶಾಲಿ');
+      if (girlYoga2) reasons.add('ಚಂದ್ರ, ಶುಕ್ರ, ಕುಜ ಸಮ ರಾಶಿಯಲ್ಲಿ');
+    }
+
+    if (twinsYoga1) {
+      yogas.add(Yoga(
+        shloka: 'ದ್ವಂಶಸ್ಥಾ ಬುಧವೀಕ್ಷಣಾಚ ಯಮಲಂ ಕುರ್ವಂತಿ ಪಕ್ಷೇ ಸಕೇ',
+        name: 'ಅವಳಿ ಜನನ ಯೋಗ (೧೨)',
+        description: 'ಲಗ್ನ ನವಾಂಶ ದ್ವಿಸ್ವಭಾವ (${_rashiNames[lagNavR12]}) + ಬುಧನ ದೃಷ್ಟಿ',
+        result: 'ಅವಳಿ ಮಕ್ಕಳ ಜನನ',
+        rashi: lagRashi,
+        planets: ['ಬುಧ'],
+      ));
+    }
+
+    // ═══ Nisheka Shloka 14: Napumsaka (Eunuch) Yoga ═══
+    bool napumsaka1 = (sunR + 6) % 12 == moonR2 || (moonR2 + 6) % 12 == sunR;
+    bool napumsaka2 = (satR2 + 6) % 12 == merR || (merR + 6) % 12 == satR2;
+    bool marsAspSun14 = (marsR + 6) % 12 == sunR || (marsR + 3) % 12 == sunR || (marsR + 7) % 12 == sunR;
+    bool napumsaka3 = sunEven && marsAspSun14 && moonOdd && lagOdd;
+    final venNavOdd = _isOddSign(_d9Rashi(ven));
+    bool napumsaka4 = moonNavOdd && lagNavOdd && venNavOdd;
+    
+    if (napumsaka1 || napumsaka2 || napumsaka3 || napumsaka4) {
+      final reasons = <String>[];
+      if (napumsaka1) reasons.add('ರವಿ ಮತ್ತು ಚಂದ್ರರ ಪರಸ್ಪರ ದೃಷ್ಟಿ');
+      if (napumsaka2) reasons.add('ಶನಿ ಮತ್ತು ಬುಧರ ಪರಸ್ಪರ ದೃಷ್ಟಿ');
+      if (napumsaka3) reasons.add('ಸಮ ರಾಶಿಯಲ್ಲಿ ರವಿ + ಕುಜನ ದೃಷ್ಟಿ, ಚಂದ್ರ ಮತ್ತು ಲಗ್ನ ಬೆಸ ರಾಶಿಯಲ್ಲಿ');
+      if (napumsaka4) reasons.add('ಚಂದ್ರ, ಲಗ್ನ, ಶುಕ್ರ ಪುರುಷ (ಬೆಸ) ನವಾಂಶದಲ್ಲಿ');
+      yogas.add(Yoga(
+        shloka: 'ಅನ್ನೋ ನ್ಯಂ ಯದಿ ಪಶ್ಯತಃ ಶಶಿರವೀ ಯದ್ವಾರ್ಕಿಸೌಮ್ಯ ತಥಾ...',
+        name: 'ಕ್ಲೀಬ (ನಪುಂಸಕ) ಯೋಗ (೧೪)',
+        description: reasons.join('\n'),
+        result: 'ನಪುಂಸಕ ಜನನ',
+        rashi: lagRashi,
+        planets: ['ರವಿ', 'ಚಂದ್ರ', 'ಶನಿ', 'ಬುಧ', 'ಕುಜ', 'ಶುಕ್ರ'],
+      ));
+    }
 
     // ═══ Nisheka Shloka 15: Twins Yoga 2 ═══
     final merOdd = _isOddSign(merR);
@@ -757,6 +850,7 @@ class ViyoniJanma {
       monthDetails.add('${m+1}ನೇ ತಿಂಗಳು ($mLordNameKn): ${afflicted ? "ಅಶುಭ (ಪೀಡಿತ)" : isGood ? "ಶುಭ (ಬಲಶಾಲಿ)" : "ಸಾಮಾನ್ಯ"}');
     }
     
+
     // ═══ Nisheka Shloka 17: Double limbs & Mute child ═══
     final trik1 = (lagRashi + 4) % 12;
     final trik2 = (lagRashi + 8) % 12;
@@ -901,6 +995,10 @@ class ViyoniJanma {
       ));
     }
 
+    // ═══ Nisheka Shloka 21: Birth timing from Dwadashamsha ═══
+    final moonD12 = ((moonLon % 30) / 2.5).floor();
+    final d12Rashi = (moonR2 + moonD12) % 12;
+
     // ═══ Nisheka Shloka 22: Delayed birth ═══
     final satNav22 = _d9Rashi(sat);
     final satIn7th = ((satR2 - lagRashi) % 12) + 1 == 7;
@@ -1004,6 +1102,12 @@ class ViyoniJanma {
       }
     }
 
+    // ═══ JK Shloka 5: Illegitimate birth ═══
+    final jk5JupR = _rashiOf(jup);
+    final jk5JupAspL = (jk5JupR + 6) % 12 == lagRashi || (jk5JupR + 4) % 12 == lagRashi || (jk5JupR + 8) % 12 == lagRashi;
+    final jk5JupAspM = (jk5JupR + 6) % 12 == moonR2 || (jk5JupR + 4) % 12 == moonR2 || (jk5JupR + 8) % 12 == moonR2;
+    final jk5MoonSun = moonR2 == sunR;
+    final jk5MalSun = jk5MoonSun && malLons.entries.any((e) => _rashiOf(e.value) == moonR2);
 
     // ═══ JK Shloka 6: Father in bondage ═══
     final jk6Mal579 = <String>[];
@@ -1091,7 +1195,7 @@ class ViyoniJanma {
       if ((marsR + 6) % 12 == lagRashi || (marsR + 3) % 12 == lagRashi || (marsR + 7) % 12 == lagRashi) jk11Asp['ಕುಜ'] = 'ಸ್ಮಶಾನ';
       if ((jk1VenR + 6) % 12 == lagRashi) jk11Asp['ಶುಕ್ರ'] = 'ರಮ್ಯ ಸ್ಥಳ';
       if ((moonR2 + 6) % 12 == lagRashi) jk11Asp['ಚಂದ್ರ'] = 'ರಮ್ಯ ಸ್ಥಳ';
-      if ((_rashiOf(jup) + 6) % 12 == lagRashi || (_rashiOf(jup) + 4) % 12 == lagRashi || (_rashiOf(jup) + 8) % 12 == lagRashi) jk11Asp['ಗುರು'] = 'ಯಾಗಶಾಲೆ';
+      if ((jk5JupR + 6) % 12 == lagRashi || (jk5JupR + 4) % 12 == lagRashi || (jk5JupR + 8) % 12 == lagRashi) jk11Asp['ಗುರು'] = 'ಯಾಗಶಾಲೆ';
       if ((sunR + 6) % 12 == lagRashi) jk11Asp['ರವಿ'] = 'ರಾಜಮಂದಿರ';
       if ((jk1MerR + 6) % 12 == lagRashi) jk11Asp['ಬುಧ'] = 'ಶಿಲ್ಪಾಲಯ';
       if (jk11Asp.isNotEmpty) {
@@ -1125,7 +1229,7 @@ class ViyoniJanma {
     final jk13MoonInLag = moonR2 == lagRashi;
     final jk13SunMarsInTrik = (jk13SunInTri == 5 || jk13SunInTri == 9) && (jk13MarsInTri == 5 || jk13MarsInTri == 9);
     if (jk13SunMarsInTrik && jk13MoonInLag) {
-      final jk13JupAsp = (_rashiOf(jup) + 6) % 12 == lagRashi || (_rashiOf(jup) + 4) % 12 == lagRashi || (_rashiOf(jup) + 8) % 12 == lagRashi;
+      final jk13JupAsp = (jk5JupR + 6) % 12 == lagRashi || (jk5JupR + 4) % 12 == lagRashi || (jk5JupR + 8) % 12 == lagRashi;
       yogas.add(Yoga(
         shloka: 'ಆರಾರ್ಕಜಯೋಸ್ತ್ರಿಕೋಣಗೇ ಚಂದ್ರೇsರ್ಕೇ ಚ ವಿಸೃಜ್ಯತೇsಂಬಯಾ',
         name: 'ಮಾತೃ ತ್ಯಾಗ ಯೋಗ (ಜಕ ೧೩)',
@@ -1217,6 +1321,70 @@ class ViyoniJanma {
         rashi: moonR2, planets: ['ಚಂದ್ರ', ...jk17MalIn7, ...jk17MalIn4, ...jk17MalIn7L, ...jk17MalIn4L],
       ));
     }
+
+    // ═══ JK Shloka 18: Lamp & door of delivery room ═══
+    final jk18SunRType = (sunR == 0 || sunR == 3 || sunR == 6 || sunR == 9) ? 'ಚರ (ಚಲಿಸುವ)' : (sunR == 1 || sunR == 4 || sunR == 7 || sunR == 10) ? 'ಸ್ಥಿರ' : 'ದ್ವಿಸ್ವಭಾವ';
+    final jk18StrongInKendra = <String>[];
+    for (final e in allPLons.entries) {
+      final hFL = ((_rashiOf(e.value) - lagRashi) % 12) + 1;
+      if ((hFL == 1 || hFL == 4 || hFL == 7 || hFL == 10) && isStrong(e.key)) {
+        jk18StrongInKendra.add(_knPlanets[e.key]!);
+      }
+    }
+
+    // ═══ JK Shloka 19: House type from strongest planet ═══
+    final jk19HouseMap = <String, String>{
+      'Saturn': 'ಹಳೆಯ/ದುರಸ್ತಿ ಮನೆ', 'Mars': 'ಸುಟ್ಟ ಮನೆ', 'Moon': 'ಹೊಸ ಮನೆ',
+      'Sun': 'ಮರದ/ಗಟ್ಟಿಯಿಲ್ಲದ ಮನೆ', 'Mercury': 'ಶಿಲ್ಪಕಲೆ ಮನೆ',
+      'Venus': 'ಸುಂದರ/ಚಿತ್ರಗಳ ಹೊಸ ಮನೆ', 'Jupiter': 'ಗಟ್ಟಿಯಾದ ಮನೆ',
+    };
+    String jk19Strongest = 'Jupiter';
+    for (final e in allPLons.entries) {
+      if (isStrong(e.key)) { jk19Strongest = e.key; break; }
+    }
+
+    // ═══ JK Shloka 20: Direction of delivery room ═══
+    final jk20DirMap = <int, String>{
+      0: 'ಪೂರ್ವ', 3: 'ಪೂರ್ವ', 6: 'ಪೂರ್ವ', 7: 'ಪೂರ್ವ', 10: 'ಪೂರ್ವ',
+      2: 'ಉತ್ತರ', 5: 'ಉತ್ತರ', 8: 'ಉತ್ತರ', 11: 'ಉತ್ತರ',
+      1: 'ಪಶ್ಚಿಮ',
+      4: 'ದಕ್ಷಿಣ', 9: 'ದಕ್ಷಿಣ',
+    };
+
+    // ═══ JK Shloka 21: Bed direction ═══
+    final jk21H6 = ((lagRashi + 5) % 12);
+    final jk21H8 = ((lagRashi + 7) % 12);
+    final jk21H9 = ((lagRashi + 8) % 12);
+    final jk21H12 = ((lagRashi + 11) % 12);
+
+    // ═══ JK Shloka 22: Attendants at birth ═══
+    int jk22Count = 0;
+    final jk22Visible = <String>[];
+    final jk22Hidden = <String>[];
+    for (final e in allPLons.entries) {
+      final eR = _rashiOf(e.value);
+      final fromLag = (eR - lagRashi) % 12;
+      final fromMoon = (eR - moonR2) % 12;
+      if (fromLag > 0 && fromLag < (moonR2 - lagRashi) % 12 || fromMoon > 0 && fromMoon < (lagRashi - moonR2) % 12) {
+        jk22Count++;
+        final hFL = (eR - lagRashi) % 12;
+        if (hFL >= 1 && hFL <= 6) {
+          jk22Visible.add(_knPlanets[e.key]!);
+        } else {
+          jk22Hidden.add(_knPlanets[e.key]!);
+        }
+      }
+    }
+
+    // ═══ JK Shloka 23: Body & color of child ═══
+    final jk23LagNavLord = rashiLords[_d9Rashi(lag)];
+    final jk23MoonNavLord = rashiLords[_d9Rashi(moonLon)];
+    final jk23ColorMap = <String, String>{
+      'Sun': 'ಕೆಂಪು', 'Moon': 'ಬಿಳಿ', 'Mars': 'ಕೆಂಪು', 'Mercury': 'ಹಸಿರು',
+      'Jupiter': 'ಹೊಂಬಣ್ಣ', 'Venus': 'ಬಿಳಿ/ಹೊಳೆಯುವ', 'Saturn': 'ಕಪ್ಪು',
+    };
+
+    // ═══ JK Shloka 24: Body parts mapping (informational) ═══
 
     // ═══ JK Shloka 25: Wound or mole marks ═══
     for (final e in allPLons.entries) {
