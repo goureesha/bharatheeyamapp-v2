@@ -2880,6 +2880,127 @@ class ViyoniJanma {
       yogas.add(Yoga(shloka: 'ನೃಗುಜಶಶಿನೋರಸ್ತೇ... (ಅನಿಷ್ಟಯೋಗಾ ೫)', name: shA?'ವಿಳಂಬ ವಿವಾಹ (ಅ ೫)':'ಅಭಾರ್ಯ ಯೋಗ (ಅ ೫)', description: 'ಶುಕ್ರ+ಚಂದ್ರ 7ರಲ್ಲಿ', result: shA?'ವೃದ್ಧಾಪ್ಯದಲ್ಲಿ ಹೆಂಡತಿ':'ಹೆಂಡತಿ/ಮಕ್ಕಳಿಲ್ಲ', rashi: ch21Ven, planets: ['ಶುಕ್ರ','ಚಂದ್ರ']));
     }
 
+    // --- Shloka 6 (Anishtayoga Part2): Vamshoccheda ---
+    // Moon in 10th, Venus in 7th, papa in 4th → vamsha destroyer
+    if (ch21MoonH==10 && ch21VenH==7) {
+      final h4=(lagRashi+3)%12;
+      if (ch21Sun==h4||ch21Mars==h4||ch21Sat==h4) {
+        yogas.add(Yoga(shloka: 'ವಂಶೋಚ್ಛೇತ್ತಾ... (ಅನಿಷ್ಟಯೋಗಾ ೬)', name: 'ವಂಶೋಚ್ಛೇದ ಯೋಗ (ಅ ೬)', description: 'ಚಂದ್ರ 10, ಶುಕ್ರ 7, ಪಾಪ 4ರಲ್ಲಿ', result: 'ವಂಶನಾಶಕ', rashi: lagRashi, planets: ['ಚಂದ್ರ','ಶುಕ್ರ']));
+      }
+    }
+    // Venus in 12th in Saturn navamsha → born to dasi
+    if (ch21VenH==12) {
+      final ch21VenNav = _d9Rashi(ven);
+      final ch21VenNavLord = rashiLords[ch21VenNav];
+      if (ch21VenNavLord=='Saturn') {
+        yogas.add(Yoga(shloka: 'ದಾಸ್ಯಾಂ ಜಾತೋ... (ಅನಿಷ್ಟಯೋಗಾ ೬)', name: 'ದಾಸೀಪುತ್ರ ಯೋಗ (ಅ ೬)', description: 'ಶುಕ್ರ 12ರಲ್ಲಿ ಶನಿ ನವಾಂಶದಲ್ಲಿ', result: 'ದಾಸಿಗೆ ಹುಟ್ಟಿದವನು', rashi: ch21Ven, planets: ['ಶುಕ್ರ']));
+      }
+    }
+    // Sun+Moon in 7th aspected by Saturn → neecha
+    if (ch21SunH==7 && ch21MoonH==7) {
+      final satAsp7 = ch21Sat==(lagRashi+6)%12;
+      if (satAsp7) {
+        yogas.add(Yoga(shloka: 'ನೀಚೋsರ್ಕೇಂದ್ಯೋರ್ಮದನಗತಯೋಃ... (ಅನಿಷ್ಟಯೋಗಾ ೬)', name: 'ನೀಚ ಯೋಗ (ಅ ೬)', description: 'ಸೂರ್ಯ+ಚಂದ್ರ 7ರಲ್ಲಿ + ಶನಿ ದೃಷ್ಟಿ', result: 'ನೀಚನಾಗುತ್ತಾನೆ', rashi: ch21Sun, planets: ['ರವಿ','ಚಂದ್ರ','ಶನಿ']));
+      }
+    }
+
+    // --- Shloka 7: Venus+Mars in 7th + papa drishti → vataroga ---
+    if (ch21VenH==7 && getBhava(ch21Mars,lagRashi)==7) {
+      final papAsp = ch21Sun==(lagRashi+6)%12||ch21Sat==(lagRashi+6)%12;
+      if (papAsp) {
+        yogas.add(Yoga(shloka: 'ಪಾಪಾಲೋಕಿತಯೋಃ ಸಿತಾವನಿಜಯೋಃ... (ಅನಿಷ್ಟಯೋಗಾ ೭)', name: 'ವಾತರೋಗ ಯೋಗ (ಅ ೭)', description: 'ಶುಕ್ರ+ಕುಜ 7ರಲ್ಲಿ + ಪಾಪ ದೃಷ್ಟಿ', result: 'ವಾತರೋಗ', rashi: ch21Ven, planets: ['ಶುಕ್ರ','ಕುಜ']));
+      }
+    }
+    // Moon in Karkata/Vrischika navamsha + papa → guhyaroga
+    final ch21MoonNav = _d9Rashi(moonLon);
+    if ((ch21MoonNav==3||ch21MoonNav==7) && (ch21Sun==ch21Moon||ch21Mars==ch21Moon||ch21Sat==ch21Moon)) {
+      yogas.add(Yoga(shloka: 'ಚಂದ್ರೇ ಕರ್ಕಟವೃಶ್ಚಿಕಾಂಶಕಗತೇ... (ಅನಿಷ್ಟಯೋಗಾ ೭)', name: 'ಗುಹ್ಯರೋಗ ಯೋಗ (ಅ ೭)', description: 'ಚಂದ್ರ ಕರ್ಕಟ/ವೃಶ್ಚಿಕ ನವಾಂಶ + ಪಾಪ ಯುತ', result: 'ಗುಹ್ಯರೋಗ', rashi: ch21Moon, planets: ['ಚಂದ್ರ']));
+    }
+    // Sun+Moon in same rashi or mutual exchange → kshaya/krusha
+    final ch21SunNav = _d9Rashi(sun);
+    if (ch21Sun==ch21Moon) {
+      yogas.add(Yoga(shloka: 'ಶೋಷೀ ಪರಸ್ಪರಗೃಹಾಂಶಗಯೋ... (ಅನಿಷ್ಟಯೋಗಾ ೭)', name: 'ಕೃಶ ಶರೀರ ಯೋಗ (ಅ ೭)', description: 'ಸೂರ್ಯ+ಚಂದ್ರ ಒಂದೇ ರಾಶಿ', result: 'ಕೃಶ ಶರೀರ', rashi: ch21Sun, planets: ['ರವಿ','ಚಂದ್ರ']));
+    } else if ((ch21Sun==3&&ch21Moon==4)||(ch21Sun==4&&ch21Moon==3)||(ch21SunNav==3&&ch21MoonNav==4)||(ch21SunNav==4&&ch21MoonNav==3)) {
+      yogas.add(Yoga(shloka: 'ಶೋಷೀ ಪರಸ್ಪರಗೃಹಾಂಶಗಯೋ... (ಅನಿಷ್ಟಯೋಗಾ ೭)', name: 'ಕ್ಷಯರೋಗ ಯೋಗ (ಅ ೭)', description: 'ಸೂರ್ಯ-ಚಂದ್ರ ಪರಸ್ಪರ ರಾಶಿ/ನವಾಂಶ', result: 'ಕ್ಷಯರೋಗ', rashi: ch21Sun, planets: ['ರವಿ','ಚಂದ್ರ']));
+    }
+
+    // --- Shloka 8: Papa in 12&2, Moon lagna, Sun 7th → vikala ---
+    if (ch21MoonH==1 && ch21SunH==7) {
+      final p12=(lagRashi+11)%12; final p2=(lagRashi+1)%12;
+      final papIn12=ch21Mars==p12||ch21Sat==p12||ch21Rahu==p12;
+      final papIn2=ch21Mars==p2||ch21Sat==p2||ch21Rahu==p2;
+      if (papIn12&&papIn2) {
+        yogas.add(Yoga(shloka: 'ರಿಫಧನಸ್ಥಯೋರಶುಭಯೋಃ... (ಅನಿಷ್ಟಯೋಗಾ ೮)', name: 'ವಿಕಲ ಯೋಗ (ಅ ೮)', description: 'ಪಾಪ 12/2 + ಚಂದ್ರ ಲಗ್ನ + ಸೂರ್ಯ 7', result: 'ವಿಕಲಾಂಗ', rashi: lagRashi, planets: ['ಚಂದ್ರ','ರವಿ']));
+      }
+    }
+
+    // --- Shloka 9: Moon hemmed by papa + Sun in 7th → shvasa/kshaya ---
+    final ch21MnPrev=(ch21Moon+11)%12; final ch21MnNext=(ch21Moon+1)%12;
+    final moonHemmed=(ch21Sun==ch21MnPrev||ch21Mars==ch21MnPrev||ch21Sat==ch21MnPrev)&&(ch21Sun==ch21MnNext||ch21Mars==ch21MnNext||ch21Sat==ch21MnNext);
+    if (moonHemmed && ch21SunH==7) {
+      yogas.add(Yoga(shloka: 'ಅಂತಃ ಶಶಿನ್ಯಶುಭಯೋಃ... (ಅನಿಷ್ಟಯೋಗಾ ೯)', name: 'ಶ್ವಾಸ-ಗುಲ್ಮ ರೋಗ ಯೋಗ (ಅ ೯)', description: 'ಚಂದ್ರ ಪಾಪಮಧ್ಯ + ಸೂರ್ಯ 7ರಲ್ಲಿ', result: 'ಶ್ವಾಸ, ಕ್ಷಯ, ಪ್ಲೀಹ, ಗುಲ್ಮ ರೋಗ', rashi: ch21Moon, planets: ['ಚಂದ್ರ','ರವಿ']));
+    }
+
+    // --- Shloka 10: Moon in Mesha/Karkata/Makara/Meena navamsha + Sat+Mars → kushtha ---
+    if ((ch21MoonNav==0||ch21MoonNav==3||ch21MoonNav==9||ch21MoonNav==11)&&(ch21Sat==ch21Moon||ch21Mars==ch21Moon)) {
+      yogas.add(Yoga(shloka: 'ಚಂದ್ರೇsಶ್ಚಿಮಧ್ಯಝಷಕರ್ಕಿ... (ಅನಿಷ್ಟಯೋಗಾ ೧೦)', name: 'ಕುಷ್ಠರೋಗ ಯೋಗ (ಅ ೧೦)', description: 'ಚಂದ್ರ ಮೇಷ/ಕರ್ಕ/ಮಕರ/ಮೀನ ನವಾಂಶ + ಶನಿ/ಕುಜ ಯುತ', result: 'ಕುಷ್ಠರೋಗ', rashi: ch21Moon, planets: ['ಚಂದ್ರ']));
+    }
+
+    // --- Shloka 11: Sun/Moon/Mars/Sat in 8/6/2/12 → blindness ---
+    if (ch21SunH==8 && ch21MoonH==6 && getBhava(ch21Mars,lagRashi)==2 && getBhava(ch21Sat,lagRashi)==12) {
+      yogas.add(Yoga(shloka: 'ನಿಧನಾರಿಧನವ್ಯಯಸ್ಥಿತಾ... (ಅನಿಷ್ಟಯೋಗಾ ೧೧)', name: 'ಅಂಧತ್ವ ಯೋಗ (ಅ ೧೧)', description: 'ಸೂರ್ಯ 8, ಚಂದ್ರ 6, ಕುಜ 2, ಶನಿ 12', result: 'ಅಂಧತ್ವ', rashi: lagRashi, planets: ['ರವಿ','ಚಂದ್ರ','ಕುಜ','ಶನಿ']));
+    }
+
+    // --- Shloka 12: Papa in 9/11/3/5 without shubha drishti → deafness ---
+    final ch21H9=(lagRashi+8)%12; final ch21H11=(lagRashi+10)%12; final ch21H3=(lagRashi+2)%12; final ch21H5=(lagRashi+4)%12;
+    final papIn9=ch21Sun==ch21H9||ch21Mars==ch21H9||ch21Sat==ch21H9;
+    final papIn11=ch21Sun==ch21H11||ch21Mars==ch21H11||ch21Sat==ch21H11;
+    final papIn3=ch21Sun==ch21H3||ch21Mars==ch21H3||ch21Sat==ch21H3;
+    final papIn5=ch21Sun==ch21H5||ch21Mars==ch21H5||ch21Sat==ch21H5;
+    if (papIn9&&papIn11&&papIn3&&papIn5) {
+      final shubAsp=ch21Jup==ch21H9||ch21Jup==ch21H11||ch21Jup==ch21H3||ch21Jup==ch21H5||ch21Mer==ch21H9||ch21Mer==ch21H11;
+      if (!shubAsp) {
+        yogas.add(Yoga(shloka: 'ನವಮಾಯತೃತೀಯಧೀಯುತಾ... (ಅನಿಷ್ಟಯೋಗಾ ೧೨)', name: 'ಬಧಿರತ್ವ ಯೋಗ (ಅ ೧೨)', description: 'ಪಾಪ 9/11/3/5ರಲ್ಲಿ, ಶುಭ ದೃಷ್ಟಿ ಇಲ್ಲ', result: 'ಕಿವುಡತನ', rashi: lagRashi, planets: ['ಪಾಪ']));
+      }
+    }
+
+    // --- Shloka 13: Moon+Rahu in lagna + papa in trikona → pishacha ---
+    final ch21RahuH = getBhava(ch21Rahu, lagRashi);
+    if (ch21MoonH==1 && ch21RahuH==1) {
+      final trik5=ch21Sun==ch21H5||ch21Mars==ch21H5||ch21Sat==ch21H5;
+      final trik9=ch21Sun==ch21H9||ch21Mars==ch21H9||ch21Sat==ch21H9;
+      if (trik5||trik9) {
+        yogas.add(Yoga(shloka: 'ಉದಯತ್ಯುಡುಪೇsಸುರಾಸ್ಯಗೇ... (ಅನಿಷ್ಟಯೋಗಾ ೧೩)', name: 'ಪಿಶಾಚ ಬಾಧೆ ಯೋಗ (ಅ ೧೩)', description: 'ಚಂದ್ರ+ರಾಹು ಲಗ್ನ + ಪಾಪ ತ್ರಿಕೋಣ', result: 'ಪಿಶಾಚಿ ಬಾಧೆ', rashi: lagRashi, planets: ['ಚಂದ್ರ','ರಾಹು']));
+      }
+    }
+
+    // --- Shloka 14: Saturn 7th+Jupiter lagna → unmada ---
+    final ch21SatH = getBhava(ch21Sat, lagRashi);
+    final ch21JupH = getBhava(ch21Jup, lagRashi);
+    final ch21MarsH = getBhava(ch21Mars, lagRashi);
+    if (ch21SatH==7 && ch21JupH==1) {
+      yogas.add(Yoga(shloka: 'ಸಂಭ್ರಷ್ಟ ಪವನೇನ... (ಅನಿಷ್ಟಯೋಗಾ ೧೪)', name: 'ಉನ್ಮಾದ ಯೋಗ (ಅ ೧೪)', description: 'ಶನಿ 7 + ಗುರು ಲಗ್ನ', result: 'ವಾತಕೋಪ ಉನ್ಮಾದ', rashi: lagRashi, planets: ['ಶನಿ','ಗುರು']));
+    }
+    if (ch21MarsH==7 && ch21JupH==1) {
+      yogas.add(Yoga(shloka: 'ಸೋನ್ಮಾದೋsವನಿಸೂನುನಾ... (ಅನಿಷ್ಟಯೋಗಾ ೧೪)', name: 'ಉನ್ಮಾದ ಯೋಗ-೨ (ಅ ೧೪)', description: 'ಕುಜ 7 + ಗುರು ಲಗ್ನ', result: 'ಉನ್ಮಾದ', rashi: lagRashi, planets: ['ಕುಜ','ಗುರು']));
+    }
+    if (ch21SatH==1 && (ch21MarsH==9||ch21MarsH==5||ch21MarsH==7)) {
+      yogas.add(Yoga(shloka: 'ತದ್ವಚ್ಚಾಹ ಯಮೋದಯೇ... (ಅನಿಷ್ಟಯೋಗಾ ೧೪)', name: 'ಉನ್ಮಾದ ಯೋಗ-೩ (ಅ ೧೪)', description: 'ಶನಿ ಲಗ್ನ + ಕುಜ ${ch21MarsH}ನೇ ಮನೆ', result: 'ಉನ್ಮಾದ', rashi: lagRashi, planets: ['ಶನಿ','ಕುಜ']));
+    }
+
+    // --- Shloka 18: Sun/Sat/Mars in 10th without shubha drishti → parricide ---
+    if (ch21SunH==10 || ch21SatH==10 || ch21MarsH==10) {
+      final inH10 = <String>[];
+      if (ch21SunH==10) inH10.add('ರವಿ');
+      if (ch21SatH==10) inH10.add('ಶನಿ');
+      if (ch21MarsH==10) inH10.add('ಕುಜ');
+      final h10R=(lagRashi+9)%12;
+      final shubH10=ch21Jup==h10R||ch21Mer==h10R||ch21Ven==h10R;
+      if (!shubH10) {
+        yogas.add(Yoga(shloka: 'ರವಿಯಮಕುಜೈಃ... (ಅನಿಷ್ಟಯೋಗಾ ೧೮)', name: 'ಧೃತಕ ಯೋಗ (ಅ ೧೮)', description: '${inH10.join("+")} 10ನೇ ಮನೆ, ಶುಭದೃಷ್ಟಿ ಇಲ್ಲ', result: 'ಪಿತೃ/ಮಾತೃ ಹಾನಿಕಾರಕ', rashi: h10R, planets: inH10));
+      }
+    }
+
     return yogas;
   }
 }
