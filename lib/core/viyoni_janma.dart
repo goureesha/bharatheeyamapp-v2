@@ -53,8 +53,8 @@ class ViyoniJanma {
     for (int ref = 0; ref < 12; ref++) {
       final yogas = detect(chart, lagnaRashi: ref);
       for (final y in yogas) {
-        // Cross-lagna dedup: same name+result = duplicate
-        final key = '${y.name}|${y.result}';
+        // Cross-lagna dedup: same name+result+rashi = duplicate
+        final key = '${y.name}|${y.result}|${y.rashi}';
         if (!seen.contains(key)) {
           seen.add(key);
           allYogas.add(Yoga(
