@@ -46,7 +46,7 @@ class ViyoniJanma {
 
   /// Detect yogas from ALL 12 rashis as virtual lagna.
   /// Each yoga is tagged with [refLagna] indicating which rashi was used as reference.
-  static List<Yoga> detectAll(KundaliResult chart) {
+  static List<Yoga> detectAll(KundaliResult chart, {bool includeNavamsha = false}) {
     final allYogas = <Yoga>[];
     final seen = <String>{};
 
@@ -69,7 +69,70 @@ class ViyoniJanma {
         }
       }
     }
+
+    // ── Navamsha pass ──
+    if (includeNavamsha) {
+      final navChart = _toNavamshaChart(chart);
+      final navSeen = <String>{};
+      for (int ref = 0; ref < 12; ref++) {
+        final yogas = detect(navChart, lagnaRashi: ref);
+        for (final y in yogas) {
+          final key = 'NAV|${y.name}|${y.result}|${y.rashi}';
+          if (!navSeen.contains(key)) {
+            navSeen.add(key);
+            allYogas.add(Yoga(
+              shloka: y.shloka,
+              name: '⟪ನವಾಂಶ⟫ ${y.name}',
+              description: '⟪${_rashiNamesShort[ref]} ನವಾಂಶ ಲಗ್ನ⟫\n${y.description}',
+              result: y.result,
+              rashi: y.rashi,
+              planets: y.planets,
+              refLagna: ref,
+            ));
+          }
+        }
+      }
+    }
+
     return allYogas;
+  }
+
+  /// Convert a chart to navamsha-equivalent longitudes.
+  /// Each planet's longitude is replaced by its navamsha rashi * 30 + original pada offset.
+  static KundaliResult _toNavamshaChart(KundaliResult chart) {
+    final navPlanets = <String, PlanetInfo>{};
+    for (final e in chart.planets.entries) {
+      final navR = _d9Rashi(e.value.longitude);
+      // Place planet at midpoint of navamsha sign for consistent house calc
+      final navLon = navR * 30.0 + 15.0;
+      navPlanets[e.key] = PlanetInfo(
+        name: e.value.name,
+        longitude: navLon,
+        speed: e.value.speed,
+        nakshatra: e.value.nakshatra,
+        pada: e.value.pada,
+        rashi: _rashiNames[navR],
+        rashiIndex: navR,
+        subDrekD1: e.value.subDrekD1,
+        subDrekD9: e.value.subDrekD9,
+        subDrekD12: e.value.subDrekD12,
+        d9OfD9: e.value.d9OfD9,
+        isCombust: e.value.isCombust,
+      );
+    }
+    // Navamsha lagna
+    final lagLon = chart.bhavas.isNotEmpty ? chart.bhavas[0] : 0.0;
+    final navLagR = _d9Rashi(lagLon);
+    final navBhavas = List<double>.generate(12, (i) => ((navLagR + i) * 30.0 + 15.0) % 360);
+
+    return KundaliResult(
+      planets: navPlanets,
+      bhavas: navBhavas,
+      shadbala: chart.shadbala,
+      panchang: chart.panchang,
+      dashas: chart.dashas,
+      advSphutas: chart.advSphutas,
+    );
   }
 
   /// Detect all active yogas for the given chart.

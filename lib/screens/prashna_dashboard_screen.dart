@@ -44,6 +44,7 @@ class _PrashnaDashboardScreenState extends State<PrashnaDashboardScreen>
   late int _minute;
   late String _ampm;
   bool _recalculating = false;
+  bool _includeNavamsha = false;
 
 
   static const _tabs = ['ಕುಂಡಲಿ', 'ಸ್ಫುಟ', 'ಪಂಚಾಂಗ', 'ಷಡ್ವರ್ಗ'];
@@ -622,7 +623,7 @@ class _PrashnaDashboardScreenState extends State<PrashnaDashboardScreen>
   // YOGA SECTION (in Kundali tab)
   // ═══════════════════════════════════════════
   Widget _buildYogaSection() {
-    final yogas = ViyoniJanma.detectAll(_result);
+    final yogas = ViyoniJanma.detectAll(_result, includeNavamsha: _includeNavamsha);
     if (yogas.isEmpty) {
       return Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -658,7 +659,21 @@ class _PrashnaDashboardScreenState extends State<PrashnaDashboardScreen>
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('ಯೋಗಗಳು (${yogas.length})', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 15, color: kPurple2)),
+          Row(
+            children: [
+              Expanded(child: Text('ಯೋಗಗಳು (${yogas.length})', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 15, color: kPurple2))),
+              FilterChip(
+                label: Text('ನವಾಂಶ', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: _includeNavamsha ? Colors.white : kText)),
+                selected: _includeNavamsha,
+                onSelected: (v) => setState(() => _includeNavamsha = v),
+                selectedColor: kPurple2,
+                checkmarkColor: Colors.white,
+                backgroundColor: kCard,
+                padding: EdgeInsets.zero,
+                visualDensity: VisualDensity.compact,
+              ),
+            ],
+          ),
           const SizedBox(height: 8),
 
           // ── Rashi summary grid ──
