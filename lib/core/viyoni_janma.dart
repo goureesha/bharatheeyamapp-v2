@@ -2560,6 +2560,106 @@ class ViyoniJanma {
         ));
     }
 
+
+    // ═══════════════════════════════════════════════════
+    // Chapter 17: ದೃಷ್ಟಿಫಲಾಧ್ಯಾಯ (Drishtiphaladhyaya - Results of Aspects)
+    // ═══════════════════════════════════════════════════
+
+    // Helper: does planet aspect targetRashi? (includes special aspects)
+    bool ch17Aspects(String aspectingPlanet, int targetRashi) {
+      if (!allPLons.containsKey(aspectingPlanet)) return false;
+      final aR = _rashiOf(allPLons[aspectingPlanet]!);
+      final dist = ((targetRashi - aR) % 12) + 1;
+      if (dist == 7) return true;
+      if (aspectingPlanet == 'Mars' && (dist == 4 || dist == 8)) return true;
+      if (aspectingPlanet == 'Jupiter' && (dist == 5 || dist == 9)) return true;
+      if (aspectingPlanet == 'Saturn' && (dist == 3 || dist == 10)) return true;
+      return false;
+    }
+
+    // Shloka 1-3: Moon in rashi aspected by planets → results
+    // Order: Mars, Mercury, Jupiter, Venus, Saturn, Sun (per Niyama 1 "ಕ್ರಮವಾಗಿ")
+    final ch17RashiResults = <int, Map<String,String>>{
+      0: {'Mars':'ರಾಜ','Mercury':'ಪಂಡಿತ','Jupiter':'ರಾಜನ ಗುಣಗಳುಳ್ಳವನು','Venus':'ಕಳ್ಳ','Saturn':'ದರಿದ್ರ','Sun':'ಸೇವಕ'},
+      1: {'Mars':'ದರಿದ್ರ','Mercury':'ಕಳ್ಳ','Jupiter':'ರಾಜಮಾನ್ಯ','Venus':'ರಾಜ','Saturn':'ಧನವಂತ','Sun':'ಸೇವಕ'},
+      2: {'Mars':'ಕಬ್ಬಿಣದ ವ್ಯಾಪಾರಿ','Mercury':'ರಾಜ','Jupiter':'ಪಂಡಿತ','Venus':'ನಿರ್ಭೀತ','Saturn':'ನೇಕಾರ','Sun':'ದರಿದ್ರ'},
+      3: {'Mars':'ಯೋಧ','Mercury':'ಜ್ಞಾನಿ','Jupiter':'ರಾಜ','Venus':'ಕಬ್ಬಿಣದ ವ್ಯಾಪಾರಿ','Saturn':'ಕಣ್ಣಿನ ರೋಗಿ','Sun':'ದರಿದ್ರ'},
+      4: {'Mars':'ಜ್ಯೋತಿಷಿ','Mercury':'ಧನವಂತ','Jupiter':'ರಾಜ','Venus':'ಕ್ಷೌರಿಕ','Saturn':'ರಾಜ','Sun':'ಭೂಮಾಲೀಕ'},
+      5: {'Mars':'ಜ್ಯೋತಿಷಿ','Mercury':'ಧನವಂತ','Jupiter':'ರಾಜ','Venus':'ಕ್ಷೌರಿಕ','Saturn':'ರಾಜ','Sun':'ಭೂಮಾಲೀಕ'}, // same as Simha
+      6: {'Mars':'ರಾಜ','Mercury':'ಅಕ್ಕಸಾಲಿಗ','Jupiter':'ವ್ಯಾಪಾರಿ','Venus':'ನೀಚ/ದುಷ್ಟ','Saturn':'ನೀಚ/ದುಷ್ಟ','Sun':'ನೀಚ/ದುಷ್ಟ'},
+      7: {'Mars':'ರಾಜ','Mercury':'ಅಗಸ','Jupiter':'ಅಂಗವಿಕಲ','Venus':'ದರಿದ್ರ','Saturn':'ರಾಜ','Sun':'ರಾಜ'},
+      8: {'Mars':'ದಂಭಿ ಮತ್ತು ಶಠ','Mercury':'ಆಶ್ರಯ ಪಡೆಯುವವನು','Jupiter':'ಆಶ್ರಯ ಪಡೆಯುವವನು','Venus':'ಆಶ್ರಯ ಪಡೆಯುವವನು','Saturn':'ದಂಭಿ ಮತ್ತು ಶಠ','Sun':'ದಂಭಿ ಮತ್ತು ಶಠ'},
+      9: {'Mars':'ಬಹುದೊಡ್ಡ ರಾಜ','Mercury':'ರಾಜ','Jupiter':'ಪಂಡಿತ','Venus':'ಧನವಂತ','Saturn':'ದರಿದ್ರ','Sun':'ರಾಜ'},
+      10:{'Mars':'ರಾಜ','Mercury':'ರಾಜನಿಗೆ ಸಮಾನ','Jupiter':'ಪರಸ್ತ್ರೀ ನಿರತ','Venus':'ಪಾಪಫಲ','Saturn':'ಪಾಪಫಲ','Sun':'ಪಾಪಫಲ'},
+      11:{'Mars':'ಪಾಪಕಾರ್ಯ','Mercury':'ಹಾಸ್ಯಗಾರ','Jupiter':'ರಾಜ','Venus':'ಪಂಡಿತ','Saturn':'ಪಾಪಕಾರ್ಯ','Sun':'ಪಾಪಕಾರ್ಯ'},
+    };
+
+    // Check from Moon AND Lagna
+    for (final refR in [moonR2, lagRashi]) {
+      final refName = refR == moonR2 ? 'ಚಂದ್ರ' : 'ಲಗ್ನ';
+      final rashiMap = ch17RashiResults[refR];
+      if (rashiMap != null) {
+        for (final aspector in ['Sun','Mars','Mercury','Jupiter','Venus','Saturn']) {
+          if (aspector == 'Moon') continue;
+          if (ch17Aspects(aspector, refR)) {
+            final res = rashiMap[aspector];
+            if (res != null) {
+              yogas.add(Yoga(
+                shloka: 'ಚಂದ್ರೇ ಭೂಪಬುಧೇ ನೃಪೋ... (ದೃಷ್ಟಿಫಲಾಧ್ಯಾಯ ೧-೩)',
+                name: '$refName ದೃಷ್ಟಿ ಯೋಗ (ದೃ ೧-೩)',
+                description: '${_rashiNames[refR]}ದಲ್ಲಿರುವ $refNameನಿಗೆ ${_knPlanets[aspector]} ದೃಷ್ಟಿ',
+                result: res,
+                rashi: refR, planets: [refName, _knPlanets[aspector]!],
+              ));
+            }
+          }
+        }
+      }
+    }
+
+    // Shloka 4-8: Navamsha-based aspect results
+    // Planet order per navamsha lord: Mars, Mercury, Jupiter, Venus, Saturn, Sun → 6 results
+    final ch17NavResults = <String, List<String>>{
+      'Mars':    ['ರಕ್ಷಕ','ಹಿಂಸೆಯಲ್ಲಿ ಆಸಕ್ತ','ಯುದ್ಧದಲ್ಲಿ ಕುಶಲ','ರಾಜ','ಧನವಂತ','ಜಗಳಗಂಟ'],
+      'Venus':   ['ಮೂರ್ಖ','ಪರಸ್ತ್ರೀರತ','ಕಾವ್ಯಜ್ಞ','ಉತ್ತಮ ಕಾವ್ಯ ರಚಿಸುವವನು','ಸುಖಾಪೇಕ್ಷಿ','ಪರರ ಹೆಂಡತಿಯೊಂದಿಗೆ ಸೇರುವವನು'],
+      'Mercury': ['ರಂಗಭೂಮಿಯ ಕಲಾವಿದ','ಕಳ್ಳ','ಶ್ರೇಷ್ಠ ಕವಿ','ಮಂತ್ರಿ','ಸಂಗೀತಗಾರ','ಶಿಲ್ಪಕಲೆಯಲ್ಲಿ ನಿಪುಣ'],
+      'Moon':    ['ಸಣ್ಣ ಶರೀರದವನು','ಹಣದ ಆಸೆ ಉಳ್ಳವನು','ತಪಸ್ವಿ','ಪ್ರಮುಖ ವ್ಯಕ್ತಿ','ಸ್ತ್ರೀಯರನ್ನು ಪೋಷಿಸುವವನು','ಕಾರ್ಯನಿರತ'],
+      'Sun':     ['ಕೋಪಿಷ್ಟ','ರಾಜನಿಗೆ ಪ್ರಿಯವಾದವನು','ನಿಧಿಗೆ ಒಡೆಯ','ಪ್ರಭು','ಮಕ್ಕಳಿಲ್ಲದವನು','ಅತಿ ಹಿಂಸಾತ್ಮಕ ಕೆಲಸ ಮಾಡುವವನು'],
+      'Jupiter': ['ಪ್ರಸಿದ್ಧ ಬಲಶಾಲಿ','ಯುದ್ಧದಲ್ಲಿ ಸಲಹೆ ನೀಡುವವನು','ಹಾಸ್ಯ ಬಲ್ಲವನು','ಮಂತ್ರಿ','ಕಾಮರಹಿತ','ವೃದ್ಧರಂತಹ ಗುಣವುಳ್ಳವನು'],
+      'Saturn':  ['ಕಡಿಮೆ ಸಂತಾನವುಳ್ಳವನು','ಸಂಪತ್ತಿದ್ದರೂ ದುಃಖಿಸುವವನು','ಮಾನ ಸನ್ಮಾನಗಳಲ್ಲಿ ಆಸಕ್ತ','ತನ್ನ ಕೆಲಸದಲ್ಲಿ ನಿರತ','ದುಷ್ಟ ಸ್ತ್ರೀಯರನ್ನು ಇಷ್ಟಪಡುವವನು','ಜಿಪುಣ'],
+    };
+
+    void evaluateCh17Nav(String targetPlanet, double targetLon) {
+      final navRashi = _d9Rashi(targetLon);
+      final navLord = rashiLords[navRashi];
+      final targetKn = _knPlanets[targetPlanet]!;
+      final tRashi = _rashiOf(targetLon);
+
+      final aspectors = targetPlanet == 'Moon'
+          ? ['Mars','Mercury','Jupiter','Venus','Saturn','Sun']
+          : ['Mars','Mercury','Jupiter','Venus','Saturn','Moon'];
+
+      final results = ch17NavResults[navLord];
+      if (results != null) {
+        for (int i = 0; i < 6; i++) {
+          final aspector = aspectors[i];
+          if (ch17Aspects(aspector, tRashi) || (aspector == 'Moon' && _rashiOf(moonLon) == tRashi)) {
+            yogas.add(Yoga(
+              shloka: 'ಆರಕ್ಷಕೋ ವಧರುಚಿಃ... (ದೃಷ್ಟಿಫಲಾಧ್ಯಾಯ ೪-೮)',
+              name: 'ನವಾಂಶ ದೃಷ್ಟಿ ಯೋಗ (ದೃ ೪-೮)',
+              description: '${_knPlanets[navLord]} ನವಾಂಶದಲ್ಲಿರುವ $targetKnನಿಗೆ ${_knPlanets[aspector]} ದೃಷ್ಟಿ',
+              result: results[i],
+              rashi: tRashi, planets: [targetKn, _knPlanets[aspector]!],
+            ));
+          }
+        }
+      }
+    }
+
+    // Shloka 4-8: Navamsha aspects for Moon and Sun (Shloka 8: ಚಂದ್ರೇ ಭಾನೌ ತದ್ವದ್)
+    evaluateCh17Nav('Moon', moonLon);
+    evaluateCh17Nav('Sun', sun);
+
     return yogas;
   }
 }
