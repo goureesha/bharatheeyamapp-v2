@@ -53,8 +53,8 @@ class ViyoniJanma {
     for (int ref = 0; ref < 12; ref++) {
       final yogas = detect(chart, lagnaRashi: ref);
       for (final y in yogas) {
-        // Create unique key to avoid exact duplicates
-        final key = '${y.name}|${y.rashi}|$ref';
+        // Cross-lagna dedup: same name+result = duplicate
+        final key = '${y.name}|${y.result}';
         if (!seen.contains(key)) {
           seen.add(key);
           allYogas.add(Yoga(
@@ -2812,6 +2812,73 @@ class ViyoniJanma {
       description: '${ch18SatH}ನೇ ಮನೆಯಲ್ಲಿ ಶನಿ (${_rashiNames[ch18SatR]})',
       result: satRes, rashi: ch18SatR, planets: ['ಶನಿ'],
     ));
+
+
+    // ═══════════════════════════════════════════════════
+    // Chapter 21: ಅನಿಷ್ಟಯೋಗಾಧ್ಯಾಯ
+    // ═══════════════════════════════════════════════════
+    final ch21Ven = _rashiOf(ven);
+    final ch21Sun = _rashiOf(sun);
+    final ch21Moon = _rashiOf(moonLon);
+    final ch21Mars = _rashiOf(mars);
+    final ch21Sat = _rashiOf(sat);
+    final ch21Jup = _rashiOf(jup);
+    final ch21Mer = _rashiOf(mer);
+    final ch21Rahu = _rashiOf(rahu);
+    final ch21Ketu = _rashiOf(ketu);
+
+    // Shloka 1: 5th/7th shubha check
+    for (final refName in ['ಲಗ್ನ', 'ಚಂದ್ರ']) {
+      final refR = refName == 'ಲಗ್ನ' ? lagRashi : ch21Moon;
+      final h5 = (refR + 4) % 12;
+      final h7 = (refR + 6) % 12;
+      final shIn5 = ch21Jup == h5 || ch21Ven == h5 || ch21Mer == h5;
+      final shIn7 = ch21Jup == h7 || ch21Ven == h7 || ch21Mer == h7;
+      if (shIn5 || shIn7) {
+        yogas.add(Yoga(
+          shloka: 'ಲಗ್ನಾತ್ಪುತ್ರಕಲತ್ರಭೇ... (ಅನಿಷ್ಟಯೋಗಾ ೧)',
+          name: 'ಪುತ್ರ-ಕಲತ್ರ ಸುಖ ಯೋಗ (ಅ ೧)',
+          description: '${refName}ದಿಂದ ${shIn5 ? "5ನೇ" : "7ನೇ"} ಮನೆಯಲ್ಲಿ ಶುಭಗ್ರಹ',
+          result: 'ಮಕ್ಕಳು ಮತ್ತು ಹೆಂಡತಿಯಿಂದ ಸುಖ',
+          rashi: refR, planets: [refName],
+        ));
+      }
+    }
+    if (lagRashi == 5 && ch21Sun == 5 && ch21Sat == 11) {
+      yogas.add(Yoga(shloka: 'ಪಾರ್ಥೋನೋದಯಗೇ ರವೌ... (ಅನಿಷ್ಟಯೋಗಾ ೧)', name: 'ದಾರ ಹಾನಿ ಯೋಗ (ಅ ೧)', description: 'ಕನ್ಯಾ ಲಗ್ನ+ರವಿ, ಮೀನದಲ್ಲಿ ಶನಿ', result: 'ಹೆಂಡತಿಯ ಮರಣ', rashi: lagRashi, planets: ['ರವಿ','ಶನಿ']));
+    }
+    if (getBhava(ch21Mars, lagRashi) == 5) {
+      yogas.add(Yoga(shloka: 'ಪುತ್ರಸ್ಥಾನಗತಶ್ಚ... (ಅನಿಷ್ಟಯೋಗಾ ೧)', name: 'ಪುತ್ರ ಹಾನಿ ಯೋಗ (ಅ ೧)', description: 'ಕುಜ 5ನೇ ಮನೆಯಲ್ಲಿ', result: 'ಮಕ್ಕಳ ಮರಣ/ಕಷ್ಟ', rashi: ch21Mars, planets: ['ಕುಜ']));
+    }
+    // Shloka 2: Venus hemmed
+    final ch21VenH = getBhava(ch21Ven, lagRashi);
+    final v4 = (ch21Ven+3)%12; final v8 = (ch21Ven+7)%12;
+    final p4 = ch21Sun==v4||ch21Mars==v4||ch21Sat==v4||ch21Rahu==v4||ch21Ketu==v4;
+    final p8 = ch21Sun==v8||ch21Mars==v8||ch21Sat==v8||ch21Rahu==v8||ch21Ketu==v8;
+    final vn=(ch21Ven+1)%12; final vp=(ch21Ven+11)%12;
+    final hm=(ch21Sun==vn||ch21Mars==vn||ch21Sat==vn)&&(ch21Sun==vp||ch21Mars==vp||ch21Sat==vp);
+    final sv = ch21Jup==ch21Ven||ch21Mer==ch21Ven;
+    if ((p4&&p8||hm)&&!sv) {
+      yogas.add(Yoga(shloka: 'ಉಗ್ರಗ್ರಹೈ:... (ಅನಿಷ್ಟಯೋಗಾ ೨)', name: 'ಜಾಯಾ ವಧ ಯೋಗ (ಅ ೨)', description: 'ಶುಕ್ರನಿಂದ 4/8ರಲ್ಲಿ ಪಾಪ, ಶುಭದೃಷ್ಟಿ ಇಲ್ಲ', result: 'ಹೆಂಡತಿಗೆ ಅಪಾಯ', rashi: ch21Ven, planets: ['ಶುಕ್ರ']));
+    }
+    // Shloka 3
+    final ch21SunH = getBhava(ch21Sun, lagRashi); final ch21MoonH = getBhava(ch21Moon, lagRashi);
+    if ((ch21SunH==12&&ch21MoonH==6)||(ch21SunH==6&&ch21MoonH==12)) {
+      yogas.add(Yoga(shloka: 'ಲಗ್ನಾದ್ ವ್ಯಯಾರಿಗತಯೋಃ... (ಅನಿಷ್ಟಯೋಗಾ ೩)', name: 'ದೃಷ್ಟಿ ದೋಷ ಯೋಗ (ಅ ೩)', description: 'ಸೂರ್ಯ+ಚಂದ್ರ 12/6ರಲ್ಲಿ', result: 'ದೃಷ್ಟಿದೋಷ', rashi: ch21Sun, planets: ['ರವಿ','ಚಂದ್ರ']));
+    }
+    if (ch21Ven==ch21Sun) { final cH=getBhava(ch21Sun,lagRashi); if(cH==7||cH==5||cH==9) {
+      yogas.add(Yoga(shloka: 'ಶುಕ್ರಾರ್ಕಯೋರ್ವಿಕಲ... (ಅನಿಷ್ಟಯೋಗಾ ೩)', name: 'ವಿಕಲ ದಾರ ಯೋಗ (ಅ ೩)', description: 'ಸೂರ್ಯ+ಶುಕ್ರ ${cH}ನೇ ಮನೆಯಲ್ಲಿ', result: 'ವಿಕಲಾಂಗ ಹೆಂಡತಿ', rashi: ch21Sun, planets: ['ರವಿ','ಶುಕ್ರ']));
+    }}
+    // Shloka 4
+    if ((lagRashi==9||lagRashi==10||lagRashi==0||lagRashi==7)&&ch21VenH==7) {
+      final h5R=(lagRashi+4)%12; if(ch21Jup!=h5R&&ch21Mer!=h5R) {
+        yogas.add(Yoga(shloka: 'ಕೋಣೋದಯೇ... (ಅನಿಷ್ಟಯೋಗಾ ೪)', name: 'ವಂಧ್ಯಾ ಯೋಗ (ಅ ೪)', description: 'ಶನಿ/ಕುಜ ಲಗ್ನ+ಶುಕ್ರ 7+5ರಲ್ಲಿ ಶುಭ ಇಲ್ಲ', result: 'ಬಂಜೆ ಹೆಂಡತಿ', rashi: ch21Ven, planets: ['ಶುಕ್ರ']));
+    }}
+    // Shloka 5
+    if (ch21VenH==7&&ch21MoonH==7) {
+      final shA=ch21Jup==(lagRashi+6)%12||ch21Mer==(lagRashi+6)%12;
+      yogas.add(Yoga(shloka: 'ನೃಗುಜಶಶಿನೋರಸ್ತೇ... (ಅನಿಷ್ಟಯೋಗಾ ೫)', name: shA?'ವಿಳಂಬ ವಿವಾಹ (ಅ ೫)':'ಅಭಾರ್ಯ ಯೋಗ (ಅ ೫)', description: 'ಶುಕ್ರ+ಚಂದ್ರ 7ರಲ್ಲಿ', result: shA?'ವೃದ್ಧಾಪ್ಯದಲ್ಲಿ ಹೆಂಡತಿ':'ಹೆಂಡತಿ/ಮಕ್ಕಳಿಲ್ಲ', rashi: ch21Ven, planets: ['ಶುಕ್ರ','ಚಂದ್ರ']));
+    }
 
     return yogas;
   }

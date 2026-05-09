@@ -639,8 +639,9 @@ class _PrashnaDashboardScreenState extends State<PrashnaDashboardScreen>
     const rashiNames = ['ಮೇಷ','ವೃಷಭ','ಮಿಥುನ','ಕರ್ಕ','ಸಿಂಹ','ಕನ್ಯಾ','ತುಲಾ','ವೃಶ್ಚಿಕ','ಧನು','ಮಕರ','ಕುಂಭ','ಮೀನ'];
     final byRashi = <int, List<Yoga>>{};
     for (final y in yogas) {
-      if (y.rashi >= 0 && y.rashi < 12) {
-        byRashi.putIfAbsent(y.rashi, () => []).add(y);
+      final grp = y.refLagna >= 0 ? y.refLagna : y.rashi;
+      if (grp >= 0 && grp < 12) {
+        byRashi.putIfAbsent(grp, () => []).add(y);
       }
     }
 
