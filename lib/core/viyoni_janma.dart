@@ -1091,7 +1091,7 @@ class ViyoniJanma {
       if ((marsR + 6) % 12 == lagRashi || (marsR + 3) % 12 == lagRashi || (marsR + 7) % 12 == lagRashi) jk11Asp['ಕುಜ'] = 'ಸ್ಮಶಾನ';
       if ((jk1VenR + 6) % 12 == lagRashi) jk11Asp['ಶುಕ್ರ'] = 'ರಮ್ಯ ಸ್ಥಳ';
       if ((moonR2 + 6) % 12 == lagRashi) jk11Asp['ಚಂದ್ರ'] = 'ರಮ್ಯ ಸ್ಥಳ';
-      if ((jk5JupR + 6) % 12 == lagRashi || (jk5JupR + 4) % 12 == lagRashi || (jk5JupR + 8) % 12 == lagRashi) jk11Asp['ಗುರು'] = 'ಯಾಗಶಾಲೆ';
+      if ((_rashiOf(jup) + 6) % 12 == lagRashi || (_rashiOf(jup) + 4) % 12 == lagRashi || (_rashiOf(jup) + 8) % 12 == lagRashi) jk11Asp['ಗುರು'] = 'ಯಾಗಶಾಲೆ';
       if ((sunR + 6) % 12 == lagRashi) jk11Asp['ರವಿ'] = 'ರಾಜಮಂದಿರ';
       if ((jk1MerR + 6) % 12 == lagRashi) jk11Asp['ಬುಧ'] = 'ಶಿಲ್ಪಾಲಯ';
       if (jk11Asp.isNotEmpty) {
@@ -1125,7 +1125,7 @@ class ViyoniJanma {
     final jk13MoonInLag = moonR2 == lagRashi;
     final jk13SunMarsInTrik = (jk13SunInTri == 5 || jk13SunInTri == 9) && (jk13MarsInTri == 5 || jk13MarsInTri == 9);
     if (jk13SunMarsInTrik && jk13MoonInLag) {
-      final jk13JupAsp = (jk5JupR + 6) % 12 == lagRashi || (jk5JupR + 4) % 12 == lagRashi || (jk5JupR + 8) % 12 == lagRashi;
+      final jk13JupAsp = (_rashiOf(jup) + 6) % 12 == lagRashi || (_rashiOf(jup) + 4) % 12 == lagRashi || (_rashiOf(jup) + 8) % 12 == lagRashi;
       yogas.add(Yoga(
         shloka: 'ಆರಾರ್ಕಜಯೋಸ್ತ್ರಿಕೋಣಗೇ ಚಂದ್ರೇsರ್ಕೇ ಚ ವಿಸೃಜ್ಯತೇsಂಬಯಾ',
         name: 'ಮಾತೃ ತ್ಯಾಗ ಯೋಗ (ಜಕ ೧೩)',
@@ -1940,7 +1940,7 @@ class ViyoniJanma {
     }
     
     int dyTogetherRashi(String p1, String p2) {
-      return _rashiOf(allPLons[p1]!);
+      return lagRashi;
     }
 
     // ═══ DY Shloka 1: Sun combinations ═══
