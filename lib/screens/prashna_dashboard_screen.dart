@@ -817,6 +817,12 @@ class _PrashnaDashboardScreenState extends State<PrashnaDashboardScreen>
                     Text(gp.rashi, style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: kText)),
                   ]),
                   const SizedBox(height: 8),
+                  // Shloka
+                  if (gp.rashiShloka.isNotEmpty)
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 6),
+                      child: Text(gp.rashiShloka, style: TextStyle(fontSize: 10, fontStyle: FontStyle.italic, color: kMuted, height: 1.4)),
+                    ),
                   // Phala rows
                   _phalaRow('ರಾಶಿ ಫಲ', gp.rashi, gp.rashiPhala, pColor),
                   _phalaRow('ನವಾಂಶ ಫಲ', gp.navamshaRashi, gp.navamshaPhala, pColor),
