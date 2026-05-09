@@ -2664,6 +2664,155 @@ class ViyoniJanma {
     evaluateCh17Nav('Moon', moonLon);
     evaluateCh17Nav('Sun', sun);
 
+
+    // ═══════════════════════════════════════════════════
+    // Chapter 18: ಭಾವಫಲಾಧ್ಯಾಯ (Bhavaphaladhyaya - Results of Planets in Houses)
+    // ═══════════════════════════════════════════════════
+
+    int getBhava(int pRashi, int lagR) => ((pRashi - lagR) % 12) + 1;
+
+    // --- Shloka 1-3: Sun in houses ---
+    final ch18SunR = _rashiOf(sun);
+    final ch18SunH = getBhava(ch18SunR, lagRashi);
+    String sunRes = '';
+    if (ch18SunH == 1) {
+      if (ch18SunR == 0) sunRes = 'ಧನವಂತ ಮತ್ತು ದೃಷ್ಟಿದೋಷವುಳ್ಳವನು';
+      else if (ch18SunR == 4) sunRes = 'ರಾತ್ರಿಯಲ್ಲಿ ಕಣ್ಣು ಕಾಣಿಸದವನು';
+      else if (ch18SunR == 3) sunRes = 'ಗುಳ್ಳೆಗಳಂತಹ ಕಣ್ಣುಳ್ಳವನು';
+      else sunRes = 'ಶೂರ, ಜಡಸ್ವಭಾವದವನು, ದೃಷ್ಟಿದೋಷವುಳ್ಳವನು, ಕರುಣೆಯಿಲ್ಲದವನು';
+    } else if (ch18SunH == 2) sunRes = 'ಬಹಳ ಸಂಪತ್ತುಳ್ಳವನು, ರಾಜನಿಂದ ಧನ ನಷ್ಟ, ಮುಖದ ರೋಗ';
+    else if (ch18SunH == 3) sunRes = 'ಬುದ್ಧಿವಂತ ಮತ್ತು ಪರಾಕ್ರಮಿ';
+    else if (ch18SunH == 4) sunRes = 'ಸುಖವಿಲ್ಲದವನು, ಮಾನಸಿಕ ಪೀಡೆ';
+    else if (ch18SunH == 5) sunRes = 'ಮಕ್ಕಳಿಲ್ಲದವನು ಮತ್ತು ಧನಹೀನ';
+    else if (ch18SunH == 6) sunRes = 'ಬಲಶಾಲಿ, ಶತ್ರುಗಳನ್ನು ಸೋಲಿಸುವವನು';
+    else if (ch18SunH == 7) sunRes = 'ಸ್ತ್ರೀಯರಿಂದ ಅವಮಾನ';
+    else if (ch18SunH == 8) sunRes = 'ಕಡಿಮೆ ಮಕ್ಕಳು, ದೃಷ್ಟಿದೋಷ';
+    else if (ch18SunH == 9) sunRes = 'ಮಕ್ಕಳು, ಹಣ ಮತ್ತು ಸುಖ';
+    else if (ch18SunH == 10) sunRes = 'ಶಾಸ್ತ್ರಜ್ಞಾನ ಮತ್ತು ಶೌರ್ಯ';
+    else if (ch18SunH == 11) sunRes = 'ಬಹಳ ಧನವಂತ';
+    else if (ch18SunH == 12) sunRes = 'ಪತಿತನಾಗುತ್ತಾನೆ';
+    if (sunRes.isNotEmpty) {
+      yogas.add(Yoga(
+        shloka: 'ಶೂರಃ ಸ್ತಬ್ಧ ವಿಕಲನಯನೋ... (ಭಾವಫಲಾಧ್ಯಾಯ ೧-೩)',
+        name: 'ಸೂರ್ಯ ಭಾವ ಫಲ (${ch18SunH}ನೇ ಮನೆ)',
+        description: '${ch18SunH}ನೇ ಮನೆಯಲ್ಲಿ ಸೂರ್ಯ (${_rashiNames[ch18SunR]})',
+        result: sunRes, rashi: ch18SunR, planets: ['ರವಿ'],
+      ));
+    }
+
+    // --- Shloka 4-5: Moon in houses ---
+    final ch18MoonR = _rashiOf(moonLon);
+    final ch18MoonH = getBhava(ch18MoonR, lagRashi);
+    // Moon's own rashi = Cancer(3), exalted = Taurus(1)
+    String moonRes = '';
+    if (ch18MoonH == 1) {
+      if (ch18MoonR == 3 || ch18MoonR == 1) moonRes = 'ಧನವಂತ ಮತ್ತು ಬಹಳ ಮಕ್ಕಳುಳ್ಳವನು';
+      else moonRes = 'ಮೂಗ, ಹುಚ್ಚ, ಜಡಬುದ್ಧಿ, ಕುರುಡ, ನೀಚ, ಕಿವುಡ, ಸೇವಕ';
+    } else if (ch18MoonH == 2) moonRes = 'ಧನವಂತ, ದೊಡ್ಡ ಕುಟುಂಬ';
+    else if (ch18MoonH == 3) moonRes = 'ಹಿಂಸಕನಾಗುತ್ತಾನೆ';
+    else if (ch18MoonH == 4 || ch18MoonH == 5) moonRes = 'ಆಯಾ ಭಾವಗಳಿಗೆ ಸಂಬಂಧಿಸಿದ ಉತ್ತಮ ಫಲಗಳು';
+    else if (ch18MoonH == 6) moonRes = 'ಅನೇಕ ಶತ್ರುಗಳು, ಮೃದು ಶರೀರ, ಕಾಮಾತುರ, ಆಲಸಿ';
+    else if (ch18MoonH == 7) moonRes = 'ಅಸೂಯೆ ಪಡುವವನು, ಸ್ತ್ರೀಯರಲ್ಲಿ ಆಸಕ್ತ';
+    else if (ch18MoonH == 8) moonRes = 'ಬುದ್ಧಿವಂತ, ರೋಗದಿಂದ ಪೀಡಿತ';
+    else if (ch18MoonH == 9) moonRes = 'ಸೌಭಾಗ್ಯ, ಮಕ್ಕಳು, ಮಿತ್ರರು, ಬಂಧುಗಳು, ಧನ';
+    else if (ch18MoonH == 10) moonRes = 'ಧರ್ಮ, ಧನ, ಬುದ್ಧಿ, ಶೌರ್ಯ, ಕಾರ್ಯಸಿದ್ಧಿ';
+    else if (ch18MoonH == 11) moonRes = 'ಪ್ರಸಿದ್ಧ, ೧೧ನೇ ಭಾವದ ಗುಣಗಳು';
+    else if (ch18MoonH == 12) moonRes = 'ನೀಚ ಮತ್ತು ಅಂಗಹೀನ';
+    if (moonRes.isNotEmpty) {
+      yogas.add(Yoga(
+        shloka: 'ಮೂಕೋನ್ಮತ್ತಜಡಾಂಧನೀಚ... (ಭಾವಫಲಾಧ್ಯಾಯ ೪-೫)',
+        name: 'ಚಂದ್ರ ಭಾವ ಫಲ (${ch18MoonH}ನೇ ಮನೆ)',
+        description: '${ch18MoonH}ನೇ ಮನೆಯಲ್ಲಿ ಚಂದ್ರ (${_rashiNames[ch18MoonR]})',
+        result: moonRes, rashi: ch18MoonR, planets: ['ಚಂದ್ರ'],
+      ));
+    }
+
+    // --- Shloka 6: Mars in houses ---
+    final ch18MarsR = _rashiOf(mars);
+    final ch18MarsH = getBhava(ch18MarsR, lagRashi);
+    String marsRes = '';
+    if (ch18MarsH == 1) marsRes = 'ಗಾಯಗೊಂಡ ಶರೀರವುಳ್ಳವನು';
+    else if (ch18MarsH == 2) marsRes = 'ಕೆಟ್ಟ ಅನ್ನವನ್ನು ತಿನ್ನುವವನು';
+    else if (ch18MarsH == 9) marsRes = 'ಪಾಪಕಾರ್ಯ ಮಾಡುವವನು';
+    else marsRes = 'ಸೂರ್ಯನಂತೆಯೇ ಫಲ: $sunRes';
+    if (marsRes.isNotEmpty) {
+      yogas.add(Yoga(
+        shloka: 'ಲಗ್ನ ಕುಜೇ ಕ್ಷತತನುರ್ಧನಗೇ... (ಭಾವಫಲಾಧ್ಯಾಯ ೬)',
+        name: 'ಕುಜ ಭಾವ ಫಲ (${ch18MarsH}ನೇ ಮನೆ)',
+        description: '${ch18MarsH}ನೇ ಮನೆಯಲ್ಲಿ ಕುಜ (${_rashiNames[ch18MarsR]})',
+        result: marsRes, rashi: ch18MarsR, planets: ['ಕುಜ'],
+      ));
+    }
+
+    // --- Shloka 6: Mercury in houses ---
+    final ch18MercR = _rashiOf(mer);
+    final ch18MercH = getBhava(ch18MercR, lagRashi);
+    final mercResults = <int,String>{1:'ವಿದ್ವಾಂಸ',2:'ಧನವಂತ',3:'ಪ್ರಬಲ',4:'ಪಂಡಿತ',5:'ಮಂತ್ರಿ',6:'ಶತ್ರುವಿಲ್ಲದವನು',7:'ಹಾಸ್ಯ ಬಲ್ಲವನು'};
+    String mercRes = '';
+    if (ch18MercH == 8) mercRes = 'ಸೂರ್ಯನಂತೆಯೇ ಫಲ: $sunRes';
+    else mercRes = mercResults[ch18MercH] ?? 'ಪ್ರಸಿದ್ಧ ಗುಣವುಳ್ಳವನು';
+    yogas.add(Yoga(
+      shloka: 'ವಿದ್ವಾನ್ ಧನೀ ಪ್ರಬಲಪಂಡಿತಮಂತ್ರ್ಯ... (ಭಾವಫಲಾಧ್ಯಾಯ ೬)',
+      name: 'ಬುಧ ಭಾವ ಫಲ (${ch18MercH}ನೇ ಮನೆ)',
+      description: '${ch18MercH}ನೇ ಮನೆಯಲ್ಲಿ ಬುಧ (${_rashiNames[ch18MercR]})',
+      result: mercRes, rashi: ch18MercR, planets: ['ಬುಧ'],
+    ));
+
+    // --- Shloka 7: Jupiter in houses ---
+    final ch18JupR = _rashiOf(jup);
+    final ch18JupH = getBhava(ch18JupR, lagRashi);
+    final jupResults = <int,String>{
+      1:'ವಿದ್ವಾಂಸ',2:'ಒಳ್ಳೆಯ ಮಾತುಗಾರ',3:'ಜಿಪುಣ',4:'ಸುಖಿ',5:'ಬುದ್ಧಿವಂತ',
+      6:'ಶತ್ರುವಿಲ್ಲದವನು',7:'ತಂದೆಗಿಂತ ಶ್ರೇಷ್ಠ',8:'ನೀಚ',9:'ತಪಸ್ವಿ',
+      10:'ಧನವಂತ',11:'ಲಾಭವುಳ್ಳವನು',12:'ದುಷ್ಟ'
+    };
+    final jupRes = jupResults[ch18JupH] ?? '';
+    if (jupRes.isNotEmpty) {
+      yogas.add(Yoga(
+        shloka: 'ವಿದ್ವಾನ್ ಸುವಾಕ್ಯಃ ಕೃಪಣಃ... (ಭಾವಫಲಾಧ್ಯಾಯ ೭)',
+        name: 'ಗುರು ಭಾವ ಫಲ (${ch18JupH}ನೇ ಮನೆ)',
+        description: '${ch18JupH}ನೇ ಮನೆಯಲ್ಲಿ ಗುರು (${_rashiNames[ch18JupR]})',
+        result: jupRes, rashi: ch18JupR, planets: ['ಗುರು'],
+      ));
+    }
+
+    // --- Shloka 8: Venus in houses ---
+    final ch18VenR = _rashiOf(ven);
+    final ch18VenH = getBhava(ch18VenR, lagRashi);
+    String venRes = '';
+    if (ch18VenH == 1) venRes = 'ಕಾಮಕಾರ್ಯದಲ್ಲಿ ನಿಪುಣ, ಸುಖಿ';
+    else if (ch18VenH == 5) venRes = 'ಸುಖಿ';
+    else if (ch18VenH == 7) venRes = 'ಜಗಳಗಂಟ, ರತಿಕ್ರೀಡೆಯಲ್ಲಿ ಆಸಕ್ತ';
+    else venRes = '${jupResults[ch18VenH] ?? 'ಗುರುವಿನಂತೆ ಫಲ'}, ಧನವಂತ';
+    yogas.add(Yoga(
+      shloka: 'ಸ್ಮರನಿಪುಣ: ಸುಖವಾಂಶ್ಚ... (ಭಾವಫಲಾಧ್ಯಾಯ ೮)',
+      name: 'ಶುಕ್ರ ಭಾವ ಫಲ (${ch18VenH}ನೇ ಮನೆ)',
+      description: '${ch18VenH}ನೇ ಮನೆಯಲ್ಲಿ ಶುಕ್ರ (${_rashiNames[ch18VenR]})',
+      result: venRes, rashi: ch18VenR, planets: ['ಶುಕ್ರ'],
+    ));
+
+    // --- Shloka 9: Saturn in houses ---
+    final ch18SatR = _rashiOf(sat);
+    final ch18SatH = getBhava(ch18SatR, lagRashi);
+    // Saturn own: Capricorn(9), Aquarius(10). Exalted: Libra(6). Jupiter's: Sagittarius(8), Pisces(11)
+    String satRes = '';
+    if (ch18SatH == 1) {
+      final satInGoodSign = {6,8,9,10,11}.contains(ch18SatR); // own/exalted/Jupiter's
+      if (satInGoodSign) {
+        satRes = 'ರಾಜನಿಗೆ ಸಮಾನ, ಗ್ರಾಮ/ನಗರ ಒಡೆಯ, ವಿದ್ವಾಂಸ, ಸುಂದರ ಶರೀರ';
+      } else {
+        satRes = 'ದರಿದ್ರ, ರೋಗಿ, ಕಾಮಾತುರ, ಮಲಿನ, ಬಾಲ್ಯ ರೋಗ, ಆಲಸ ಮಾತು';
+      }
+    } else {
+      satRes = 'ಸೂರ್ಯನಂತೆಯೇ ಫಲ: $sunRes';
+    }
+    yogas.add(Yoga(
+      shloka: 'ಅದೃಷ್ಟಾರ್ಥೋ ರೋಗೀ ಮದನವಶಗೋ... (ಭಾವಫಲಾಧ್ಯಾಯ ೯)',
+      name: 'ಶನಿ ಭಾವ ಫಲ (${ch18SatH}ನೇ ಮನೆ)',
+      description: '${ch18SatH}ನೇ ಮನೆಯಲ್ಲಿ ಶನಿ (${_rashiNames[ch18SatR]})',
+      result: satRes, rashi: ch18SatR, planets: ['ಶನಿ'],
+    ));
+
     return yogas;
   }
 }
