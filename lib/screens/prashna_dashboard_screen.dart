@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../core/calculator.dart';
 import '../core/viyoni_janma.dart';
+import '../core/graha_phala.dart';
 import '../constants/strings.dart';
 import '../widgets/common.dart';
 import '../widgets/prashna_chart.dart';
@@ -706,28 +707,8 @@ class _PrashnaDashboardScreenState extends State<PrashnaDashboardScreen>
           )),
           const SizedBox(height: 8),
 
-          // ── Planet summary ──
-          if (byPlanet.isNotEmpty)
-            AppCard(child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text('ಗ್ರಹ ಸಾರಾಂಶ', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w800, color: kText)),
-                const SizedBox(height: 6),
-                Wrap(
-                  spacing: 6,
-                  runSpacing: 6,
-                  children: byPlanet.entries.map((e) => Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: kTeal.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(8),
-                      border: Border.all(color: kTeal.withOpacity(0.3)),
-                    ),
-                    child: Text('${e.key}: ${e.value}', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: kTeal)),
-                  )).toList(),
-                ),
-              ],
-            )),
+          // ── ಗ್ರಹ ಫಲ (Graha Phala) ──
+          ..._buildGrahaPhalas(r),
           const SizedBox(height: 8),
 
           // ── Yoga details grouped by rashi ──
@@ -787,6 +768,90 @@ class _PrashnaDashboardScreenState extends State<PrashnaDashboardScreen>
     );
   }
 
+
+  // ═══════════════════════════════════════════
+  // GRAHA PHALA CARDS
+  // ═══════════════════════════════════════════
+  List<Widget> _buildGrahaPhalas(KundaliResult r) {
+    final phalas = GrahaPhala.generate(r);
+    if (phalas.isEmpty) return [];
+    const planetColors = {
+      'ರವಿ': Color(0xFFE65100),
+      'ಚಂದ್ರ': Color(0xFF90CAF9),
+      'ಕುಜ': Color(0xFFD32F2F),
+      'ಬುಧ': Color(0xFF388E3C),
+      'ಗುರು': Color(0xFFFFA000),
+      'ಶುಕ್ರ': Color(0xFFEC407A),
+      'ಶನಿ': Color(0xFF5C6BC0),
+    };
+    return [
+      AppCard(
+        padding: EdgeInsets.zero,
+        child: ExpansionTile(
+          tilePadding: const EdgeInsets.symmetric(horizontal: 12),
+          childrenPadding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
+          initiallyExpanded: false,
+          title: Text('ಗ್ರಹ ಫಲ', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w900, color: kText)),
+          subtitle: Text('ರಾಶಿ · ನವಾಂಶ · ದ್ವಾದಶಾಂಶ · ದ್ರೇಕ್ಕಾಣ', style: TextStyle(fontSize: 10, color: kMuted)),
+          children: phalas.map((gp) {
+            final pColor = planetColors[gp.planet] ?? kTeal;
+            return Container(
+              margin: const EdgeInsets.only(top: 8),
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: pColor.withOpacity(0.05),
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: pColor.withOpacity(0.2)),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Planet name header
+                  Row(children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                      decoration: BoxDecoration(color: pColor.withOpacity(0.15), borderRadius: BorderRadius.circular(6)),
+                      child: Text(gp.planet, style: TextStyle(fontSize: 13, fontWeight: FontWeight.w900, color: pColor)),
+                    ),
+                    const SizedBox(width: 8),
+                    Text(gp.rashi, style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: kText)),
+                  ]),
+                  const SizedBox(height: 8),
+                  // Phala rows
+                  _phalaRow('ರಾಶಿ ಫಲ', gp.rashi, gp.rashiPhala, pColor),
+                  _phalaRow('ನವಾಂಶ ಫಲ', gp.navamshaRashi, gp.navamshaPhala, pColor),
+                  _phalaRow('ದ್ವಾದಶಾಂಶ ಫಲ', gp.dvadamshaRashi, gp.dvadashamshaPhala, pColor),
+                  _phalaRow('ದ್ರೇಕ್ಕಾಣ ಫಲ', gp.drekkanaRashi, gp.drekkanaPhala, pColor),
+                ],
+              ),
+            );
+          }).toList(),
+        ),
+      ),
+    ];
+  }
+
+  Widget _phalaRow(String label, String rashi, String phala, Color accent) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 4),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(
+            width: 90,
+            child: Text(label, style: TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: accent)),
+          ),
+          SizedBox(
+            width: 50,
+            child: Text(rashi, style: TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: kMuted)),
+          ),
+          Expanded(
+            child: Text(phala, style: TextStyle(fontSize: 10, color: kText)),
+          ),
+        ],
+      ),
+    );
+  }
 
   // ═══════════════════════════════════════════
   // HELPERS
