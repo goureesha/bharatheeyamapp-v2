@@ -708,7 +708,7 @@ class _PrashnaDashboardScreenState extends State<PrashnaDashboardScreen>
           const SizedBox(height: 8),
 
           // ── ಗ್ರಹ ಫಲ (Graha Phala) ──
-          ..._buildGrahaPhalas(r),
+          ..._buildGrahaPhalas(_result),
           const SizedBox(height: 8),
 
           // ── Yoga details grouped by rashi ──
