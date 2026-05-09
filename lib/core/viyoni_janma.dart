@@ -1343,18 +1343,28 @@ class ViyoniJanma {
     // ═══ JK Shloka 17: Mother's suffering ═══
     final jk17MalIn7 = <String>[];
     final jk17MalIn4 = <String>[];
+    final jk17MalIn7L = <String>[]; // from lagna
+    final jk17MalIn4L = <String>[]; // from lagna
     for (final e in malLons.entries) {
       final hFM = ((_rashiOf(e.value) - moonR2) % 12) + 1;
       if (hFM == 7) jk17MalIn7.add(_knPlanets[e.key]!);
       if (hFM == 4) jk17MalIn4.add(_knPlanets[e.key]!);
+      final hFL = ((_rashiOf(e.value) - lagRashi) % 12) + 1;
+      if (hFL == 7) jk17MalIn7L.add(_knPlanets[e.key]!);
+      if (hFL == 4) jk17MalIn4L.add(_knPlanets[e.key]!);
     }
-    if (jk17MalIn7.isNotEmpty || jk17MalIn4.isNotEmpty) {
+    if (jk17MalIn7.isNotEmpty || jk17MalIn4.isNotEmpty || jk17MalIn7L.isNotEmpty || jk17MalIn4L.isNotEmpty) {
+      final details = <String>[];
+      if (jk17MalIn7.isNotEmpty) details.add('ಚಂದ್ರನಿಂದ 7ನೇ: ${jk17MalIn7.join(",")}');
+      if (jk17MalIn4.isNotEmpty) details.add('ಚಂದ್ರನಿಂದ 4ನೇ: ${jk17MalIn4.join(",")}');
+      if (jk17MalIn7L.isNotEmpty) details.add('ಲಗ್ನದಿಂದ 7ನೇ: ${jk17MalIn7L.join(",")}');
+      if (jk17MalIn4L.isNotEmpty) details.add('ಲಗ್ನದಿಂದ 4ನೇ: ${jk17MalIn4L.join(",")}');
       yogas.add(Yoga(
         shloka: 'ಪಾಪೈಶ್ಚಂದ್ರಸ್ಮರಸುಖಗತೈಃ ಕೇಶಮಾಹುರ್ಜನನ್ಯಾ:',
         name: 'ಮಾತೃ ಕಷ್ಟ ಯೋಗ (ಜಕ ೧೭)',
-        description: '${jk17MalIn7.isNotEmpty ? "ಚಂದ್ರನಿಂದ 7ನೇ: ${jk17MalIn7.join(",")}" : ""}${jk17MalIn4.isNotEmpty ? "\nಚಂದ್ರನಿಂದ 4ನೇ: ${jk17MalIn4.join(",")}" : ""}',
+        description: details.join('\n'),
         result: 'ತಾಯಿಗೆ ಹೆರಿಗೆಯಲ್ಲಿ ಕಷ್ಟ',
-        rashi: moonR2, planets: ['ಚಂದ್ರ', ...jk17MalIn7, ...jk17MalIn4],
+        rashi: moonR2, planets: ['ಚಂದ್ರ', ...jk17MalIn7, ...jk17MalIn4, ...jk17MalIn7L, ...jk17MalIn4L],
       ));
     }
 
@@ -1969,25 +1979,41 @@ class ViyoniJanma {
       rashi: moonR2, planets: ['ಚಂದ್ರ', 'ರವಿ'],
     ));
 
-    // ═══ CY Shloka 2: Adhi Yoga (Benefics in 6, 7, 8 from Moon) ═══
-    bool cy2BenIn6 = false, cy2BenIn7 = false, cy2BenIn8 = false;
+    // ═══ CY Shloka 2: Adhi Yoga (Benefics in 6, 7, 8 from Moon AND Lagna) ═══
+    bool cy2BenIn6M = false, cy2BenIn7M = false, cy2BenIn8M = false;
+    bool cy2BenIn6L = false, cy2BenIn7L = false, cy2BenIn8L = false;
     for (final e in allPLons.entries) {
       if ({'Jupiter', 'Venus', 'Mercury'}.contains(e.key)) {
-        final h = ((_rashiOf(e.value) - moonR2) % 12) + 1;
-        if (h == 6) cy2BenIn6 = true;
-        if (h == 7) cy2BenIn7 = true;
-        if (h == 8) cy2BenIn8 = true;
+        final hM = ((_rashiOf(e.value) - moonR2) % 12) + 1;
+        if (hM == 6) cy2BenIn6M = true;
+        if (hM == 7) cy2BenIn7M = true;
+        if (hM == 8) cy2BenIn8M = true;
+        final hL = ((_rashiOf(e.value) - lagRashi) % 12) + 1;
+        if (hL == 6) cy2BenIn6L = true;
+        if (hL == 7) cy2BenIn7L = true;
+        if (hL == 8) cy2BenIn8L = true;
       }
     }
-    if (cy2BenIn6 || cy2BenIn7 || cy2BenIn8) {
-       final benHouses = <String>[];
-       if (cy2BenIn6) benHouses.add('6');
-       if (cy2BenIn7) benHouses.add('7');
-       if (cy2BenIn8) benHouses.add('8');
+    if (cy2BenIn6M || cy2BenIn7M || cy2BenIn8M || cy2BenIn6L || cy2BenIn7L || cy2BenIn8L) {
+       final details = <String>[];
+       if (cy2BenIn6M || cy2BenIn7M || cy2BenIn8M) {
+         final mH = <String>[];
+         if (cy2BenIn6M) mH.add('6');
+         if (cy2BenIn7M) mH.add('7');
+         if (cy2BenIn8M) mH.add('8');
+         details.add('ಚಂದ್ರನಿಂದ ${mH.join(",")}ನೇ ಮನೆಯಲ್ಲಿ ಶುಭಗ್ರಹರು');
+       }
+       if (cy2BenIn6L || cy2BenIn7L || cy2BenIn8L) {
+         final lH = <String>[];
+         if (cy2BenIn6L) lH.add('6');
+         if (cy2BenIn7L) lH.add('7');
+         if (cy2BenIn8L) lH.add('8');
+         details.add('ಲಗ್ನದಿಂದ ${lH.join(",")}ನೇ ಮನೆಯಲ್ಲಿ ಶುಭಗ್ರಹರು');
+       }
        yogas.add(Yoga(
         shloka: 'ಸೌಮ್ಯ ಸ್ಮರಾರಿನಿಧನೇಷ್ಟಧಿಯೋಗ ಇಂದೋಸ್ತಸ್ಮಿಂಶ್ಚಮೂಪಸಚಿವಕ್ಷಿತಿಪಾಲಜನ್ಮ',
-        name: 'ಚಂದ್ರ ಅಧಿಯೋಗ (ಚಾ ೨)',
-        description: 'ಚಂದ್ರನಿಂದ ${benHouses.join(',')}ನೇ ಮನೆಯಲ್ಲಿ ಶುಭಗ್ರಹರು',
+        name: 'ಅಧಿಯೋಗ (ಚಾ ೨)',
+        description: details.join('\n'),
         result: 'ಸೇನಾಪತಿ/ಮಂತ್ರಿ/ರಾಜ, ದೀರ್ಘಾಯು, ಶತ್ರುನಾಶ',
         rashi: moonR2, planets: ['ಚಂದ್ರ'],
       ));
@@ -1999,6 +2025,10 @@ class ViyoniJanma {
     final cy3PlanetsIn12 = <String>[];
     bool cy3PlanetInKendra = false;
     bool cy3PlanetWithMoon = false;
+    // Also from lagna
+    bool cy3PlanetIn2L = false, cy3PlanetIn12L = false;
+    final cy3PlanetsIn2L = <String>[];
+    final cy3PlanetsIn12L = <String>[];
     
     for (final e in allPLons.entries) {
       if (e.key != 'Sun' && e.key != 'Moon' && e.key != 'Rahu' && e.key != 'Ketu') {
@@ -2015,6 +2045,14 @@ class ViyoniJanma {
         
         final hFromLag = ((_rashiOf(e.value) - lagRashi) % 12) + 1;
         if (hFromLag == 1 || hFromLag == 4 || hFromLag == 7 || hFromLag == 10) cy3PlanetInKendra = true;
+        if (hFromLag == 2) {
+          cy3PlanetIn2L = true;
+          cy3PlanetsIn2L.add(_knPlanets[e.key]!);
+        }
+        if (hFromLag == 12) {
+          cy3PlanetIn12L = true;
+          cy3PlanetsIn12L.add(_knPlanets[e.key]!);
+        }
       }
     }
 
@@ -2022,12 +2060,16 @@ class ViyoniJanma {
     bool hasAnapha = !cy3PlanetIn2 && cy3PlanetIn12;
     bool hasDurudhura = cy3PlanetIn2 && cy3PlanetIn12;
     bool hasKemadruma = !cy3PlanetIn2 && !cy3PlanetIn12 && !cy3PlanetInKendra && !cy3PlanetWithMoon;
+    // Lagna-based variants
+    bool hasSunaphaL = cy3PlanetIn2L && !cy3PlanetIn12L;
+    bool hasAnaphaL = !cy3PlanetIn2L && cy3PlanetIn12L;
+    bool hasDurudhuraL = cy3PlanetIn2L && cy3PlanetIn12L;
     
     if (hasSunapha) {
       yogas.add(Yoga(
         shloka: 'ಸ್ವಯಮಧಿಗತವಿತ್ತಃ ಪಾರ್ಥಿವಸ್ತತ್ಸಮೋ ವಾ ಭವತಿ ಹಿ ಸುನಭಾಯಾಂ ಧೀಧನಖ್ಯಾತಿಮಾಂಶ್ಚ',
         name: 'ಸುನಫಾ ಯೋಗ (ಚಾ ೩,೪,೫,೭)',
-        description: 'ಚಂದ್ರನಿಂದ 2ನೇ ಮನೆಯಲ್ಲಿ: ${cy3PlanetsIn2.join(', ')}',
+        description: 'ಚಂದ್ರನಿಂದ 2ನೇ ಮನೆ: ${cy3PlanetsIn2.join(', ')}${cy3PlanetsIn2L.isNotEmpty ? '\nಲಗ್ನದಿಂದ 2ನೇ ಮನೆ: ${cy3PlanetsIn2L.join(', ')}' : ''}',
         result: 'ಸ್ವಂತ ಪರಿಶ್ರಮದಿಂದ ಧನ, ರಾಜನ ಸಮಾನ, ಬುದ್ಧಿವಂತ',
         rashi: moonR2, planets: ['ಚಂದ್ರ'],
       ));
