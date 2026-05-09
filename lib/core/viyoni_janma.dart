@@ -3001,6 +3001,119 @@ class ViyoniJanma {
       }
     }
 
+    // ═══════════════════════════════════════════════════
+    // Chapter 22: ಸ್ತ್ರೀಜಾತಕಾಧ್ಯಾಯ (Streejaatakadhyaya)
+    // ═══════════════════════════════════════════════════
+    final ch22LagNav = _d9Rashi(lag);
+    final ch22MoonNav2 = _d9Rashi(moonLon);
+    final ch22LagLord = rashiLords[lagRashi];
+    final ch22H7 = (lagRashi+6)%12;
+    final ch22H7Lord = rashiLords[ch22H7];
+    final ch22H8 = (lagRashi+7)%12;
+    final ch22H8Lord = rashiLords[ch22H8];
+    final ch22VenNav = _d9Rashi(ven);
+    final ch22SatNav = _d9Rashi(sat);
+    final ch22MarsNav = _d9Rashi(mars);
+
+    // Shloka 2: Lagna+Moon in even rashi → feminine; odd → masculine traits
+    final ch22LagEven = _isEvenSign(lagRashi);
+    final ch22MoonEven = _isEvenSign(ch21Moon);
+    if (ch22LagEven && ch22MoonEven) {
+      yogas.add(Yoga(shloka: 'ಯುಕ್ಕೇಷು ಲಗ್ನಶಶಿನೋಃ... (ಸ್ತ್ರೀಜಾತಕ ೨)', name: 'ಸ್ತ್ರೀ ಸಹಜ ಗುಣ (ಸ್ತ್ರೀ ೨)', description: 'ಲಗ್ನ+ಚಂದ್ರ ಸಮ ರಾಶಿ', result: 'ಸ್ತ್ರೀಸಹಜ ಗುಣ, ಆಭರಣಪ್ರಿಯಳು', rashi: lagRashi, planets: ['ಲಗ್ನ','ಚಂದ್ರ']));
+    } else if (!ch22LagEven && !ch22MoonEven) {
+      yogas.add(Yoga(shloka: 'ಓಜಸ್ಥಯೋಸ್ತು ಪುರುಷಾಕೃತಿ... (ಸ್ತ್ರೀಜಾತಕ ೨)', name: 'ಪುರುಷಾಕೃತಿ ಸ್ತ್ರೀ (ಸ್ತ್ರೀ ೨)', description: 'ಲಗ್ನ+ಚಂದ್ರ ಬೆಸ ರಾಶಿ', result: 'ಪುರುಷನಂತಹ ಆಕಾರ/ಗುಣ', rashi: lagRashi, planets: ['ಲಗ್ನ','ಚಂದ್ರ']));
+    }
+
+    // Shloka 3: Mars rashi lagna/Moon + navamsha lord → character
+    final ch22LagInMars = ch22LagLord == 'Mars';
+    if (ch22LagInMars) {
+      final navLord = rashiLords[ch22LagNav];
+      if (navLord=='Mars') yogas.add(Yoga(shloka: 'ಕನೈವ ದುಷ್ಟಾ... (ಸ್ತ್ರೀಜಾತಕ ೩)', name: 'ಕನ್ಯಾ ದುಷ್ಟ (ಸ್ತ್ರೀ ೩)', description: 'ಕುಜ ರಾಶಿ+ಕುಜ ನವಾಂಶ', result: 'ಕನ್ಯೆಯಿರುವಾಗಲೇ ದುಷ್ಟಳು', rashi: lagRashi, planets: ['ಲಗ್ನ']));
+      if (navLord=='Saturn') yogas.add(Yoga(shloka: 'ವಜತೀಹ ದಾಸ್ಯಂ... (ಸ್ತ್ರೀಜಾತಕ ೩)', name: 'ದಾಸಿ ಯೋಗ (ಸ್ತ್ರೀ ೩)', description: 'ಕುಜ ರಾಶಿ+ಶನಿ ನವಾಂಶ', result: 'ದಾಸಿಯಾಗುತ್ತಾಳೆ', rashi: lagRashi, planets: ['ಲಗ್ನ']));
+      if (navLord=='Jupiter') yogas.add(Yoga(shloka: 'ಸಾಧೀ... (ಸ್ತ್ರೀಜಾತಕ ೩)', name: 'ಸಾಧ್ವಿ ಯೋಗ (ಸ್ತ್ರೀ ೩)', description: 'ಕುಜ ರಾಶಿ+ಗುರು ನವಾಂಶ', result: 'ಸಾಧ್ವಿಯಾಗುತ್ತಾಳೆ', rashi: lagRashi, planets: ['ಲಗ್ನ']));
+      if (navLord=='Mercury') yogas.add(Yoga(shloka: 'ಸಮಾಯಾ... (ಸ್ತ್ರೀಜಾತಕ ೩)', name: 'ಮಾಯಾವಿ (ಸ್ತ್ರೀ ೩)', description: 'ಕುಜ ರಾಶಿ+ಬುಧ ನವಾಂಶ', result: 'ಮಾಯಾವಿಯಾಗುತ್ತಾಳೆ', rashi: lagRashi, planets: ['ಲಗ್ನ']));
+      if (navLord=='Venus') yogas.add(Yoga(shloka: 'ಕುಚರಿತ್ರಯುಕ್ತಾ... (ಸ್ತ್ರೀಜಾತಕ ೩)', name: 'ಕುಚರಿತ್ರ (ಸ್ತ್ರೀ ೩)', description: 'ಕುಜ ರಾಶಿ+ಶುಕ್ರ ನವಾಂಶ', result: 'ಕೆಟ್ಟ ಚಾರಿತ್ರ್ಯ', rashi: lagRashi, planets: ['ಲಗ್ನ']));
+    }
+
+    // Shloka 7: Saturn+Venus mutual navamsha exchange
+    final ch22SatNavLord = rashiLords[ch22SatNav];
+    final ch22VenNavLord = rashiLords[ch22VenNav];
+    if (ch22SatNavLord=='Venus' && ch22VenNavLord=='Saturn') {
+      yogas.add(Yoga(shloka: 'ವೃಕ್ಷಂಸ್ಥಾವಸಿತಸಿತೌ ಪರಸ್ಪರಾಂಶೇ... (ಸ್ತ್ರೀಜಾತಕ ೭)', name: 'ಶನಿ-ಶುಕ್ರ ಪರಿವರ್ತನೆ (ಸ್ತ್ರೀ ೭)', description: 'ಶನಿ ಶುಕ್ರ ನವಾಂಶ + ಶುಕ್ರ ಶನಿ ನವಾಂಶ', result: 'ಅಸಾಮಾನ್ಯ ಕಾಮವೃತ್ತಿ', rashi: ch21Ven, planets: ['ಶುಕ್ರ','ಶನಿ']));
+    }
+
+    // Shloka 8: 7th house analysis for husband
+    final ch22H7Nav = _d9Rashi(lag + (ch22H7 * 30.0)); // approximate
+    final ch22H7NavLord = rashiLords[ch22H7Nav];
+    // Mercury+Saturn in 7th → impotent husband
+    if (ch21Mer == ch22H7 && ch21Sat == ch22H7) {
+      yogas.add(Yoga(shloka: 'ಕ್ಲೀಬೋsಸ್ತೇ ಬುಧಮಂದಯೋಃ... (ಸ್ತ್ರೀಜಾತಕ ೮)', name: 'ನಪುಂಸಕ ಪತಿ (ಸ್ತ್ರೀ ೮)', description: 'ಬುಧ+ಶನಿ 7ನೇ ಮನೆಯಲ್ಲಿ', result: 'ನಪುಂಸಕ ಗಂಡ', rashi: ch22H7, planets: ['ಬುಧ','ಶನಿ']));
+    }
+    // Sun in 7th → abandoned by husband
+    if (ch21SunH == 7) {
+      yogas.add(Yoga(shloka: 'ಉತ್ಕೃಷ್ಟಾ ತರಣೇ... (ಸ್ತ್ರೀಜಾತಕ ೮)', name: 'ಪತಿ ತ್ಯಾಗ (ಸ್ತ್ರೀ ೮)', description: 'ಸೂರ್ಯ 7ರಲ್ಲಿ', result: 'ಗಂಡನಿಂದ ತ್ಯಜಿಸಲ್ಪಡುತ್ತಾಳೆ', rashi: ch22H7, planets: ['ರವಿ']));
+    }
+    // Mars in 7th → early widowhood
+    if (ch21MarsH == 7) {
+      yogas.add(Yoga(shloka: 'ಕುಜೇ ತು ವಿಧವಾ... (ಸ್ತ್ರೀಜಾತಕ ೮)', name: 'ಬಾಲ ವೈಧವ್ಯ (ಸ್ತ್ರೀ ೮)', description: 'ಕುಜ 7ರಲ್ಲಿ', result: 'ಬಾಲ್ಯದಲ್ಲಿ ವಿಧವೆ', rashi: ch22H7, planets: ['ಕುಜ']));
+    }
+
+    // Shloka 9: Papa in 7th → widowhood; mixed → remarriage
+    final papaIn7th = ch21Sun==ch22H7||ch21Mars==ch22H7||ch21Sat==ch22H7||ch21Rahu==ch22H7;
+    final shubIn7th = ch21Jup==ch22H7||ch21Ven==ch22H7||ch21Mer==ch22H7;
+    if (papaIn7th && !shubIn7th) {
+      yogas.add(Yoga(shloka: 'ಆಗ್ನಯ್ಕೇರ್ವಿಧವಾ... (ಸ್ತ್ರೀಜಾತಕ ೯)', name: 'ವೈಧವ್ಯ ಯೋಗ (ಸ್ತ್ರೀ ೯)', description: 'ಪಾಪ 7ರಲ್ಲಿ ಶುಭ ಇಲ್ಲ', result: 'ವಿಧವೆ', rashi: ch22H7, planets: ['ಪಾಪ']));
+    } else if (papaIn7th && shubIn7th) {
+      yogas.add(Yoga(shloka: 'ಮಿಶ್ನೆ ಪುನರ್ಭೂ... (ಸ್ತ್ರೀಜಾತಕ ೯)', name: 'ಪುನರ್ವಿವಾಹ (ಸ್ತ್ರೀ ೯)', description: 'ಪಾಪ+ಶುಭ 7ರಲ್ಲಿ', result: 'ಪುನರ್ವಿವಾಹ', rashi: ch22H7, planets: ['ಮಿಶ್ರ']));
+    }
+    // Venus+Mars mutual navamsha → vyabhicharini
+    final ch22MarsNavLord = rashiLords[ch22MarsNav];
+    if (ch22VenNavLord=='Mars' && ch22MarsNavLord=='Venus') {
+      yogas.add(Yoga(shloka: 'ಅನ್ನೋನ್ಯಾಂಶಗಯೋಃ ಸಿತಾವನಿಜಯೋಃ... (ಸ್ತ್ರೀಜಾತಕ ೯)', name: 'ವ್ಯಭಿಚಾರ ಯೋಗ (ಸ್ತ್ರೀ ೯)', description: 'ಶುಕ್ರ-ಕುಜ ಪರಸ್ಪರ ನವಾಂಶ', result: 'ವ್ಯಭಿಚಾರಿಣಿ', rashi: ch21Ven, planets: ['ಶುಕ್ರ','ಕುಜ']));
+    }
+
+    // Shloka 11-12: 7th house lord → husband quality
+    final ch22H7RashiLord = rashiLords[ch22H7];
+    final ch22Res11 = <String,String>{
+      'Saturn': 'ವೃದ್ಧ ಮತ್ತು ಮೂರ್ಖ ಗಂಡ', 'Mars': 'ಸ್ತ್ರೀಲೋಲ ಕೋಪಿಷ್ಟ ಗಂಡ',
+      'Venus': 'ಸುಂದರ ಸೌಭಾಗ್ಯವಂತ ಗಂಡ', 'Mercury': 'ವಿದ್ವಾಂಸ ನಿಪುಣ ಗಂಡ',
+      'Moon': 'ಕಾಮಾತುರ ಮೃದು ಗಂಡ', 'Jupiter': 'ಗುಣವಂತ ಜಿತೇಂದ್ರಿಯ ಗಂಡ',
+      'Sun': 'ಅತಿ ಮೃದು ಕರ್ಮಠ ಗಂಡ',
+    };
+    final ch22H7Res = ch22Res11[ch22H7RashiLord];
+    if (ch22H7Res != null) {
+      yogas.add(Yoga(shloka: 'ವೃದ್ಧೋ ಮೂರ್ಖ... (ಸ್ತ್ರೀಜಾತಕ ೧೧-೧೨)', name: 'ಪತಿ ಗುಣ (ಸ್ತ್ರೀ ೧೧)', description: '7ನೇ ಮನೆ ${_rashiNames[ch22H7]} (${ch22H7RashiLord})', result: ch22H7Res, rashi: ch22H7, planets: ['7ನೇ ಮನೆ']));
+    }
+
+    // Shloka 13: Venus+Moon in lagna
+    if (ch21Ven==lagRashi && ch21Moon==lagRashi) {
+      yogas.add(Yoga(shloka: 'ಈರ್ಷ್ಯಾನ್ವಿತಾ ಸುಖಪರಾ... (ಸ್ತ್ರೀಜಾತಕ ೧೩)', name: 'ಶುಕ್ರ-ಚಂದ್ರ ಲಗ್ನ (ಸ್ತ್ರೀ ೧೩)', description: 'ಶುಕ್ರ+ಚಂದ್ರ ಲಗ್ನದಲ್ಲಿ', result: 'ಅಸೂಯಾಪರಳು, ಸುಖಾಪೇಕ್ಷಿ', rashi: lagRashi, planets: ['ಶುಕ್ರ','ಚಂದ್ರ']));
+    }
+    // Mercury+Moon in lagna
+    if (ch21Mer==lagRashi && ch21Moon==lagRashi) {
+      yogas.add(Yoga(shloka: 'ಕಲಾಸು ನಿಪುಣಾ... (ಸ್ತ್ರೀಜಾತಕ ೧೩)', name: 'ಕಲಾ ನಿಪುಣ (ಸ್ತ್ರೀ ೧೩)', description: 'ಬುಧ+ಚಂದ್ರ ಲಗ್ನದಲ್ಲಿ', result: 'ಕಲೆಗಳಲ್ಲಿ ನಿಪುಣಳು, ಸುಖಿ, ಗುಣವಂತಳು', rashi: lagRashi, planets: ['ಬುಧ','ಚಂದ್ರ']));
+    }
+    // Venus+Mercury in lagna
+    if (ch21Ven==lagRashi && ch21Mer==lagRashi) {
+      yogas.add(Yoga(shloka: 'ಶುಕಷ್ಣಯೋಸ್ತು ಸುಭಗಾ... (ಸ್ತ್ರೀಜಾತಕ ೧೩)', name: 'ಸುಭಗ ಕಲಾಜ್ಞ (ಸ್ತ್ರೀ ೧೩)', description: 'ಶುಕ್ರ+ಬುಧ ಲಗ್ನದಲ್ಲಿ', result: 'ಸುಭಗ, ಕಾಂತಿಯುತಳು, ಕಲಾಪ್ರವೀಣಳು', rashi: lagRashi, planets: ['ಶುಕ್ರ','ಬುಧ']));
+    }
+
+    // Shloka 14: Papa in 8th → widowhood
+    final papaIn8 = ch21Sun==ch22H8||ch21Mars==ch22H8||ch21Sat==ch22H8||ch21Rahu==ch22H8;
+    if (papaIn8) {
+      yogas.add(Yoga(shloka: 'ಕ್ರೂರೇ ಷ್ಣಮೇ ವಿಧವತಾ... (ಸ್ತ್ರೀಜಾತಕ ೧೪)', name: 'ವೈಧವ್ಯ ಯೋಗ-೨ (ಸ್ತ್ರೀ ೧೪)', description: 'ಪಾಪಗ್ರಹ 8ನೇ ಮನೆಯಲ್ಲಿ', result: 'ವಿಧವೆಯಾಗುತ್ತಾಳೆ', rashi: ch22H8, planets: ['ಪಾಪ']));
+    }
+    // Shubha in 8th → she dies first
+    final shubIn8 = ch21Jup==ch22H8||ch21Ven==ch22H8||ch21Mer==ch22H8;
+    if (shubIn8) {
+      yogas.add(Yoga(shloka: 'ಸತ್ತ್ವರ್ಥಗೇಷು ಮರಣಂ ಸ್ವಯಮೇವ... (ಸ್ತ್ರೀಜಾತಕ ೧೪)', name: 'ಸ್ವಮರಣ ಮೊದಲು (ಸ್ತ್ರೀ ೧೪)', description: 'ಶುಭಗ್ರಹ 8ನೇ ಮನೆಯಲ್ಲಿ', result: 'ಗಂಡನ ಮೊದಲೇ ಮರಣ', rashi: ch22H8, planets: ['ಶುಭ']));
+    }
+
+    // Shloka 14: Moon in Kanya/Vrischika/Vrishabha/Simha → few children
+    if (ch21Moon==5||ch21Moon==7||ch21Moon==1||ch21Moon==4) {
+      yogas.add(Yoga(shloka: 'ಕಾಲಿಗೋಹರಿಸು ಅಲ್ಪಸುತ... (ಸ್ತ್ರೀಜಾತಕ ೧೪)', name: 'ಅಲ್ಪ ಸಂತಾನ (ಸ್ತ್ರೀ ೧೪)', description: 'ಚಂದ್ರ ${_rashiNames[ch21Moon]}ದಲ್ಲಿ', result: 'ಕಡಿಮೆ ಮಕ್ಕಳು', rashi: ch21Moon, planets: ['ಚಂದ್ರ']));
+    }
+
     return yogas;
   }
 }
