@@ -70,21 +70,24 @@ class ViyoniJanma {
       }
     }
 
-    // ── Navamsha pass ──
+    // ── ಛಾಯಾ (Navamsha) pass ──
     if (includeNavamsha) {
       final navChart = _toNavamshaChart(chart);
       final navSeen = <String>{};
       for (int ref = 0; ref < 12; ref++) {
         final yogas = detect(navChart, lagnaRashi: ref);
         for (final y in yogas) {
-          final key = 'NAV|${y.name}|${y.result}|${y.rashi}';
+          // Skip if same yoga already found in rashi pass
+          final rashiKey = '${y.name}|${y.result}|${y.rashi}';
+          if (seen.contains(rashiKey)) continue;
+          final key = 'CHAYA|${y.name}|${y.result}|${y.rashi}';
           if (!navSeen.contains(key)) {
             navSeen.add(key);
             allYogas.add(Yoga(
               shloka: y.shloka,
-              name: '⟪ನವಾಂಶ⟫ ${y.name}',
-              description: '⟪${_rashiNamesShort[ref]} ನವಾಂಶ ಲಗ್ನ⟫\n${y.description}',
-              result: y.result,
+              name: 'ಛಾಯಾ: ${y.name}',
+              description: '⟪${_rashiNamesShort[ref]} ಲಗ್ನ — ನವಾಂಶ ಆಧಾರ⟫\n${y.description}',
+              result: '${y.result} (ಛಾಯಾ)',
               rashi: y.rashi,
               planets: y.planets,
               refLagna: ref,

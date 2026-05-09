@@ -663,7 +663,7 @@ class _PrashnaDashboardScreenState extends State<PrashnaDashboardScreen>
             children: [
               Expanded(child: Text('ಯೋಗಗಳು (${yogas.length})', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 15, color: kPurple2))),
               FilterChip(
-                label: Text('ನವಾಂಶ', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: _includeNavamsha ? Colors.white : kText)),
+                label: Text('ಛಾಯಾ ಯೋಗ', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: _includeNavamsha ? Colors.white : kText)),
                 selected: _includeNavamsha,
                 onSelected: (v) => setState(() => _includeNavamsha = v),
                 selectedColor: kPurple2,
