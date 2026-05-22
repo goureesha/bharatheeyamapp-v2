@@ -1,4 +1,4 @@
-package com.bharatheeyam.prashna
+package com.bharatheeyam.v2
 
 import io.flutter.embedding.android.FlutterActivity
 
