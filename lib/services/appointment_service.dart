@@ -15,6 +15,7 @@ class Appointment {
   final String notes;
   final String createdAt;
   final String clientId; // Links to Client.clientId (BH-2026-0001)
+  final String googleEventId; // Google Calendar event ID for 2-way sync
 
   Appointment({
     required this.id,
@@ -27,6 +28,7 @@ class Appointment {
     required this.notes,
     required this.createdAt,
     this.clientId = '',
+    this.googleEventId = '',
   });
 
   /// Parse from tab-separated cached row
@@ -50,13 +52,43 @@ class Appointment {
       notes: row.length > 6 ? row[6].toString() : '',
       createdAt: row.length > 7 ? row[7].toString() : '',
       clientId: row.length > 8 ? row[8].toString() : '',
+      googleEventId: row.length > 9 ? row[9].toString() : '',
     );
   }
 
   List<Object> toRow() => [
     '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}',
-    startTime, endTime, clientName, clientPhone, status, notes, createdAt, clientId,
+    startTime, endTime, clientName, clientPhone, status, notes, createdAt, clientId, googleEventId,
   ];
+
+  /// Create a copy with updated fields
+  Appointment copyWith({
+    String? id,
+    DateTime? date,
+    String? startTime,
+    String? endTime,
+    String? clientName,
+    String? clientPhone,
+    String? status,
+    String? notes,
+    String? createdAt,
+    String? clientId,
+    String? googleEventId,
+  }) {
+    return Appointment(
+      id: id ?? this.id,
+      date: date ?? this.date,
+      startTime: startTime ?? this.startTime,
+      endTime: endTime ?? this.endTime,
+      clientName: clientName ?? this.clientName,
+      clientPhone: clientPhone ?? this.clientPhone,
+      status: status ?? this.status,
+      notes: notes ?? this.notes,
+      createdAt: createdAt ?? this.createdAt,
+      clientId: clientId ?? this.clientId,
+      googleEventId: googleEventId ?? this.googleEventId,
+    );
+  }
 
   /// Human-readable time for WhatsApp
   String get timeRange => '$startTime - $endTime';
@@ -224,6 +256,7 @@ class AppointmentService {
           endTime: appt.endTime, clientName: appt.clientName,
           clientPhone: appt.clientPhone, status: newStatus,
           notes: appt.notes, createdAt: appt.createdAt, clientId: appt.clientId,
+          googleEventId: appt.googleEventId,
         );
         await _saveToCache();
         return true;
@@ -238,6 +271,54 @@ class AppointmentService {
   /// Delete an appointment
   static Future<bool> deleteAppointment(Appointment appt) async {
     return updateStatus(appt, 'cancelled');
+  }
+
+  /// Update a full appointment (replace by matching date+startTime+clientName)
+  static Future<bool> updateAppointment(Appointment updated) async {
+    try {
+      final idx = _appointments.indexWhere((a) =>
+          a.date == updated.date && a.startTime == updated.startTime && a.clientName == updated.clientName);
+      if (idx >= 0) {
+        _appointments[idx] = updated;
+        await _saveToCache();
+        updateNotifier.value++;
+        return true;
+      }
+      return false;
+    } catch (e) {
+      debugPrint('AppointmentService: UpdateAppointment error: $e');
+      return false;
+    }
+  }
+
+  /// Set Google Calendar event ID on an appointment (after push to GCal)
+  static Future<bool> setGoogleEventId(Appointment appt, String eventId) async {
+    try {
+      final idx = _appointments.indexWhere((a) =>
+          a.date == appt.date && a.startTime == appt.startTime && a.clientName == appt.clientName);
+      if (idx >= 0) {
+        _appointments[idx] = _appointments[idx].copyWith(googleEventId: eventId);
+        await _saveToCache();
+        return true;
+      }
+      return false;
+    } catch (e) {
+      debugPrint('AppointmentService: setGoogleEventId error: $e');
+      return false;
+    }
+  }
+
+  /// Add an appointment directly (used by calendar sync for pulled events)
+  static Future<bool> addAppointmentDirect(Appointment appt) async {
+    try {
+      _appointments.add(appt);
+      await _saveToCache();
+      updateNotifier.value++;
+      return true;
+    } catch (e) {
+      debugPrint('AppointmentService: addAppointmentDirect error: $e');
+      return false;
+    }
   }
 
   // ─── Queries ─────────────────────────────────────────────

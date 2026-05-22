@@ -139,6 +139,17 @@ class _AppointmentScreenState extends State<AppointmentScreen> with SingleTicker
     if (mounted) setState(() => _isSyncing = true);
     await AppointmentService.loadAll();
     await ClientService.loadAll();
+
+    // Auto-sync with Google Calendar
+    if (GoogleAuthService.isSignedIn) {
+      try {
+        await CalendarService.loadLastSyncTime();
+        await CalendarService.fullSync();
+      } catch (e) {
+        debugPrint('AppointmentScreen: Calendar sync error: $e');
+      }
+    }
+
     if (mounted) {
       setState(() {
         _isSyncing = false;
@@ -148,11 +159,39 @@ class _AppointmentScreenState extends State<AppointmentScreen> with SingleTicker
   }
 
   Future<void> _syncData() async {
-    await _syncInBackground();
+    if (_isSyncing) return;
+    if (mounted) setState(() => _isSyncing = true);
+
+    await AppointmentService.loadAll();
+    await ClientService.loadAll();
+
+    // Sync with Google Calendar
+    if (GoogleAuthService.isSignedIn) {
+      try {
+        final result = await CalendarService.fullSync();
+        if (mounted) {
+          final msg = '✅ ಸಿಂಕ್ ಪೂರ್ಣ! ↑${result.pushed} ↓${result.pulled} 🗑${result.deleted}';
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(msg), duration: const Duration(seconds: 3)),
+          );
+        }
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('⚠️ Calendar ಸಿಂಕ್ ವಿಫಲ: $e'), backgroundColor: Colors.orange),
+          );
+        }
+      }
+    } else {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('✅ ಸಿಂಕ್ ಪೂರ್ಣವಾಗಿದೆ!'), duration: Duration(seconds: 2)),
+        );
+      }
+    }
+
     if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('✅ ಸಿಂಕ್ ಪೂರ್ಣವಾಗಿದೆ!'), duration: Duration(seconds: 2)),
-      );
+      setState(() => _isSyncing = false);
     }
   }
 
@@ -181,7 +220,9 @@ class _AppointmentScreenState extends State<AppointmentScreen> with SingleTicker
             icon: _isSyncing
                 ? SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: kTeal))
                 : Icon(Icons.sync, color: kTeal),
-            tooltip: 'ಸಿಂಕ್ ಮಾಡಿ',
+            tooltip: CalendarService.lastSyncTime != null
+                ? 'ಸಿಂಕ್ ಮಾಡಿ (ಕೊನೆಯ: ${CalendarService.lastSyncTime})'
+                : 'Google Calendar ಸಿಂಕ್ ಮಾಡಿ',
             onPressed: _isSyncing ? null : () => _syncData(),
           ),
           IconButton(
@@ -1029,18 +1070,27 @@ class _AppointmentScreenState extends State<AppointmentScreen> with SingleTicker
                                     SnackBar(content: Text('✅ ಅಪಾಯಿಂಟ್\u200cಮೆಂಟ್ ಬುಕ್ ಆಗಿದೆ!'), backgroundColor: Colors.green),
                                   );
 
-                                  // Sync to Google Calendar
-                                  final startDt = DateTime(apptDate.year, apptDate.month, apptDate.day, startHour, startMin);
-                                  final calOk = await CalendarService.createAppointment(
-                                    title: nameCtrl.text,
-                                    start: startDt,
-                                    end: startDt.add(Duration(minutes: daySlot.slotMinutes)),
-                                    description: 'ಫೋನ್: ${phoneCtrl.text}\n${notesCtrl.text}'.trim(),
-                                  );
-                                  if (mounted && calOk) {
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      const SnackBar(content: Text('📅 Google Calendar ಗೆ ಸೇರಿಸಲಾಗಿದೆ'), backgroundColor: Colors.blueGrey),
-                                    );
+                                  // Sync to Google Calendar (2-way)
+                                  if (GoogleAuthService.isSignedIn) {
+                                    try {
+                                      final latestAppts = AppointmentService.getAppointmentsForDate(apptDate);
+                                      final justAdded = latestAppts.where((a) =>
+                                        a.startTime == selectedSlot! && a.clientName == nameCtrl.text
+                                      ).firstOrNull;
+                                      if (justAdded != null) {
+                                        final eventId = await CalendarService.pushAppointment(justAdded);
+                                        if (eventId != null) {
+                                          await AppointmentService.setGoogleEventId(justAdded, eventId);
+                                        }
+                                      }
+                                      if (mounted) {
+                                        ScaffoldMessenger.of(context).showSnackBar(
+                                          const SnackBar(content: Text('📅 Google Calendar ಗೆ ಸೇರಿಸಲಾಗಿದೆ'), backgroundColor: Colors.blueGrey),
+                                        );
+                                      }
+                                    } catch (e) {
+                                      debugPrint('Calendar push after booking failed: $e');
+                                    }
                                   }
 
                                   // Ask to send WhatsApp confirmation
