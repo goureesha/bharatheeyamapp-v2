@@ -267,7 +267,7 @@ class CalendarService {
         if (localEventIds.contains(event.id)) continue;
 
         // Check if this is an event we created (has our marker)
-        final isOurs = event.extendedProperties?.private_?[_appSourceKey] == 'bharatheeyam';
+        final isOurs = event.extendedProperties?.private?[_appSourceKey] == 'bharatheeyam';
         // If it's our event but not in local list, it was deleted locally — skip
         if (isOurs) continue;
 
@@ -343,7 +343,7 @@ class CalendarService {
           ..dateTime = end
           ..timeZone = 'Asia/Kolkata')
         ..extendedProperties = (gcal.EventExtendedProperties()
-          ..private_ = {_appSourceKey: 'bharatheeyam'});
+          ..private = {_appSourceKey: 'bharatheeyam'});
 
       if (location != null) event.location = location;
 
@@ -398,7 +398,7 @@ class CalendarService {
         ..timeZone = 'Asia/Kolkata')
       ..colorId = colorId
       ..extendedProperties = (gcal.EventExtendedProperties()
-        ..private_ = {
+        ..private = {
           _appIdKey: '${appt.date.year}-${appt.date.month.toString().padLeft(2, '0')}-${appt.date.day.toString().padLeft(2, '0')}_${appt.startTime}_${appt.clientName}',
           _appSourceKey: 'bharatheeyam',
         });
