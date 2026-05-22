@@ -33,6 +33,13 @@ class CalendarService {
   /// Returns true if successful, false if auth fails.
   static Future<bool> initialize() async {
     try {
+      // Ensure calendar scopes are granted
+      final scopeOk = await GoogleAuthService.ensureCalendarScope();
+      if (!scopeOk) {
+        debugPrint('CalendarService: Calendar scope not granted');
+        return false;
+      }
+
       final client = await GoogleAuthService.getAuthenticatedClient();
       if (client == null) {
         debugPrint('CalendarService: No authenticated client');
