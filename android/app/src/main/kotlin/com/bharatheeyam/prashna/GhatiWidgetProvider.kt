@@ -1,4 +1,4 @@
-package com.bharatheeyam.v2
+package com.bharatheeyam.prashna
 
 import android.appwidget.AppWidgetManager
 import android.appwidget.AppWidgetProvider
