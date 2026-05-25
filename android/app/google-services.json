@@ -9,7 +9,7 @@
       "client_info": {
         "mobilesdk_app_id": "1:149255394829:android:a03a9b351374d181b1a744",
         "android_client_info": {
-          "package_name": "com.bharatheeyam.prashna"
+          "package_name": "com.bharatheeyam.v2"
         }
       },
       "oauth_client": [
@@ -17,7 +17,7 @@
           "client_id": "149255394829-mfgc63r74nif6covj9eqvl3daqe0dtku.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {
-            "package_name": "com.bharatheeyam.prashna",
+            "package_name": "com.bharatheeyam.v2",
             "certificate_hash": "bb35147343d47d53a5827bb5794ffa3be9ccf13e"
           }
         },
