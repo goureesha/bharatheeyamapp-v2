@@ -8,7 +8,7 @@ import 'tester_service.dart';
 /// Used for user identity and Google Calendar 2-way sync.
 class GoogleAuthService {
   static const _webClientId =
-      '330797161511-h4mb1l0i76ea37s6if93bml6gia4puva.apps.googleusercontent.com';
+      '149255394829-167dod55vdctebqpqacn5n5in5rfiift.apps.googleusercontent.com';
 
   static GoogleSignIn? _googleSignIn;
   static GoogleSignInAccount? _currentUser;
