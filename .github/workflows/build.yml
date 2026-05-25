@@ -21,10 +21,23 @@ jobs:
           java-version: '17'
           distribution: 'temurin'
 
+      - name: Inject secrets
+        run: |
+          echo '${{ secrets.GOOGLE_SERVICES_JSON }}' | base64 -d > android/app/google-services.json
+          cat > lib/config/secrets.dart << 'DART'
+          class AppSecrets {
+            static const firebaseApiKey = '${{ secrets.FIREBASE_API_KEY }}';
+            static const firebaseAppId = '${{ secrets.FIREBASE_APP_ID }}';
+            static const firebaseMessagingSenderId = '${{ secrets.FIREBASE_MESSAGING_SENDER_ID }}';
+            static const firebaseProjectId = '${{ secrets.FIREBASE_PROJECT_ID }}';
+            static const firebaseAuthDomain = '${{ secrets.FIREBASE_AUTH_DOMAIN }}';
+            static const firebaseStorageBucket = '${{ secrets.FIREBASE_STORAGE_BUCKET }}';
+          }
+          DART
+
       - name: Create debug keystore
         run: |
           mkdir -p android/app
-          # Use debug signing for APK (no Play Store secrets needed)
           keytool -genkey -v -keystore android/app/debug.jks -keyalg RSA -keysize 2048 -validity 10000 -alias debug -storepass android -keypass android -dname "CN=Debug,O=Debug,C=US"
           echo "storePassword=android" > android/key.properties
           echo "keyPassword=android" >> android/key.properties
@@ -65,6 +78,20 @@ jobs:
       contents: write
     steps:
       - uses: actions/checkout@v4
+
+      - name: Inject secrets
+        run: |
+          echo '${{ secrets.GOOGLE_SERVICES_JSON }}' | base64 -d > android/app/google-services.json
+          cat > lib/config/secrets.dart << 'DART'
+          class AppSecrets {
+            static const firebaseApiKey = '${{ secrets.FIREBASE_API_KEY }}';
+            static const firebaseAppId = '${{ secrets.FIREBASE_APP_ID }}';
+            static const firebaseMessagingSenderId = '${{ secrets.FIREBASE_MESSAGING_SENDER_ID }}';
+            static const firebaseProjectId = '${{ secrets.FIREBASE_PROJECT_ID }}';
+            static const firebaseAuthDomain = '${{ secrets.FIREBASE_AUTH_DOMAIN }}';
+            static const firebaseStorageBucket = '${{ secrets.FIREBASE_STORAGE_BUCKET }}';
+          }
+          DART
 
       - name: Set up Flutter
         uses: subosito/flutter-action@v2

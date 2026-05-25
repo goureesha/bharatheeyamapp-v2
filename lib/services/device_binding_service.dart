@@ -3,6 +3,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:uuid/uuid.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_core/firebase_core.dart';
+import '../config/secrets.dart';
 import 'google_auth_service.dart';
 
 /// Manages one-Gmail-one-device binding using Firestore for cross-device enforcement.
@@ -52,12 +53,12 @@ class DeviceBindingService {
       if (kIsWeb) {
         await Firebase.initializeApp(
           options: const FirebaseOptions(
-            apiKey: 'AIzaSyDuvupb8vGDaX2wS3q3BheIUC1H-Us7my0',
-            appId: '1:149255394829:android:a03a9b351374d181b1a744',
-            messagingSenderId: '149255394829',
-            projectId: 'bharatiyam-clone',
-            authDomain: 'bharatiyam-clone.firebaseapp.com',
-            storageBucket: 'bharatiyam-clone.firebasestorage.app',
+            apiKey: AppSecrets.firebaseApiKey,
+            appId: AppSecrets.firebaseAppId,
+            messagingSenderId: AppSecrets.firebaseMessagingSenderId,
+            projectId: AppSecrets.firebaseProjectId,
+            authDomain: AppSecrets.firebaseAuthDomain,
+            storageBucket: AppSecrets.firebaseStorageBucket,
           ),
         );
       } else {
