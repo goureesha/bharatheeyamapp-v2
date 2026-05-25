@@ -24,7 +24,8 @@ jobs:
       - name: Inject secrets
         run: |
           echo '${{ secrets.GOOGLE_SERVICES_JSON }}' | base64 -d > android/app/google-services.json
-          cat > lib/config/secrets.dart << 'DART'
+          mkdir -p lib/config
+          cat > lib/config/secrets.dart << EOF
           class AppSecrets {
             static const firebaseApiKey = '${{ secrets.FIREBASE_API_KEY }}';
             static const firebaseAppId = '${{ secrets.FIREBASE_APP_ID }}';
@@ -33,15 +34,14 @@ jobs:
             static const firebaseAuthDomain = '${{ secrets.FIREBASE_AUTH_DOMAIN }}';
             static const firebaseStorageBucket = '${{ secrets.FIREBASE_STORAGE_BUCKET }}';
           }
-          DART
+          EOF
 
-      - name: Create debug keystore
+      - name: Setup signing
         run: |
-          mkdir -p android/app
-          keytool -genkey -v -keystore android/app/debug.jks -keyalg RSA -keysize 2048 -validity 10000 -alias debug -storepass android -keypass android -dname "CN=Debug,O=Debug,C=US"
+          echo '${{ secrets.DEBUG_KEYSTORE }}' | base64 -d > android/app/debug.jks
           echo "storePassword=android" > android/key.properties
           echo "keyPassword=android" >> android/key.properties
-          echo "keyAlias=debug" >> android/key.properties
+          echo "keyAlias=androiddebugkey" >> android/key.properties
           echo "storeFile=debug.jks" >> android/key.properties
 
       - name: Set up Flutter
@@ -82,7 +82,8 @@ jobs:
       - name: Inject secrets
         run: |
           echo '${{ secrets.GOOGLE_SERVICES_JSON }}' | base64 -d > android/app/google-services.json
-          cat > lib/config/secrets.dart << 'DART'
+          mkdir -p lib/config
+          cat > lib/config/secrets.dart << EOF
           class AppSecrets {
             static const firebaseApiKey = '${{ secrets.FIREBASE_API_KEY }}';
             static const firebaseAppId = '${{ secrets.FIREBASE_APP_ID }}';
@@ -91,7 +92,7 @@ jobs:
             static const firebaseAuthDomain = '${{ secrets.FIREBASE_AUTH_DOMAIN }}';
             static const firebaseStorageBucket = '${{ secrets.FIREBASE_STORAGE_BUCKET }}';
           }
-          DART
+          EOF
 
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
