@@ -1,26 +1,44 @@
 {
   "project_info": {
-    "project_number": "212430902387",
-    "project_id": "bharatheeyam-app",
-    "storage_bucket": "bharatheeyam-app.firebasestorage.app"
+    "project_number": "149255394829",
+    "project_id": "bharatiyam-clone",
+    "storage_bucket": "bharatiyam-clone.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:212430902387:android:340c606ce8af7e1e014606",
+        "mobilesdk_app_id": "1:149255394829:android:a03a9b351374d181b1a744",
         "android_client_info": {
           "package_name": "com.bharatheeyam.prashna"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "149255394829-mfgc63r74nif6covj9eqvl3daqe0dtku.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.bharatheeyam.prashna",
+            "certificate_hash": "bb35147343d47d53a5827bb5794ffa3be9ccf13e"
+          }
+        },
+        {
+          "client_id": "149255394829-167dod55vdctebqpqacn5n5in5rfiift.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
-          "current_key": "AIzaSyA3RzpXGv6yMXwqz7px7Fg2nZQ0Bn6Ep80"
+          "current_key": "AIzaSyDuvupb8vGDaX2wS3q3BheIUC1H-Us7my0"
         }
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "149255394829-167dod55vdctebqpqacn5n5in5rfiift.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
         }
       }
     }

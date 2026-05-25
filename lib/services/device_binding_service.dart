@@ -52,13 +52,12 @@ class DeviceBindingService {
       if (kIsWeb) {
         await Firebase.initializeApp(
           options: const FirebaseOptions(
-            apiKey: 'AIzaSyAkG1hdauVlL9b8nHM5o2B25yPQ6IANci4',
-            appId: '1:212430902387:web:149c933fd3d29aa5014606',
-            messagingSenderId: '212430902387',
-            projectId: 'bharatheeyam-app',
-            authDomain: 'bharatheeyam-app.firebaseapp.com',
-            storageBucket: 'bharatheeyam-app.firebasestorage.app',
-            measurementId: 'G-BNTGY2WSLZ',
+            apiKey: 'AIzaSyDuvupb8vGDaX2wS3q3BheIUC1H-Us7my0',
+            appId: '1:149255394829:android:a03a9b351374d181b1a744',
+            messagingSenderId: '149255394829',
+            projectId: 'bharatiyam-clone',
+            authDomain: 'bharatiyam-clone.firebaseapp.com',
+            storageBucket: 'bharatiyam-clone.firebasestorage.app',
           ),
         );
       } else {
