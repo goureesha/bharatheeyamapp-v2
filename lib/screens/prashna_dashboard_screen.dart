@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import '../core/calculator.dart';
-import '../core/viyoni_janma.dart';
+
 import '../core/graha_phala.dart';
 import '../constants/strings.dart';
 import '../widgets/common.dart';
@@ -45,7 +45,7 @@ class _PrashnaDashboardScreenState extends State<PrashnaDashboardScreen>
   late int _minute;
   late String _ampm;
   bool _recalculating = false;
-  bool _includeNavamsha = false;
+
 
 
   static const _tabs = ['ಕುಂಡಲಿ', 'ಸ್ಫುಟ', 'ಪಂಚಾಂಗ', 'ಷಡ್ವರ್ಗ'];
@@ -265,8 +265,6 @@ class _PrashnaDashboardScreenState extends State<PrashnaDashboardScreen>
             chartSize: chartSize,
             textScale: textScale,
           ),
-          const SizedBox(height: 16),
-          _buildYogaSection(),
           const SizedBox(height: 24),
         ],
       ),
@@ -619,155 +617,6 @@ class _PrashnaDashboardScreenState extends State<PrashnaDashboardScreen>
       ),
     );
   }
-
-  // ═══════════════════════════════════════════
-  // YOGA SECTION (in Kundali tab)
-  // ═══════════════════════════════════════════
-  Widget _buildYogaSection() {
-    final yogas = ViyoniJanma.detectAll(_result, includeNavamsha: _includeNavamsha);
-    if (yogas.isEmpty) {
-      return Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16),
-        child: AppCard(child: Row(children: [
-          Icon(Icons.check_circle, color: Colors.green, size: 20),
-          const SizedBox(width: 8),
-          Expanded(child: Text('ಯಾವುದೇ ಯೋಗ ಕಂಡುಬಂದಿಲ್ಲ',
-            style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: kMuted))),
-        ])),
-      );
-    }
-
-    // Group by rashi
-    const rashiNames = ['ಮೇಷ','ವೃಷಭ','ಮಿಥುನ','ಕರ್ಕ','ಸಿಂಹ','ಕನ್ಯಾ','ತುಲಾ','ವೃಶ್ಚಿಕ','ಧನು','ಮಕರ','ಕುಂಭ','ಮೀನ'];
-    final byRashi = <int, List<Yoga>>{};
-    for (final y in yogas) {
-      final grp = y.refLagna >= 0 ? y.refLagna : y.rashi;
-      if (grp >= 0 && grp < 12) {
-        byRashi.putIfAbsent(grp, () => []).add(y);
-      }
-    }
-
-    // Group by planet
-    final byPlanet = <String, int>{};
-    for (final y in yogas) {
-      for (final p in y.planets) {
-        byPlanet[p] = (byPlanet[p] ?? 0) + 1;
-      }
-    }
-
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Expanded(child: Text('ಯೋಗಗಳು (${yogas.length})', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 15, color: kPurple2))),
-              FilterChip(
-                label: Text('ಛಾಯಾ ಯೋಗ', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: _includeNavamsha ? Colors.white : kText)),
-                selected: _includeNavamsha,
-                onSelected: (v) => setState(() => _includeNavamsha = v),
-                selectedColor: kPurple2,
-                checkmarkColor: Colors.white,
-                backgroundColor: kCard,
-                padding: EdgeInsets.zero,
-                visualDensity: VisualDensity.compact,
-              ),
-            ],
-          ),
-          const SizedBox(height: 8),
-
-          // ── Rashi summary grid ──
-          AppCard(child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text('ರಾಶಿ ಸಾರಾಂಶ', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w800, color: kText)),
-              const SizedBox(height: 6),
-              Wrap(
-                spacing: 6,
-                runSpacing: 6,
-                children: List.generate(12, (i) {
-                  final count = byRashi[i]?.length ?? 0;
-                  return Container(
-                    width: 72,
-                    padding: const EdgeInsets.symmetric(vertical: 6),
-                    decoration: BoxDecoration(
-                      color: count > 0 ? kOrange.withOpacity(0.12) : kBg,
-                      borderRadius: BorderRadius.circular(8),
-                      border: Border.all(color: count > 0 ? kOrange.withOpacity(0.4) : kBorder),
-                    ),
-                    child: Column(children: [
-                      Text(rashiNames[i], style: TextStyle(fontSize: 10, fontWeight: FontWeight.w800, color: count > 0 ? kOrange : kMuted)),
-                      Text('$count', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w900, color: count > 0 ? kOrange : kMuted)),
-                    ]),
-                  );
-                }),
-              ),
-            ],
-          )),
-          const SizedBox(height: 8),
-
-          // ── ಗ್ರಹ ಫಲ (Graha Phala) ──
-          ..._buildGrahaPhalas(_result),
-          const SizedBox(height: 8),
-
-          // ── Yoga details grouped by rashi ──
-          ...byRashi.entries.map((entry) {
-            final ri = entry.key;
-            final rYogas = entry.value;
-            return AppCard(
-              padding: EdgeInsets.zero,
-              child: ExpansionTile(
-                tilePadding: const EdgeInsets.symmetric(horizontal: 12),
-                childrenPadding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
-                leading: CircleAvatar(
-                  radius: 14,
-                  backgroundColor: kOrange.withOpacity(0.15),
-                  child: Text('${rYogas.length}', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w900, color: kOrange)),
-                ),
-                title: Text('${rashiNames[ri]}', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w900, color: kText)),
-                subtitle: Text('${rYogas.length} ಯೋಗ | ${rYogas.map((y) => y.planets).expand((p) => p).toSet().join(", ")}',
-                  style: TextStyle(fontSize: 10, color: kMuted)),
-                children: rYogas.map((y) => Container(
-                  margin: const EdgeInsets.only(top: 8),
-                  padding: const EdgeInsets.all(10),
-                  decoration: BoxDecoration(
-                    color: kBg,
-                    borderRadius: BorderRadius.circular(10),
-                    border: Border.all(color: kBorder),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(y.name, style: TextStyle(fontSize: 13, fontWeight: FontWeight.w900, color: kOrange)),
-                      const SizedBox(height: 4),
-                      Text(y.shloka, style: TextStyle(fontSize: 11, fontStyle: FontStyle.italic, color: kMuted, height: 1.4)),
-                      const SizedBox(height: 4),
-                      Text(y.description, style: TextStyle(fontSize: 11, color: kText)),
-                      const SizedBox(height: 2),
-                      Text(y.result, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: kTeal)),
-                      if (y.planets.isNotEmpty) ...[
-                        const SizedBox(height: 4),
-                        Wrap(
-                          spacing: 4,
-                          children: y.planets.map((p) => Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                            decoration: BoxDecoration(color: kTeal.withOpacity(0.1), borderRadius: BorderRadius.circular(4)),
-                            child: Text(p, style: TextStyle(fontSize: 9, fontWeight: FontWeight.w700, color: kTeal)),
-                          )).toList(),
-                        ),
-                      ],
-                    ],
-                  ),
-                )).toList(),
-              ),
-            );
-          }),
-        ],
-      ),
-    );
-  }
-
 
   // ═══════════════════════════════════════════
   // GRAHA PHALA CARDS
