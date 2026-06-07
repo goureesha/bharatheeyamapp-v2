@@ -8437,7 +8437,7 @@ d0=J.k(l8,"Sun")
 d0.toString
 m0=B.e.q(B.e.q(J.k(d0,0),360)+360,360)
 m1=B.h.aL(B.e.aF(B.e.q(l9-m0+360,360)/12),0,29)
-m2=B.e.q(m1+c4,4)
+m2=B.e.q(m1+c4+3,4)
 if(J.f(m2,0)||J.f(m2,3))t2=A.t("bhumiShubha")
 else t2=J.f(m2,1)?A.t("akashaAshubha"):A.t("patalaAshubha")
 m3=t2
@@ -67550,7 +67550,7 @@ o=A.rf(q,B.i0,B.fd.kF(0,B.kf))
 n=B.h.aL(B.e.aF(B.e.q(p.a-o.a+360,360)/12),0,29)
 m=A.fm(a)-1
 l=B.e.q(m+1,7)
-k=B.e.q(n+l,4)
+k=B.e.q(n+l+3,4)
 j=J.f(k,0)||J.f(k,3)
 g.k(0,h,j)
 return j}catch(i){return!1}},
