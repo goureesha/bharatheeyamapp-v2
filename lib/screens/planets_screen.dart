@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../core/transit_cache.dart';
 import '../core/transit_calculator.dart';
 import '../constants/strings.dart';
 import '../widgets/common.dart';
@@ -20,25 +21,35 @@ class _PlanetsScreenState extends State<PlanetsScreen> with SingleTickerProvider
   // Planet filter: null means "All"
   String? _selectedPlanet;
 
-  // Planet names for filter chips
-  static const _planets = [
-    'ಸೂರ್ಯ', 'ಚಂದ್ರ', 'ಮಂಗಳ', 'ಬುಧ', 'ಗುರು', 'ಶುಕ್ರ', 'ಶನಿ', 'ರಾಹು', 'ಕೇತು',
+  // Planet keys (English, language-independent)
+  static const _planetKeys = [
+    'sun', 'moon', 'mars', 'mercury', 'jupiter', 'venus', 'saturn', 'rahu', 'ketu',
   ];
 
   // Planet emoji icons
   static const _planetIcons = <String, String>{
-    'ಸೂರ್ಯ': '☉', 'ಚಂದ್ರ': '☽', 'ಮಂಗಳ': '♂', 'ಬುಧ': '☿',
-    'ಗುರು': '♃', 'ಶುಕ್ರ': '♀', 'ಶನಿ': '♄', 'ರಾಹು': '☊', 'ಕೇತು': '☋',
+    'sun': '☉', 'moon': '☽', 'mars': '♂', 'mercury': '☿',
+    'jupiter': '♃', 'venus': '♀', 'saturn': '♄', 'rahu': '☊', 'ketu': '☋',
   };
 
   // Planet colors
   static final _planetColors = <String, Color>{
-    'ಸೂರ್ಯ': Color(0xFFFF6B00), 'ಚಂದ್ರ': Color(0xFF4A90D9),
-    'ಮಂಗಳ': Color(0xFFE53935), 'ಬುಧ': Color(0xFF43A047),
-    'ಗುರು': Color(0xFFFFC107), 'ಶುಕ್ರ': Color(0xFFE91E8C),
-    'ಶನಿ': Color(0xFF5C6BC0), 'ರಾಹು': Color(0xFF455A64),
-    'ಕೇತು': Color(0xFF795548),
+    'sun': Color(0xFFFF6B00), 'moon': Color(0xFF4A90D9),
+    'mars': Color(0xFFE53935), 'mercury': Color(0xFF43A047),
+    'jupiter': Color(0xFFFFC107), 'venus': Color(0xFFE91E8C),
+    'saturn': Color(0xFF5C6BC0), 'rahu': Color(0xFF455A64),
+    'ketu': Color(0xFF795548),
   };
+
+  // Get localized planet name from English key
+  static String _planetLabel(String key) {
+    const _keyToLocale = {
+      'sun': 'surya', 'moon': 'chandra', 'mars': 'mars',
+      'mercury': 'mercury', 'jupiter': 'jupiter', 'venus': 'venus',
+      'saturn': 'saturn', 'rahu': 'rahu', 'ketu': 'ketu',
+    };
+    return AppLocale.l(_keyToLocale[key] ?? key);
+  }
 
   @override
   void initState() {
@@ -50,14 +61,16 @@ class _PlanetsScreenState extends State<PlanetsScreen> with SingleTickerProvider
 
   Future<void> _loadData() async {
     setState(() => _isLoading = true);
-    
-    final data = await TransitCalculator.calculateAnnualEvents(_selectedYear);
+
+    final data = await TransitCache.getYear(_selectedYear);
     
     if (mounted) {
       setState(() {
         _transitData = data;
         _isLoading = false;
       });
+      // Pre-fetch adjacent years in background for instant navigation
+      TransitCache.prefetchAdjacent(_selectedYear);
     }
   }
 
@@ -69,7 +82,7 @@ class _PlanetsScreenState extends State<PlanetsScreen> with SingleTickerProvider
   }
   
   String _formatDate(DateTime d) {
-    const months = ['ಜನವರಿ', 'ಫೆಬ್ರವರಿ', 'ಮಾರ್ಚ್', 'ಏಪ್ರಿಲ್', 'ಮೇ', 'ಜೂನ್', 'ಜುಲೈ', 'ಆಗಸ್ಟ್', 'ಸೆಪ್ಟೆಂಬರ್', 'ಅಕ್ಟೋಬರ್', 'ನವೆಂಬರ್', 'ಡಿಸೆಂಬರ್'];
+    final months = [AppLocale.l('jan'), AppLocale.l('feb'), AppLocale.l('mar'), AppLocale.l('apr'), AppLocale.l('may'), AppLocale.l('jun'), AppLocale.l('jul'), AppLocale.l('aug'), AppLocale.l('sep'), AppLocale.l('oct'), AppLocale.l('nov'), AppLocale.l('dec')];
     return '${d.day} ${months[d.month - 1]} ${d.year}';
   }
 
@@ -82,7 +95,7 @@ class _PlanetsScreenState extends State<PlanetsScreen> with SingleTickerProvider
     return Scaffold(
       backgroundColor: kBg,
       appBar: AppBar(
-        title: Text(AppLocale.isHindi ? 'ग्रह जानकारी' : 'ಗ್ರಹಗಳ ಮಾಹಿತಿ', style: TextStyle(fontWeight: FontWeight.bold)),
+        title: Text(AppLocale.l('planets'), style: TextStyle(fontWeight: FontWeight.bold)),
         backgroundColor: kBg,
         foregroundColor: kPurple1,
         elevation: 0,
@@ -123,7 +136,7 @@ class _PlanetsScreenState extends State<PlanetsScreen> with SingleTickerProvider
                 Padding(
                   padding: const EdgeInsets.only(right: 6),
                   child: ChoiceChip(
-                    label: Text(AppLocale.isHindi ? 'सभी' : 'ಎಲ್ಲಾ', style: TextStyle(
+                    label: Text(AppLocale.l('all'), style: TextStyle(
                       fontWeight: FontWeight.bold, fontSize: 12,
                       color: _selectedPlanet == null ? Colors.white : kText,
                     )),
@@ -135,13 +148,13 @@ class _PlanetsScreenState extends State<PlanetsScreen> with SingleTickerProvider
                   ),
                 ),
                 // Planet chips
-                ..._planets.map((p) => Padding(
+                ..._planetKeys.map((p) => Padding(
                   padding: const EdgeInsets.only(right: 6),
                   child: ChoiceChip(
                     avatar: _selectedPlanet == p ? null : Text(
                       _planetIcons[p] ?? '', style: const TextStyle(fontSize: 14),
                     ),
-                    label: Text(p, style: TextStyle(
+                    label: Text(_planetLabel(p), style: TextStyle(
                       fontWeight: FontWeight.bold, fontSize: 12,
                       color: _selectedPlanet == p ? Colors.white : kText,
                     )),
@@ -176,7 +189,7 @@ class _PlanetsScreenState extends State<PlanetsScreen> with SingleTickerProvider
             child: _isLoading
                 ? const Center(child: CircularProgressIndicator())
                 : _transitData == null
-                    ? const Center(child: Text('ಡೇಟಾ ಲಭ್ಯವಿಲ್ಲ'))
+                    ? Center(child: Text(AppLocale.l('noResults')))
                     : TabBarView(
                         controller: _tabCtrl,
                         children: [
@@ -199,7 +212,7 @@ class _PlanetsScreenState extends State<PlanetsScreen> with SingleTickerProvider
     }
     if (transits.isEmpty) {
       return Center(child: Text(
-        _selectedPlanet != null ? '$_selectedPlanet' : (AppLocale.isHindi ? 'कोई संचार नहीं' : 'ಯಾವುದೇ ಸಂಚಾರಗಳಿಲ್ಲ'),
+        _selectedPlanet != null ? '${_planetLabel(_selectedPlanet!)} — ${AppLocale.l('noTransits')}' : AppLocale.l('noTransits'),
         style: TextStyle(color: kMuted),
       ));
     }
@@ -224,9 +237,17 @@ class _PlanetsScreenState extends State<PlanetsScreen> with SingleTickerProvider
                 style: TextStyle(color: pColor, fontWeight: FontWeight.bold, fontSize: 18),
               ),
             ),
-            title: Text(ev.planetName, style: TextStyle(fontWeight: FontWeight.bold, color: kText)),
-            subtitle: Text(ev.description, style: TextStyle(color: kMuted)),
-            trailing: Text(_formatDate(ev.date), style: TextStyle(color: kText, fontWeight: FontWeight.w600, fontSize: 12)),
+            title: Text(_planetLabel(ev.planetName), style: TextStyle(fontWeight: FontWeight.bold, color: kText)),
+            subtitle: Text('${trAll(ev.fromRashi)} → ${trAll(ev.toRashi)}', style: TextStyle(color: kMuted)),
+            trailing: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                Text(_formatDate(ev.date), style: TextStyle(color: kText, fontWeight: FontWeight.w600, fontSize: 12)),
+                if (ev.time.isNotEmpty)
+                  Text(ev.time, style: TextStyle(color: kMuted, fontWeight: FontWeight.w500, fontSize: 11)),
+              ],
+            ),
           ),
         );
       },
@@ -240,7 +261,7 @@ class _PlanetsScreenState extends State<PlanetsScreen> with SingleTickerProvider
     }
     if (periods.isEmpty) {
       return Center(child: Text(
-        _selectedPlanet != null ? '$_selectedPlanet' : (AppLocale.isHindi ? 'कोई ग्रह वक्री नहीं' : 'ಯಾವುದೇ ಗ್ರಹ ವಕ್ರಿಯಾಗಿಲ್ಲ'),
+        _selectedPlanet != null ? '${_planetLabel(_selectedPlanet!)} — ${AppLocale.l('noRetro')}' : AppLocale.l('noRetro'),
         style: TextStyle(color: kMuted),
       ));
     }
@@ -250,7 +271,7 @@ class _PlanetsScreenState extends State<PlanetsScreen> with SingleTickerProvider
       itemBuilder: (context, index) {
         final vp = periods[index];
         final startStr = _formatDate(vp.startDate);
-        final endStr = vp.endDate != null ? _formatDate(vp.endDate!) : 'ಮುಂದಿನ ವರ್ಷದವರೆಗೆ';
+        final endStr = vp.endDate != null ? _formatDate(vp.endDate!) : AppLocale.l('continues');
         final pColor = _getPlanetColor(vp.planetName);
         
         return Card(
@@ -279,14 +300,14 @@ class _PlanetsScreenState extends State<PlanetsScreen> with SingleTickerProvider
                     children: [
                       Row(
                         children: [
-                           Text(vp.planetName, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: pColor)),
+                           Text(_planetLabel(vp.planetName), style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: pColor)),
                            const SizedBox(width: 8),
                            Icon(Icons.turn_left, size: 16, color: pColor),
                         ],
                       ),
                       const SizedBox(height: 8),
-                      Text('ಪ್ರಾರಂಭ: $startStr', style: TextStyle(color: pColor.withValues(alpha: 0.8), fontSize: 13)),
-                      Text('ಅಂತ್ಯ: $endStr', style: TextStyle(color: pColor.withValues(alpha: 0.8), fontSize: 13)),
+                      Text('${AppLocale.l('start')}: $startStr', style: TextStyle(color: pColor.withValues(alpha: 0.8), fontSize: 13)),
+                      Text('${AppLocale.l('end')}: $endStr', style: TextStyle(color: pColor.withValues(alpha: 0.8), fontSize: 13)),
                     ],
                   ),
                 ),
@@ -305,7 +326,7 @@ class _PlanetsScreenState extends State<PlanetsScreen> with SingleTickerProvider
     }
     if (periods.isEmpty) {
       return Center(child: Text(
-        _selectedPlanet != null ? '$_selectedPlanet' : (AppLocale.isHindi ? 'कोई ग्रह अस्त नहीं' : 'ಯಾವುದೇ ಗ್ರಹ ಅಸ್ತವಾಗಿಲ್ಲ'),
+        _selectedPlanet != null ? '${_planetLabel(_selectedPlanet!)} — ${AppLocale.l('noCombust')}' : AppLocale.l('noCombust'),
         style: TextStyle(color: kMuted),
       ));
     }
@@ -315,7 +336,7 @@ class _PlanetsScreenState extends State<PlanetsScreen> with SingleTickerProvider
       itemBuilder: (context, index) {
         final ap = periods[index];
         final startStr = _formatDate(ap.startDate);
-        final endStr = ap.endDate != null ? _formatDate(ap.endDate!) : 'ಮುಂದಿನ ವರ್ಷದವರೆಗೆ';
+        final endStr = ap.endDate != null ? _formatDate(ap.endDate!) : AppLocale.l('continues');
         final pColor = _getPlanetColor(ap.planetName);
         
         return Card(
@@ -344,14 +365,14 @@ class _PlanetsScreenState extends State<PlanetsScreen> with SingleTickerProvider
                     children: [
                       Row(
                         children: [
-                           Text(ap.planetName, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: pColor)),
+                           Text(_planetLabel(ap.planetName), style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: pColor)),
                            const SizedBox(width: 8),
                            Icon(Icons.brightness_low, size: 16, color: pColor),
                         ],
                       ),
                       const SizedBox(height: 8),
-                      Text('ಪ್ರಾರಂಭ: $startStr', style: TextStyle(color: pColor.withValues(alpha: 0.8), fontSize: 13)),
-                      Text('ಅಂತ್ಯ: $endStr', style: TextStyle(color: pColor.withValues(alpha: 0.8), fontSize: 13)),
+                      Text('${AppLocale.l('start')}: $startStr', style: TextStyle(color: pColor.withValues(alpha: 0.8), fontSize: 13)),
+                      Text('${AppLocale.l('end')}: $endStr', style: TextStyle(color: pColor.withValues(alpha: 0.8), fontSize: 13)),
                     ],
                   ),
                 ),

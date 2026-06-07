@@ -5,6 +5,7 @@ import '../services/google_auth_service.dart';
 import '../services/calendar_service.dart';
 import 'input_screen.dart';
 import 'panchanga_screen.dart';
+import 'panchanga_search_screen.dart';
 import 'taranukoola_screen.dart';
 import 'match_making_tab.dart';
 
@@ -12,6 +13,8 @@ import 'planets_screen.dart';
 import 'settings_screen.dart';
 import 'vedic_clock_screen.dart';
 import 'appointment_screen.dart';
+import 'pooja_lists_screen.dart';
+import 'vastu_screen.dart';
 import 'ashtamangala_screen.dart';
 import 'prashna_input_screen.dart';
 import '../services/tester_service.dart';
@@ -27,6 +30,9 @@ class HomeScreen extends StatelessWidget {
       }),
       _Section(AppLocale.l('panchanga'), 'Panchanga', Icons.calendar_month, kPurple2, () {
         Navigator.push(context, MaterialPageRoute(builder: (_) => const PanchangaScreen()));
+      }),
+      _Section(AppLocale.l('panchangaSearch'), 'Panchanga Search', Icons.search, const Color(0xFF2980B9), () {
+        Navigator.push(context, MaterialPageRoute(builder: (_) => const PanchangaSearchScreen()));
       }),
       _Section(AppLocale.l('taranukoola'), 'Taranukoola', Icons.stars_rounded, kGreen, () {
         Navigator.push(context, MaterialPageRoute(builder: (_) => const TaranukoolaScreen()));
@@ -44,6 +50,12 @@ class HomeScreen extends StatelessWidget {
       _Section(AppLocale.l('appointment'), 'Appointments', Icons.event_note, kTeal, () {
         Navigator.push(context, MaterialPageRoute(builder: (_) => const AppointmentScreen()));
       }),
+      _Section(AppLocale.l('poojaLists'), 'Pooja Lists', Icons.list_alt_rounded, const Color(0xFF8E44AD), () {
+        Navigator.push(context, MaterialPageRoute(builder: (_) => const PoojaListsScreen()));
+      }),
+      _Section(AppLocale.l('vastuLabel'), 'Vastu', Icons.home_work_rounded, const Color(0xFFD4A017), () {
+        Navigator.push(context, MaterialPageRoute(builder: (_) => const VastuScreen()));
+      }),
       _Section('ಪ್ರಶ್ನ', 'Prashna', Icons.help_outline_rounded, const Color(0xFF1565C0), () {
         Navigator.push(context, MaterialPageRoute(builder: (_) => const PrashnaInputScreen()));
       }),
@@ -60,7 +72,9 @@ class HomeScreen extends StatelessWidget {
       }),
     ];
 
-    return Scaffold(
+    return ValueListenableBuilder<String>(
+      valueListenable: AppLocale.langNotifier,
+      builder: (context, _, __) => Scaffold(
       backgroundColor: kBg,
       body: SafeArea(
         child: SingleChildScrollView(
@@ -93,7 +107,7 @@ class HomeScreen extends StatelessWidget {
                           letterSpacing: 1.5,
                         )),
                         const SizedBox(height: 4),
-                        Text('Vedic Astrology', style: TextStyle(
+                        Text('made by Goureesh Bhat Mudebail', style: TextStyle(
                           fontSize: tablet ? 15 : 13,
                           color: kMuted, letterSpacing: 0.5,
                         )),
@@ -132,7 +146,7 @@ class HomeScreen extends StatelessWidget {
           ),
         ),
       ),
-    );
+    ));
   }
 
   void _showAppointmentDialog(BuildContext context) {
@@ -289,7 +303,7 @@ class MatchMakingScreen extends StatelessWidget {
       backgroundColor: kBg,
       appBar: AppBar(
         backgroundColor: kCard,
-        title: Text('ಹೊಂದಾಣಿಕೆ / Match Making',
+        title: Text('${AppLocale.l('matchMakingTitle')} / Match Making',
             style: TextStyle(color: kText, fontSize: 16, fontWeight: FontWeight.w800)),
         iconTheme: IconThemeData(color: kText),
         elevation: 0,

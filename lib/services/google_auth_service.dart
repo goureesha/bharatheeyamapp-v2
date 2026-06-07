@@ -65,6 +65,10 @@ class GoogleAuthService {
     }
   }
 
+  /// Stub: clone doesn't use Firebase Auth for Firestore rules.
+  /// Always returns true so TesterService can proceed.
+  static Future<bool> ensureFirebaseAuth() async => true;
+
   /// Request Calendar scopes if not already granted.
   /// Returns true if scopes are available, false if user denied.
   static Future<bool> ensureCalendarScope() async {

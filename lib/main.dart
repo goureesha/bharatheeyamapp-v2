@@ -1,10 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'screens/home_screen.dart';
 import 'widgets/common.dart';
-import 'services/google_auth_service.dart';
-import 'services/firebase_service.dart';
 
 import 'services/festival_cache_service.dart';
 import 'services/location_service.dart';
@@ -12,6 +11,7 @@ import 'services/tester_service.dart';
 import 'package:flutter/foundation.dart';
 import 'package:sweph/sweph.dart';
 import 'core/ephemeris.dart';
+import 'core/calculator.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -23,11 +23,7 @@ Future<void> main() async {
     DeviceOrientation.landscapeRight,
   ]);
 
-  // Firebase must init BEFORE auth/tester because sign-in triggers
-  // TesterService.checkTesterStatus() which uses FirebaseFirestore.instance
-  await FirebaseService.init();
-
-  // Run ALL critical startup tasks in PARALLEL (not sequentially)
+  // Run ALL critical startup tasks in PARALLEL
   await Future.wait([
     _initEphemeris(),
     AppThemes.loadTheme(),
@@ -35,7 +31,6 @@ Future<void> main() async {
     AppLocale.loadLang(),
     LocationService.init(),
     TesterService.init(),
-    _initAuth(),
   ]);
 
   // Now show the app
@@ -56,26 +51,46 @@ Future<void> _initEphemeris() async {
   }
 }
 
-/// Sign in silently (no device binding check).
-Future<void> _initAuth() async {
-  try {
-    await GoogleAuthService.signInSilently();
-  } catch (e) {
-    debugPrint('Auth init error: $e');
-  }
-}
-
 /// Non-critical startup tasks that run AFTER the app is visible
 Future<void> _deferredInit() async {
-  // Start the appointment listener now that auth is complete.
-  if (GoogleAuthService.isSignedIn) {
-    FirebaseService.listenForAppointments();
-  }
-
   // Pre-load festival events lazily (non-blocking)
   FestivalCacheService.loadYear(DateTime.now().year);
+
+  // Write sunrise data for the native Android home screen widget.
+  _writeSunriseForWidget();
 }
 
+/// Calculate today's sunrise and save to SharedPreferences for native widget
+Future<void> _writeSunriseForWidget() async {
+  try {
+    final now = DateTime.now();
+    final result = await AstroCalculator.calculate(
+      year: now.year, month: now.month, day: now.day,
+      hourUtcOffset: LocationService.tzOffset,
+      hour24: now.hour + now.minute / 60.0,
+      lat: LocationService.lat, lon: LocationService.lon,
+      ayanamsaMode: 'lahiri', trueNode: true,
+    );
+    if (result == null) return;
+
+    // Parse sunrise time from panchanga string (format: "06:23 AM")
+    final srParts = result.panchang.sunrise.split(':');
+    final srHour = double.tryParse(srParts[0].replaceAll(RegExp(r'[^0-9]'), '')) ?? 6;
+    final srMin = double.tryParse(srParts.length > 1 ? srParts[1].replaceAll(RegExp(r'[^0-9]'), '') : '0') ?? 0;
+    final isPM = result.panchang.sunrise.toUpperCase().contains('PM');
+    double sunriseH24 = srHour + srMin / 60.0;
+    if (isPM && srHour != 12) sunriseH24 += 12;
+    if (!isPM && srHour == 12) sunriseH24 = srMin / 60.0;
+
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setDouble('sunrise_hour24', sunriseH24);
+    debugPrint('Widget sunrise_hour24 written: $sunriseH24');
+  } catch (e) {
+    debugPrint('Widget sunrise write failed: $e');
+  }
+}
+
+final GlobalKey<ScaffoldMessengerState> scaffoldMessengerKey = GlobalKey<ScaffoldMessengerState>();
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
 class BharatheeyamApp extends StatefulWidget {
@@ -112,9 +127,10 @@ class _BharatheeyamAppState extends State<BharatheeyamApp> with WidgetsBindingOb
       valueListenable: AppThemes.themeNotifier,
       builder: (context, themeIndex, child) {
         return MaterialApp(
+          scaffoldMessengerKey: scaffoldMessengerKey,
           navigatorKey: navigatorKey,
           key: ValueKey('theme_$themeIndex'),
-          title: 'ಪ್ರಶ್ನ',
+          title: AppLocale.l('appName'),
           debugShowCheckedModeBanner: false,
           locale: const Locale('en', 'IN'),
           supportedLocales: const [
@@ -210,6 +226,10 @@ class _BharatheeyamAppState extends State<BharatheeyamApp> with WidgetsBindingOb
               focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: kPurple2, width: 2)),
               contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
               labelStyle: TextStyle(color: kMuted),
+              hintStyle: TextStyle(color: kMuted),
+            ),
+            dropdownMenuTheme: DropdownMenuThemeData(
+              textStyle: TextStyle(color: kText),
             ),
             elevatedButtonTheme: ElevatedButtonThemeData(
               style: ElevatedButton.styleFrom(

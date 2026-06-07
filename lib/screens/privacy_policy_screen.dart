@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../widgets/common.dart';
 
 class PrivacyPolicyScreen extends StatelessWidget {
   const PrivacyPolicyScreen({super.key});
+
+  static const _privacyUrl = 'https://goureesha.github.io/bharatheeyamapp/privacy.html';
 
   @override
   Widget build(BuildContext context) {
@@ -10,10 +13,17 @@ class PrivacyPolicyScreen extends StatelessWidget {
       backgroundColor: kBg,
       appBar: AppBar(
         backgroundColor: kCard,
-        title: Text('ಗೌಪ್ಯತಾ ನೀತಿ / Privacy Policy',
+        title: Text(AppLocale.l('privacyLink'),
             style: TextStyle(color: kText, fontSize: 16, fontWeight: FontWeight.w800)),
         iconTheme: IconThemeData(color: kText),
         elevation: 0,
+        actions: [
+          IconButton(
+            icon: Icon(Icons.open_in_browser, color: kPurple2),
+            tooltip: 'View Online',
+            onPressed: () => launchUrl(Uri.parse(_privacyUrl), mode: LaunchMode.externalApplication),
+          ),
+        ],
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),

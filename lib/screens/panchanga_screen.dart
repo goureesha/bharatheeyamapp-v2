@@ -1,13 +1,11 @@
-import 'dart:async';
 import 'package:flutter/material.dart';
 import '../widgets/common.dart';
 import '../constants/strings.dart';
 import '../core/calculator.dart';
 import '../core/ephemeris.dart';
-import '../core/events.dart';
-import '../services/festival_cache_service.dart';
 import '../services/location_service.dart';
 import 'package:table_calendar/table_calendar.dart';
+import 'package:sweph/sweph.dart';
 
 
 class PanchangaScreen extends StatefulWidget {
@@ -30,13 +28,10 @@ class _PanchangaScreenState extends State<PanchangaScreen> {
 
   DateTime _focusedDay = DateTime.now();
 
-  // Events for current selected day
-  List<AstroEvent> _currentEvents = [];
+  List<dynamic> _currentEvents = [];
 
-
-
-  // Debounce timer for month-change swipe
-  Timer? _monthDebounce;
+  // In-memory session cache — computed dates are instant on revisit
+  static final Map<String, PanchangData> _panchangCache = {};
 
   @override
   void initState() {
@@ -46,37 +41,39 @@ class _PanchangaScreenState extends State<PanchangaScreen> {
 
   @override
   void dispose() {
-    _monthDebounce?.cancel();
     super.dispose();
   }
 
   Future<void> _initLoad() async {
     await _calcPanchang();
-    // If cache not loaded yet for this year, load the current month quickly
-    if (!FestivalCacheService.isLoaded) {
-      await FestivalCacheService.loadMonth(_focusedDay.year, _focusedDay.month);
-      if (mounted) setState(() {});
-    }
   }
 
-  List<AstroEvent> _getEventsForDay(DateTime day) {
-    return FestivalCacheService.getEventsForDate(day);
-  }
+  String _cacheKey(DateTime d) => '${d.year}-${d.month}-${d.day}';
 
   Future<void> _calcPanchang() async {
+    // Check in-memory cache first (instant — no lag)
+    final key = _cacheKey(_selectedDate);
+    final cached = _panchangCache[key];
+    if (cached != null) {
+      setState(() {
+        _panchang = cached;
+        _currentEvents = [];
+        _loading = false;
+      });
+      return;
+    }
+
     setState(() => _loading = true);
 
     try {
-      // Compute actual sunrise for the selected date — vara starts at sunrise
       await Ephemeris.initSweph();
       final srSs = Ephemeris.findSunriseSetForDate(
         _selectedDate.year, _selectedDate.month, _selectedDate.day,
         _lat, _lon, tzOffset: LocationService.tzOffset,
       );
-      // Convert sunrise JD to local hour (decimal) + tiny buffer for float safety
       final srJd = srSs[0];
       final srLocalFrac = ((srJd + 0.5 + (LocationService.tzOffset / 24.0)) % 1.0 + 1.0) % 1.0;
-      final hour24 = (srLocalFrac * 24.0) + (1.0 / 60.0); // sunrise + 1 min
+      final hour24 = (srLocalFrac * 24.0) + (1.0 / 60.0);
 
       final result = await AstroCalculator.calculate(
         year: _selectedDate.year, month: _selectedDate.month, day: _selectedDate.day,
@@ -88,20 +85,51 @@ class _PanchangaScreenState extends State<PanchangaScreen> {
       );
 
       if (result != null && mounted) {
-        final events = FestivalCacheService.getEventsForDate(_selectedDate);
-        // If cache miss, compute from panchang
-        final finalEvents = events.isNotEmpty ? events : EventCalculator.getEventsForPanchang(result.panchang);
-
+        // Store in cache for instant revisit
+        _panchangCache[key] = result.panchang;
         setState(() {
           _panchang = result.panchang;
-          _currentEvents = finalEvents;
+          _currentEvents = [];
           _loading = false;
         });
+        // Pre-compute nearby dates in background (no lag on next tap)
+        _precomputeNearbyDates();
       } else {
         if (mounted) setState(() => _loading = false);
       }
     } catch (e) {
       if (mounted) setState(() => _loading = false);
+    }
+  }
+
+  /// Pre-compute ±3 days around selected date in background
+  /// So when user taps nearby dates, they load instantly
+  void _precomputeNearbyDates() async {
+    for (int offset in [-3, -2, -1, 1, 2, 3]) {
+      final d = _selectedDate.add(Duration(days: offset));
+      final key = _cacheKey(d);
+      if (_panchangCache.containsKey(key)) continue;
+
+      try {
+        final srSs = Ephemeris.findSunriseSetForDate(
+          d.year, d.month, d.day, _lat, _lon,
+          tzOffset: LocationService.tzOffset,
+        );
+        final srFrac = ((srSs[0] + 0.5 + (LocationService.tzOffset / 24.0)) % 1.0 + 1.0) % 1.0;
+        final h24 = (srFrac * 24.0) + (1.0 / 60.0);
+
+        final result = await AstroCalculator.calculate(
+          year: d.year, month: d.month, day: d.day,
+          hourUtcOffset: LocationService.tzOffset,
+          hour24: h24, lat: _lat, lon: _lon,
+          ayanamsaMode: 'lahiri', trueNode: true,
+        );
+        if (result != null) {
+          _panchangCache[key] = result.panchang;
+        }
+      } catch (_) {}
+      // Yield to UI between each background computation
+      await Future.delayed(Duration.zero);
     }
   }
 
@@ -143,6 +171,15 @@ class _PanchangaScreenState extends State<PanchangaScreen> {
     // Hindi
     'रविवार': 0, 'सोमवार': 1, 'मंगलवार': 2, 'बुधवार': 3,
     'गुरुवार': 4, 'शुक्रवार': 5, 'शनिवार': 6,
+    // Tamil
+    'ஞாயிறு': 0, 'திங்கள்': 1, 'செவ்வாய்': 2, 'புதன்': 3,
+    'வியாழன்': 4, 'வெள்ளி': 5, 'சனி': 6,
+    // Telugu
+    'ఆదివారం': 0, 'సోమవారం': 1, 'మంగళవారం': 2, 'బుధవారం': 3,
+    'గురువారం': 4, 'శుక్రవారం': 5, 'శనివారం': 6,
+    // Malayalam
+    'ഞായറാഴ്ച': 0, 'തിങ്കളാഴ്ച': 1, 'ചൊവ്വാഴ്ച': 2, 'ബുധനാഴ്ച': 3,
+    'വ്യാഴാഴ്ച': 4, 'വെള്ളിയാഴ്ച': 5, 'ശനിയാഴ്ച': 6,
     // English fallback
     'Sunday': 0, 'Monday': 1, 'Tuesday': 2, 'Wednesday': 3,
     'Thursday': 4, 'Friday': 5, 'Saturday': 6,
@@ -183,7 +220,7 @@ class _PanchangaScreenState extends State<PanchangaScreen> {
   // ─── Chougadiya (Gauri Panchanga) ───
   // 8 day periods + 8 night periods. Each named after: Udveg, Char, Laabh, Amrut, Kaala, Shubh, Rog
   // Day sequence by weekday, Night sequence follows after
-  static const _chougNames = ['ಉದ್ವೇಗ', 'ಚಲ', 'ಲಾಭ', 'ಅಮೃತ', 'ಕಾಲ', 'ಶುಭ', 'ರೋಗ'];
+  static const _chougKeys = ['choug0', 'choug1', 'choug2', 'choug3', 'choug4', 'choug5', 'choug6'];
   static const _chougNature = ['⚠️', '⬆️', '✅', '🏆', '❌', '✅', '⚠️'];
   // Starting Chougadiya for each weekday (day): Sun=Udveg(0), Mon=Amrut(3), Tue=Rog(6), Wed=Laabh(2), Thu=Shubh(5), Fri=Chal(1), Sat=Kaal(4)
   static const _chougDayStart   = [0, 3, 6, 2, 5, 1, 4]; // Sun..Sat
@@ -214,7 +251,7 @@ class _PanchangaScreenState extends State<PanchangaScreen> {
       final s = periodStart + i * duration;
       final e = s + duration;
       result.add({
-        'name': tr(_chougNames[idx]),
+        'name': AppLocale.l(_chougKeys[idx]),
         'nature': _chougNature[idx],
         'start': _minutesToTimeStr(s % (24 * 60)),
         'end': _minutesToTimeStr(e % (24 * 60)),
@@ -226,7 +263,7 @@ class _PanchangaScreenState extends State<PanchangaScreen> {
   // ─── Hora (Planetary Hours) ───
   // Planet order for Hora: Sun, Venus, Mercury, Moon, Saturn, Jupiter, Mars
   // The first Hora of a day belongs to the weekday ruler
-  static const _horaOrder = ['ಸೂರ್ಯ', 'ಶುಕ್ರ', 'ಬುಧ', 'ಚಂದ್ರ', 'ಶನಿ', 'ಗುರು', 'ಮಂಗಳ'];
+  static const _horaKeys = ['horaSurya', 'horaShukra', 'horaBudha', 'horaChandra', 'horaShani', 'horaGuru', 'horaMangala'];
   static const _horaIcons = ['☀️', '♀️', '☿️', '🌙', '🪐', '♃', '♂️'];
   // Weekday ruler index in _horaOrder: Sun=0, Mon=3, Tue=6, Wed=2, Thu=5, Fri=1, Sat=4
   static const _weekdayHoraStart = [0, 3, 6, 2, 5, 1, 4]; // Sun..Sat
@@ -255,13 +292,119 @@ class _PanchangaScreenState extends State<PanchangaScreen> {
       final s = periodStart + i * duration;
       final e = s + duration;
       result.add({
-        'planet': tr(_horaOrder[idx]),
+        'planet': AppLocale.l(_horaKeys[idx]),
         'icon': _horaIcons[idx],
         'start': _minutesToTimeStr(s % (24 * 60)),
         'end': _minutesToTimeStr(e % (24 * 60)),
       });
     }
     return result;
+  }
+
+  // ─── Agnivasa cache (independent of panchang cache) ───
+  final Map<String, bool> _agniVasaCache = {};
+
+  // ─── Check if a day has Agni on Prithvi ───
+  bool _isPrithviDay(DateTime day) {
+    final key = _cacheKey(day);
+    if (_agniVasaCache.containsKey(key)) return _agniVasaCache[key]!;
+    try {
+      final srSs = Ephemeris.findSunriseSetForDate(
+        day.year, day.month, day.day,
+        LocationService.lat, LocationService.lon, tzOffset: LocationService.tzOffset,
+      );
+      final srJd = srSs[0];
+      final jd = srJd + (1.0 / 1440.0);
+      Sweph.swe_set_sid_mode(SiderealMode.SE_SIDM_LAHIRI);
+      final moonPos = Sweph.swe_calc_ut(jd, HeavenlyBody.SE_MOON, SwephFlag.SEFLG_SWIEPH | SwephFlag.SEFLG_SIDEREAL);
+      final sunPos = Sweph.swe_calc_ut(jd, HeavenlyBody.SE_SUN, SwephFlag.SEFLG_SWIEPH | SwephFlag.SEFLG_SIDEREAL);
+      final tithiIdx = (((moonPos.longitude - sunPos.longitude + 360) % 360) / 12).floor().clamp(0, 29);
+      int pyWeekday = day.weekday - 1; // Mon=0..Sun=6
+      int wIdx = (pyWeekday + 1) % 7; // Sun=0..Sat=6
+      final agniVal = (tithiIdx + wIdx) % 4;
+      final isPrithvi = (agniVal == 0 || agniVal == 3);
+      _agniVasaCache[key] = isPrithvi;
+      return isPrithvi;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  // ─── Calendar cell with green dot for Prithvi days ───
+  Widget _buildCalendarCell(DateTime day, bool isToday, bool isSelected) {
+    final isPrithvi = _isPrithviDay(day);
+    return Container(
+      margin: const EdgeInsets.all(4),
+      decoration: BoxDecoration(
+        color: isSelected ? kPurple2 : isToday ? kPurple2.withOpacity(0.3) : null,
+        shape: BoxShape.circle,
+      ),
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          Center(child: Text(
+            '${day.day}',
+            style: TextStyle(
+              color: isSelected ? Colors.white : isToday ? Colors.white : kText,
+              fontWeight: isSelected || isToday ? FontWeight.bold : FontWeight.normal,
+            ),
+          )),
+          if (isPrithvi)
+            Positioned(
+              bottom: 4,
+              child: Container(
+                width: 6, height: 6,
+                decoration: const BoxDecoration(color: Colors.green, shape: BoxShape.circle),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  // ─── Agni Vasa Card ───
+  Widget _buildAgniVasaCard() {
+    if (_panchang == null) return const SizedBox();
+    final agni = _panchang!.agniVasa;
+    final isPrithvi = agni.contains('ಭೂಮಿ') || agni.contains('भूमि') || agni.contains('பூமி') || agni.contains('భూమి') || agni.contains('ഭൂമി') || agni.contains('Bhumi');
+    final color = isPrithvi ? Colors.green : Colors.red;
+    final icon = isPrithvi ? Icons.check_circle : Icons.cancel;
+
+    return AppCard(
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Row(children: [
+          Icon(Icons.local_fire_department, color: kOrange, size: 22),
+          const SizedBox(width: 8),
+          Text(AppLocale.l('agniVasa') + ' / Agni Vasa', style: TextStyle(
+            fontWeight: FontWeight.w900, fontSize: 14, color: kOrange)),
+        ]),
+        const SizedBox(height: 6),
+        Text(AppLocale.l('agniVasaDesc'), style: TextStyle(color: kMuted, fontSize: 11)),
+        const SizedBox(height: 12),
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+          decoration: BoxDecoration(
+            color: color.withOpacity(0.08),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: color.withOpacity(0.3)),
+          ),
+          child: Row(children: [
+            Icon(icon, color: color, size: 28),
+            const SizedBox(width: 12),
+            Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Text(trAll(agni), style: TextStyle(
+                fontSize: 16, fontWeight: FontWeight.w900, color: color)),
+              const SizedBox(height: 2),
+              Text(
+                isPrithvi ? 'Agni on Earth — Auspicious' : agni.contains('ಆಕಾಶ') || agni.contains('आकाश') ? 'Agni in Sky — Inauspicious' : 'Agni in Netherworld — Inauspicious',
+                style: TextStyle(fontSize: 12, color: kMuted),
+              ),
+            ])),
+          ]),
+        ),
+      ]),
+    );
   }
 
   @override
@@ -272,7 +415,7 @@ class _PanchangaScreenState extends State<PanchangaScreen> {
       backgroundColor: kBg,
       appBar: AppBar(
         backgroundColor: kCard,
-        title: Text(tr('ಪಂಚಾಂಗ') + ' / Panchang',
+        title: Text(AppLocale.l('panchanga') + ' / Panchang',
             style: TextStyle(color: kText, fontSize: 16, fontWeight: FontWeight.w800)),
         iconTheme: IconThemeData(color: kText),
         elevation: 0,
@@ -289,7 +432,7 @@ class _PanchangaScreenState extends State<PanchangaScreen> {
                       Row(children: [
                         Icon(Icons.calendar_month, color: kPurple2, size: 20),
                         const SizedBox(width: 8),
-                        Text(tr('ದಿನಾಂಕ ಆಯ್ಕೆಮಾಡಿ'), style: TextStyle(
+                        Text(AppLocale.l('selectDateLabel'), style: TextStyle(
                           fontWeight: FontWeight.w800, fontSize: 15, color: kPurple2)),
                         const Spacer(),
                         TextButton.icon(
@@ -300,7 +443,7 @@ class _PanchangaScreenState extends State<PanchangaScreen> {
                             _calcPanchang();
                           },
                           icon: Icon(Icons.today, size: 16),
-                          label: Text(tr('ಇಂದು'), style: TextStyle(fontSize: 12)),
+                          label: Text(AppLocale.l('today'), style: TextStyle(fontSize: 12)),
                           style: TextButton.styleFrom(padding: EdgeInsets.symmetric(horizontal: 8)),
                         ),
                       ]),
@@ -311,7 +454,7 @@ class _PanchangaScreenState extends State<PanchangaScreen> {
                           borderRadius: BorderRadius.circular(12),
                           color: kBg,
                         ),
-                        child: TableCalendar<AstroEvent>(
+                        child: TableCalendar(
                           firstDay: DateTime.utc(1800, 1, 1),
                           lastDay: DateTime.utc(2100, 12, 31),
                           focusedDay: _focusedDay,
@@ -329,13 +472,6 @@ class _PanchangaScreenState extends State<PanchangaScreen> {
                           },
                           onPageChanged: (focusedDay) {
                             _focusedDay = focusedDay;
-                            // Debounce: wait 300ms after swipe stops before computing
-                            _monthDebounce?.cancel();
-                            _monthDebounce = Timer(const Duration(milliseconds: 300), () {
-                              FestivalCacheService.loadMonth(focusedDay.year, focusedDay.month).then((_) {
-                                if (mounted) setState(() {});
-                              });
-                            });
                           },
                           calendarStyle: CalendarStyle(
                             todayDecoration: BoxDecoration(
@@ -356,6 +492,11 @@ class _PanchangaScreenState extends State<PanchangaScreen> {
                             weekdayStyle: TextStyle(color: kText, fontWeight: FontWeight.bold),
                             weekendStyle: TextStyle(color: Colors.redAccent, fontWeight: FontWeight.bold),
                           ),
+                          calendarBuilders: CalendarBuilders(
+                            defaultBuilder: (context, day, focusedDay) => _buildCalendarCell(day, false, false),
+                            todayBuilder: (context, day, focusedDay) => _buildCalendarCell(day, true, false),
+                            selectedBuilder: (context, day, focusedDay) => _buildCalendarCell(day, false, true),
+                          ),
                         ),
                       ),
                     ]),
@@ -364,8 +505,8 @@ class _PanchangaScreenState extends State<PanchangaScreen> {
 
                   // Date & Place info
                   AppCard(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                    _kv(tr('ಸ್ಥಳ'), _place),
-                    _kv(tr('ದಿನಾಂಕ'), dateStr),
+                    _kv(AppLocale.l('sthala'), _place),
+                    _kv(AppLocale.l('dinanka'), dateStr),
                   ])),
 
 
@@ -380,12 +521,12 @@ class _PanchangaScreenState extends State<PanchangaScreen> {
                     AppCard(
                       padding: EdgeInsets.zero,
                       child: Column(children: [
-                        _sectionHeader(Icons.auto_awesome, tr('ಪಂಚಾಂಗ') + ' / Five Limbs', kPurple2),
-                        _tableRow([tr('ತಿಥಿ'), _formatEnd(tr(_panchang!.tithi), _panchang!.tithiEndTime, _panchang!.tithiEndsNextDay)]),
-                        _tableRow([tr('ವಾರ'), tr(_panchang!.vara)]),
-                        _tableRow([tr('ಚಂದ್ರ ನಕ್ಷತ್ರ'), _formatEnd('${tr(_panchang!.nakshatra)} - ${tr('ಪಾದ')} ${_chandraPada()}', _panchang!.nakEndTime, _panchang!.nakEndsNextDay)]),
-                        _tableRow([tr('ಯೋಗ'), _formatEnd(tr(_panchang!.yoga), _panchang!.yogaEndTime, _panchang!.yogaEndsNextDay)]),
-                        _tableRow([tr('ಕರಣ'), _formatEnd(tr(_panchang!.karana), _panchang!.karanaEndTime, _panchang!.karanaEndsNextDay)]),
+                        _sectionHeader(Icons.auto_awesome, AppLocale.l('panchanga') + ' / Five Limbs', kPurple2),
+                        _tableRow([AppLocale.l('tithi'), _formatEnd(trAll(_panchang!.tithi), _panchang!.tithiEndTime, _panchang!.tithiEndsNextDay)]),
+                        _tableRow([AppLocale.l('vara'), trAll(_panchang!.vara)]),
+                        _tableRow([AppLocale.l('chandraNak'), _formatEnd('${trAll(_panchang!.nakshatra)} - ${AppLocale.l('pada')} ${_chandraPada()}', _panchang!.nakEndTime, _panchang!.nakEndsNextDay)]),
+                        _tableRow([AppLocale.l('yoga'), _formatEnd(trAll(_panchang!.yoga), _panchang!.yogaEndTime, _panchang!.yogaEndsNextDay)]),
+                        _tableRow([AppLocale.l('karana'), _formatEnd(trAll(_panchang!.karana), _panchang!.karanaEndTime, _panchang!.karanaEndsNextDay)]),
                       ]),
                     ),
 
@@ -393,12 +534,12 @@ class _PanchangaScreenState extends State<PanchangaScreen> {
                     AppCard(
                       padding: EdgeInsets.zero,
                       child: Column(children: [
-                        _sectionHeader(Icons.wb_sunny, tr('ಸೂರ್ಯ') + ' / Sun', kOrange),
-                        _tableRow([tr('ಸೂರ್ಯೋದಯ'), _panchang!.sunrise]),
-                        _tableRow([tr('ಸೂರ್ಯಾಸ್ತ'), _panchang!.sunset]),
-                        _tableRow([tr('ಸೂರ್ಯ ನಕ್ಷತ್ರ'), '${tr(_panchang!.suryaNakshatra)} - ${tr('ಪಾದ')} ${_panchang!.suryaPada}']),
-                        _tableRow([tr('ಸೌರ ಮಾಸ'), tr(_panchang!.souraMasa)]),
-                        _tableRow([tr('ಸೌರ ಮಾಸ ಗತ ದಿನ'), _panchang!.souraMasaGataDina]),
+                        _sectionHeader(Icons.wb_sunny, AppLocale.l('surya') + ' / Sun', kOrange),
+                        _tableRow([AppLocale.l('sunrise'), _panchang!.sunrise]),
+                        _tableRow([AppLocale.l('sunset'), _panchang!.sunset]),
+                        _tableRow([AppLocale.l('suryaNak'), '${trAll(_panchang!.suryaNakshatra)} - ${AppLocale.l('pada')} ${_panchang!.suryaPada}']),
+                        _tableRow([AppLocale.l('souraMasa'), trAll(_panchang!.souraMasa)]),
+                        _tableRow([AppLocale.l('souraMasaGataDina'), _panchang!.souraMasaGataDina]),
                       ]),
                     ),
 
@@ -406,11 +547,11 @@ class _PanchangaScreenState extends State<PanchangaScreen> {
                     AppCard(
                       padding: EdgeInsets.zero,
                       child: Column(children: [
-                        _sectionHeader(Icons.nightlight_round, tr('ಚಂದ್ರ') + ' / Moon', kTeal),
-                        _tableRow([tr('ಚಂದ್ರ ರಾಶಿ'), tr(_panchang!.chandraRashi)]),
-                        _tableRow([tr('ಚಂದ್ರ ಮಾಸ'), tr(_panchang!.chandraMasa)]),
+                        _sectionHeader(Icons.nightlight_round, AppLocale.l('chandra') + ' / Moon', kTeal),
+                        _tableRow([AppLocale.l('chandraRashi'), trAll(_panchang!.chandraRashi)]),
+                        _tableRow([AppLocale.l('chandraMasa'), trAll(_panchang!.chandraMasa)]),
 
-                        _tableRow([tr('ಪರಮ ಘಟಿ'), _panchang!.paramaGhati]),
+                        _tableRow([AppLocale.l('paramaGhati'), _panchang!.paramaGhati]),
                       ]),
                     ),
 
@@ -418,17 +559,20 @@ class _PanchangaScreenState extends State<PanchangaScreen> {
                     AppCard(
                       padding: EdgeInsets.zero,
                       child: Column(children: [
-                        _sectionHeader(Icons.access_time, tr('ಕಾಲ') + ' / Time', kPurple1),
-                        _tableRow([tr('ಸಂವತ್ಸರ'), tr(_panchang!.samvatsara)]),
-                        _tableRow([tr('ಅಯನ'), tr(_panchang!.ayana)]),
-                        _tableRow([tr('ಋತು'), tr(_panchang!.rutu)]),
-                        _tableRow([tr('ಹಗಲಿನ ಪ್ರಮಾಣ'), _panchang!.divamana]),
-                        _tableRow([tr('ರಾತ್ರಿಯ ಪ್ರಮಾಣ'), _panchang!.ratrimana]),
+                        _sectionHeader(Icons.access_time, AppLocale.l('kala') + ' / Time', kPurple1),
+                        _tableRow([AppLocale.l('samvatsara'), trAll(_panchang!.samvatsara)]),
+                        _tableRow([AppLocale.l('ayana'), trAll(_panchang!.ayana)]),
+                        _tableRow([AppLocale.l('rutu'), trAll(_panchang!.rutu)]),
+                        _tableRow([AppLocale.l('divamana'), _panchang!.divamana]),
+                        _tableRow([AppLocale.l('ratrimana'), _panchang!.ratrimana]),
 
-                        _tableRow([tr('ವಿಷ ಪ್ರಘಟಿ'), _panchang!.vishaPraghati]),
-                        _tableRow([tr('ಅಮೃತ ಪ್ರಘಟಿ'), _panchang!.amrutaPraghati]),
+                        _tableRow([AppLocale.l('vishaPraghati'), _panchang!.vishaPraghati]),
+                        _tableRow([AppLocale.l('amrutaPraghati'), _panchang!.amrutaPraghati]),
                       ]),
                     ),
+
+                    // ═══ ಅಗ್ನಿವಾಸ — Agni Vasa ═══
+                    _buildAgniVasaCard(),
 
                     // ═══ Hora (Day) ═══
                     _buildHoraCard(true),
@@ -450,21 +594,21 @@ class _PanchangaScreenState extends State<PanchangaScreen> {
   // ─── Day Muhurtas (15 divisions of daytime) ───
   // Traditional names and nature: S=Shubha, A=Ashubha, M=Madhyama
   static List<Map<String, String>> get _muhurtaNames => [
-    {'name': tr('ರುದ್ರ'), 'nameEn': 'Rudra', 'nature': 'A'},
-    {'name': tr('ಅಹಿ'), 'nameEn': 'Ahi', 'nature': 'A'},
-    {'name': tr('ಮಿತ್ರ'), 'nameEn': 'Mitra', 'nature': 'S'},
-    {'name': tr('ಪಿತ್ರು'), 'nameEn': 'Pitru', 'nature': 'A'},
-    {'name': tr('ವಸು'), 'nameEn': 'Vasu', 'nature': 'S'},
-    {'name': tr('ವಾರಾಹ'), 'nameEn': 'Varaha', 'nature': 'S'},
-    {'name': tr('ವಿಶ್ವೇದೇವ'), 'nameEn': 'Vishwedeva', 'nature': 'S'},
-    {'name': tr('ವಿಧಿ'), 'nameEn': 'Vidhi', 'nature': 'M'},
-    {'name': tr('ಸತ್ಮುಖಿ'), 'nameEn': 'Satmukhi', 'nature': 'S'},
-    {'name': tr('ಪುರುಹೂತ'), 'nameEn': 'Puruhuta', 'nature': 'A'},
-    {'name': tr('ವಾಹಿನಿ'), 'nameEn': 'Vahini', 'nature': 'A'},
-    {'name': tr('ನಕ್ತನಕರ'), 'nameEn': 'Naktanakara', 'nature': 'M'},
-    {'name': tr('ವರುಣ'), 'nameEn': 'Varuna', 'nature': 'S'},
-    {'name': tr('ಅರ್ಯಮ'), 'nameEn': 'Aryama', 'nature': 'S'},
-    {'name': tr('ಭಗ'), 'nameEn': 'Bhaga', 'nature': 'A'},
+    {'name': AppLocale.l('muh0'), 'nameEn': 'Rudra', 'nature': 'A'},
+    {'name': AppLocale.l('muh1'), 'nameEn': 'Ahi', 'nature': 'A'},
+    {'name': AppLocale.l('muh2'), 'nameEn': 'Mitra', 'nature': 'S'},
+    {'name': AppLocale.l('muh3'), 'nameEn': 'Pitru', 'nature': 'A'},
+    {'name': AppLocale.l('muh4'), 'nameEn': 'Vasu', 'nature': 'S'},
+    {'name': AppLocale.l('muh5'), 'nameEn': 'Varaha', 'nature': 'S'},
+    {'name': AppLocale.l('muh6'), 'nameEn': 'Vishwedeva', 'nature': 'S'},
+    {'name': AppLocale.l('muh7'), 'nameEn': 'Vidhi', 'nature': 'M'},
+    {'name': AppLocale.l('muh8'), 'nameEn': 'Satmukhi', 'nature': 'S'},
+    {'name': AppLocale.l('muh9'), 'nameEn': 'Puruhuta', 'nature': 'A'},
+    {'name': AppLocale.l('muh10'), 'nameEn': 'Vahini', 'nature': 'A'},
+    {'name': AppLocale.l('muh11'), 'nameEn': 'Naktanakara', 'nature': 'M'},
+    {'name': AppLocale.l('muh12'), 'nameEn': 'Varuna', 'nature': 'S'},
+    {'name': AppLocale.l('muh13'), 'nameEn': 'Aryama', 'nature': 'S'},
+    {'name': AppLocale.l('muh14'), 'nameEn': 'Bhaga', 'nature': 'A'},
   ];
 
   Widget _buildMuhurtaCard() {
@@ -478,11 +622,11 @@ class _PanchangaScreenState extends State<PanchangaScreen> {
         Row(children: [
           Icon(Icons.schedule, color: const Color(0xFF5B2C6F), size: 22),
           const SizedBox(width: 8),
-          Text(tr('ಹಗಲಿನ ಮುಹೂರ್ತ') + ' / Day Muhurtas', style: TextStyle(
+          Text(AppLocale.l('dayMuhurta') + ' / Day Muhurtas', style: TextStyle(
             fontWeight: FontWeight.w900, fontSize: 14, color: const Color(0xFF5B2C6F))),
         ]),
         const SizedBox(height: 6),
-        Text(tr('ದಿನವನ್ನು 15 ಸಮಭಾಗಗಳಾಗಿ ವಿಂಗಡಿಸಿದೆ'), style: TextStyle(color: kMuted, fontSize: 11)),
+        Text(AppLocale.l('dayMuhurtaDesc'), style: TextStyle(color: kMuted, fontSize: 11)),
         const SizedBox(height: 10),
         ...List.generate(15, (i) {
           final item = _muhurtaNames[i];
@@ -490,7 +634,7 @@ class _PanchangaScreenState extends State<PanchangaScreen> {
           final end = start + duration;
           final nature = item['nature']!;
           final color = nature == 'S' ? Colors.green : nature == 'A' ? Colors.red : kOrange;
-          final label = nature == 'S' ? tr('ಶುಭ') : nature == 'A' ? tr('ಅಶುಭ') : tr('ಮಧ್ಯಮ');
+          final label = nature == 'S' ? AppLocale.l('shubha') : nature == 'A' ? AppLocale.l('ashubha') : AppLocale.l('madhyama');
 
           // Check if current time falls in this muhurta
           final now = DateTime.now();
@@ -556,10 +700,10 @@ class _PanchangaScreenState extends State<PanchangaScreen> {
     final abhijitStart = midday - muhurtaDur / 2.0;
     final abhijitEnd = midday + muhurtaDur / 2.0;
     timings.add({
-      'name': tr('ಅಭಿಜಿತ್ ಮುಹೂರ್ತ'), 'nameEn': 'Abhijit Muhurta',
+      'name': AppLocale.l('abhijit'), 'nameEn': 'Abhijit Muhurta',
       'start': _minutesToTimeStr(abhijitStart), 'end': _minutesToTimeStr(abhijitEnd),
       'icon': Icons.star, 'color': Colors.green,
-      'desc': tr('ಅತ್ಯಂತ ಶುಭ — ') + 'Most auspicious (midday ± ½ muhurta)',
+      'desc': AppLocale.l('abhijitDesc') + 'Most auspicious (midday ± ½ muhurta)',
     });
 
     // ═══ Durmuhurta — fixed offsets from sunrise per weekday ═══
@@ -586,11 +730,11 @@ class _PanchangaScreenState extends State<PanchangaScreen> {
       final dStart = sr + offset;
       final dEnd = dStart + dur;
       timings.add({
-        'name': weekdayDurs.length > 1 ? '${tr('ದುರ್ಮುಹೂರ್ತ')} ${i + 1}' : tr('ದುರ್ಮುಹೂರ್ತ'),
+        'name': weekdayDurs.length > 1 ? '${AppLocale.l('durmuhurta')} ${i + 1}' : AppLocale.l('durmuhurta'),
         'nameEn': weekdayDurs.length > 1 ? 'Durmuhurta ${i + 1}' : 'Durmuhurta',
         'start': _minutesToTimeStr(dStart % (24 * 60)), 'end': _minutesToTimeStr(dEnd % (24 * 60)),
         'icon': Icons.dangerous, 'color': Colors.red,
-        'desc': tr('ಅಶುಭ ಸಮಯ — ') + 'Inauspicious (${dur.toInt()} min)',
+        'desc': AppLocale.l('durmuhurtaDesc') + 'Inauspicious (${dur.toInt()} min)',
       });
     }
 
@@ -607,11 +751,11 @@ class _PanchangaScreenState extends State<PanchangaScreen> {
     final varjyaStartMins = sr + (varjyaStartGhati * 24.0);
     final varjyaEndMins = varjyaStartMins + (4 * 24.0); // 4 ghatis = 96 min
     timings.add({
-      'name': tr('ವರ್ಜ್ಯ (ತ್ಯಾಜ್ಯ)'), 'nameEn': 'Varjyam (Tyajya)',
+      'name': AppLocale.l('varjya'), 'nameEn': 'Varjyam (Tyajya)',
       'start': _minutesToTimeStr(varjyaStartMins % (24 * 60)),
       'end': _minutesToTimeStr(varjyaEndMins % (24 * 60)),
       'icon': Icons.block, 'color': Colors.orange,
-      'desc': tr('ವರ್ಜ್ಯ ಕಾಲ — ') + 'Avoid (nakshatra ghati: $varjyaStartGhati-${varjyaStartGhati + 4})',
+      'desc': AppLocale.l('varjyaDesc') + 'Avoid (nakshatra ghati: $varjyaStartGhati-${varjyaStartGhati + 4})',
     });
 
     // ═══ Amrita Siddhi Yoga ═══
@@ -629,14 +773,14 @@ class _PanchangaScreenState extends State<PanchangaScreen> {
     }
 
     if (hasAmritaSiddhi) {
-      final varas = [tr('ಭಾನುವಾರ'), tr('ಸೋಮವಾರ'), tr('ಮಂಗಳವಾರ'), tr('ಬುಧವಾರ'), tr('ಗುರುವಾರ'), tr('ಶುಕ್ರವಾರ'), tr('ಶನಿವಾರ')];
+      final varas = [trAll(knVara[0]), trAll(knVara[1]), trAll(knVara[2]), trAll(knVara[3]), trAll(knVara[4]), trAll(knVara[5]), trAll(knVara[6])];
       final varaName = varas[_weekday];
-      final nakName = tr(_panchang!.nakshatra.split(' ')[0]); // Get exact nakshatra name without extra text
+      final nakName = trAll(_panchang!.nakshatra.split(' ')[0]);
       timings.add({
-        'name': tr('ಅಮೃತ ಸಿದ್ಧಿ ಯೋಗ'), 'nameEn': 'Amrita Siddhi Yoga',
+        'name': AppLocale.l('amritaSiddhi'), 'nameEn': 'Amrita Siddhi Yoga',
         'start': _minutesToTimeStr(sr % (24*60)), 'end': _minutesToTimeStr(ss % (24*60)),
         'icon': Icons.diamond, 'color': Colors.green,
-        'desc': '$varaName + $nakName ನಕ್ಷತ್ರ ವಿಶೇಷ ಸಂಯೋಜನೆ ಅತ್ಯಂತ ಶುಭ',
+        'desc': '$varaName + $nakName ${AppLocale.l('amritaSiddhiDesc')}',
       });
     }
 
@@ -645,11 +789,11 @@ class _PanchangaScreenState extends State<PanchangaScreen> {
         Row(children: [
           Icon(Icons.access_alarm, color: kOrange, size: 22),
           const SizedBox(width: 8),
-          Text(tr('ಮುಹೂರ್ತ ಸಮಯ') + ' / Muhurta Timings', style: TextStyle(
+          Text(AppLocale.l('muhurtaTimings') + ' / Muhurta Timings', style: TextStyle(
             fontWeight: FontWeight.w900, fontSize: 14, color: kOrange)),
         ]),
         const SizedBox(height: 6),
-        Text(tr('ಅಭಿಜಿತ್, ದುರ್ಮುಹೂರ್ತ ಮತ್ತು ವರ್ಜ್ಯ ಕಾಲ'), style: TextStyle(color: kMuted, fontSize: 11)),
+        Text(AppLocale.l('muhurtaTimingsDesc'), style: TextStyle(color: kMuted, fontSize: 11)),
         const SizedBox(height: 10),
         ...timings.map((t) {
           final color = t['color'] as Color;
@@ -691,13 +835,13 @@ class _PanchangaScreenState extends State<PanchangaScreen> {
         Row(children: [
           Icon(Icons.warning_amber_rounded, color: Colors.red, size: 22),
           const SizedBox(width: 8),
-          Text(tr('ಅಶುಭ ಕಾಲ') + ' / Inauspicious Periods', style: TextStyle(
+          Text(AppLocale.l('ashubhaKala') + ' / Inauspicious Periods', style: TextStyle(
             fontWeight: FontWeight.w900, fontSize: 14, color: Colors.red)),
         ]),
         const SizedBox(height: 12),
-        _kalaRow(tr('ರಾಹು ಕಾಲ'), rahu['start']!, rahu['end']!, Colors.red),
-        _kalaRow(tr('ಯಮಗಂಡ ಕಾಲ'), yama['start']!, yama['end']!, Colors.orange),
-        _kalaRow(tr('ಗುಳಿಕ ಕಾಲ'), gulika['start']!, gulika['end']!, Colors.deepOrange),
+        _kalaRow(AppLocale.l('rahuKala'), rahu['start']!, rahu['end']!, Colors.red),
+        _kalaRow(AppLocale.l('yamaKala'), yama['start']!, yama['end']!, Colors.orange),
+        _kalaRow(AppLocale.l('gulikaKala'), gulika['start']!, gulika['end']!, Colors.deepOrange),
       ]),
     );
   }
@@ -731,7 +875,7 @@ class _PanchangaScreenState extends State<PanchangaScreen> {
           Icon(isDay ? Icons.wb_sunny : Icons.nightlight_round,
             color: isDay ? kOrange : kPurple2, size: 22),
           const SizedBox(width: 8),
-          Text(isDay ? tr('ಹಗಲಿನ ಚೌಘಡಿಯಾ') + ' / Day Chougadiya' : tr('ರಾತ್ರಿ ಚೌಘಡಿಯಾ') + ' / Night Chougadiya',
+          Text(isDay ? AppLocale.l('dayChougadiya') + ' / Day Chougadiya' : AppLocale.l('nightChougadiya') + ' / Night Chougadiya',
             style: TextStyle(fontWeight: FontWeight.w900, fontSize: 14, color: isDay ? kOrange : kPurple2)),
         ]),
         const SizedBox(height: 10),
@@ -774,7 +918,7 @@ class _PanchangaScreenState extends State<PanchangaScreen> {
           Icon(isDay ? Icons.access_time : Icons.access_time_filled,
             color: isDay ? kTeal : kPurple1, size: 22),
           const SizedBox(width: 8),
-          Text(isDay ? tr('ಹಗಲಿನ ಹೋರಾ') + ' / Day Hora' : tr('ರಾತ್ರಿ ಹೋರಾ') + ' / Night Hora',
+          Text(isDay ? AppLocale.l('dayHora') + ' / Day Hora' : AppLocale.l('nightHora') + ' / Night Hora',
             style: TextStyle(fontWeight: FontWeight.w900, fontSize: 14, color: isDay ? kTeal : kPurple1)),
         ]),
         const SizedBox(height: 10),
@@ -823,7 +967,7 @@ class _PanchangaScreenState extends State<PanchangaScreen> {
 
   String _formatEnd(String base, String endTime, bool nextDay) {
     if (endTime.isEmpty) return base;
-    return '$base (${tr('ಅಂತ್ಯ')}: $endTime${nextDay ? tr(' ಮುಂದಿನ ದಿನ') : ''})';
+    return '$base (${AppLocale.l('endLabel')}: $endTime${nextDay ? ' ${AppLocale.l('nextDayLabel')}' : ''})';
   }
 
   int _chandraPada() {

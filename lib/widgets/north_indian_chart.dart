@@ -339,7 +339,7 @@ class NorthIndianChart extends StatelessWidget {
           children: [
             Image.asset('assets/images/logo.png', width: 36, height: 36),
             const SizedBox(height: 2),
-            Text(AppLocale.isHindi && centerLabel != null ? centerLabel!.split('\n').map((line) => tr(line)).join('\n') : (centerLabel ?? AppLocale.l('appName')),
+            Text(AppLocale.current != 'kn' && centerLabel != null ? centerLabel!.split('\n').map((line) => tr(line)).join('\n') : (centerLabel ?? AppLocale.l('appName')),
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: 12 * textScale,
@@ -357,7 +357,7 @@ class NorthIndianChart extends StatelessWidget {
   }
 
   Widget _planetChip(String name, {PlanetInfo? info, double? displayDeg}) {
-    final map = AppLocale.isHindi ? _shortNamesHi : _shortNamesKn;
+    final map = _shortNames;
     final shortName = map[name] ?? name;
     String displayText = shortName;
     bool isCombust = false;
@@ -460,6 +460,58 @@ class NorthIndianChart extends StatelessWidget {
     'ಲಗ್ನ': 'ल',
     'ಮಾಂದಿ': 'मां',
   };
+
+  static const _shortNamesTa = <String, String>{
+    'ರವಿ': 'சூ', 'ಸೂರ್ಯ': 'சூ',
+    'ಚಂದ್ರ': 'சந்',
+    'ಕುಜ': 'செ', 'ಮಂಗಳ': 'செ',
+    'ಬುಧ': 'பு',
+    'ಗುರು': 'கு',
+    'ಶುಕ್ರ': 'சு',
+    'ಶನಿ': 'ச',
+    'ರಾಹು': 'ரா',
+    'ಕೇತು': 'கே',
+    'ಲಗ್ನ': 'ல',
+    'ಮಾಂದಿ': 'மா',
+  };
+
+  static const _shortNamesTe = <String, String>{
+    'ರವಿ': 'ర', 'ಸೂರ್ಯ': 'సూ',
+    'ಚಂದ್ರ': 'చం',
+    'ಕುಜ': 'కు', 'ಮಂಗಳ': 'మం',
+    'ಬುಧ': 'బు',
+    'ಗುರು': 'గు',
+    'ಶುಕ್ರ': 'శు',
+    'ಶನಿ': 'శ',
+    'ರಾಹು': 'రా',
+    'ಕೇತು': 'కే',
+    'ಲಗ್ನ': 'ల',
+    'ಮಾಂದಿ': 'మా',
+  };
+
+  static const _shortNamesMl = <String, String>{
+    'ರವಿ': 'ര', 'ಸೂರ್ಯ': 'സൂ',
+    'ಚಂದ್ರ': 'ചം',
+    'ಕುಜ': 'കു', 'ಮಂಗಳ': 'മം',
+    'ಬುಧ': 'ബു',
+    'ಗುರು': 'ഗു',
+    'ಶುಕ್ರ': 'ശു',
+    'ಶನಿ': 'ശ',
+    'ರಾಹು': 'രാ',
+    'ಕೇತು': 'കേ',
+    'ಲಗ್ನ': 'ല',
+    'ಮಾಂದಿ': 'മാ',
+  };
+
+  static Map<String, String> get _shortNames {
+    switch (AppLocale.current) {
+      case 'hi': return _shortNamesHi;
+      case 'ta': return _shortNamesTa;
+      case 'te': return _shortNamesTe;
+      case 'ml': return _shortNamesMl;
+      default: return _shortNamesKn;
+    }
+  }
 }
 
 // ─────────────────────────────────────────────

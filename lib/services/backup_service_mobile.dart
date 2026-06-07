@@ -1,21 +1,32 @@
 import 'dart:io';
 import 'package:file_picker/file_picker.dart';
 import 'package:path_provider/path_provider.dart';
-import 'package:share_plus/share_plus.dart';
+import 'package:flutter/foundation.dart';
 
-/// Mobile: save to temp file and open Share sheet
+/// Mobile: save to Downloads folder directly
 Future<bool> exportJsonFile(String jsonString, String fileName) async {
   try {
-    final dir = await getTemporaryDirectory();
-    final file = File('${dir.path}/$fileName');
-    await file.writeAsString(jsonString);
+    // Try to get the Downloads directory
+    Directory? downloadsDir;
+    if (defaultTargetPlatform == TargetPlatform.android) {
+      downloadsDir = Directory('/storage/emulated/0/Download');
+      if (!downloadsDir.existsSync()) {
+        downloadsDir = await getExternalStorageDirectory();
+      }
+    } else {
+      downloadsDir = await getApplicationDocumentsDirectory();
+    }
 
-    await Share.shareXFiles(
-      [XFile(file.path)],
-      text: 'Bharatheeyam App Data Backup',
-    );
+    if (downloadsDir == null) {
+      downloadsDir = await getTemporaryDirectory();
+    }
+
+    final file = File('${downloadsDir.path}/$fileName');
+    await file.writeAsString(jsonString);
+    debugPrint('Backup saved to: ${file.path}');
     return true;
   } catch (e) {
+    debugPrint('Backup export error: $e');
     return false;
   }
 }

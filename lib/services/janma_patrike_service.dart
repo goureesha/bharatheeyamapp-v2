@@ -7,6 +7,7 @@ import 'package:screenshot/screenshot.dart';
 import '../core/calculator.dart';
 import '../constants/strings.dart';
 import 'pdf_theme.dart';
+import '../widgets/common.dart';
 
 class UserDetails {
   final String name;
@@ -33,10 +34,33 @@ class UserDetails {
 }
 
 class JanmaPatrikeService {
-  static const _shortNames = <String, String>{
-    'ಲಗ್ನ': 'ಲ', 'ರವಿ': 'ರ', 'ಚಂದ್ರ': 'ಚಂ', 'ಕುಜ': 'ಕು', 'ಬುಧ': 'ಬು',
-    'ಗುರು': 'ಗು', 'ಶುಕ್ರ': 'ಶು', 'ಶನಿ': 'ಶ', 'ರಾಹು': 'ರಾ', 'ಕೇತು': 'ಕೇ', 'ಮಾಂದಿ': 'ಮಾ',
-  };
+  /// Select the correct font family based on the user's locale
+  static String _fontForLocale() {
+    switch (AppLocale.current) {
+      case 'hi': return 'NotoSansDevanagari';
+      case 'ta': return 'NotoSansTamil';
+      case 'te': return 'NotoSansTelugu';
+      case 'ml': return 'NotoSansMalayalam';
+      default:   return 'NotoSansKannada';
+    }
+  }
+
+  /// Locale-aware short names for chart cells
+  static Map<String, String> get _shortNames {
+    return <String, String>{
+      'ಲಗ್ನ': AppLocale.l('abbrLagna'),
+      'ರವಿ': AppLocale.l('abbrRavi'),
+      'ಚಂದ್ರ': AppLocale.l('abbrChandra'),
+      'ಕುಜ': AppLocale.l('abbrKuja'),
+      'ಬುಧ': AppLocale.l('abbrBudha'),
+      'ಗುರು': AppLocale.l('abbrGuru'),
+      'ಶುಕ್ರ': AppLocale.l('abbrShukra'),
+      'ಶನಿ': AppLocale.l('abbrShani'),
+      'ರಾಹು': AppLocale.l('abbrRahu'),
+      'ಕೇತು': AppLocale.l('abbrKetu'),
+      'ಮಾಂದಿ': AppLocale.l('abbrMandi'),
+    };
+  }
 
   static List<List<String>> _computeChart(KundaliResult result, int Function(double deg) rashiResolver) {
     final List<List<String>> chart = List.generate(12, (_) => []);
@@ -179,9 +203,9 @@ class JanmaPatrikeService {
       child: MediaQuery(
         data: const MediaQueryData(),
         child: Theme(
-          data: ThemeData(fontFamily: 'Noto Sans Kannada'),
+          data: ThemeData(fontFamily: _fontForLocale()),
           child: DefaultTextStyle(
-            style: const TextStyle(color: Colors.black, fontSize: 13),
+            style: TextStyle(color: Colors.black, fontSize: 13, fontFamily: _fontForLocale()),
             child: Material(
               color: Colors.white,
               child: theme.buildPageBorder(
@@ -207,33 +231,33 @@ class JanmaPatrikeService {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        _buildHeader('ಜನ್ಮ ಪತ್ರಿಕೆ', 'ಭಾರತೀಯಂ ಜ್ಯೋತಿಷ ಅಪ್ಲಿಕೇಶನ್', t),
+        _buildHeader(AppLocale.l('jpTitle'), AppLocale.l('jpSubtitle'), t),
         const SizedBox(height: 5),
 
-        _buildSectionTitle('ವೈಯಕ್ತಿಕ ವಿವರ', t),
+        _buildSectionTitle(AppLocale.l('jpPersonalDetails'), t),
         _buildDetailBox([
-          ['ಜಾತಕರ ಹೆಸರು:', user.name, 'ಜನ್ಮ ಊರು:', user.place],
-          ['ಜನನ ದಿನಾಂಕ:', user.dateStr, 'ಜನ್ಮ ಸಮಯ:', user.timeStr],
-          ['ತಂದೆ ಹೆಸರು:', user.fatherName, 'ತಾಯಿ ಹೆಸರು:', user.motherName],
-          ['ಗೋತ್ರ:', user.gotra, 'ಲಗ್ನ ರಾಶಿ:', lagnaRashi],
+          [AppLocale.l('jpNativeName'), user.name, AppLocale.l('jpBirthPlace'), user.place],
+          [AppLocale.l('jpDob'), user.dateStr, AppLocale.l('jpTime'), user.timeStr],
+          [AppLocale.l('jpFather'), user.fatherName, AppLocale.l('jpMother'), user.motherName],
+          [AppLocale.l('jpGotra'), user.gotra, AppLocale.l('jpLagnaRashi'), trAll(lagnaRashi)],
         ], t),
         const SizedBox(height: 2),
 
-        _buildSectionTitle('ಪಂಚಾಂಗ ವಿವರ', t),
+        _buildSectionTitle(AppLocale.l('jpPanchangaDetails'), t),
         _buildDetailBox([
-          ['ಸಂವತ್ಸರ:', p.samvatsara, 'ಚಂದ್ರ ಮಾಸ:', p.chandraMasa],
-          ['ರವಿ ಮಾಸ:', p.souraMasa, 'ಋತು:', p.rutu],
-          ['ತಿಥಿ:', p.tithi, 'ವಾರ:', p.vara],
-          ['ನಕ್ಷತ್ರ:', p.nakshatra, 'ಕರಣ:', p.karana],
-          ['ಯೋಗ:', p.yoga, 'ಚಂದ್ರ ರಾಶಿ:', p.chandraRashi],
-          ['ಉದಯಾದಿ ಘಟಿ:', p.udayadiGhati, 'ಗತ ಘಟಿ:', p.gataGhati],
-          ['ಪರಮ ಘಟಿ:', p.paramaGhati, 'ಶೇಷ ಘಟಿ:', p.shesha],
-          ['ವಿಷ ಪ್ರಘಟಿ:', p.vishaPraghati, 'ಅಮೃತ ಪ್ರಘಟಿ:', p.amrutaPraghati],
-          ['ಸೂರ್ಯೋದಯ:', p.sunrise, 'ಸೂರ್ಯಾಸ್ತ:', p.sunset],
+          [AppLocale.l('jpSamvatsara'), trAll(p.samvatsara), AppLocale.l('jpChandraMasa'), trAll(p.chandraMasa)],
+          [AppLocale.l('jpSouraMasa'), trAll(p.souraMasa), AppLocale.l('jpRutu'), trAll(p.rutu)],
+          [AppLocale.l('jpTithi'), trAll(p.tithi), AppLocale.l('jpVara'), trAll(p.vara)],
+          [AppLocale.l('jpNakshatra'), trAll(p.nakshatra), AppLocale.l('jpKarana'), trAll(p.karana)],
+          [AppLocale.l('jpYoga'), trAll(p.yoga), AppLocale.l('jpChandraRashi'), trAll(p.chandraRashi)],
+          [AppLocale.l('jpUdayadiGhati'), p.udayadiGhati, AppLocale.l('jpGataGhati'), p.gataGhati],
+          [AppLocale.l('jpParamaGhati'), p.paramaGhati, AppLocale.l('jpSheshaGhati'), p.shesha],
+          [AppLocale.l('jpVishaPraghati'), p.vishaPraghati, AppLocale.l('jpAmrutaPraghati'), p.amrutaPraghati],
+          [AppLocale.l('jpSunrise'), p.sunrise, AppLocale.l('jpSunset'), p.sunset],
         ], t),
         const SizedBox(height: 2),
 
-        _buildSectionTitle('ತತ್ಕಾಲ ಗ್ರಹಸ್ಥಿತಿ', t),
+        _buildSectionTitle(AppLocale.l('jpGrahaStithi'), t),
         _buildGrahaTable(result, t),
         const SizedBox(height: 2),
 
@@ -241,11 +265,11 @@ class JanmaPatrikeService {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Expanded(child: AspectRatio(aspectRatio: 1.0, child: _buildChartWidget('ರಾಶಿ ಕುಂಡಲಿ', _rashiChart(result), t))),
+              Expanded(child: AspectRatio(aspectRatio: 1.0, child: _buildChartWidget(AppLocale.l('jpRashiKundali'), _rashiChart(result), t))),
               const SizedBox(width: 8),
-              Expanded(child: AspectRatio(aspectRatio: 1.0, child: _buildChartWidget('ನವಾಂಶ ಕುಂಡಲಿ', _navamshaChart(result), t))),
+              Expanded(child: AspectRatio(aspectRatio: 1.0, child: _buildChartWidget(AppLocale.l('jpNavamshaKundali'), _navamshaChart(result), t))),
               const SizedBox(width: 8),
-              Expanded(child: AspectRatio(aspectRatio: 1.0, child: _buildChartWidget('ಭಾವ ಕುಂಡಲಿ', _bhavaChart(result), t))),
+              Expanded(child: AspectRatio(aspectRatio: 1.0, child: _buildChartWidget(AppLocale.l('jpBhavaKundali'), _bhavaChart(result), t))),
             ],
           ),
         ),
@@ -263,18 +287,18 @@ class JanmaPatrikeService {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        _buildHeader('ಜನ್ಮ ಪತ್ರಿಕೆ — ದಶಾ ವಿವರ', '${user.name} — ${user.dateStr}', t),
+        _buildHeader(AppLocale.l('jpDashaTitle'), '${user.name} — ${user.dateStr}', t),
         const SizedBox(height: 15),
 
-        _buildSectionTitle('ನಕ್ಷತ್ರ ಮತ್ತು ದಶಾ ವಿವರ', t),
+        _buildSectionTitle(AppLocale.l('jpNakDasha'), t),
         _buildDetailBox([
-          ['ಜನ್ಮ ನಕ್ಷತ್ರ:', p.nakshatra, 'ಚಂದ್ರ ರಾಶಿ:', p.chandraRashi],
-          ['ನಕ್ಷತ್ರ ಪರಮ ಘಟಿ:', p.paramaGhati, 'ಗತ ಘಟಿ:', p.gataGhati],
-          ['ಶಿಷ್ಟ ದಶಾ ನಾಥ:', p.dashaLord, 'ಶಿಷ್ಟ ದಶಾ ಶೇಷ:', p.dashaBalance],
+          [AppLocale.l('jpJanmaNak'), trAll(p.nakshatra), AppLocale.l('jpChandraRashi'), trAll(p.chandraRashi)],
+          [AppLocale.l('jpNakParama'), p.paramaGhati, AppLocale.l('jpGataGhati'), p.gataGhati],
+          [AppLocale.l('jpShishtaDasha'), trAll(p.dashaLord), AppLocale.l('jpShishtaShesha'), p.dashaBalance],
         ], t),
         const SizedBox(height: 15),
 
-        _buildSectionTitle('ವಿಂಶೋತ್ತರೀ ಮಹಾ ದಶಾ', t),
+        _buildSectionTitle(AppLocale.l('jpMahaDasha'), t),
         _buildDashaTable(result, t),
         const SizedBox(height: 15),
 
@@ -286,7 +310,7 @@ class JanmaPatrikeService {
             border: Border.all(color: t.dashaHighlightBorder),
             borderRadius: BorderRadius.circular(6),
           ),
-          child: Text('ಶಿಷ್ಟ ದಶೆ: ${p.dashaLord} — ಶೇಷ: ${p.dashaBalance}',
+          child: Text('${AppLocale.l('jpShishtaDashe')} ${trAll(p.dashaLord)} — ${AppLocale.l('jpShesha')} ${p.dashaBalance}',
             style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13, color: t.dashaHighlightText)
           ),
         ),
@@ -322,7 +346,7 @@ class JanmaPatrikeService {
               Image.asset('assets/images/ganapati.png', width: 48, height: 48),
               const SizedBox(width: 6),
               Expanded(
-                child: Text('ಶ್ರೀ ಗಣೇಶಾಯ ನಮಃ',
+                child: Text(AppLocale.l('shriGaneshaya'),
                   textAlign: TextAlign.center,
                   style: TextStyle(fontWeight: FontWeight.bold, fontSize: 11, color: shlokaColor)),
               ),
@@ -332,7 +356,7 @@ class JanmaPatrikeService {
                 ],
               ),
               Expanded(
-                child: Text('ಶ್ರೀ ಗುರುಭ್ಯೋ ನಮಃ',
+                child: Text(AppLocale.l('shriGurubhyo'),
                   textAlign: TextAlign.center,
                   style: TextStyle(fontWeight: FontWeight.bold, fontSize: 11, color: shlokaColor)),
               ),
@@ -341,7 +365,7 @@ class JanmaPatrikeService {
             ],
           ),
           const SizedBox(height: 3),
-          Text('ಜನ್ಮಕಾಲೇ ಗ್ರಹಾಃ ಯೇ ಯೇ ಯದ್ಭಾವಸ್ಥಿತಿಗಾಮಿನಃ ।\nತತ್ಫಲಂ ಪ್ರವದೇದ್ವಿದ್ವಾನ್ ಜಾತಕಂ ಜೀವನಪ್ರದಮ್ ॥',
+          Text(AppLocale.l('janmaShloka'),
             textAlign: TextAlign.center,
             style: TextStyle(fontWeight: FontWeight.w500, fontSize: 9, color: shlokaColor, fontStyle: FontStyle.italic, height: 1.3)),
           const SizedBox(height: 4),
@@ -403,21 +427,21 @@ class JanmaPatrikeService {
   }
 
   static Widget _buildGrahaTable(KundaliResult result, PdfThemeConfig t) {
-    final headers = ['ಗ್ರಹ', 'ರಾಶಿ', 'ಅಂಶ', 'ನಕ್ಷತ್ರ', 'ಪಾದ', 'ವಕ್ರ/ಅಸ್ತ'];
+    final headers = [AppLocale.l('hGraha'), AppLocale.l('hRashi'), AppLocale.l('hSphuta'), AppLocale.l('nakshatra'), AppLocale.l('jpPada'), AppLocale.l('pdfVakriAsta')];
 
     final rows = <List<String>>[];
     for (final planetKey in planetOrder) {
       final info = result.planets[planetKey];
       if (info == null) continue;
       String vakrast = '-';
-      if (info.speed < 0) vakrast = 'ವ';
-      if (info.isCombust) vakrast = vakrast == 'ವ' ? 'ವ / ಅ' : 'ಅ';
+      if (info.speed < 0) vakrast = AppLocale.l('pdfVakri').substring(0, 1);
+      if (info.isCombust) vakrast = vakrast == AppLocale.l('pdfVakri').substring(0, 1) ? '${AppLocale.l('pdfVakri').substring(0, 1)} / ${AppLocale.l('pdfAsta').substring(0, 1)}' : AppLocale.l('pdfAsta').substring(0, 1);
 
       rows.add([
-        planetKey,
-        info.rashi,
+        trAll(planetKey),
+        trAll(info.rashi),
         formatDeg(info.longitude),
-        info.nakshatra,
+        trAll(info.nakshatra),
         info.pada.toString(),
         vakrast,
       ]);
@@ -541,7 +565,7 @@ class JanmaPatrikeService {
   }
 
   static Widget _buildDashaTable(KundaliResult result, PdfThemeConfig t) {
-    final headers = ['ಕ್ರ.', 'ದಶಾ ನಾಥ', 'ವರ್ಷ', 'ಆರಂಭ ದಿನಾಂಕ', 'ಅಂತ್ಯ ದಿನಾಂಕ'];
+    final headers = [AppLocale.l('jpSlNo'), AppLocale.l('pdfDashaLord'), AppLocale.l('jpYears'), AppLocale.l('jpStartDate'), AppLocale.l('jpEndDate')];
 
     final rows = <List<String>>[];
     for (int i = 0; i < result.dashas.length; i++) {
@@ -552,7 +576,7 @@ class JanmaPatrikeService {
 
       rows.add([
         (i + 1).toString(),
-        d.lord,
+        trAll(d.lord),
         years.toString(),
         startStr,
         endStr,
@@ -603,7 +627,7 @@ class JanmaPatrikeService {
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Text(jyotishiName, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: t.footerText)),
-          Text('ಭಾರತೀಯಂ', style: TextStyle(fontWeight: FontWeight.normal, fontSize: 13, color: t.footerText.withOpacity(0.5))),
+          Text(AppLocale.l('jpBharatiyam'), style: TextStyle(fontWeight: FontWeight.normal, fontSize: 13, color: t.footerText.withOpacity(0.5))),
           Text(jyotishiPhone, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: t.footerText)),
         ],
       ),

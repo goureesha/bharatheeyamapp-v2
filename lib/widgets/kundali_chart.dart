@@ -166,7 +166,43 @@ class KundaliChart extends StatelessWidget {
       for (final pName in planetOrder) {
         final info = result.planets[pName];
         if (info == null) continue;
-        final ri = _rashinFor(info.longitude);
+        int ri;
+        if (isBhava) {
+          // Bhav chart: use same bhav madhya/sandhi logic as normal branch
+          final d = info.longitude;
+          List<double> madhyas;
+          if (bhavaFromPlanet != null) {
+            final offset = (refLongitude - lagnaLong + 360.0) % 360.0;
+            madhyas = List.generate(12, (i) => (result.bhavas[i] + offset) % 360.0);
+          } else {
+            madhyas = result.bhavas;
+          }
+          List<double> boundaries = List.filled(12, 0.0);
+          for (int i = 0; i < 12; i++) {
+            final m1 = madhyas[i];
+            final m2 = madhyas[(i + 1) % 12];
+            double diff = (m2 - m1 + 360.0) % 360.0;
+            boundaries[i] = (m1 + (diff / 2.0)) % 360.0;
+          }
+          int bhavaIdx = 0;
+          for (int i = 0; i < 12; i++) {
+            final startBoundary = boundaries[(i + 11) % 12];
+            final endBoundary = boundaries[i];
+            if (startBoundary < endBoundary) {
+              if (d >= startBoundary && d < endBoundary) { bhavaIdx = i; break; }
+            } else {
+              if (d >= startBoundary || d < endBoundary) { bhavaIdx = i; break; }
+            }
+          }
+          if (bhavaFromPlanet != null) {
+            final planetRashiIdx = (refLongitude / 30).floor() % 12;
+            ri = (planetRashiIdx + bhavaIdx) % 12;
+          } else {
+            ri = (lagnaIdx + bhavaIdx) % 12;
+          }
+        } else {
+          ri = _rashinFor(info.longitude);
+        }
         if (ri >= 0 && ri < 12) {
           final dd = _amshaDegree(info.longitude);
           boxData[ri]!.add((name: pName, info: info, degree: info.longitude % 30, displayDeg: dd, type: pName == 'ಲಗ್ನ' ? ChipType.lagna : ChipType.planet));
@@ -345,7 +381,7 @@ class KundaliChart extends StatelessWidget {
 
   Widget _centerBox() {
     String label = centerLabel ?? AppLocale.l('appName');
-    if (AppLocale.isHindi && centerLabel != null) {
+    if (AppLocale.current != 'kn' && centerLabel != null) {
       // Auto-translate each line of the center label
       label = label.split('\n').map((line) => tr(line)).join('\n');
     }
@@ -422,30 +458,70 @@ class KundaliChart extends StatelessWidget {
     'ಮಾಂದಿ': 'मां',
   };
 
+  static const _shortNamesTa = <String, String>{
+    'ರವಿ': 'சூ', 'ಸೂರ್ಯ': 'சூ',
+    'ಚಂದ್ರ': 'சந்',
+    'ಕುಜ': 'செ', 'ಮಂಗಳ': 'செ',
+    'ಬುಧ': 'பு',
+    'ಗುರು': 'கு',
+    'ಶುಕ್ರ': 'சு',
+    'ಶನಿ': 'ச',
+    'ರಾಹು': 'ரா',
+    'ಕೇತು': 'கே',
+    'ಲಗ್ನ': 'ல',
+    'ಮಾಂದಿ': 'மா',
+  };
+
+  static const _shortNamesTe = <String, String>{
+    'ರವಿ': 'ర', 'ಸೂರ್ಯ': 'సూ',
+    'ಚಂದ್ರ': 'చం',
+    'ಕುಜ': 'కు', 'ಮಂಗಳ': 'మం',
+    'ಬುಧ': 'బు',
+    'ಗುರು': 'గు',
+    'ಶುಕ್ರ': 'శు',
+    'ಶನಿ': 'శ',
+    'ರಾಹು': 'రా',
+    'ಕೇತು': 'కే',
+    'ಲಗ್ನ': 'ల',
+    'ಮಾಂದಿ': 'మా',
+  };
+
+  static const _shortNamesMl = <String, String>{
+    'ರವಿ': 'ര', 'ಸೂರ್ಯ': 'സൂ',
+    'ಚಂದ್ರ': 'ചം',
+    'ಕುಜ': 'കു', 'ಮಂಗಳ': 'മം',
+    'ಬುಧ': 'ബു',
+    'ಗುರು': 'ഗു',
+    'ಶುಕ್ರ': 'ശു',
+    'ಶನಿ': 'ശ',
+    'ರಾಹು': 'രാ',
+    'ಕೇತು': 'കേ',
+    'ಲಗ್ನ': 'ല',
+    'ಮಾಂದಿ': 'മാ',
+  };
+
+  static Map<String, String> get _shortNames {
+    switch (AppLocale.current) {
+      case 'hi': return _shortNamesHi;
+      case 'ta': return _shortNamesTa;
+      case 'te': return _shortNamesTe;
+      case 'ml': return _shortNamesMl;
+      default: return _shortNamesKn;
+    }
+  }
+
   Widget _planetChip(String name, {PlanetInfo? info, required ChipType type, double? displayDeg}) {
     Color color;
     switch (type) {
       case ChipType.lagna:  color = const Color(0xFFE53E3E); break;
       case ChipType.sphuta: color = const Color(0xFF805AD5); break;
       default:
-        switch (name) {
-          case 'ರವಿ': color = const Color(0xFFC53030); break;
-          case 'ಚಂದ್ರ': color = const Color(0xFF2C5282); break;
-          case 'ಕುಜ':
-          case 'ಮಂಗಳ': color = const Color(0xFFE53E3E); break;
-          case 'ಬುಧ': color = const Color(0xFF2F855A); break;
-          case 'ಗುರು': color = const Color(0xFFDD6B20); break;
-          case 'ಶುಕ್ರ': color = const Color(0xFFB83280); break;
-          case 'ಶನಿ': color = const Color(0xFF1A202C); break;
-          case 'ರಾಹು': color = const Color(0xFF744210); break;
-          case 'ಕೇತು': color = const Color(0xFF4A5568); break;
-          default: color = const Color(0xFF2B6CB0);
-        }
+        color = const Color(0xFF1A202C); // Uniform dark color for all planets
         break;
     }
 
     // Build display text
-    final map = AppLocale.isHindi ? _shortNamesHi : _shortNamesKn;
+    final map = _shortNames;
     final shortName = map[name] ?? name;
     String displayText = shortName;
     bool isCombust = false;

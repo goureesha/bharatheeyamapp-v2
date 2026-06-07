@@ -3,6 +3,7 @@ import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
 import '../core/calculator.dart';
+import '../widgets/common.dart';
 
 /// Generates a professional Kundali PDF with all astrological data
 class PdfService {
@@ -45,7 +46,7 @@ class PdfService {
         pw.SizedBox(height: 12),
 
         // Birth Details
-        _sectionTitle('ಜನ್ಮ ವಿವರ / Birth Details', headStyle),
+        _sectionTitle(AppLocale.l('pdfBirthDetails'), headStyle),
         pw.SizedBox(height: 6),
         pw.Table.fromTextArray(
           headerStyle: cellBoldStyle,
@@ -53,50 +54,50 @@ class PdfService {
           headerDecoration: pw.BoxDecoration(color: PdfColor.fromHex('#F3E5F5')),
           cellAlignment: pw.Alignment.centerLeft,
           data: [
-            ['ಹೆಸರು / Name', name],
-            ['ಜನ್ಮ ದಿನಾಂಕ / DOB', dateStr],
-            ['ಜನ್ಮ ಸಮಯ / Time', timeStr],
-            ['ಸ್ಥಳ / Place', place],
-            ['ಅಕ್ಷಾಂಶ / Lat', lat.toStringAsFixed(4)],
-            ['ರೇಖಾಂಶ / Lon', lon.toStringAsFixed(4)],
+            [AppLocale.l('pdfName'), name],
+            [AppLocale.l('pdfDob'), dateStr],
+            [AppLocale.l('pdfTime'), timeStr],
+            [AppLocale.l('pdfPlace'), place],
+            [AppLocale.l('pdfLat'), lat.toStringAsFixed(4)],
+            [AppLocale.l('pdfLon'), lon.toStringAsFixed(4)],
           ],
         ),
 
         pw.SizedBox(height: 16),
 
         // Panchanga Data
-        _sectionTitle('ಪಂಚಾಂಗ / Panchanga', headStyle),
+        _sectionTitle(AppLocale.l('pdfPanchanga'), headStyle),
         pw.SizedBox(height: 6),
         pw.Table.fromTextArray(
           headerStyle: cellBoldStyle,
           cellStyle: cellStyle,
           headerDecoration: pw.BoxDecoration(color: PdfColor.fromHex('#E8F5E9')),
           data: [
-            ['ವಿಷಯ', 'ವಿವರ'],
-            ['ಸಂವತ್ಸರ', panchang.samvatsara],
-            ['ಋತು', panchang.rutu],
-            ['ವಾರ', panchang.vara],
-            ['ತಿಥಿ', panchang.tithi],
-            ['ನಕ್ಷತ್ರ', panchang.nakshatra],
-            ['ಯೋಗ', panchang.yoga],
-            ['ಕರಣ', panchang.karana],
-            ['ಚಂದ್ರ ರಾಶಿ', panchang.chandraRashi],
-            ['ಚಂದ್ರ ಮಾಸ', panchang.chandraMasa],
-            ['ಸೌರ ಮಾಸ', panchang.souraMasa],
-            ['ಸೂರ್ಯೋದಯ', panchang.sunrise],
-            ['ಸೂರ್ಯಾಸ್ತ', panchang.sunset],
-            ['ಉದಯಾದಿ ಘಟಿ', panchang.udayadiGhati],
-            ['ಗತ ಘಟಿ', panchang.gataGhati],
-            ['ಪರಮ ಘಟಿ', panchang.paramaGhati],
-            ['ವಿಷ ಪ್ರಘಟಿ', panchang.vishaPraghati],
-            ['ಅಮೃತ ಪ್ರಘಟಿ', panchang.amrutaPraghati],
+            [AppLocale.l('pdfTopic'), AppLocale.l('pdfDetail')],
+            [AppLocale.l('samvatsara'), trAll(panchang.samvatsara)],
+            [AppLocale.l('rutu'), trAll(panchang.rutu)],
+            [AppLocale.l('vara'), trAll(panchang.vara)],
+            [AppLocale.l('tithiLabel'), trAll(panchang.tithi)],
+            [AppLocale.l('nakshatra'), trAll(panchang.nakshatra)],
+            [AppLocale.l('yogaLabel'), trAll(panchang.yoga)],
+            [AppLocale.l('karanaLabel'), trAll(panchang.karana)],
+            [AppLocale.l('chandraRashiLabel'), trAll(panchang.chandraRashi)],
+            [AppLocale.l('chandraMasaLabel'), trAll(panchang.chandraMasa)],
+            [AppLocale.l('souraMasaLabel'), trAll(panchang.souraMasa)],
+            [AppLocale.l('sunriseLabel'), panchang.sunrise],
+            [AppLocale.l('sunsetLabel'), panchang.sunset],
+            [AppLocale.l('udayadiGhatiLabel'), panchang.udayadiGhati],
+            [AppLocale.l('gataGhatiLabel'), panchang.gataGhati],
+            [AppLocale.l('paramaGhatiLabel'), panchang.paramaGhati],
+            [AppLocale.l('vishaPraghatiLabel'), panchang.vishaPraghati],
+            [AppLocale.l('amrutaPraghatiLabel'), panchang.amrutaPraghati],
           ],
         ),
 
         pw.SizedBox(height: 16),
 
         // Graha Sputa (Planet Positions)
-        _sectionTitle('ಗ್ರಹ ಸ್ಥಿತಿ / Planet Positions', headStyle),
+        _sectionTitle(AppLocale.l('pdfPlanetPos'), headStyle),
         pw.SizedBox(height: 6),
         pw.Table.fromTextArray(
           headerStyle: cellBoldStyle.copyWith(color: PdfColors.white),
@@ -104,17 +105,17 @@ class PdfService {
           headerDecoration: pw.BoxDecoration(color: PdfColor.fromHex('#4A148C')),
           cellPadding: const pw.EdgeInsets.all(4),
           data: [
-            ['ಗ್ರಹ', 'ರಾಶಿ', 'ಅಂಶ', 'ನಕ್ಷತ್ರ', 'ಪಾದ', 'ವಕ್ರ/ಅಸ್ತ'],
+            [AppLocale.l('hGraha'), AppLocale.l('hRashi'), AppLocale.l('hSphuta'), AppLocale.l('nakshatra'), AppLocale.l('pdfBhava').substring(0,1) + '.', AppLocale.l('pdfVakriAsta')],
             ...planets.entries.map((e) {
               final p = e.value;
               final status = <String>[];
-              if (p.speed < 0) status.add('ವಕ್ರ');
-              if (p.isCombust) status.add('ಅಸ್ತ');
+              if (p.speed < 0) status.add(AppLocale.l('pdfVakri'));
+              if (p.isCombust) status.add(AppLocale.l('pdfAsta'));
               return [
-                p.name,
-                p.rashi,
+                trAll(p.name),
+                trAll(p.rashi),
                 formatDeg(p.longitude),
-                p.nakshatra,
+                trAll(p.nakshatra),
                 '${p.pada}',
                 status.isEmpty ? '-' : status.join(', '),
               ];
@@ -136,7 +137,7 @@ class PdfService {
         pw.SizedBox(height: 12),
 
         // Vimshottari Dasha
-        _sectionTitle('ವಿಂಶೋತ್ತರೀ ದಶಾ / Vimshottari Dasha', headStyle),
+        _sectionTitle(AppLocale.l('pdfDasha'), headStyle),
         pw.SizedBox(height: 6),
         pw.Table.fromTextArray(
           headerStyle: cellBoldStyle.copyWith(color: PdfColors.white),
@@ -144,9 +145,9 @@ class PdfService {
           headerDecoration: pw.BoxDecoration(color: PdfColor.fromHex('#1565C0')),
           cellPadding: const pw.EdgeInsets.all(4),
           data: [
-            ['ದಶಾ ನಾಥ', 'ಆರಂಭ', 'ಅಂತ್ಯ'],
+            [AppLocale.l('pdfDashaLord'), AppLocale.l('pdfStart'), AppLocale.l('pdfEnd')],
             ...result.dashas.map((d) => [
-              d.lord,
+              trAll(d.lord),
               '${d.start.day.toString().padLeft(2,'0')}-${d.start.month.toString().padLeft(2,'0')}-${d.start.year}',
               '${d.end.day.toString().padLeft(2,'0')}-${d.end.month.toString().padLeft(2,'0')}-${d.end.year}',
             ]),
@@ -156,7 +157,7 @@ class PdfService {
         pw.SizedBox(height: 16),
 
         // Bhava Madhya Sputa
-        _sectionTitle('ಭಾವ ಮಧ್ಯ ಸ್ಪುಟ / Bhava Madhya', headStyle),
+        _sectionTitle(AppLocale.l('pdfBhavaMadhya'), headStyle),
         pw.SizedBox(height: 6),
         pw.Table.fromTextArray(
           headerStyle: cellBoldStyle.copyWith(color: PdfColors.white),
@@ -164,9 +165,9 @@ class PdfService {
           headerDecoration: pw.BoxDecoration(color: PdfColor.fromHex('#2E7D32')),
           cellPadding: const pw.EdgeInsets.all(4),
           data: [
-            ['ಭಾವ', 'ಸ್ಪುಟ'],
+            [AppLocale.l('pdfBhava'), AppLocale.l('pdfSphuta')],
             ...result.bhavas.asMap().entries.map((e) => [
-              'ಭಾವ ${e.key + 1}',
+              '${AppLocale.l('pdfBhava')} ${e.key + 1}',
               formatDeg(e.value),
             ]),
           ],
@@ -176,7 +177,7 @@ class PdfService {
 
         // Upagraha Sputa
         if (result.advSphutas.isNotEmpty) ...[
-          _sectionTitle('ಉಪಗ್ರಹ ಸ್ಪುಟ / Upagraha Sputa', headStyle),
+          _sectionTitle(AppLocale.l('pdfUpagraha'), headStyle),
           pw.SizedBox(height: 6),
           pw.Table.fromTextArray(
             headerStyle: cellBoldStyle.copyWith(color: PdfColors.white),
@@ -184,9 +185,9 @@ class PdfService {
             headerDecoration: pw.BoxDecoration(color: PdfColor.fromHex('#E65100')),
             cellPadding: const pw.EdgeInsets.all(4),
             data: [
-              ['ಉಪಗ್ರಹ', 'ಸ್ಪುಟ'],
+              [AppLocale.l('hUpagraha'), AppLocale.l('pdfSphuta')],
               ...result.advSphutas.entries.map((e) => [
-                e.key,
+                trAll(e.key),
                 formatDeg(e.value),
               ]),
             ],
@@ -208,7 +209,7 @@ class PdfService {
           pw.SizedBox(height: 12),
 
           if (result.shadbala.isNotEmpty) ...[
-            _sectionTitle('ಷಡ್ಬಲ / Shadbala', headStyle),
+            _sectionTitle(AppLocale.l('pdfShadbala'), headStyle),
             pw.SizedBox(height: 6),
             pw.Table.fromTextArray(
               headerStyle: cellBoldStyle.copyWith(color: PdfColors.white),
@@ -216,13 +217,13 @@ class PdfService {
               headerDecoration: pw.BoxDecoration(color: PdfColor.fromHex('#880E4F')),
               cellPadding: const pw.EdgeInsets.all(4),
               data: [
-                ['ಗ್ರಹ', 'ಒಟ್ಟು ಬಲ', 'ಅಗತ್ಯ', 'ಅನುಪಾತ'],
+                [AppLocale.l('hGraha'), AppLocale.l('pdfTotalBala'), AppLocale.l('pdfNeeded'), AppLocale.l('pdfRatio')],
                 ...result.shadbala.entries.map((e) {
                   final total = (e.value['total'] ?? 0.0) as double;
                   final needed = (e.value['needed'] ?? 1.0) as double;
                   final ratio = needed > 0 ? total / needed : 0.0;
                   return [
-                    e.key,
+                    trAll(e.key),
                     total.toStringAsFixed(2),
                     needed.toStringAsFixed(2),
                     ratio.toStringAsFixed(2),
@@ -234,7 +235,7 @@ class PdfService {
           ],
 
           if (notes.isNotEmpty) ...[
-            _sectionTitle('ಟಿಪ್ಪಣಿಗಳು / Notes', headStyle),
+            _sectionTitle(AppLocale.l('pdfNotes'), headStyle),
             pw.SizedBox(height: 6),
             pw.Container(
               padding: const pw.EdgeInsets.all(10),
@@ -264,7 +265,7 @@ class PdfService {
         pw.Row(
           mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
           children: [
-            pw.Text('ಕುಂಡಲಿ / Kundali', style: titleStyle),
+            pw.Text(AppLocale.l('pdfKundali'), style: titleStyle),
             pw.Column(
               crossAxisAlignment: pw.CrossAxisAlignment.end,
               children: [

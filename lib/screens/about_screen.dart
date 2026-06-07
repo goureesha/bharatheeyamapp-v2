@@ -16,7 +16,7 @@ class AboutScreen extends StatelessWidget {
       backgroundColor: kBg,
       appBar: AppBar(
         backgroundColor: kCard,
-        title: Text('ನಮ್ಮ ಬಗ್ಗೆ / About',
+        title: Text('${AppLocale.l('aboutUs')} / About',
             style: TextStyle(
                 color: kText, fontSize: 16, fontWeight: FontWeight.w800)),
         iconTheme: IconThemeData(color: kText),
@@ -39,7 +39,7 @@ class AboutScreen extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 12),
-                Text('ಭಾರತೀಯಮ್',
+                Text(AppLocale.l('appName'),
                     style: TextStyle(
                         fontSize: 22,
                         fontWeight: FontWeight.w900,
@@ -342,7 +342,7 @@ class AboutScreen extends StatelessWidget {
             // ─── Source Code (prominent at bottom) ────────────────────
 
 
-            _sectionHeader('ಅಪ್ ಬಗ್ಗೆ / About the App'),
+            _sectionHeader('${AppLocale.l('aboutUs')} / About the App'),
             _bodyCard(
               'ಭಾರತೀಯಮ್ ಒಂದು ಮುಕ್ತ-ಮೂಲ ವೈದಿಕ ಜ್ಯೋತಿಷ್ಯ ಅಪ್ಲಿಕೇಶನ್ — '
               'ಜನ್ಮಕುಂಡಲಿ, ದಶ, ಪಂಚಾಂಗ, ಷಡ್ಬಲ, ಆರೂಢ, ತಾರಾನುಕೂಲ ಮತ್ತು ಮೇಳಾಪಕ '
@@ -575,7 +575,7 @@ class AboutScreen extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text('ಆಧಾರ ಶ್ಲೋಕ:', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: kPurple2)),
+                      Text(AppLocale.l('referenceShloka'), style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: kPurple2)),
                       const SizedBox(height: 2),
                       Text(e.shloka.replaceAll('\\n', '\n'),
                         style: TextStyle(fontStyle: FontStyle.italic, color: kPurple2, fontSize: 12)),
@@ -596,7 +596,7 @@ class AboutScreen extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text('ನಿಯಮ:', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.amber[800])),
+                      Text(AppLocale.l('rule'), style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.amber[800])),
                       const SizedBox(height: 2),
                       Text(e.meaning, style: TextStyle(fontSize: 12, color: kText)),
                     ],
@@ -607,7 +607,7 @@ class AboutScreen extends StatelessWidget {
               Row(
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: [
-                  Text('ಆಕರ: ', style: TextStyle(fontSize: 10, color: kMuted)),
+                  Text(AppLocale.l('source'), style: TextStyle(fontSize: 10, color: kMuted)),
                   Flexible(child: Text(e.source, style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: kPurple2))),
                 ],
               ),

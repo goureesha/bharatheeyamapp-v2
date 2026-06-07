@@ -75,7 +75,7 @@ class _ClientDetailScreenState extends State<ClientDetailScreen> {
               onPressed: () => _generateKundali(familyMode: true),
               backgroundColor: kTeal,
               icon: const Icon(Icons.auto_awesome, color: Colors.white),
-              label: Text('ರಚಿಸಿ (${_selectedMembers.length})', style: const TextStyle(fontWeight: FontWeight.w900, color: Colors.white)),
+              label: Text('${AppLocale.l('create')} (${_selectedMembers.length})', style: TextStyle(fontWeight: FontWeight.w900, color: Colors.white)),
             )
           else if (!_familyMode && _members.isNotEmpty)
             const SizedBox.shrink(),
@@ -134,9 +134,9 @@ class _ClientDetailScreenState extends State<ClientDetailScreen> {
           _infoRow(Icons.phone, widget.client.phone),
           if (widget.client.email.isNotEmpty) _infoRow(Icons.email, widget.client.email),
           if (widget.client.address.isNotEmpty) _infoRow(Icons.location_on, widget.client.address),
-          _infoRow(Icons.calendar_today, 'ಗ್ರಾಹಕರ ದಿನಾಂಕ: ${widget.client.createdAt}'),
+          _infoRow(Icons.calendar_today, '${AppLocale.l('clientDate')}: ${widget.client.createdAt}'),
           if (_history.isNotEmpty)
-            _infoRow(Icons.repeat, '${_history.length} ಭೇಟಿಗಳು | ಕೊನೆ: ${_history.first.dateStr}'),
+            _infoRow(Icons.repeat, '${_history.length} ${AppLocale.l('visits')} | ${AppLocale.l('lastVisit')}: ${_history.first.dateStr}'),
         ],
       ),
     );
@@ -161,7 +161,7 @@ class _ClientDetailScreenState extends State<ClientDetailScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          SectionTitle('📅 ಅಪಾಯಿಂಟ್\u200cಮೆಂಟ್ ಇತಿಹಾಸ'),
+          SectionTitle('📅 ${AppLocale.l('appointmentHistory')}'),
           ..._history.take(5).map((a) => Container(
             margin: const EdgeInsets.only(top: 6),
             padding: const EdgeInsets.all(10),
@@ -208,7 +208,7 @@ class _ClientDetailScreenState extends State<ClientDetailScreen> {
           if (_history.length > 5)
             Padding(
               padding: const EdgeInsets.only(top: 8),
-              child: Text('+ ${_history.length - 5} ಹೆಚ್ಚಿನ ಭೇಟಿಗಳು', style: TextStyle(fontSize: 12, color: kMuted)),
+              child: Text('+ ${_history.length - 5} ${AppLocale.l('moreVisits')}', style: TextStyle(fontSize: 12, color: kMuted)),
             ),
         ],
       ),
@@ -228,7 +228,7 @@ class _ClientDetailScreenState extends State<ClientDetailScreen> {
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       child: Row(
         children: [
-          Text('👥 ಕುಟುಂಬ ಸದಸ್ಯರು', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w900, color: kPurple2)),
+          Text('👥 ${AppLocale.l('familyMembers')}', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w900, color: kPurple2)),
           const Spacer(),
           Container(
             decoration: BoxDecoration(
@@ -238,8 +238,8 @@ class _ClientDetailScreenState extends State<ClientDetailScreen> {
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                _modeChip('ಒಬ್ಬರು', !_familyMode, () => setState(() { _familyMode = false; _selectedMembers.clear(); })),
-                _modeChip('ಕುಟುಂಬ', _familyMode, () => setState(() => _familyMode = true)),
+                _modeChip(AppLocale.l('single'), !_familyMode, () => setState(() { _familyMode = false; _selectedMembers.clear(); })),
+                _modeChip(AppLocale.l('family'), _familyMode, () => setState(() => _familyMode = true)),
               ],
             ),
           ),
@@ -273,7 +273,7 @@ class _ClientDetailScreenState extends State<ClientDetailScreen> {
             children: [
               Icon(Icons.person_add, size: 48, color: kMuted),
               const SizedBox(height: 8),
-              Text('ಇನ್ನೂ ಸದಸ್ಯರಿಲ್ಲ. ➕ ಬಟನ್ ಒತ್ತಿ ಸೇರಿಸಿ.', style: TextStyle(color: kMuted, fontSize: 14)),
+              Text(AppLocale.l('noMembersYet'), style: TextStyle(color: kMuted, fontSize: 14)),
             ],
           ),
         ),
@@ -379,7 +379,7 @@ class _ClientDetailScreenState extends State<ClientDetailScreen> {
     final dob = m.dobDate;
     if (dob == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('ಜನ್ಮ ದಿನಾಂಕ ಸರಿಯಾಗಿಲ್ಲ')));
+        SnackBar(content: Text(AppLocale.l('invalidDob'))));
       return;
     }
     _showLoading();
@@ -449,7 +449,7 @@ class _ClientDetailScreenState extends State<ClientDetailScreen> {
       if (mounted) Navigator.pop(context);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('ದೋಷ: $e')));
+          SnackBar(content: Text('${AppLocale.l('errorLabel')}: $e')));
       }
     }
   }
@@ -497,20 +497,20 @@ class _ClientDetailScreenState extends State<ClientDetailScreen> {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('➕ ಸದಸ್ಯ ಸೇರಿಸಿ', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: kPurple2)),
+                Text('➕ ${AppLocale.l('addMember')}', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: kPurple2)),
                 const SizedBox(height: 16),
 
                 // Name
                 TextField(
                   controller: nameCtrl,
-                  decoration: const InputDecoration(labelText: 'ಹೆಸರು', prefixIcon: Icon(Icons.person)),
+                  decoration: InputDecoration(labelText: AppLocale.l('nameLabel'), prefixIcon: Icon(Icons.person)),
                 ),
                 const SizedBox(height: 12),
 
                 // Relation
                 DropdownButtonFormField<String>(
                   value: relation,
-                  decoration: const InputDecoration(labelText: 'ಸಂಬಂಧ', prefixIcon: Icon(Icons.family_restroom)),
+                  decoration: InputDecoration(labelText: AppLocale.l('relation'), prefixIcon: Icon(Icons.family_restroom)),
                   items: relations.map((r) => DropdownMenuItem(value: r, child: Text(r))).toList(),
                   onChanged: (v) => setS(() => relation = v!),
                 ),
@@ -536,7 +536,7 @@ class _ClientDetailScreenState extends State<ClientDetailScreen> {
                     child: Row(children: [
                       Icon(Icons.calendar_today, color: kMuted),
                       const SizedBox(width: 10),
-                      Text('ದಿನಾಂಕ: ${dob.day.toString().padLeft(2, '0')}-${dob.month.toString().padLeft(2, '0')}-${dob.year}',
+                      Text('${AppLocale.l('dateLabel')}: ${dob.day.toString().padLeft(2, '0')}-${dob.month.toString().padLeft(2, '0')}-${dob.year}',
                         style: TextStyle(color: kText)),
                     ]),
                   ),
@@ -567,7 +567,7 @@ class _ClientDetailScreenState extends State<ClientDetailScreen> {
                     child: Row(children: [
                       Icon(Icons.access_time, color: kMuted),
                       const SizedBox(width: 10),
-                      Text('ಸಮಯ: ${hour.toString().padLeft(2, '0')}:${minute.toString().padLeft(2, '0')} $ampm',
+                      Text('${AppLocale.l('timeLabel')}: ${hour.toString().padLeft(2, '0')}:${minute.toString().padLeft(2, '0')} $ampm',
                         style: TextStyle(color: kText)),
                     ]),
                   ),
@@ -585,7 +585,7 @@ class _ClientDetailScreenState extends State<ClientDetailScreen> {
                     return TextField(
                       controller: textCtrl,
                       focusNode: focusNode,
-                      decoration: const InputDecoration(labelText: 'ಜನ್ಮ ಸ್ಥಳ', prefixIcon: Icon(Icons.location_on)),
+                      decoration: InputDecoration(labelText: AppLocale.l('birthPlace'), prefixIcon: Icon(Icons.location_on)),
                     );
                   },
                   onSelected: (selection) {
@@ -606,13 +606,13 @@ class _ClientDetailScreenState extends State<ClientDetailScreen> {
                   Expanded(child: TextField(
                     controller: latCtrl,
                     keyboardType: TextInputType.numberWithOptions(decimal: true, signed: true),
-                    decoration: const InputDecoration(labelText: 'ಅಕ್ಷಾಂಶ'),
+                    decoration: InputDecoration(labelText: AppLocale.l('latitude')),
                   )),
                   const SizedBox(width: 10),
                   Expanded(child: TextField(
                     controller: lonCtrl,
                     keyboardType: TextInputType.numberWithOptions(decimal: true, signed: true),
-                    decoration: const InputDecoration(labelText: 'ರೇಖಾಂಶ'),
+                    decoration: InputDecoration(labelText: AppLocale.l('longitude')),
                   )),
                 ]),
                 const SizedBox(height: 20),
@@ -622,7 +622,7 @@ class _ClientDetailScreenState extends State<ClientDetailScreen> {
                   width: double.infinity,
                   child: ElevatedButton.icon(
                     icon: const Icon(Icons.save, color: Colors.white),
-                    label: const Text('ಸೇರಿಸಿ', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 16, color: Colors.white)),
+                    label: Text(AppLocale.l('add'), style: TextStyle(fontWeight: FontWeight.w900, fontSize: 16, color: Colors.white)),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: kTeal,
                       padding: const EdgeInsets.symmetric(vertical: 14),
@@ -646,7 +646,7 @@ class _ClientDetailScreenState extends State<ClientDetailScreen> {
                       final ok = await ClientService.addFamilyMember(member);
                       if (mounted) {
                         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                          content: Text(ok ? 'ಸದಸ್ಯ ಸೇರಿಸಲಾಗಿದೆ!' : 'ದೋಷ ಸಂಭವಿಸಿದೆ')));
+                          content: Text(ok ? AppLocale.l('memberAdded') : AppLocale.l('errorOccurred'))));
                         _loadData();
                       }
                     },
@@ -678,15 +678,15 @@ class _ClientDetailScreenState extends State<ClientDetailScreen> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text('✏️ ಗ್ರಾಹಕ ವಿವರ', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: kPurple2)),
+            Text('✏️ ${AppLocale.l('editClient')}', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: kPurple2)),
             const SizedBox(height: 16),
-            TextField(controller: nameCtrl, decoration: const InputDecoration(labelText: 'ಹೆಸರು')),
+            TextField(controller: nameCtrl, decoration: InputDecoration(labelText: AppLocale.l('nameLabel'))),
             const SizedBox(height: 10),
-            TextField(controller: phoneCtrl, decoration: const InputDecoration(labelText: 'ಫೋನ್'), keyboardType: TextInputType.phone),
+            TextField(controller: phoneCtrl, decoration: InputDecoration(labelText: AppLocale.l('phone')), keyboardType: TextInputType.phone),
             const SizedBox(height: 10),
-            TextField(controller: emailCtrl, decoration: const InputDecoration(labelText: 'ಇಮೇಲ್')),
+            TextField(controller: emailCtrl, decoration: InputDecoration(labelText: AppLocale.l('email'))),
             const SizedBox(height: 10),
-            TextField(controller: addressCtrl, decoration: const InputDecoration(labelText: 'ವಿಳಾಸ')),
+            TextField(controller: addressCtrl, decoration: InputDecoration(labelText: AppLocale.l('address'))),
             const SizedBox(height: 16),
             SizedBox(
               width: double.infinity,
@@ -705,7 +705,7 @@ class _ClientDetailScreenState extends State<ClientDetailScreen> {
                   if (mounted) setState(() {});
                 },
                 style: ElevatedButton.styleFrom(backgroundColor: kTeal, padding: const EdgeInsets.symmetric(vertical: 14)),
-                child: const Text('ನವೀಕರಿಸಿ', style: TextStyle(fontWeight: FontWeight.w900, color: Colors.white)),
+                child: Text(AppLocale.l('update'), style: TextStyle(fontWeight: FontWeight.w900, color: Colors.white)),
               ),
             ),
           ],

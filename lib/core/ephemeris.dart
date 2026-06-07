@@ -13,6 +13,12 @@ double _norm(double d) => (d % 360.0 + 360.0) % 360.0;
 class Ephemeris {
   static bool _isInit = false;
 
+  static const _epheFiles = [
+    'packages/sweph/assets/ephe/sepl_18.se1',
+    'packages/sweph/assets/ephe/semo_18.se1',
+    'packages/sweph/assets/ephe/seas_18.se1',
+  ];
+
   static Future<void> initSweph() async {
     if (_isInit) return;
     // Retry up to 3 times – the first attempt may fail on some platforms
@@ -20,7 +26,7 @@ class Ephemeris {
     // but succeeds on subsequent attempts.
     for (int attempt = 0; attempt < 3; attempt++) {
       try {
-        await Sweph.init(epheAssets: []);
+        await Sweph.init(epheAssets: _epheFiles);
         _isInit = true;
         return;
       } catch (_) {
@@ -30,7 +36,7 @@ class Ephemeris {
       }
     }
     // If all retries failed, try one last time and let the error propagate
-    await Sweph.init(epheAssets: []);
+    await Sweph.init(epheAssets: _epheFiles);
     _isInit = true;
   }
   // ─────────────────────────────────────────────

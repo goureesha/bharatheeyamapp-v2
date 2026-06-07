@@ -76,10 +76,10 @@ class _InputScreenState extends State<InputScreen> {
   }
 
   Future<void> _checkNetwork() async {
-    final allowed = await NetworkService.checkAndInitialize();
+    // Clone doesn't gate access — always allow
     if (mounted) {
       setState(() {
-        _isNetworkBlocked = !allowed;
+        _isNetworkBlocked = false;
         _isInitStatus = false;
       });
     }

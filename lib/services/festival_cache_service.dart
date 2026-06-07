@@ -25,7 +25,7 @@ class FestivalCacheService {
 
   static const String _cachePrefix = 'fc_'; // Short prefix to save space
   static const String _cacheVersionKey = 'fc_ver';
-  static const int _cacheVersion = 3; // Bumped: now uses sunrise+5min instead of 6AM
+  static const int _cacheVersion = 4; // Bumped: now persists empty-event days with '_' marker
 
   static bool get isLoaded => _isLoaded;
   static bool get isLoading => _isLoading;
@@ -65,6 +65,9 @@ class FestivalCacheService {
     debugPrint('FestivalCache: Done. ${_cache.length} festival days for $year');
   }
 
+  // Cancellation: bumped each time loadMonth is called so stale computations abort
+  static int _loadMonthToken = 0;
+
   /// Load a specific month (for quick partial loading when swiping calendar)
   static Future<void> loadMonth(int year, int month) async {
     // Skip if we're already computing to prevent overlapping work
@@ -83,18 +86,50 @@ class FestivalCacheService {
     if (allCached) return;
 
     _isLoading = true;
-    bool anyNew = false;
+    final myToken = ++_loadMonthToken; // Cancel stale computations
+    bool anyComputed = false;
     
+    // Try loading just this month from disk first
+    final diskLoaded = await _loadMonthFromDisk(year, month);
+    if (diskLoaded) {
+      // Re-check if all days now cached after disk load
+      bool nowCached = true;
+      for (int day = 1; day <= daysInMonth; day++) {
+        if (!_cache.containsKey(DateTime(year, month, day))) {
+          nowCached = false;
+          break;
+        }
+      }
+      if (nowCached) {
+        _isLoading = false;
+        return;
+      }
+    }
+
+    // Initialize ephemeris ONCE before the loop
+    try {
+      await Ephemeris.initSweph();
+    } catch (_) {
+      _isLoading = false;
+      return;
+    }
+
     for (int day = 1; day <= daysInMonth; day++) {
+      // Abort if a newer loadMonth was called (user swiped again)
+      if (myToken != _loadMonthToken) {
+        _isLoading = false;
+        return;
+      }
+
       final dateKey = DateTime(year, month, day);
       if (_cache.containsKey(dateKey)) continue;
 
-      // Yield to UI thread EVERY day to keep animations smooth
-      await Future.delayed(Duration.zero);
+      // Yield to UI thread every 3 days to keep animations smooth
+      if (day % 3 == 0) {
+        await Future.delayed(const Duration(milliseconds: 1));
+      }
 
       try {
-        // Compute sunrise + 5 minutes for correct Vedic day
-        await Ephemeris.initSweph();
         final srSs = Ephemeris.findSunriseSetForDate(year, month, day, _lat, _lon, tzOffset: _tzOffset);
         final srFrac = ((srSs[0] + 0.5 + (_tzOffset / 24.0)) % 1.0 + 1.0) % 1.0;
         final h24 = (srFrac * 24.0) + (5.0 / 60.0);
@@ -109,22 +144,17 @@ class FestivalCacheService {
         );
         if (res != null) {
           final events = EventCalculator.getEventsForPanchang(res.panchang);
-          if (events.isNotEmpty) {
-            _cache[dateKey] = events;
-            anyNew = true;
-          } else {
-            // Mark empty days as cached too (empty list) to avoid recomputation
-            _cache[dateKey] = [];
-          }
+          _cache[dateKey] = events; // Cache even empty lists to avoid recomputation
+          anyComputed = true;
         }
       } catch (_) {}
     }
     
     _isLoading = false;
 
-    // Save new data to disk cache
-    if (anyNew) {
-      _saveToDisk(year);
+    // Always save to disk after computing new days (even if all events empty)
+    if (anyComputed) {
+      _saveMonthToDisk(year, month);
     }
   }
 
@@ -183,30 +213,52 @@ class FestivalCacheService {
       
       // Save each month separately to stay within SharedPreferences limits
       for (int month = 1; month <= 12; month++) {
-        final monthData = <String, List<Map<String, String>>>{};
-        
-        _cache.forEach((date, events) {
-          if (date.year == year && date.month == month) {
-            final key = '${date.day}';
-            monthData[key] = events.map((e) => {
-              'n': e.name,
-              'd': e.description,
-              's': e.shloka,
-              'm': e.meaning,
-              'r': e.source,
-            }).toList();
-          }
-        });
-        
-        if (monthData.isNotEmpty) {
-          await prefs.setString('$_cachePrefix${year}_$month', jsonEncode(monthData));
-        }
+        await _writeMonthToPrefs(prefs, year, month);
       }
       
       await prefs.setInt(_cacheVersionKey, _cacheVersion);
       debugPrint('FestivalCache: Saved $year to SharedPreferences');
     } catch (e) {
       debugPrint('FestivalCache: Error saving: $e');
+    }
+  }
+
+  /// Save a single month to SharedPreferences
+  static Future<void> _saveMonthToDisk(int year, int month) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await _writeMonthToPrefs(prefs, year, month);
+      await prefs.setInt(_cacheVersionKey, _cacheVersion);
+      debugPrint('FestivalCache: Saved $year-$month to SharedPreferences');
+    } catch (e) {
+      debugPrint('FestivalCache: Error saving month: $e');
+    }
+  }
+
+  /// Write one month's data to prefs (includes empty-event days as "_" marker)
+  static Future<void> _writeMonthToPrefs(SharedPreferences prefs, int year, int month) async {
+    final monthData = <String, dynamic>{};
+    
+    _cache.forEach((date, events) {
+      if (date.year == year && date.month == month) {
+        final key = '${date.day}';
+        if (events.isEmpty) {
+          // Store empty-event days with a marker so they persist
+          monthData[key] = '_';
+        } else {
+          monthData[key] = events.map((e) => {
+            'n': e.name,
+            'd': e.description,
+            's': e.shloka,
+            'm': e.meaning,
+            'r': e.source,
+          }).toList();
+        }
+      }
+    });
+    
+    if (monthData.isNotEmpty) {
+      await prefs.setString('$_cachePrefix${year}_$month', jsonEncode(monthData));
     }
   }
 
@@ -225,24 +277,7 @@ class FestivalCacheService {
       bool anyLoaded = false;
       
       for (int month = 1; month <= 12; month++) {
-        final jsonStr = prefs.getString('$_cachePrefix${year}_$month');
-        if (jsonStr == null) continue;
-
-        final data = jsonDecode(jsonStr) as Map<String, dynamic>;
-        for (final entry in data.entries) {
-          final day = int.parse(entry.key);
-          final date = DateTime(year, month, day);
-          final events = (entry.value as List).map((e) {
-            final m = e as Map<String, dynamic>;
-            return AstroEvent(
-              name: m['n'] ?? '',
-              description: m['d'] ?? '',
-              shloka: m['s'] ?? '',
-              meaning: m['m'] ?? '',
-              source: m['r'] ?? '',
-            );
-          }).toList();
-          _cache[date] = events;
+        if (_parseMonthJson(prefs, year, month)) {
           anyLoaded = true;
         }
       }
@@ -252,6 +287,49 @@ class FestivalCacheService {
       debugPrint('FestivalCache: Error loading from disk: $e');
       return false;
     }
+  }
+
+  /// Load a single month from SharedPreferences (used by loadMonth for quick disk check)
+  static Future<bool> _loadMonthFromDisk(int year, int month) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final savedVersion = prefs.getInt(_cacheVersionKey) ?? 0;
+      if (savedVersion != _cacheVersion) return false;
+      return _parseMonthJson(prefs, year, month);
+    } catch (_) {
+      return false;
+    }
+  }
+
+  /// Parse a single month's JSON from prefs into _cache. Handles '_' empty marker.
+  static bool _parseMonthJson(SharedPreferences prefs, int year, int month) {
+    final jsonStr = prefs.getString('$_cachePrefix${year}_$month');
+    if (jsonStr == null) return false;
+
+    bool loaded = false;
+    final data = jsonDecode(jsonStr) as Map<String, dynamic>;
+    for (final entry in data.entries) {
+      final day = int.parse(entry.key);
+      final date = DateTime(year, month, day);
+      if (entry.value == '_') {
+        // Empty-event day marker — cache as empty list
+        _cache[date] = [];
+      } else {
+        final events = (entry.value as List).map((e) {
+          final m = e as Map<String, dynamic>;
+          return AstroEvent(
+            name: m['n'] ?? '',
+            description: m['d'] ?? '',
+            shloka: m['s'] ?? '',
+            meaning: m['m'] ?? '',
+            source: m['r'] ?? '',
+          );
+        }).toList();
+        _cache[date] = events;
+      }
+      loaded = true;
+    }
+    return loaded;
   }
 
   /// Clear the cache (both memory and disk)

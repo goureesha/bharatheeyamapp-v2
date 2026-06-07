@@ -28,35 +28,35 @@ enum MuhurtaEvent {
   karnavedha,    // ಕರ್ಣವೇಧ — Ear Piercing
 }
 
-/// Kannada names and English subtitles for each event
+/// Localized names and English subtitles for each event
 class MuhurtaEventInfo {
-  final String kannadaName;
+  final String localeKey;     // AppLocale key for translated name
   final String englishName;
   final bool defaultTwoPerson; // Auto-switch to 2-person mode
 
-  const MuhurtaEventInfo(this.kannadaName, this.englishName, {this.defaultTwoPerson = false});
+  const MuhurtaEventInfo(this.localeKey, this.englishName, {this.defaultTwoPerson = false});
 }
 
 const Map<MuhurtaEvent, MuhurtaEventInfo> muhurtaEventNames = {
-  MuhurtaEvent.vivaha:         MuhurtaEventInfo('ವಿವಾಹ', 'Marriage', defaultTwoPerson: true),
-  MuhurtaEvent.upanayana:      MuhurtaEventInfo('ಉಪನಯನ', 'Thread Ceremony'),
-  MuhurtaEvent.grihaPrevesha:  MuhurtaEventInfo('ಗೃಹಪ್ರವೇಶ', 'House Warming'),
-  MuhurtaEvent.devaPratishtha: MuhurtaEventInfo('ದೇವ ಪ್ರತಿಷ್ಠಾ', 'Deity Installation'),
-  MuhurtaEvent.aksharabhyasa:  MuhurtaEventInfo('ಅಕ್ಷರಾಭ್ಯಾಸ', 'Education Start'),
-  MuhurtaEvent.yatra:          MuhurtaEventInfo('ಯಾತ್ರಾ', 'Travel'),
-  MuhurtaEvent.vyapara:        MuhurtaEventInfo('ವ್ಯಾಪಾರ ಆರಂಭ', 'Business Start'),
-  MuhurtaEvent.annaprashana:   MuhurtaEventInfo('ಅನ್ನಪ್ರಾಶನ', 'First Feeding'),
-  MuhurtaEvent.namakarana:     MuhurtaEventInfo('ನಾಮಕರಣ', 'Naming Ceremony'),
-  MuhurtaEvent.seemanta:       MuhurtaEventInfo('ಸೀಮಂತ', 'Prenatal Rite'),
-  MuhurtaEvent.chowla:         MuhurtaEventInfo('ಚೌಲ / ಮುಂಡನ', 'Tonsure'),
-  MuhurtaEvent.vastuShilanyas: MuhurtaEventInfo('ವಾಸ್ತು ಶಿಲಾನ್ಯಾಸ', 'Foundation Laying'),
-  MuhurtaEvent.aushadha:       MuhurtaEventInfo('ಔಷಧ ಸೇವನೆ', 'Medical Treatment'),
-  MuhurtaEvent.krishi:         MuhurtaEventInfo('ಕೃಷಿ', 'Agriculture'),
-  MuhurtaEvent.vahanaKraya:    MuhurtaEventInfo('ವಾಹನ ಖರೀದಿ', 'Vehicle Purchase'),
-  MuhurtaEvent.aasthiKraya:    MuhurtaEventInfo('ಆಸ್ತಿ ಖರೀದಿ', 'Property Purchase'),
-  MuhurtaEvent.swarnaKraya:    MuhurtaEventInfo('ಆಭರಣ ಖರೀದಿ', 'Gold Purchase'),
-  MuhurtaEvent.udyoga:         MuhurtaEventInfo('ಉದ್ಯೋಗ ಸೇರ್ಪಡೆ', 'Job/Office Joining'),
-  MuhurtaEvent.karnavedha:     MuhurtaEventInfo('ಕರ್ಣವೇಧ', 'Ear Piercing'),
+  MuhurtaEvent.vivaha:         MuhurtaEventInfo('evVivaha', 'Marriage', defaultTwoPerson: true),
+  MuhurtaEvent.upanayana:      MuhurtaEventInfo('evUpanayana', 'Thread Ceremony'),
+  MuhurtaEvent.grihaPrevesha:  MuhurtaEventInfo('evGrihaPrevesha', 'House Warming'),
+  MuhurtaEvent.devaPratishtha: MuhurtaEventInfo('evDevaPratishtha', 'Deity Installation'),
+  MuhurtaEvent.aksharabhyasa:  MuhurtaEventInfo('evAksharabhyasa', 'Education Start'),
+  MuhurtaEvent.yatra:          MuhurtaEventInfo('evYatra', 'Travel'),
+  MuhurtaEvent.vyapara:        MuhurtaEventInfo('evVyapara', 'Business Start'),
+  MuhurtaEvent.annaprashana:   MuhurtaEventInfo('evAnnaprashana', 'First Feeding'),
+  MuhurtaEvent.namakarana:     MuhurtaEventInfo('evNamakarana', 'Naming Ceremony'),
+  MuhurtaEvent.seemanta:       MuhurtaEventInfo('evSeemanta', 'Prenatal Rite'),
+  MuhurtaEvent.chowla:         MuhurtaEventInfo('evChowla', 'Tonsure'),
+  MuhurtaEvent.vastuShilanyas: MuhurtaEventInfo('evVastuShilanyas', 'Foundation Laying'),
+  MuhurtaEvent.aushadha:       MuhurtaEventInfo('evAushadha', 'Medical Treatment'),
+  MuhurtaEvent.krishi:         MuhurtaEventInfo('evKrishi', 'Agriculture'),
+  MuhurtaEvent.vahanaKraya:    MuhurtaEventInfo('evVahanaKraya', 'Vehicle Purchase'),
+  MuhurtaEvent.aasthiKraya:    MuhurtaEventInfo('evAasthiKraya', 'Property Purchase'),
+  MuhurtaEvent.swarnaKraya:    MuhurtaEventInfo('evSwarnaKraya', 'Gold Purchase'),
+  MuhurtaEvent.udyoga:         MuhurtaEventInfo('evUdyoga', 'Job/Office Joining'),
+  MuhurtaEvent.karnavedha:     MuhurtaEventInfo('evKarnavedha', 'Ear Piercing'),
 };
 
 /// Which shuddhi checks are required for the event
@@ -730,8 +730,8 @@ BalaScore calculateGuruBala(int janmaRashiIdx, int jupiterRashiIdx) {
 // ============================================================
 
 /// Malefic planets (Paapa Grahas) for shuddhi checks
-/// Mars(ಕುಜ), Saturn(ಶನಿ), Rahu(ರಾಹು), Ketu(ಕೇತು), Sun(ರವಿ)
-const List<String> paapGrahas = ['ಕುಜ', 'ಶನಿ', 'ರಾಹು', 'ಕೇತು', 'ರವಿ'];
+/// Mars(ಕುಜ), Saturn(ಶನಿ), Rahu(ರಾಹು), Ketu(ಕೇತು), Sun(ರವಿ), Mandi(ಮಾಂದಿ)
+const List<String> paapGrahas = ['ಕುಜ', 'ಶನಿ', 'ರಾಹು', 'ಕೇತು', 'ರವಿ', 'ಮಾಂದಿ'];
 
 class LagnaWindow {
   final int rashiIndex;    // 0-11
@@ -741,7 +741,7 @@ class LagnaWindow {
   final bool isAllowed;    // true if this lagna is allowed for the event
 
   // Shuddhi checks
-  final bool lagnaShuddhi;         // No malefics in lagna rashi (1st house)
+  final bool lagnaShuddhi;         // No planet in lagna rashi (graha varjita)
   final bool saptamaShuddhi;       // Clean 7th house (varies by event)
   final bool ashtamaShuddhi;       // Clean 8th house
   final bool dashamaShuddhi;       // Empty 10th house
@@ -799,7 +799,7 @@ class LagnaWindow {
 List<String> findAllPlanetsInRashi(int rashiIdx, Map<String, int> planetRashis) {
   final List<String> found = [];
   planetRashis.forEach((planet, rIdx) {
-    if (rIdx == rashiIdx && planet != 'ರಾಹು' && planet != 'ಕೇತು') {
+    if (rIdx == rashiIdx && planet != 'ರಾಹು' && planet != 'ಕೇತು' && planet != 'ಲಗ್ನ') {
       found.add(planet);
     }
   });
