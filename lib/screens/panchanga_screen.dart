@@ -321,7 +321,7 @@ class _PanchangaScreenState extends State<PanchangaScreen> {
       final tithiIdx = (((moonPos.longitude - sunPos.longitude + 360) % 360) / 12).floor().clamp(0, 29);
       int pyWeekday = day.weekday - 1; // Mon=0..Sun=6
       int wIdx = (pyWeekday + 1) % 7; // Sun=0..Sat=6
-      final agniVal = (tithiIdx + wIdx) % 4;
+      final agniVal = (tithiIdx + wIdx + 3) % 4;
       final isPrithvi = (agniVal == 0 || agniVal == 3);
       _agniVasaCache[key] = isPrithvi;
       return isPrithvi;
