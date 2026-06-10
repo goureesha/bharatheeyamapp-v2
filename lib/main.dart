@@ -6,6 +6,7 @@ import 'screens/home_screen.dart';
 import 'widgets/common.dart';
 import 'services/google_auth_service.dart';
 import 'services/firebase_service.dart';
+import 'services/user_session_service.dart';
 
 import 'services/festival_cache_service.dart';
 import 'services/location_service.dart';
@@ -270,9 +271,183 @@ class _BharatheeyamAppState extends State<BharatheeyamApp> with WidgetsBindingOb
               indicatorSize: TabBarIndicatorSize.tab,
             ),
           ),
-          home: const HomeScreen(),
+          home: GoogleAuthService.isSignedIn
+              ? const _AuthGate()
+              : const _LoginScreen(),
         );
       },
+    );
+  }
+}
+
+/// Gate that checks blocked status after login
+class _AuthGate extends StatefulWidget {
+  const _AuthGate();
+  @override
+  State<_AuthGate> createState() => _AuthGateState();
+}
+
+class _AuthGateState extends State<_AuthGate> {
+  bool _checking = true;
+  bool _blocked = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _checkAccess();
+  }
+
+  Future<void> _checkAccess() async {
+    final allowed = await UserSessionService.registerAndCheck();
+    if (mounted) {
+      setState(() {
+        _blocked = !allowed;
+        _checking = false;
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (_checking) {
+      return Scaffold(
+        backgroundColor: kBg,
+        body: Center(
+          child: Column(mainAxisSize: MainAxisSize.min, children: [
+            CircularProgressIndicator(color: kPurple2),
+            const SizedBox(height: 16),
+            Text('Verifying access...', style: TextStyle(color: kMuted)),
+          ]),
+        ),
+      );
+    }
+    if (_blocked) return const _BlockedScreen();
+    return const HomeScreen();
+  }
+}
+
+/// Login screen shown when user is not signed in
+class _LoginScreen extends StatefulWidget {
+  const _LoginScreen();
+  @override
+  State<_LoginScreen> createState() => _LoginScreenState();
+}
+
+class _LoginScreenState extends State<_LoginScreen> {
+  bool _loading = false;
+  String? _error;
+
+  Future<void> _signIn() async {
+    setState(() { _loading = true; _error = null; });
+    try {
+      final success = await GoogleAuthService.signIn();
+      if (success && mounted) {
+        // Register device and check block
+        final allowed = await UserSessionService.registerAndCheck();
+        if (mounted) {
+          if (!allowed) {
+            setState(() { _loading = false; _error = 'Account blocked. Contact admin.'; });
+            return;
+          }
+          // Start appointment listener
+          FirebaseService.listenForAppointments();
+          // Restart app to home
+          Navigator.of(context).pushAndRemoveUntil(
+            MaterialPageRoute(builder: (_) => const HomeScreen()),
+            (_) => false,
+          );
+        }
+      } else {
+        if (mounted) setState(() { _loading = false; _error = 'Sign-in cancelled.'; });
+      }
+    } catch (e) {
+      if (mounted) setState(() { _loading = false; _error = e.toString(); });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: kBg,
+      body: Center(
+        child: Padding(
+          padding: const EdgeInsets.all(32),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(Icons.auto_awesome, size: 64, color: kPurple2),
+              const SizedBox(height: 16),
+              Text('ಭಾರತೀಯಂ', style: TextStyle(fontSize: 28, fontWeight: FontWeight.w900, color: kPurple2)),
+              const SizedBox(height: 8),
+              Text('Bharatheeyam Jyothishya', style: TextStyle(fontSize: 14, color: kMuted)),
+              const SizedBox(height: 32),
+              Text('Sign in with Google to continue', style: TextStyle(fontSize: 14, color: kText)),
+              const SizedBox(height: 20),
+              if (_loading)
+                CircularProgressIndicator(color: kPurple2)
+              else
+                ElevatedButton.icon(
+                  onPressed: _signIn,
+                  icon: const Icon(Icons.login, color: Colors.white),
+                  label: const Text('Sign in with Google', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w800)),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: kPurple2,
+                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  ),
+                ),
+              if (_error != null) ...[
+                const SizedBox(height: 12),
+                Text(_error!, style: TextStyle(color: Colors.red, fontSize: 12)),
+              ],
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Blocked screen shown when admin has blocked the user
+class _BlockedScreen extends StatelessWidget {
+  const _BlockedScreen();
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: kBg,
+      body: Center(
+        child: Padding(
+          padding: const EdgeInsets.all(32),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(Icons.block, size: 64, color: Colors.red),
+              const SizedBox(height: 16),
+              Text('Account Blocked', style: TextStyle(fontSize: 22, fontWeight: FontWeight.w900, color: Colors.red)),
+              const SizedBox(height: 12),
+              Text(
+                'Your account has been blocked by the administrator.\nPlease contact support for assistance.',
+                textAlign: TextAlign.center,
+                style: TextStyle(fontSize: 14, color: kMuted),
+              ),
+              const SizedBox(height: 24),
+              TextButton(
+                onPressed: () async {
+                  await GoogleAuthService.signOut();
+                  if (context.mounted) {
+                    Navigator.of(context).pushAndRemoveUntil(
+                      MaterialPageRoute(builder: (_) => const _LoginScreen()),
+                      (_) => false,
+                    );
+                  }
+                },
+                child: Text('Sign Out', style: TextStyle(color: kPurple2)),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }
