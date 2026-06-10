@@ -170,15 +170,30 @@ class _AppointmentScreenState extends State<AppointmentScreen> with SingleTicker
       try {
         final result = await CalendarService.fullSync();
         if (mounted) {
-          final msg = '✅ ಸಿಂಕ್ ಪೂರ್ಣ! ↑${result.pushed} ↓${result.pulled} 🗑${result.deleted}';
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(msg), duration: const Duration(seconds: 3)),
+          final debugInfo = CalendarService.lastSyncDebug ?? 'No debug info';
+          showDialog(
+            context: context,
+            builder: (_) => AlertDialog(
+              title: const Text('📅 Calendar Sync Result'),
+              content: Text(
+                '↑ Pushed: ${result.pushed}\n'
+                '↓ Pulled: ${result.pulled}\n'
+                '🗑 Deleted: ${result.deleted}\n\n'
+                '$debugInfo'
+              ),
+              actions: [TextButton(onPressed: () => Navigator.pop(context), child: const Text('OK'))],
+            ),
           );
         }
       } catch (e) {
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('⚠️ Calendar ಸಿಂಕ್ ವಿಫಲ: $e'), backgroundColor: Colors.orange),
+          showDialog(
+            context: context,
+            builder: (_) => AlertDialog(
+              title: const Text('⚠️ Calendar Sync Error'),
+              content: Text('$e\n\nInit error: ${CalendarService.lastInitError ?? "none"}'),
+              actions: [TextButton(onPressed: () => Navigator.pop(context), child: const Text('OK'))],
+            ),
           );
         }
       }

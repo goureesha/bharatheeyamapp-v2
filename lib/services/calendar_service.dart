@@ -32,6 +32,7 @@ class CalendarService {
   /// Initialize the Calendar API client.
   /// Returns true if successful, false if auth fails.
   static String? lastInitError;
+  static String? lastSyncDebug;
 
   static Future<bool> initialize() async {
     try {
@@ -272,10 +273,14 @@ class CalendarService {
       // Step 3: Pull events from GCal that we don't have locally
       // Check BOTH the dedicated calendar AND the primary calendar
       final gcalEvents = await pullEvents();
+      final dedicatedCount = gcalEvents.length;
 
       // Also pull from primary calendar
       final primaryEvents = await pullEvents(calendarId: 'primary');
+      final primaryCount = primaryEvents.length;
       gcalEvents.addAll(primaryEvents);
+
+      int skippedTracked = 0, skippedOurs = 0, skippedNull = 0;
 
       final localEventIds = localAppts
           .where((a) => a.googleEventId.isNotEmpty)
@@ -286,20 +291,29 @@ class CalendarService {
         if (event.id == null) continue;
 
         // Skip events we already track
-        if (localEventIds.contains(event.id)) continue;
+        if (localEventIds.contains(event.id)) { skippedTracked++; continue; }
 
         // Check if this is an event we created (has our marker)
         final isOurs = event.extendedProperties?.private?[_appSourceKey] == 'bharatheeyam';
         // If it's our event but not in local list, it was deleted locally — skip
-        if (isOurs) continue;
+        if (isOurs) { skippedOurs++; continue; }
 
         // This is a new event created directly in GCal — pull it in
         final appt = _toAppointment(event);
         if (appt != null) {
           await AppointmentService.addAppointmentDirect(appt);
           pulled++;
+        } else {
+          skippedNull++;
         }
       }
+
+      lastSyncDebug = 'Dedicated cal: $dedicatedCount events\n'
+          'Primary cal: $primaryCount events\n'
+          'Already tracked: $skippedTracked\n'
+          'Ours (skipped): $skippedOurs\n'
+          'Convert failed: $skippedNull\n'
+          'Calendar ID: $_calendarId';
 
       // Step 4: Check for events deleted from GCal
       // (Events we pushed but that no longer exist in GCal)
