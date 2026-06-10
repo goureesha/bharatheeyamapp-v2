@@ -1,0 +1,36 @@
+name: Deploy Admin Dashboard
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'web/admin/**'
+      - 'firebase.json'
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # Copy config.js with Firebase keys from secret
+      - name: Create config.js
+        run: |
+          cat > web/admin/config.js << 'EOF'
+          const firebaseConfig = {
+            apiKey: "${{ secrets.FIREBASE_API_KEY }}",
+            authDomain: "bharatiyam-clone.firebaseapp.com",
+            projectId: "bharatiyam-clone",
+            storageBucket: "bharatiyam-clone.firebasestorage.app",
+            messagingSenderId: "149255394829",
+            appId: "1:149255394829:android:a03a9b351374d181b1a744"
+          };
+          EOF
+
+      - name: Deploy to Firebase Hosting
+        uses: FirebaseExtended/action-hosting-deploy@v0
+        with:
+          repoToken: '${{ secrets.GITHUB_TOKEN }}'
+          firebaseServiceAccount: '${{ secrets.FIREBASE_SERVICE_ACCOUNT }}'
+          channelId: live
+          projectId: bharatiyam-clone
