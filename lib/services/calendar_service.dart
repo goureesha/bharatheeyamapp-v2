@@ -223,14 +223,14 @@ class CalendarService {
         final ok = await initialize();
         if (!ok) {
           _isSyncing = false;
-          return (pushed: 0, pulled: 0, deleted: 0);
+          throw Exception('Calendar API init failed. Sign out & sign in again, and allow Calendar permission.');
         }
       }
 
       final calId = await getOrCreateCalendar();
       if (calId == null) {
         _isSyncing = false;
-        return (pushed: 0, pulled: 0, deleted: 0);
+        throw Exception('Could not find or create Bharatheeyam calendar in Google Calendar.');
       }
 
       final localAppts = AppointmentService.appointments;
