@@ -31,25 +31,31 @@ class CalendarService {
 
   /// Initialize the Calendar API client.
   /// Returns true if successful, false if auth fails.
+  static String? lastInitError;
+
   static Future<bool> initialize() async {
     try {
       // Ensure calendar scopes are granted
       final scopeOk = await GoogleAuthService.ensureCalendarScope();
       if (!scopeOk) {
-        debugPrint('CalendarService: Calendar scope not granted');
+        lastInitError = 'Calendar permission not granted. Please sign out, sign in again and allow Calendar access.';
+        debugPrint('CalendarService: $lastInitError');
         return false;
       }
 
       final client = await GoogleAuthService.getAuthenticatedClient();
       if (client == null) {
-        debugPrint('CalendarService: No authenticated client');
+        lastInitError = 'Google auth client is null. Please sign out and sign in again.';
+        debugPrint('CalendarService: $lastInitError');
         return false;
       }
       _calendarApi = gcal.CalendarApi(client);
+      lastInitError = null;
       debugPrint('CalendarService: Initialized successfully');
       return true;
     } catch (e) {
-      debugPrint('CalendarService: Init error: $e');
+      lastInitError = 'Init error: $e';
+      debugPrint('CalendarService: $lastInitError');
       return false;
     }
   }
@@ -308,6 +314,8 @@ class CalendarService {
       debugPrint('CalendarService: Sync complete — pushed=$pushed, pulled=$pulled, deleted=$deleted');
     } catch (e) {
       debugPrint('CalendarService: fullSync error: $e');
+      _isSyncing = false;
+      rethrow;
     } finally {
       _isSyncing = false;
     }
