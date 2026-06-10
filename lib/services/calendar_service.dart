@@ -177,8 +177,11 @@ class CalendarService {
   static Future<List<gcal.Event>> pullEvents({
     DateTime? timeMin,
     DateTime? timeMax,
+    String? calendarId,
   }) async {
-    if (_calendarApi == null || _calendarId == null) return [];
+    if (_calendarApi == null) return [];
+    final cId = calendarId ?? _calendarId;
+    if (cId == null) return [];
 
     final now = DateTime.now();
     timeMin ??= now.subtract(const Duration(days: 30));
@@ -190,7 +193,7 @@ class CalendarService {
 
       do {
         final result = await _calendarApi!.events.list(
-          _calendarId!,
+          cId,
           timeMin: timeMin!.toUtc(),
           timeMax: timeMax!.toUtc(),
           singleEvents: true,
@@ -267,7 +270,13 @@ class CalendarService {
       }
 
       // Step 3: Pull events from GCal that we don't have locally
+      // Check BOTH the dedicated calendar AND the primary calendar
       final gcalEvents = await pullEvents();
+
+      // Also pull from primary calendar
+      final primaryEvents = await pullEvents(calendarId: 'primary');
+      gcalEvents.addAll(primaryEvents);
+
       final localEventIds = localAppts
           .where((a) => a.googleEventId.isNotEmpty)
           .map((a) => a.googleEventId)
