@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bharatheeyam Admin Dashboard</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Segoe UI', system-ui, sans-serif; background: #0f0f1a; color: #e0e0e0; min-height: 100vh; }
+    .header { background: linear-gradient(135deg, #1a1a2e, #16213e); padding: 20px 32px; border-bottom: 1px solid #2a2a4a; display: flex; align-items: center; justify-content: space-between; }
+    .header h1 { font-size: 22px; color: #a78bfa; font-weight: 800; }
+    .header .stats { display: flex; gap: 24px; }
+    .stat-box { background: #1e1e3a; padding: 8px 16px; border-radius: 8px; text-align: center; }
+    .stat-box .num { font-size: 24px; font-weight: 900; color: #a78bfa; }
+    .stat-box .label { font-size: 11px; color: #888; }
+    .container { max-width: 1200px; margin: 0 auto; padding: 24px; }
+    .search-bar { width: 100%; padding: 12px 16px; background: #1e1e3a; border: 1px solid #2a2a4a; border-radius: 10px; color: #e0e0e0; font-size: 14px; margin-bottom: 20px; }
+    .search-bar:focus { outline: none; border-color: #a78bfa; }
+    table { width: 100%; border-collapse: collapse; background: #1a1a2e; border-radius: 12px; overflow: hidden; }
+    th { background: #16213e; padding: 12px 16px; text-align: left; font-size: 12px; text-transform: uppercase; color: #888; letter-spacing: 1px; }
+    td { padding: 12px 16px; border-bottom: 1px solid #1e1e3a; font-size: 13px; }
+    tr:hover { background: #1e1e3a; }
+    .avatar { width: 32px; height: 32px; border-radius: 50%; vertical-align: middle; margin-right: 8px; }
+    .status-active { color: #4ade80; font-weight: 700; }
+    .status-blocked { color: #f87171; font-weight: 700; }
+    .btn { padding: 6px 14px; border: none; border-radius: 6px; cursor: pointer; font-weight: 700; font-size: 12px; }
+    .btn-block { background: #f87171; color: #fff; }
+    .btn-unblock { background: #4ade80; color: #000; }
+    .btn-view { background: #a78bfa; color: #fff; margin-right: 6px; }
+    .device-count { background: #2a2a4a; padding: 2px 8px; border-radius: 10px; font-weight: 700; color: #a78bfa; }
+    .modal-overlay { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.7); z-index: 100; justify-content: center; align-items: center; }
+    .modal-overlay.active { display: flex; }
+    .modal { background: #1a1a2e; border: 1px solid #2a2a4a; border-radius: 12px; padding: 24px; width: 90%; max-width: 600px; max-height: 80vh; overflow-y: auto; }
+    .modal h2 { color: #a78bfa; margin-bottom: 16px; }
+    .modal .close { float: right; cursor: pointer; color: #888; font-size: 20px; }
+    .device-card { background: #16213e; border: 1px solid #2a2a4a; border-radius: 8px; padding: 12px; margin-bottom: 8px; }
+    .device-card .field { display: flex; justify-content: space-between; margin: 4px 0; }
+    .device-card .field .key { color: #888; font-size: 12px; }
+    .device-card .field .val { color: #e0e0e0; font-size: 12px; font-weight: 600; }
+    .loading { text-align: center; padding: 40px; color: #888; }
+    @media (max-width: 768px) {
+      .header { flex-direction: column; gap: 12px; }
+      td, th { padding: 8px; font-size: 12px; }
+      .btn { padding: 4px 8px; font-size: 11px; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="header">
+  <h1>🔱 Bharatheeyam Admin</h1>
+  <div class="stats">
+    <div class="stat-box"><div class="num" id="totalUsers">-</div><div class="label">Total Users</div></div>
+    <div class="stat-box"><div class="num" id="activeUsers">-</div><div class="label">Active</div></div>
+    <div class="stat-box"><div class="num" id="blockedUsers">-</div><div class="label">Blocked</div></div>
+    <div class="stat-box"><div class="num" id="totalDevices">-</div><div class="label">Devices</div></div>
+  </div>
+</div>
+
+<div class="container">
+  <input class="search-bar" type="text" id="searchInput" placeholder="🔍 Search by email or name..." oninput="filterUsers()">
+  <table>
+    <thead>
+      <tr>
+        <th>User</th>
+        <th>Email</th>
+        <th>Devices</th>
+        <th>Status</th>
+        <th>Last Login</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody id="usersTable">
+      <tr><td colspan="6" class="loading">Loading users...</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- Device Details Modal -->
+<div class="modal-overlay" id="deviceModal">
+  <div class="modal">
+    <span class="close" onclick="closeModal()">&times;</span>
+    <h2 id="modalTitle">Devices</h2>
+    <div id="deviceList"></div>
+  </div>
+</div>
+
+<!-- Firebase JS SDK -->
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+<script src="config.js"></script>
+
+<script>
+  // firebaseConfig is loaded from config.js (gitignored)
+
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.firestore();
+
+  let allUsers = [];
+
+  // Load all users
+  async function loadUsers() {
+    const snapshot = await db.collection('users').get();
+    allUsers = [];
+    let totalDevices = 0;
+    let active = 0;
+    let blocked = 0;
+
+    snapshot.forEach(doc => {
+      const data = doc.data();
+      data.id = doc.id;
+      allUsers.push(data);
+      totalDevices += (data.deviceCount || 0);
+      if (data.status === 'blocked') blocked++;
+      else active++;
+    });
+
+    document.getElementById('totalUsers').textContent = allUsers.length;
+    document.getElementById('activeUsers').textContent = active;
+    document.getElementById('blockedUsers').textContent = blocked;
+    document.getElementById('totalDevices').textContent = totalDevices;
+
+    renderUsers(allUsers);
+  }
+
+  function renderUsers(users) {
+    const tbody = document.getElementById('usersTable');
+    if (users.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="6" class="loading">No users found</td></tr>';
+      return;
+    }
+
+    tbody.innerHTML = users.map(u => {
+      const photo = u.photoUrl ? `<img class="avatar" src="${u.photoUrl}" onerror="this.style.display='none'">` : '';
+      const statusClass = u.status === 'blocked' ? 'status-blocked' : 'status-active';
+      const statusText = u.status === 'blocked' ? '🚫 Blocked' : '✅ Active';
+      const lastLogin = u.lastLogin ? new Date(u.lastLogin.seconds * 1000).toLocaleString('en-IN') : '-';
+      const btnClass = u.status === 'blocked' ? 'btn btn-unblock' : 'btn btn-block';
+      const btnText = u.status === 'blocked' ? 'Unblock' : 'Block';
+
+      return `<tr>
+        <td>${photo}${u.name || '-'}</td>
+        <td>${u.email || u.id}</td>
+        <td><span class="device-count">${u.deviceCount || 0}</span></td>
+        <td><span class="${statusClass}">${statusText}</span></td>
+        <td>${lastLogin}</td>
+        <td>
+          <button class="btn btn-view" onclick="viewDevices('${u.id}', '${(u.name || '').replace(/'/g, "\\'")}')">Devices</button>
+          <button class="${btnClass}" onclick="toggleBlock('${u.id}', '${u.status}')">${btnText}</button>
+        </td>
+      </tr>`;
+    }).join('');
+  }
+
+  function filterUsers() {
+    const q = document.getElementById('searchInput').value.toLowerCase();
+    const filtered = allUsers.filter(u =>
+      (u.email || '').toLowerCase().includes(q) ||
+      (u.name || '').toLowerCase().includes(q) ||
+      (u.id || '').toLowerCase().includes(q)
+    );
+    renderUsers(filtered);
+  }
+
+  async function toggleBlock(email, currentStatus) {
+    const newStatus = currentStatus === 'blocked' ? 'active' : 'blocked';
+    const action = newStatus === 'blocked' ? 'block' : 'unblock';
+    if (!confirm(`Are you sure you want to ${action} ${email}?`)) return;
+
+    await db.collection('users').doc(email).update({ status: newStatus });
+    await loadUsers();
+  }
+
+  async function viewDevices(email, name) {
+    document.getElementById('modalTitle').textContent = `Devices — ${name || email}`;
+    document.getElementById('deviceList').innerHTML = '<div class="loading">Loading devices...</div>';
+    document.getElementById('deviceModal').classList.add('active');
+
+    const snapshot = await db.collection('users').doc(email).collection('devices').get();
+    if (snapshot.empty) {
+      document.getElementById('deviceList').innerHTML = '<div class="loading">No devices found</div>';
+      return;
+    }
+
+    let html = '';
+    snapshot.forEach(doc => {
+      const d = doc.data();
+      const lastActive = d.lastActive ? new Date(d.lastActive.seconds * 1000).toLocaleString('en-IN') : '-';
+      const firstLogin = d.firstLogin ? new Date(d.firstLogin.seconds * 1000).toLocaleString('en-IN') : '-';
+      html += `<div class="device-card">
+        <div class="field"><span class="key">Device ID</span><span class="val">${doc.id}</span></div>
+        <div class="field"><span class="key">Model</span><span class="val">${d.model || '-'}</span></div>
+        <div class="field"><span class="key">OS</span><span class="val">${d.os || '-'}</span></div>
+        <div class="field"><span class="key">App Version</span><span class="val">${d.appVersion || '-'} (${d.buildNumber || '-'})</span></div>
+        <div class="field"><span class="key">First Login</span><span class="val">${firstLogin}</span></div>
+        <div class="field"><span class="key">Last Active</span><span class="val">${lastActive}</span></div>
+      </div>`;
+    });
+    document.getElementById('deviceList').innerHTML = html;
+  }
+
+  function closeModal() {
+    document.getElementById('deviceModal').classList.remove('active');
+  }
+
+  // Close modal on overlay click
+  document.getElementById('deviceModal').addEventListener('click', (e) => {
+    if (e.target === document.getElementById('deviceModal')) closeModal();
+  });
+
+  // Load on page ready
+  loadUsers();
+
+  // Auto-refresh every 30 seconds
+  setInterval(loadUsers, 30000);
+</script>
+
+</body>
+</html>
