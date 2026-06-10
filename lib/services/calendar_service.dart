@@ -209,10 +209,11 @@ class CalendarService {
         pageToken = result.nextPageToken;
       } while (pageToken != null);
 
-      debugPrint('CalendarService: Pulled ${events.length} events');
+      debugPrint('CalendarService: Pulled ${events.length} events from $cId');
       return events;
     } catch (e) {
-      debugPrint('CalendarService: pullEvents error: $e');
+      debugPrint('CalendarService: pullEvents error for $cId: $e');
+      lastSyncDebug = (lastSyncDebug ?? '') + '\nPull ERROR ($cId): $e';
       return [];
     }
   }
@@ -224,6 +225,7 @@ class CalendarService {
   static Future<({int pushed, int pulled, int deleted})> fullSync() async {
     if (_isSyncing) return (pushed: 0, pulled: 0, deleted: 0);
     _isSyncing = true;
+    lastSyncDebug = '';
 
     int pushed = 0, pulled = 0, deleted = 0;
 
