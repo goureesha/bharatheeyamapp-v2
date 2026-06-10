@@ -448,13 +448,30 @@ class CalendarService {
   /// Returns null if the event can't be converted.
   static Appointment? _toAppointment(gcal.Event event) {
     try {
-      final start = event.start?.dateTime;
-      final end = event.end?.dateTime;
-      if (start == null || end == null) return null;
+      DateTime localStart;
+      DateTime localEnd;
 
-      // Convert to local time
-      final localStart = start.toLocal();
-      final localEnd = end.toLocal();
+      if (event.start?.dateTime != null && event.end?.dateTime != null) {
+        // Timed event
+        localStart = event.start!.dateTime!.toLocal();
+        localEnd = event.end!.dateTime!.toLocal();
+      } else if (event.start?.date != null) {
+        // All-day event — use 09:00-10:00 as default time
+        localStart = DateTime(
+          event.start!.date!.year,
+          event.start!.date!.month,
+          event.start!.date!.day,
+          9, 0,
+        );
+        localEnd = DateTime(
+          event.start!.date!.year,
+          event.start!.date!.month,
+          event.start!.date!.day,
+          10, 0,
+        );
+      } else {
+        return null;
+      }
 
       // Extract client name from title (remove emoji prefix if present)
       String clientName = event.summary ?? 'Unknown';
