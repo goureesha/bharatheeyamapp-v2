@@ -4,6 +4,8 @@ import 'package:flutter/services.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'screens/home_screen.dart';
 import 'widgets/common.dart';
+import 'services/google_auth_service.dart';
+import 'services/firebase_service.dart';
 
 import 'services/festival_cache_service.dart';
 import 'services/location_service.dart';
@@ -23,6 +25,9 @@ Future<void> main() async {
     DeviceOrientation.landscapeRight,
   ]);
 
+  // Firebase must init BEFORE auth (sign-in needs Firestore for appointments)
+  await FirebaseService.init();
+
   // Run ALL critical startup tasks in PARALLEL
   await Future.wait([
     _initEphemeris(),
@@ -31,6 +36,7 @@ Future<void> main() async {
     AppLocale.loadLang(),
     LocationService.init(),
     TesterService.init(),
+    _initAuth(),
   ]);
 
   // Now show the app
@@ -51,8 +57,22 @@ Future<void> _initEphemeris() async {
   }
 }
 
+/// Sign in silently for appointment sync.
+Future<void> _initAuth() async {
+  try {
+    await GoogleAuthService.signInSilently();
+  } catch (e) {
+    debugPrint('Auth init error: $e');
+  }
+}
+
 /// Non-critical startup tasks that run AFTER the app is visible
 Future<void> _deferredInit() async {
+  // Start the appointment listener if signed in
+  if (GoogleAuthService.isSignedIn) {
+    FirebaseService.listenForAppointments();
+  }
+
   // Pre-load festival events lazily (non-blocking)
   FestivalCacheService.loadYear(DateTime.now().year);
 
