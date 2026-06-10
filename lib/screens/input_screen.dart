@@ -1007,6 +1007,10 @@ class _InputScreenState extends State<InputScreen> {
                   (name) => name.toLowerCase().contains(query));
             },
             fieldViewBuilder: (context, textEditingController, focusNode, onFieldSubmitted) {
+              // Pre-populate with saved place name
+              if (_placeCtrl.text.isNotEmpty && textEditingController.text.isEmpty) {
+                textEditingController.text = _placeCtrl.text;
+              }
               return TextField(
                 controller: textEditingController,
                 focusNode: focusNode,
