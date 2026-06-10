@@ -998,6 +998,7 @@ class _InputScreenState extends State<InputScreen> {
 
           // Searchable Place Selector (Offline + Online)
           Autocomplete<String>(
+            key: ValueKey(_placeCtrl.text),
             optionsBuilder: (TextEditingValue textEditingValue) {
               if (textEditingValue.text.isEmpty) {
                 return offlinePlaces.keys.take(15);
