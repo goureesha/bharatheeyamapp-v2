@@ -266,6 +266,18 @@ class _PrashnaDashboardScreenState extends State<PrashnaDashboardScreen>
             textScale: textScale,
           ),
           const SizedBox(height: 24),
+
+          // ── Rashi Phala Section ──
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                ..._buildGrahaPhalas(_result),
+              ],
+            ),
+          ),
+          const SizedBox(height: 24),
         ],
       ),
     );
