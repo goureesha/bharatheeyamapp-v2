@@ -9,7 +9,7 @@ import '../services/history_service.dart';
 import '../core/calculator.dart';
 import '../constants/places.dart';
 import '../core/ephemeris.dart';
-import '../services/network_service.dart';
+
 import '../services/google_auth_service.dart';
 import '../services/calendar_service.dart';
 import '../services/location_service.dart';
@@ -33,8 +33,8 @@ class _InputScreenState extends State<InputScreen> {
   int _hour          = DateTime.now().hour % 12 == 0 ? 12 : DateTime.now().hour % 12;
   int _minute        = DateTime.now().minute;
   String _ampm       = DateTime.now().hour < 12 ? 'AM' : 'PM';
-  String _ayanamsa   = 'ಲಾಹಿರಿ';
-  String _nodeMode   = 'ನಿಜ ರಾಹು';
+  String _ayanamsa   = 'lahiri';
+  String _nodeMode   = 'mean';
   bool _loading      = false;
   bool _geoLoading   = false;
   String _geoStatus  = '';
@@ -42,8 +42,7 @@ class _InputScreenState extends State<InputScreen> {
   Map<String, Profile> _savedProfiles = {};
   String? _selName;
 
-  bool _isInitStatus = true;
-  bool _isNetworkBlocked = false;
+  bool _isInitStatus = false;
   bool _loadedFromSaved = false; // true when user opened an existing profile
 
   String _loadedNotes = '';
@@ -51,6 +50,12 @@ class _InputScreenState extends State<InputScreen> {
   Map<String, int> _loadedAroodhas = {};
   int? _loadedJanmaNakshatraIdx;
   List<String> _loadedGroupMembers = [];
+
+  // Udayadi Ghati input
+  bool _showGhatiInput = false;
+  final _ghatiCtrl = TextEditingController();
+  final _vighatiCtrl = TextEditingController();
+  String? _computedSunrise; // display sunrise for feedback
 
 
 
@@ -62,7 +67,6 @@ class _InputScreenState extends State<InputScreen> {
     _lonCtrl = TextEditingController(text: LocationService.lon.toStringAsFixed(4));
     _tzCtrl = TextEditingController(text: '${LocationService.tzOffset >= 0 ? '+' : ''}${LocationService.tzOffset}');
     _loadProfiles();
-    _checkNetwork();
     HistoryService.load();
   }
 
@@ -72,18 +76,12 @@ class _InputScreenState extends State<InputScreen> {
     _latCtrl.dispose();
     _lonCtrl.dispose();
     _tzCtrl.dispose();
+    _ghatiCtrl.dispose();
+    _vighatiCtrl.dispose();
     super.dispose();
   }
 
-  Future<void> _checkNetwork() async {
-    // Clone doesn't gate access — always allow
-    if (mounted) {
-      setState(() {
-        _isNetworkBlocked = false;
-        _isInitStatus = false;
-      });
-    }
-  }
+
 
   Future<void> _loadProfiles() async {
     final p = await StorageService.loadAll();
@@ -330,9 +328,8 @@ class _InputScreenState extends State<InputScreen> {
       if (_ampm == 'AM' && _hour == 12) h24 = 0;
       final localHour = h24 + _minute / 60.0;
 
-      final aynMode = _ayanamsa == 'ರಾಮನ್'
-          ? 'raman' : _ayanamsa == 'ಕೆ.ಪಿ' ? 'kp' : 'lahiri';
-      final trueNode = _nodeMode == 'ನಿಜ ರಾಹು';
+      final aynMode = _ayanamsa;
+      final trueNode = _nodeMode == 'true';
 
       final tzOffset = double.tryParse(_tzCtrl.text) ?? LocationService.tzOffset;
 
@@ -390,7 +387,7 @@ class _InputScreenState extends State<InputScreen> {
             ampm: _ampm,
             lat: lat,
             lon: lon,
-            extraInfo: {'clientId': activeClientId ?? ''},
+            extraInfo: {'clientId': activeClientId ?? '', 'ayanamsa': _ayanamsa, 'nodeMode': _nodeMode},
             initialNotes: uiNotes,
             initialAroodhas: _loadedAroodhas,
             initialJanmaNakshatraIdx: _loadedJanmaNakshatraIdx,
@@ -469,39 +466,7 @@ class _InputScreenState extends State<InputScreen> {
 
   @override
   Widget build(BuildContext context) {
-    if (_isInitStatus) {
-      return const Scaffold(body: Center(child: CircularProgressIndicator()));
-    }
-    if (_isNetworkBlocked) {
-      return Scaffold(
-        backgroundColor: kBg,
-        body: Center(
-          child: Padding(
-            padding: const EdgeInsets.all(32),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(Icons.wifi_off, size: 80, color: Colors.red.shade400),
-                const SizedBox(height: 24),
-                Text(AppLocale.l('webBlockedTitle'), style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.red), textAlign: TextAlign.center),
-                const SizedBox(height: 16),
-                Text('ನಿಮ್ಮ ಚಂದಾದಾರಿಕೆಯನ್ನು ಪರಿಶೀಲಿಸಲು ದಯವಿಟ್ಟು ೪೮ ಗಂಟೆಗಳಿಗೊಮ್ಮೆ ಇಂಟರ್ನೆಟ್ ಸಂಪರ್ಕ ಕಲ್ಪಿಸಿ.', 
-                    style: TextStyle(fontSize: 16, height: 1.5), textAlign: TextAlign.center),
-                const SizedBox(height: 32),
-                ElevatedButton.icon(
-                  onPressed: () {
-                    setState(() => _isInitStatus = true);
-                    _checkNetwork();
-                  },
-                  icon: Icon(Icons.refresh, color: Colors.white),
-                  label: Text(AppLocale.l('retryBtn')),
-                ),
-              ],
-            ),
-          ),
-        ),
-      );
-    }
+
 
     return Scaffold(
       backgroundColor: kBg,
@@ -569,13 +534,13 @@ class _InputScreenState extends State<InputScreen> {
                  e.value.date.contains(searchQuery);
         }).toList();
 
-        // Sort ascending by Client ID ("BH-2026-0001", "BH-2026-0002" ...) so they display in exact serial order
+        // Sort descending by Client ID so newest entries appear first
         filteredEntries.sort((a, b) {
           final aId = a.value.clientId ?? '';
           final bId = b.value.clientId ?? '';
           if (aId.isEmpty && bId.isNotEmpty) return 1;
           if (aId.isNotEmpty && bId.isEmpty) return -1;
-          return aId.compareTo(bId); // Ascending serial order
+          return bId.compareTo(aId); // Descending — newest first
         });
 
         return SafeArea(
@@ -659,7 +624,7 @@ class _InputScreenState extends State<InputScreen> {
                               Padding(
                                 padding: const EdgeInsets.only(top: 2),
                                 child: Text(
-                                  '👥 $totalKundalis ಕುಂಡಲಿ: ${profile.groupMembers.join(', ')}',
+                                  '👥 $totalKundalis ${AppLocale.l('kundaliCount')}: ${profile.groupMembers.join(', ')}',
                                   style: TextStyle(color: kTeal, fontSize: 11, fontWeight: FontWeight.w600),
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
@@ -688,12 +653,9 @@ class _InputScreenState extends State<InputScreen> {
                                 );
                                 if (confirm == true) {
                                   await StorageService.delete(name);
-                                  // Also remove the member from ClientService if it exists
+                                  // Also remove the member from ClientService (properly persist)
                                   if (profile.clientId != null && profile.clientId!.isNotEmpty) {
-                                    final members = ClientService.getMembersForClient(profile.clientId!);
-                                    if (members.any((m) => m.memberName == name)) {
-                                      members.removeWhere((m) => m.memberName == name);
-                                    }
+                                    await ClientService.removeFamilyMember(profile.clientId!, name);
                                   }
                                   await _loadProfiles();
                                   setSheetState(() {}); // refresh the sheet
@@ -747,7 +709,7 @@ class _InputScreenState extends State<InputScreen> {
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(
-                        'ಇತ್ತೀಚಿನ ಕುಂಡಲಿಗಳು (${items.length}/100)',
+                        '${AppLocale.l('recentKundalis')} (${items.length}/100)',
                         style: TextStyle(fontSize: 17, fontWeight: FontWeight.w900, color: const Color(0xFF7B2D8E)),
                       ),
                     ),
@@ -758,11 +720,11 @@ class _InputScreenState extends State<InputScreen> {
                             context: ctx,
                             builder: (dCtx) => AlertDialog(
                               backgroundColor: kBg,
-                              title: Text('ಇತಿಹಾಸ ಅಳಿಸಿ', style: TextStyle(color: kText, fontWeight: FontWeight.w900)),
-                              content: Text('ಎಲ್ಲಾ ${items.length} ಇತಿಹಾಸ ನಮೂದುಗಳನ್ನು ಅಳಿಸಬೇಕೇ?', style: TextStyle(color: kMuted)),
+                              title: Text(AppLocale.l('clearHistory'), style: TextStyle(color: kText, fontWeight: FontWeight.w900)),
+                              content: Text('${AppLocale.l('clearHistoryConfirm')}', style: TextStyle(color: kMuted)),
                               actions: [
-                                TextButton(onPressed: () => Navigator.pop(dCtx, false), child: Text('ಬೇಡ', style: TextStyle(color: kMuted))),
-                                TextButton(onPressed: () => Navigator.pop(dCtx, true), child: Text('ಅಳಿಸಿ', style: TextStyle(color: Colors.red))),
+                                TextButton(onPressed: () => Navigator.pop(dCtx, false), child: Text(AppLocale.l('no'), style: TextStyle(color: kMuted))),
+                                TextButton(onPressed: () => Navigator.pop(dCtx, true), child: Text(AppLocale.l('delete'), style: TextStyle(color: Colors.red))),
                               ],
                             ),
                           );
@@ -772,7 +734,7 @@ class _InputScreenState extends State<InputScreen> {
                           }
                         },
                         icon: Icon(Icons.delete_sweep, color: Colors.red.shade400, size: 18),
-                        label: Text('ಅಳಿಸಿ', style: TextStyle(color: Colors.red.shade400, fontSize: 12)),
+                        label: Text(AppLocale.l('delete'), style: TextStyle(color: Colors.red.shade400, fontSize: 12)),
                       ),
                   ],
                 ),
@@ -786,9 +748,9 @@ class _InputScreenState extends State<InputScreen> {
                       children: [
                         Icon(Icons.history_toggle_off, size: 64, color: kMuted.withOpacity(0.3)),
                         const SizedBox(height: 12),
-                        Text('ಇತಿಹಾಸ ಖಾಲಿ', style: TextStyle(fontSize: 16, color: kMuted)),
+                        Text(AppLocale.l('historyEmpty'), style: TextStyle(fontSize: 16, color: kMuted)),
                         const SizedBox(height: 4),
-                        Text('ಕುಂಡಲಿ ರಚಿಸಿದಾಗ ಇಲ್ಲಿ ಕಾಣಿಸುತ್ತದೆ', style: TextStyle(fontSize: 13, color: kMuted.withOpacity(0.6))),
+                        Text(AppLocale.l('historyHint'), style: TextStyle(fontSize: 13, color: kMuted.withOpacity(0.6))),
                       ],
                     ),
                   ),
@@ -806,13 +768,13 @@ class _InputScreenState extends State<InputScreen> {
                       final diff = DateTime.now().difference(ts);
                       String ago;
                       if (diff.inMinutes < 1) {
-                        ago = 'ಈಗ';
+                        ago = AppLocale.l('now');
                       } else if (diff.inMinutes < 60) {
-                        ago = '${diff.inMinutes}m ಹಿಂದೆ';
+                        ago = '${diff.inMinutes}m ${AppLocale.l('ago')}';
                       } else if (diff.inHours < 24) {
-                        ago = '${diff.inHours}h ಹಿಂದೆ';
+                        ago = '${diff.inHours}h ${AppLocale.l('ago')}';
                       } else {
-                        ago = '${diff.inDays}d ಹಿಂದೆ';
+                        ago = '${diff.inDays}d ${AppLocale.l('ago')}';
                       }
 
                       // Check if already saved
@@ -859,7 +821,7 @@ class _InputScreenState extends State<InputScreen> {
                             if (!isSaved)
                               IconButton(
                                 icon: Icon(Icons.bookmark_add_outlined, color: kTeal, size: 20),
-                                tooltip: 'ಉಳಿಸಿ',
+                                tooltip: AppLocale.l('save'),
                                 padding: EdgeInsets.zero,
                                 constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
                                 onPressed: () async {
@@ -869,7 +831,7 @@ class _InputScreenState extends State<InputScreen> {
                                   if (mounted) {
                                     ScaffoldMessenger.of(context).showSnackBar(
                                       SnackBar(
-                                        content: Text('\u2705 "${entry.name}" ಉಳಿಸಲಾಗಿದೆ'),
+                                        content: Text('\u2705 "${entry.name}" ${AppLocale.l('saved')}'),
                                         backgroundColor: kGreen,
                                         duration: const Duration(seconds: 2),
                                       ),
@@ -879,7 +841,7 @@ class _InputScreenState extends State<InputScreen> {
                               ),
                             IconButton(
                               icon: Icon(Icons.close, color: Colors.red.shade300, size: 18),
-                              tooltip: 'ಅಳಿಸಿ',
+                              tooltip: AppLocale.l('delete'),
                               padding: EdgeInsets.zero,
                               constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
                               onPressed: () async {
@@ -945,9 +907,10 @@ class _InputScreenState extends State<InputScreen> {
           // Name
           TextField(
             controller: _nameCtrl,
+            style: TextStyle(color: kText),
             decoration: InputDecoration(
               labelText: AppLocale.l('name'),
-              prefixIcon: Icon(Icons.person_outline),
+              prefixIcon: Icon(Icons.person_outline, color: kMuted),
             ),
           ),
           const SizedBox(height: 14),
@@ -994,6 +957,109 @@ class _InputScreenState extends State<InputScreen> {
               ]),
             ),
           ),
+          const SizedBox(height: 8),
+
+          // Udayadi Ghati toggle + input
+          GestureDetector(
+            onTap: () => setState(() => _showGhatiInput = !_showGhatiInput),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+              decoration: BoxDecoration(
+                color: _showGhatiInput ? kPurple2.withOpacity(0.08) : kCard,
+                border: Border.all(color: _showGhatiInput ? kPurple2.withOpacity(0.3) : kBorder),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Row(children: [
+                Icon(Icons.sunny, size: 18, color: _showGhatiInput ? kOrange : kMuted),
+                const SizedBox(width: 10),
+                Expanded(child: Text(
+                  AppLocale.l('udayadiGhatiLabel'),
+                  style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: _showGhatiInput ? kPurple2 : kText),
+                )),
+                Icon(_showGhatiInput ? Icons.expand_less : Icons.expand_more, color: kMuted, size: 20),
+              ]),
+            ),
+          ),
+          if (_showGhatiInput) ...[
+            const SizedBox(height: 8),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: kCard,
+                border: Border.all(color: kPurple2.withOpacity(0.2)),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+
+                Row(children: [
+                  Expanded(child: TextField(
+                    controller: _ghatiCtrl,
+                    keyboardType: TextInputType.number,
+                    inputFormatters: [
+                      FilteringTextInputFormatter.digitsOnly,
+                      LengthLimitingTextInputFormatter(2),
+                    ],
+                    onChanged: (v) {
+                      final n = int.tryParse(v) ?? 0;
+                      if (n > 60) _ghatiCtrl.text = '60';
+                    },
+                    decoration: InputDecoration(
+                      labelText: AppLocale.l('ghatiLabel'),
+                      isDense: true,
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                    ),
+                    style: TextStyle(fontSize: 14, color: kText),
+                  )),
+                  const SizedBox(width: 10),
+                  Expanded(child: TextField(
+                    controller: _vighatiCtrl,
+                    keyboardType: TextInputType.number,
+                    inputFormatters: [
+                      FilteringTextInputFormatter.digitsOnly,
+                      LengthLimitingTextInputFormatter(2),
+                    ],
+                    onChanged: (v) {
+                      final n = int.tryParse(v) ?? 0;
+                      if (n > 60) _vighatiCtrl.text = '60';
+                    },
+                    decoration: InputDecoration(
+                      labelText: AppLocale.l('vighatiLabel'),
+                      isDense: true,
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                    ),
+                    style: TextStyle(fontSize: 14, color: kText),
+                  )),
+                  const SizedBox(width: 10),
+                  ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: kPurple2,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                    ),
+                    onPressed: _applyGhatiTime,
+                    child: Text(AppLocale.l('applyLabel'), style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700)),
+                  ),
+                ]),
+                if (_computedSunrise != null) ...[
+                  const SizedBox(height: 8),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: Colors.green.withOpacity(0.08),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Text(
+                      '☀️ ${AppLocale.l('sunriseLabel')}: $_computedSunrise',
+                      style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Colors.green.shade700),
+                    ),
+                  ),
+                ],
+              ]),
+            ),
+          ],
           const SizedBox(height: 14),
 
           // Searchable Place Selector (Offline + Online)
@@ -1008,13 +1074,14 @@ class _InputScreenState extends State<InputScreen> {
                   (name) => name.toLowerCase().contains(query));
             },
             fieldViewBuilder: (context, textEditingController, focusNode, onFieldSubmitted) {
-              // Pre-populate with saved place name
-              if (_placeCtrl.text.isNotEmpty && textEditingController.text.isEmpty) {
+              // Pre-fill with default location if empty
+              if (textEditingController.text.isEmpty && _placeCtrl.text.isNotEmpty) {
                 textEditingController.text = _placeCtrl.text;
               }
               return TextField(
                 controller: textEditingController,
                 focusNode: focusNode,
+                style: TextStyle(color: kText),
                 decoration: InputDecoration(
                   labelText: AppLocale.l('searchPlace'),
                   prefixIcon: Icon(Icons.search),
@@ -1089,6 +1156,7 @@ class _InputScreenState extends State<InputScreen> {
               flex: 4,
               child: TextField(
                 controller: _latCtrl,
+                style: TextStyle(color: kText),
                 keyboardType: const TextInputType.numberWithOptions(decimal: true, signed: true),
                 decoration: InputDecoration(labelText: AppLocale.l('lat'), isDense: true),
               ),
@@ -1098,6 +1166,7 @@ class _InputScreenState extends State<InputScreen> {
               flex: 4,
               child: TextField(
                 controller: _lonCtrl,
+                style: TextStyle(color: kText),
                 keyboardType: const TextInputType.numberWithOptions(decimal: true, signed: true),
                 decoration: InputDecoration(labelText: AppLocale.l('lon'), isDense: true),
               ),
@@ -1107,18 +1176,41 @@ class _InputScreenState extends State<InputScreen> {
               flex: 3,
               child: TextField(
                 controller: _tzCtrl,
+                style: TextStyle(color: kText),
                 keyboardType: const TextInputType.numberWithOptions(decimal: true, signed: true),
                 decoration: InputDecoration(labelText: AppLocale.l('tzOffset'), isDense: true),
               ),
             ),
           ]),
+          // Single Letter Mode toggle
+          ValueListenableBuilder<bool>(
+            valueListenable: SingleLetterMode.notifier,
+            builder: (context, isActive, _) => Container(
+              decoration: BoxDecoration(
+                color: isActive ? kPurple2.withOpacity(0.08) : kCard,
+                border: Border.all(color: isActive ? kPurple2.withOpacity(0.3) : kBorder),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: SwitchListTile(
+                dense: true,
+                contentPadding: const EdgeInsets.symmetric(horizontal: 12),
+                title: Text(
+                  AppLocale.l('singleLetterMode'),
+                  style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: isActive ? kPurple2 : kText),
+                ),
+                value: isActive,
+                activeColor: kPurple2,
+                onChanged: (v) => SingleLetterMode.toggle(v),
+              ),
+            ),
+          ),
           const SizedBox(height: 14),
 
           // Advanced options
           Theme(
             data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
             child: ExpansionTile(
-              title: Text('⚙️ ${AppLocale.l('advancedSettings')}', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14)),
+              title: Text('⚙️ ${AppLocale.l('advancedSettings')}', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14, color: kText)),
               children: [
                 const SizedBox(height: 8),
                 Row(children: [
@@ -1126,8 +1218,8 @@ class _InputScreenState extends State<InputScreen> {
                     child: DropdownButtonFormField<String>(
                       value: _ayanamsa,
                       decoration: InputDecoration(labelText: AppLocale.l('ayanamsa')),
-                      items: ['ಲಾಹಿರಿ','ರಾಮನ್','ಕೆ.ಪಿ'].map((v) => DropdownMenuItem(
-                        value: v, child: Text(v, style: TextStyle()))).toList(),
+                      items: [{'v':'lahiri','l':'Lahiri'},{'v':'raman','l':'Raman'},{'v':'kp','l':'KP'}].map((m) => DropdownMenuItem(
+                        value: m['v']!, child: Text(m['l']!, style: TextStyle(color: kText)))).toList(),
                       onChanged: (v) => setState(() => _ayanamsa = v!),
                     ),
                   ),
@@ -1136,8 +1228,8 @@ class _InputScreenState extends State<InputScreen> {
                     child: DropdownButtonFormField<String>(
                       value: _nodeMode,
                       decoration: InputDecoration(labelText: AppLocale.l('nodeType')),
-                      items: ['ನಿಜ ರಾಹು','ಸರಾಸರಿ ರಾಹು'].map((v) => DropdownMenuItem(
-                        value: v, child: Text(v, style: TextStyle()))).toList(),
+                      items: [{'v':'true','l':'True Node'},{'v':'mean','l':'Mean Node'}].map((m) => DropdownMenuItem(
+                        value: m['v']!, child: Text(m['l']!, style: TextStyle(color: kText)))).toList(),
                       onChanged: (v) => setState(() => _nodeMode = v!),
                     ),
                   ),
@@ -1201,18 +1293,22 @@ class _InputScreenState extends State<InputScreen> {
             Expanded(
               child: ElevatedButton(
                 onPressed: () {
-                  final now = DateTime.now();
+                  // Get the timezone of the currently selected location
+                  final selectedTz = double.tryParse(_tzCtrl.text) ?? LocationService.tzOffset;
+                  // Convert device UTC time to the selected location's local time
+                  final nowUtc = DateTime.now().toUtc();
+                  final locationNow = nowUtc.add(Duration(
+                    hours: selectedTz.truncate(),
+                    minutes: ((selectedTz - selectedTz.truncate()) * 60).round(),
+                  ));
                   setState(() {
                     _loadedFromSaved = false;
                     _nameCtrl.clear();
-                    _placeCtrl.text = LocationService.place;
-                    _latCtrl.text = LocationService.lat.toStringAsFixed(4);
-                    _lonCtrl.text = LocationService.lon.toStringAsFixed(4);
-                    _tzCtrl.text = '${LocationService.tzOffset >= 0 ? '+' : ''}${LocationService.tzOffset}';
-                    _dob = now;
-                    _hour = now.hour % 12 == 0 ? 12 : now.hour % 12;
-                    _minute = now.minute;
-                    _ampm = now.hour >= 12 ? 'PM' : 'AM';
+                    // Keep the currently selected place — don't reset to default
+                    _dob = locationNow;
+                    _hour = locationNow.hour % 12 == 0 ? 12 : locationNow.hour % 12;
+                    _minute = locationNow.minute;
+                    _ampm = locationNow.hour >= 12 ? 'PM' : 'AM';
                     _loadedNotes = '';
                     _loadedClientId = null;
                     _loadedAroodhas = {};
@@ -1242,6 +1338,61 @@ class _InputScreenState extends State<InputScreen> {
             ),
           ]),
         ],
+      ),
+    );
+  }
+  /// Calculate birth time from Udayadi Ghati/Vighati
+  void _applyGhatiTime() {
+    final ghati = int.tryParse(_ghatiCtrl.text) ?? 0;
+    final vighati = int.tryParse(_vighatiCtrl.text) ?? 0;
+
+    if (ghati == 0 && vighati == 0) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(AppLocale.l('enterGhatiErr')), backgroundColor: Colors.red),
+      );
+      return;
+    }
+
+    final lat = double.tryParse(_latCtrl.text) ?? 0;
+    final lon = double.tryParse(_lonCtrl.text) ?? 0;
+    final tzText = _tzCtrl.text.replaceAll('+', '');
+    final tz = double.tryParse(tzText) ?? 5.5;
+
+    // Get sunrise JD for the selected date
+    final srSs = Ephemeris.findSunriseSetForDate(
+      _dob.year, _dob.month, _dob.day, lat, lon, tzOffset: tz,
+    );
+    final sunriseJd = srSs[0];
+
+    // Convert ghati/vighati to JD offset
+    // 1 ghati = 24 min = 1/60 day, 1 vighati = 24 sec = 1/3600 day
+    final totalGhatis = ghati + (vighati / 60.0);
+    final jdBirth = sunriseJd + (totalGhatis / 60.0);
+
+    // Convert sunrise JD to local time string for display
+    final sunriseStr = formatTimeFromJd(sunriseJd, tzOffset: tz);
+
+    // Convert birth JD to local time
+    final localJd = jdBirth + 0.5 + (tz / 24.0);
+    double frac = localJd - localJd.floor();
+    frac = ((frac % 1.0) + 1.0) % 1.0;
+    int totalMinutes = (frac * 24 * 60).round();
+    if (totalMinutes >= 1440) totalMinutes -= 1440;
+    int h24 = totalMinutes ~/ 60;
+    int min = totalMinutes % 60;
+    if (h24 >= 24) h24 -= 24;
+
+    setState(() {
+      _ampm = h24 >= 12 ? 'PM' : 'AM';
+      _hour = h24 % 12 == 0 ? 12 : h24 % 12;
+      _minute = min;
+      _computedSunrise = sunriseStr;
+    });
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('${AppLocale.l('timeAdjusted')}: ${_hour.toString().padLeft(2, '0')}:${_minute.toString().padLeft(2, '0')} $_ampm'),
+        backgroundColor: Colors.green,
       ),
     );
   }

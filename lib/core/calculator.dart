@@ -454,7 +454,29 @@ class AstroCalculator {
               pdCum = nextPdCum;
               final pdDays = (pdY * 365.25).round();
               final pe = cpd.add(Duration(days: pdDays));
-              pratyantars.add(DashaEntry(lord: dashaLords[ip], start: cpd, end: pe));
+              // Sookshma dashas within partial pratyantara
+              final List<DashaEntry> sookshmas = [];
+              DateTime csd = cpd;
+              for (int k2 = 0; k2 < 9; k2++) {
+                final is2 = (ip + k2) % 9;
+                double sdY = (totalMdYears * dashaYears[ia] * dashaYears[ip] * dashaYears[is2]) / (120.0 * 120.0 * 120.0);
+                final sdDays = (sdY * 365.25).round();
+                final se = csd.add(Duration(days: sdDays));
+                // Prana dashas within sookshma
+                final List<DashaEntry> pranas = [];
+                DateTime cprana = csd;
+                for (int k3 = 0; k3 < 9; k3++) {
+                  final ip2 = (is2 + k3) % 9;
+                  double prY = (totalMdYears * dashaYears[ia] * dashaYears[ip] * dashaYears[is2] * dashaYears[ip2]) / (120.0 * 120.0 * 120.0 * 120.0);
+                  final prDays = (prY * 365.25).round();
+                  final prE = cprana.add(Duration(days: prDays < 1 ? 1 : prDays));
+                  pranas.add(DashaEntry(lord: dashaLords[ip2], start: cprana, end: prE));
+                  cprana = prE;
+                }
+                sookshmas.add(DashaEntry(lord: dashaLords[is2], start: csd, end: se, antardashas: pranas));
+                csd = se;
+              }
+              pratyantars.add(DashaEntry(lord: dashaLords[ip], start: cpd, end: pe, antardashas: sookshmas));
               cpd = pe;
             }
           } else {
@@ -464,7 +486,31 @@ class AstroCalculator {
               double pdY = (totalMdYears * dashaYears[ia] * dashaYears[ip]) / (120.0 * 120.0);
               final pdDays = (pdY * 365.25).round();
               final pe = cpd.add(Duration(days: pdDays));
-              pratyantars.add(DashaEntry(lord: dashaLords[ip], start: cpd, end: pe));
+
+              // Sookshma dashas
+              final List<DashaEntry> sookshmas = [];
+              DateTime csd = cpd;
+              for (int k2 = 0; k2 < 9; k2++) {
+                final is2 = (ip + k2) % 9;
+                double sdY = (totalMdYears * dashaYears[ia] * dashaYears[ip] * dashaYears[is2]) / (120.0 * 120.0 * 120.0);
+                final sdDays = (sdY * 365.25).round();
+                final se = csd.add(Duration(days: sdDays));
+                // Prana dashas within sookshma
+                final List<DashaEntry> pranas = [];
+                DateTime cprana = csd;
+                for (int k3 = 0; k3 < 9; k3++) {
+                  final ip2 = (is2 + k3) % 9;
+                  double prY = (totalMdYears * dashaYears[ia] * dashaYears[ip] * dashaYears[is2] * dashaYears[ip2]) / (120.0 * 120.0 * 120.0 * 120.0);
+                  final prDays = (prY * 365.25).round();
+                  final prE = cprana.add(Duration(days: prDays < 1 ? 1 : prDays));
+                  pranas.add(DashaEntry(lord: dashaLords[ip2], start: cprana, end: prE));
+                  cprana = prE;
+                }
+                sookshmas.add(DashaEntry(lord: dashaLords[is2], start: csd, end: se, antardashas: pranas));
+                csd = se;
+              }
+
+              pratyantars.add(DashaEntry(lord: dashaLords[ip], start: cpd, end: pe, antardashas: sookshmas));
               cpd = pe;
             }
           }
@@ -487,7 +533,31 @@ class AstroCalculator {
             double pdY = (dashaYears[im] * dashaYears[ia] * dashaYears[ip]) / (120.0 * 120.0);
             final pdDays = (pdY * 365.25).round();
             final pe = cpd.add(Duration(days: pdDays));
-            pratyantars.add(DashaEntry(lord: dashaLords[ip], start: cpd, end: pe));
+
+            // Sookshma dashas within pratyantara
+            final List<DashaEntry> sookshmas = [];
+            DateTime csd = cpd;
+            for (int k2 = 0; k2 < 9; k2++) {
+              final is2 = (ip + k2) % 9;
+              double sdY = (dashaYears[im] * dashaYears[ia] * dashaYears[ip] * dashaYears[is2]) / (120.0 * 120.0 * 120.0);
+              final sdDays = (sdY * 365.25).round();
+              final se = csd.add(Duration(days: sdDays));
+              // Prana dashas within sookshma
+              final List<DashaEntry> pranas = [];
+              DateTime cprana = csd;
+              for (int k3 = 0; k3 < 9; k3++) {
+                final ip2 = (is2 + k3) % 9;
+                double prY = (dashaYears[im] * dashaYears[ia] * dashaYears[ip] * dashaYears[is2] * dashaYears[ip2]) / (120.0 * 120.0 * 120.0 * 120.0);
+                final prDays = (prY * 365.25).round();
+                final prE = cprana.add(Duration(days: prDays < 1 ? 1 : prDays));
+                pranas.add(DashaEntry(lord: dashaLords[ip2], start: cprana, end: prE));
+                cprana = prE;
+              }
+              sookshmas.add(DashaEntry(lord: dashaLords[is2], start: csd, end: se, antardashas: pranas));
+              csd = se;
+            }
+
+            pratyantars.add(DashaEntry(lord: dashaLords[ip], start: cpd, end: pe, antardashas: sookshmas));
             cpd = pe;
           }
 
@@ -741,34 +811,46 @@ class AstroCalculator {
       String chandraMasaRaw = '';
       String chandraMasa = '';
       try {
-        // Approximate days from birth to previous Amavasya
-        // tIdx: 0 = Shukla Pratipada (start of month, 1 tithi after previous Amavasya)
-        // tIdx: 29 = Amavasya (END of month in Amavasyanta)
-        final tithiDuration = 29.530589 / 30.0; // ~0.9844 days per tithi
+        // Find EXACT New Moon (Amavasya) dates using binary search
+        // instead of approximation, which can be off by 1-2 days
+        // and cause wrong Adhika/Nija detection near Sankranti boundaries.
         
-        // Days back to the previous Amavasya (the one that marks the start boundary)
-        // At tIdx=0 (Shukla Pratipada): ~1 tithi back to previous Amavasya
-        // At tIdx=29 (Amavasya): ~30 tithis back (full month) to PREVIOUS Amavasya
-        final daysBackToAmavasya = (tIdx + 1) * tithiDuration;
+        // Helper: find exact JD where Moon-Sun longitude = 0° (New Moon)
+        // near an approximate JD, searching within ±3 days.
+        double findNewMoon(double jdApprox) {
+          double low = jdApprox - 3.0, high = jdApprox + 3.0;
+          for (int i = 0; i < 30; i++) {
+            final mid = (low + high) / 2;
+            final moonCalc = Sweph.swe_calc_ut(mid, HeavenlyBody.SE_MOON, SwephFlag.SEFLG_SWIEPH);
+            final sunCalc = Sweph.swe_calc_ut(mid, HeavenlyBody.SE_SUN, SwephFlag.SEFLG_SWIEPH);
+            final tDeg = ((moonCalc.longitude - sunCalc.longitude) % 360 + 360) % 360;
+            // Map to -180..+180 for convergence at 0°
+            final diff = ((tDeg + 180) % 360) - 180;
+            if (diff < 0) low = mid; else high = mid;
+          }
+          return (low + high) / 2;
+        }
         
-        // Days forward to the next Amavasya (the one that marks the end boundary)
-        // At tIdx=0: ~29 tithis forward
-        // At tIdx=29 (Amavasya): 0 days (we ARE at the end Amavasya)
-        final daysForwardToNextAmavasya = (29 - tIdx) * tithiDuration;
+        // Approximate days to previous/next Amavasya using tithi index
+        final synodic = 29.530589;
+        final tithiDuration = synodic / 30.0;
+        final approxDaysBack = (tIdx + 1) * tithiDuration;
+        final approxDaysForward = (29 - tIdx) * tithiDuration;
         
-
+        // Refine to exact New Moon JDs
+        final jdPrevAmavasya = findNewMoon(jdBirth - approxDaysBack);
+        final jdNextAmavasya = findNewMoon(jdBirth + approxDaysForward);
         
-        final jdPrevAmavasya = jdBirth - daysBackToAmavasya;
-        final jdNextAmavasya = jdBirth + daysForwardToNextAmavasya;
-        
-        // Get Sun's sidereal Rashi at previous Amavasya
+        // Get Sun's sidereal Rashi at exact previous Amavasya
+        final aynPrev = _getAyanamsa(jdPrevAmavasya, ayanamsaMode);
         final sunPrevCalc = Sweph.swe_calc_ut(jdPrevAmavasya, HeavenlyBody.SE_SUN, SwephFlag.SEFLG_SWIEPH);
-        final sunPrevSid = ((sunPrevCalc.longitude - ayn) % 360 + 360) % 360;
+        final sunPrevSid = ((sunPrevCalc.longitude - aynPrev) % 360 + 360) % 360;
         final prevAmaRashi = (sunPrevSid / 30).floor() % 12;
         
-        // Get Sun's sidereal Rashi at next Amavasya
+        // Get Sun's sidereal Rashi at exact next Amavasya
+        final aynNext = _getAyanamsa(jdNextAmavasya, ayanamsaMode);
         final sunNextCalc = Sweph.swe_calc_ut(jdNextAmavasya, HeavenlyBody.SE_SUN, SwephFlag.SEFLG_SWIEPH);
-        final sunNextSid = ((sunNextCalc.longitude - ayn) % 360 + 360) % 360;
+        final sunNextSid = ((sunNextCalc.longitude - aynNext) % 360 + 360) % 360;
         final nextAmaRashi = (sunNextSid / 30).floor() % 12;
         
         // Check if a Sankranti occurred: Sun must have changed Rashi
@@ -801,6 +883,22 @@ class AstroCalculator {
       final jdVE = js + (nakDurationDays * ((vishaG + 4.0) / 60.0)); // 4 ghati duration
       final jdAS = js + (nakDurationDays * (amrutaG / 60.0));
       final jdAE = js + (nakDurationDays * ((amrutaG + 4.0) / 60.0)); // 4 ghati duration
+
+      // Find the sunrise immediately preceding a given event JD
+      double eventSunrise(double eventJd) {
+        final utcMs = ((eventJd - 2440587.5) * 86400000).round();
+        final localDt = DateTime.fromMillisecondsSinceEpoch(utcMs, isUtc: true)
+            .add(Duration(milliseconds: (hourUtcOffset * 3600000).round()));
+        final srSs = Ephemeris.findSunriseSetForDate(
+            localDt.year, localDt.month, localDt.day, lat, lon, tzOffset: hourUtcOffset);
+        if (eventJd >= srSs[0]) return srSs[0];
+        final prevDt = localDt.subtract(const Duration(days: 1));
+        final prevSrSs = Ephemeris.findSunriseSetForDate(
+            prevDt.year, prevDt.month, prevDt.day, lat, lon, tzOffset: hourUtcOffset);
+        return prevSrSs[0];
+      }
+      final vishaSr = eventSunrise(jdVS);
+      final amrutaSr = eventSunrise(jdAS);
 
       final vishaStr = '${formatTimeFromJd(jdVS, tzOffset: hourUtcOffset)} - ${formatTimeFromJd(jdVE, tzOffset: hourUtcOffset)}';
       final amrutaStr = '${formatTimeFromJd(jdAS, tzOffset: hourUtcOffset)} - ${formatTimeFromJd(jdAE, tzOffset: hourUtcOffset)}';
@@ -872,7 +970,8 @@ class AstroCalculator {
       }
 
       // Agni Vasa — use tithi at sunrise (not at calculation time)
-      // Formula: (tithiIdx + wIdx + 3) % 4
+      // Ex: Shukla Panchami(5)+1=6, Kuja Vara(3)+1=4, total=10, 10%4=2
+      // Formula: ((Tithi + 1) + (Vara + 1)) % 4 = (tIdxSunrise + wIdx) % 4
       // Remainder: 0 or 3 = Bhumi (Shubha), 1 = Akasha (Ashubha), 2 = Patala (Ashubha)
       final srPlanets = Ephemeris.calcAll(panchSunrise, ayanamsaMode, trueNode);
       final srMoon = normDeg(srPlanets['Moon']![0]);
@@ -927,8 +1026,8 @@ class AstroCalculator {
         souraMasaGataDina: souraMasaGataDina,
         chandraMasa: chandraMasa,
         samvatsara: samvatsara,
-        vishaPraghati: '${vishaG.toInt()}${AppLocale.l('ghatiSuffix')} ($vishaStr)',
-        amrutaPraghati: '${amrutaG.toInt()}${AppLocale.l('ghatiSuffix')} ($amrutaStr)',
+        vishaPraghati: '${formatGhati((jdVS - vishaSr) * 60)} - ${formatGhati((jdVE - vishaSr) * 60)} ($vishaStr)',
+        amrutaPraghati: '${formatGhati((jdAS - amrutaSr) * 60)} - ${formatGhati((jdAE - amrutaSr) * 60)} ($amrutaStr)',
         tithiEndTime: formatTimeFromJd(jdTEnd, tzOffset: hourUtcOffset),
         tithiEndsNextDay: isNextDay(jdBirth, jdTEnd),
         karanaEndTime: formatTimeFromJd(jdKEnd, tzOffset: hourUtcOffset),

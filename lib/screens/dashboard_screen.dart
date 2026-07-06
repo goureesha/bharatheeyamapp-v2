@@ -17,7 +17,7 @@ import 'dart:convert';
 import '../services/storage_service.dart';
 import '../services/client_service.dart'; // FIX: Imported missing ClientService
 import '../services/history_service.dart';
-
+import '../services/subscription_service.dart';
 import '../services/google_auth_service.dart';
 import '../services/sheets_service.dart';
 import '../services/docs_service.dart';
@@ -199,6 +199,9 @@ class _DashboardScreenState extends State<DashboardScreen>
     }
 
     _loadJyotishiDetails();
+
+    // Rebuild charts when single letter mode changes
+    SingleLetterMode.notifier.addListener(_onSingleLetterModeChanged);
   }
 
   @override
@@ -211,7 +214,12 @@ class _DashboardScreenState extends State<DashboardScreen>
     _gotraCtrl.dispose();
     _jyotishiNameCtrl.dispose();
     _jyotishiPhoneCtrl.dispose();
+    SingleLetterMode.notifier.removeListener(_onSingleLetterModeChanged);
     super.dispose();
+  }
+
+  void _onSingleLetterModeChanged() {
+    if (mounted) setState(() {});
   }
 
   @override
@@ -2264,8 +2272,8 @@ class _DashboardScreenState extends State<DashboardScreen>
                 child: Column(children: [
                   _tableRow([AppLocale.l('samvatsara'), trAll(pan.samvatsara)]),
                   _tableRow([AppLocale.l('varaLabel'), trAll(pan.vara)]),
-                  _tableRow([AppLocale.l('tithiLabel'), '${trAll(pan.tithi)}${pan.tithiGata.isNotEmpty ? ' (${AppLocale.l('gataGhati')}: ${pan.tithiGata})' : ''}']),
-                  _tableRow([AppLocale.l('chandraNakshatra'), () { final moonPada = r.planets['ಚಂದ್ರ']?.pada; final fallback = (pan.nakPercent * 4).floor() + 1; final p = moonPada ?? (fallback < 1 ? 1 : fallback > 4 ? 4 : fallback); return '${trAll(pan.nakshatra)} - ${AppLocale.l('padaLabel')} $p (${AppLocale.l('gataGhati')}: ${pan.gataGhati})'; }()]),
+                  _tableRow([AppLocale.l('tithiLabel'), '${trAll(pan.tithi)}${pan.tithiGata.isNotEmpty || pan.tithiParama.isNotEmpty ? ' (${AppLocale.l('gataGhati')}: ${pan.tithiGata}, ${AppLocale.l('paramaGhati')}: ${pan.tithiParama})' : ''}']),
+                  _tableRow([AppLocale.l('chandraNakshatra'), () { final moonPada = r.planets['ಚಂದ್ರ']?.pada; final fallback = (pan.nakPercent * 4).floor() + 1; final p = moonPada ?? (fallback < 1 ? 1 : fallback > 4 ? 4 : fallback); return '${trAll(pan.nakshatra)} - ${AppLocale.l('padaLabel')} $p (${AppLocale.l('gataGhati')}: ${pan.gataGhati}, ${AppLocale.l('paramaGhati')}: ${pan.paramaGhati})'; }()]),
                   _tableRow([AppLocale.l('yogaLabel'), '${trAll(pan.yoga)}${pan.yogaGata.isNotEmpty ? ' (${AppLocale.l('gataGhati')}: ${pan.yogaGata})' : ''}']),
                   _tableRow([AppLocale.l('karanaLabel'), '${trAll(pan.karana)}${pan.karanaGata.isNotEmpty ? ' (${AppLocale.l('gataGhati')}: ${pan.karanaGata})' : ''}']),
                   _tableRow([AppLocale.l('chandraRashiLabel'), trAll(pan.chandraRashi)]),
@@ -2275,6 +2283,8 @@ class _DashboardScreenState extends State<DashboardScreen>
                   _tableRow([AppLocale.l('souraMasaGataDina'), pan.souraMasaGataDina]),
                   _tableRow([AppLocale.l('sunrise'), pan.sunrise]),
                   _tableRow([AppLocale.l('sunset'), pan.sunset]),
+                  _tableRow([AppLocale.l('divamana'), pan.divamana]),
+                  _tableRow([AppLocale.l('ratrimana'), pan.ratrimana]),
                   _tableRow([AppLocale.l('udayadiGhati'), pan.udayadiGhati]),
                   _tableRow([AppLocale.l('gataGhati'), pan.gataGhati]),
                   _tableRow([AppLocale.l('paramaGhati'), pan.paramaGhati]),
