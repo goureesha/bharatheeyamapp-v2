@@ -43,8 +43,8 @@ class _PanchangaSearchScreenState extends State<PanchangaSearchScreen> {
   int? _selectedSouraMasa;   // index into _souraMasaNames, null = any
   int? _selectedPaksha;      // 0 = Shukla, 1 = Krishna, null = any
   int? _selectedTithiInPaksha; // 0-14 within the selected paksha
-  TimeOfDay _fromTime = const TimeOfDay(hour: 12, minute: 0);
-  TimeOfDay _toTime = const TimeOfDay(hour: 15, minute: 0);
+  TimeOfDay _fromTime = const TimeOfDay(hour: 6, minute: 0);
+  TimeOfDay _toTime = const TimeOfDay(hour: 18, minute: 0);
 
   // Results
   List<_SearchResult> _results = [];

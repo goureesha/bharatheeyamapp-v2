@@ -3,9 +3,6 @@ import 'package:flutter/services.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../widgets/common.dart';
 import '../services/google_auth_service.dart';
-import '../services/device_binding_service.dart';
-import '../services/subscription_service.dart';
-import '../main.dart';
 
 class SupportScreen extends StatefulWidget {
   const SupportScreen({super.key});
@@ -24,27 +21,10 @@ class _SupportScreenState extends State<SupportScreen> {
     try {
       final ok = await GoogleAuthService.signIn();
       if (ok && mounted) {
-        // After sign-in, register device binding + check manual premium
-        await DeviceBindingService.checkBinding();
-        await SubscriptionService.checkManualPremium();
-        await SubscriptionService.syncTrialWithFirestore();
-        deviceBindingNotifier.value = await DeviceBindingService.checkBinding();
-
-        if (SubscriptionService.hasAccess && mounted) {
-          // User has access now — refresh the whole app
-          deviceBindingNotifier.value = true;
-          // Force app rebuild by notifying
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('✅ ${GoogleAuthService.userEmail} — signed in!'), backgroundColor: Colors.green),
-          );
-          // Trigger rebuild
-          (context as Element).markNeedsBuild();
-        } else if (mounted) {
-          setState(() {});
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Signed in as ${GoogleAuthService.userEmail}'), backgroundColor: kPurple2),
-          );
-        }
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('✅ ${GoogleAuthService.userEmail} — signed in!'), backgroundColor: Colors.green),
+        );
+        setState(() {});
       }
     } catch (e) {
       if (mounted) {
@@ -164,13 +144,7 @@ class _SupportScreenState extends State<SupportScreen> {
                       const SizedBox(height: 14),
                       _infoRow(Icons.email_outlined, 'Gmail', email, context),
                       const SizedBox(height: 10),
-                      FutureBuilder<String>(
-                        future: DeviceBindingService.getDeviceId(),
-                        builder: (context, snapshot) {
-                          final deviceId = snapshot.data ?? 'Loading...';
-                          return _infoRow(Icons.smartphone, 'Device ID', deviceId, context);
-                        },
-                      ),
+                      _infoRow(Icons.smartphone, 'App', 'Bharatheeyam v2', context),
                     ],
                   ),
                 ),
@@ -195,29 +169,23 @@ class _SupportScreenState extends State<SupportScreen> {
                 // Copy details button
                 SizedBox(
                   width: double.infinity,
-                  child: FutureBuilder<String>(
-                    future: DeviceBindingService.getDeviceId(),
-                    builder: (context, snapshot) {
-                      final deviceId = snapshot.data ?? '';
-                      return ElevatedButton.icon(
-                        onPressed: () {
-                          final text = 'Gmail: $email\nDevice ID: $deviceId';
-                          Clipboard.setData(ClipboardData(text: text));
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('Details copied!'), backgroundColor: Colors.green),
-                          );
-                        },
-                        icon: const Icon(Icons.copy),
-                        label: const Text('Copy My Details',
-                          style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: kPurple2,
-                          foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(vertical: 14),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                        ),
+                  child: ElevatedButton.icon(
+                    onPressed: () {
+                      final text = 'Gmail: $email\nApp: Bharatheeyam v2';
+                      Clipboard.setData(ClipboardData(text: text));
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Details copied!'), backgroundColor: Colors.green),
                       );
                     },
+                    icon: const Icon(Icons.copy),
+                    label: const Text('Copy My Details',
+                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: kPurple2,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    ),
                   ),
                 ),
                 const SizedBox(height: 12),
@@ -225,64 +193,28 @@ class _SupportScreenState extends State<SupportScreen> {
                 // WhatsApp button
                 SizedBox(
                   width: double.infinity,
-                  child: FutureBuilder<String>(
-                    future: DeviceBindingService.getDeviceId(),
-                    builder: (context, snapshot) {
-                      final deviceId = snapshot.data ?? '';
-                      return OutlinedButton.icon(
-                        onPressed: () async {
-                          final msg = Uri.encodeComponent(
-                            'Bharatheeyam Support\nGmail: $email\nDevice ID: $deviceId');
-                          final url = Uri.parse('https://wa.me/${_supportPhone.replaceAll('+', '')}?text=$msg');
-                          if (await canLaunchUrl(url)) {
-                            await launchUrl(url, mode: LaunchMode.externalApplication);
-                          }
-                        },
-                        icon: const Icon(Icons.support_agent),
-                        label: const Text('Contact Support',
-                          style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
-                        style: OutlinedButton.styleFrom(
-                          foregroundColor: kGreen,
-                          side: BorderSide(color: kGreen),
-                          padding: const EdgeInsets.symmetric(vertical: 14),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                        ),
-                      );
+                  child: OutlinedButton.icon(
+                    onPressed: () async {
+                      final msg = Uri.encodeComponent(
+                        'Bharatheeyam Support\nGmail: $email');
+                      final url = Uri.parse('https://wa.me/${_supportPhone.replaceAll('+', '')}?text=$msg');
+                      if (await canLaunchUrl(url)) {
+                        await launchUrl(url, mode: LaunchMode.externalApplication);
+                      }
                     },
+                    icon: const Icon(Icons.support_agent),
+                    label: const Text('Contact Support',
+                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: kGreen,
+                      side: BorderSide(color: kGreen),
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    ),
                   ),
                 ),
 
-                // ── Re-check Premium button (if signed in but locked out) ──
-                if (isSignedIn) ...[
-                  const SizedBox(height: 12),
-                  SizedBox(
-                    width: double.infinity,
-                    child: OutlinedButton.icon(
-                      onPressed: () async {
-                        await SubscriptionService.checkManualPremium();
-                        if (SubscriptionService.hasAccess && mounted) {
-                          deviceBindingNotifier.value = true;
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('✅ Access restored!'), backgroundColor: Colors.green),
-                          );
-                        } else if (mounted) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('No active access found'), backgroundColor: Colors.orange),
-                          );
-                        }
-                      },
-                      icon: const Icon(Icons.refresh),
-                      label: const Text('Re-check Access',
-                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: kPurple2,
-                        side: BorderSide(color: kPurple2),
-                        padding: const EdgeInsets.symmetric(vertical: 14),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                      ),
-                    ),
-                  ),
-                ],
+
               ],
             )),
           ),

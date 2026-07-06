@@ -126,125 +126,21 @@ String _p(String key) {
 
 /// Default items added to every new pooja list
 const List<Map<String, String>> _defaultPoojaItems = [
-  // ── ಮೂಲ ಸಾಮಗ್ರಿ (Basic) ──
   {'n': 'ಅಕ್ಕಿ', 'q': '1 kg'},
-  {'n': 'ಅರಿಶಿನ', 'q': '50 gm'},
-  {'n': 'ಕುಂಕುಮ', 'q': '1 packet'},
-  {'n': 'ರಂಗೋಲಿ', 'q': ''},
-  {'n': 'ಹಸಿರು ಬಣ್ಣ', 'q': ''},
-  {'n': 'ಕಪ್ಪು ಬಣ್ಣ', 'q': ''},
-  {'n': 'ಇತರ ಬಣ್ಣ', 'q': ''},
-  {'n': 'ಗಂಧ', 'q': ''},
-
-  // ── ಹೂವು / ಎಲೆ ──
-  {'n': 'ಶಿಂಗಾರ ಹೂ', 'q': ''},
-  {'n': 'ಇತರ ಹೂ', 'q': ''},
-  {'n': 'ತುಳಸಿ', 'q': ''},
-  {'n': 'ಬಿಲ್ವಪತ್ರೆ', 'q': ''},
-  {'n': 'ದರ್ಬೆ', 'q': ''},
-  {'n': 'ಹಲಸಿನ ಕುಡಿ', 'q': ''},
-  {'n': 'ಮಾವಿನ ಕುಡಿ', 'q': ''},
-
-  // ── ದಾರ / ನೂಲು ──
-  {'n': 'ರಜ್ಜು', 'q': ''},
-  {'n': 'ನೂಲುಂಡೆ', 'q': ''},
-  {'n': 'ಜನಿವಾರ', 'q': ''},
-
-  // ── ಎಲೆ / ಹಣ್ಣು ──
-  {'n': 'ವೀಳ್ಯದೆಲೆ ಕಟ್ಟು', 'q': ''},
-  {'n': 'ಅಡಿಕೆ', 'q': '10'},
-  {'n': 'ಬಾಳೆ ಎಲೆ', 'q': ''},
-  {'n': 'ಬಾಳೆ ಹಣ್ಣು', 'q': '1 dozen'},
-  {'n': 'ಲಿಂಬೆ ಹಣ್ಣು', 'q': ''},
-  {'n': 'ಇತರ ಹಣ್ಣು', 'q': ''},
-  {'n': 'ತೆಂಗಿನ ಕಾಯಿ', 'q': '2'},
-  {'n': 'ಸೀಯಾಳ', 'q': ''},
-  {'n': 'ಕುಂಬಳ ಕಾಯಿ', 'q': ''},
-
-  // ── ಪಂಚಾಮೃತ / ದ್ರವ ──
-  {'n': 'ಗೋಮಯ', 'q': ''},
-  {'n': 'ಗೋಮೂತ್ರ', 'q': ''},
-  {'n': 'ಹಾಲು', 'q': ''},
   {'n': 'ತುಪ್ಪ', 'q': '250 ml'},
-  {'n': 'ಸಕ್ಕರೆ', 'q': ''},
-  {'n': 'ಜೇನುತುಪ್ಪ', 'q': ''},
-  {'n': 'ಕಬ್ಬಿನ ಹಾಲು', 'q': ''},
-
-  // ── ದೀಪ / ಧೂಪ ──
+  {'n': 'ತೆಂಗಿನಕಾಯಿ', 'q': '2'},
+  {'n': 'ಬಾಳೆಹಣ್ಣು', 'q': '1 dozen'},
+  {'n': 'ಹೂವು', 'q': ''},
   {'n': 'ಊದುಬತ್ತಿ', 'q': '1 packet'},
   {'n': 'ಕರ್ಪೂರ', 'q': '1 packet'},
-  {'n': 'ಹತ್ತಿಬತ್ತಿ ಕಟ್ಟು', 'q': ''},
-  {'n': 'ದೀಪದ ಎಣ್ಣೆ', 'q': '100 ml'},
-
-  // ── ಧಾನ್ಯ / ಕಾಳು ──
-  {'n': 'ಚಕ್ಕೆ ಹೊರೆ', 'q': ''},
-  {'n': 'ಕರಿ ಎಳ್ಳು', 'q': ''},
-  {'n': 'ಬಿಳಿ ಸಾಸಿವೆ', 'q': ''},
-  {'n': 'ಅರಳು', 'q': ''},
-  {'n': 'ಭತ್ತ', 'q': ''},
-  {'n': 'ಗೋಧಿ', 'q': ''},
-  {'n': 'ಅವರೆ', 'q': ''},
-  {'n': 'ಉದ್ದು', 'q': ''},
-  {'n': 'ಕಡಲೆ', 'q': ''},
-  {'n': 'ತೊಗರಿ', 'q': ''},
-  {'n': 'ಹೆಸರು', 'q': ''},
-  {'n': 'ಹುರುಳಿ', 'q': ''},
-
-  // ── ಮಸಾಲೆ / ಒಣ ಹಣ್ಣು ──
-  {'n': 'ಜಾಯಿಕಾಯಿ', 'q': ''},
-  {'n': 'ಒಣದ್ರಾಕ್ಷಿ', 'q': ''},
-  {'n': 'ಉತ್ತುತ್ತೆ', 'q': ''},
-  {'n': 'ಗೋಡಂಬಿ', 'q': ''},
-  {'n': 'ಕಾಳು ಮೆಣಸು', 'q': ''},
-  {'n': 'ಲವಂಗ', 'q': ''},
-  {'n': 'ಏಲಕ್ಕಿ', 'q': ''},
-
-  // ── ತಿಂಡಿ ──
+  {'n': 'ಅರಿಶಿನ', 'q': '50 gm'},
+  {'n': 'ಕುಂಕುಮ', 'q': '1 packet'},
+  {'n': 'ವೀಳ್ಯದೆಲೆ', 'q': '10'},
+  {'n': 'ಅಡಿಕೆ', 'q': '10'},
   {'n': 'ಬೆಲ್ಲ', 'q': '250 gm'},
-  {'n': 'ಅವಲಕ್ಕಿ', 'q': ''},
-  {'n': 'ಬಾಳೆ ಎಲೆ ದೊನ್ನೆ', 'q': ''},
-
-  // ── ವಸ್ತ್ರ ──
-  {'n': 'ಪಟ್ಟೆ ಮಡಿ', 'q': ''},
-  {'n': 'ವೇಷ್ಟಿ ಪಂಚೆ', 'q': ''},
-  {'n': 'ಮುಂಡುಪಂಚೆ', 'q': ''},
-  {'n': 'ಸೀರೆ', 'q': ''},
-  {'n': 'ಕಣ', 'q': ''},
-  {'n': 'ಶಾಲು', 'q': ''},
-  {'n': 'ಪಾಣಿ ಪಂಚೆ', 'q': ''},
-  {'n': 'ಬಾತ್ ಟವಲ್', 'q': ''},
-
-  // ── ಪಾತ್ರೆ ──
-  {'n': 'ಕೊಡಪಾನ', 'q': ''},
-  {'n': 'ತಂಬಿಗೆ', 'q': ''},
-  {'n': 'ಹರಿವಾಣ', 'q': ''},
-  {'n': 'ಕವಳಿಗೆ ಸೌಟು', 'q': ''},
-  {'n': 'ಹಿತ್ತಾಳೆ ಬುಟ್ಟಿ', 'q': ''},
-
-  // ── ಇತರ ──
-  {'n': 'ಇಟ್ಟಿಗೆ', 'q': ''},
-  {'n': 'ಹೊಯ್ಗೆ', 'q': ''},
-  {'n': 'ಬಾಳೆ ಕಂಬ (ದಿಂಡು)', 'q': ''},
-  {'n': 'ಪಂಚರತ್ನ', 'q': ''},
-  {'n': 'ಕನ್ನಡಿ', 'q': ''},
-  {'n': 'ಗೋಪಿ', 'q': ''},
-  {'n': 'ಬೆಳ್ಳಿ', 'q': ''},
-  {'n': 'ಕಬ್ಬಿನ ಜಲ್ಲೆ', 'q': ''},
-  {'n': '1 ರೂಪಾಯಿ ನಾಣ್ಯ', 'q': ''},
-  {'n': 'ಚಿಲ್ಲರೆ ರೊಕ್ಕ', 'q': ''},
-
-  // ── ಸಮಿಧ ──
-  {'n': 'ಅಶ್ವತ್ಥ', 'q': ''},
-  {'n': 'ಪಾಲಾಶ (ಮುತ್ತುಗ)', 'q': ''},
-  {'n': 'ಅತ್ತಿ', 'q': ''},
-  {'n': 'ಕದಿರ', 'q': ''},
-  {'n': 'ಶಮಿ', 'q': ''},
-  {'n': 'ದೂರ್ವೆ', 'q': ''},
-  {'n': 'ಎಕ್ಕೆ', 'q': ''},
-
-  // ── ವಿಶೇಷ ──
-  {'n': 'ನವಗ್ರಹ ರತ್ನ ಸೆಟ್', 'q': ''},
-  {'n': 'ಕಾಶಿ ತೀರ್ಥ (1 ಬಾಟಲಿ)', 'q': ''},
+  {'n': 'ಎಣ್ಣೆ', 'q': '100 ml'},
+  {'n': 'ಬತ್ತಿ', 'q': '1 packet'},
+  {'n': 'ಗಂಧ', 'q': ''},
 ];
 
 List<PoojaItem> _createDefaultItems() {
@@ -313,7 +209,7 @@ class _PoojaListsScreenState extends State<PoojaListsScreen> {
               final newList = PoojaList(
                 id: DateTime.now().millisecondsSinceEpoch.toString(),
                 name: name,
-                items: [],
+                items: _createDefaultItems(),
               );
               setState(() => _lists.insert(0, newList));
               _save();
@@ -539,12 +435,21 @@ class _PoojaListDetailScreenState extends State<_PoojaListDetailScreen> {
 
   // Dropdown state
   String? _selectedItem;
+  String? _selectedQty;
   bool _isCustomItem = false;
 
   // Default item names for dropdown (getter so it updates with language)
   List<String> get _dropdownItems => [
-    _p('customItem'),
     ..._defaultPoojaItems.map((m) => m['n']!),
+    _p('customItem'),
+  ];
+
+  // Common quantity options for dropdown
+  static const List<String> _qtyOptions = [
+    '1', '2', '3', '5', '10',
+    '50 gm', '100 gm', '250 gm', '500 gm', '1 kg',
+    '100 ml', '250 ml', '500 ml', '1 L',
+    '1 packet', '1 dozen', '1 bundle',
   ];
 
   @override
@@ -569,13 +474,13 @@ class _PoojaListDetailScreenState extends State<_PoojaListDetailScreen> {
       );
       return;
     }
-    final qty = _qtyCtrl.text.trim();
+    final qty = _selectedQty ?? '';
     setState(() {
       _list.items.add(PoojaItem(name: itemName, quantity: qty));
       _selectedItem = null;
+      _selectedQty = null;
       _isCustomItem = false;
       _customNameCtrl.clear();
-      _qtyCtrl.clear();
     });
     _saveList();
     ScaffoldMessenger.of(context).showSnackBar(
@@ -976,22 +881,23 @@ class _PoojaListDetailScreenState extends State<_PoojaListDetailScreen> {
                           ),
                     ),
                     const SizedBox(width: 8),
-                    // Quantity text field
+                    // Quantity dropdown
                     Expanded(
                       flex: 2,
-                      child: TextField(
-                        controller: _qtyCtrl,
-                        style: TextStyle(color: kText, fontSize: 14),
-                        decoration: InputDecoration(
-                          hintText: _p('selectQty'),
-                          hintStyle: TextStyle(color: kMuted, fontSize: 13),
-                          filled: true,
-                          fillColor: kBg,
-                          isDense: true,
-                          contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
-                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: kBorder)),
-                          enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: kBorder)),
-                          focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: kOrange)),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 12),
+                        decoration: BoxDecoration(color: kBg, borderRadius: BorderRadius.circular(12), border: Border.all(color: kBorder)),
+                        child: DropdownButtonHideUnderline(
+                          child: DropdownButton<String>(
+                            isExpanded: true,
+                            value: _selectedQty,
+                            hint: Text(_p('selectQty'), style: TextStyle(color: kMuted, fontSize: 13)),
+                            dropdownColor: kCard,
+                            style: TextStyle(color: kText, fontSize: 14),
+                            icon: Icon(Icons.arrow_drop_down, color: kOrange),
+                            items: _qtyOptions.map((q) => DropdownMenuItem(value: q, child: Text(q, style: TextStyle(color: kText, fontSize: 14)))).toList(),
+                            onChanged: (val) => setState(() => _selectedQty = val),
+                          ),
                         ),
                       ),
                     ),

@@ -303,46 +303,27 @@ class NorthIndianChart extends StatelessWidget {
       final w = isCorner ? boxW * 0.85 : boxW;
       final ht = isCorner ? boxH * 0.85 : boxH;
 
-      final bool singleLetter = SingleLetterMode.isActive && ((varga == 1) || isBhava);
-
       widgets.add(Positioned(
         left: center.dx * s - w / 2,
         top: center.dy * s - ht / 2,
         width: w,
         height: ht,
-        child: singleLetter
-          ? Wrap(
-              spacing: 2,
-              runSpacing: 0,
-              alignment: WrapAlignment.center,
-              runAlignment: WrapAlignment.center,
-              children: [
-                Text(rashiNum,
-                  style: TextStyle(
-                    fontSize: s * 0.028 * textScale,
-                    fontWeight: FontWeight.w800,
-                    color: const Color(0xFF718096),
-                  ),
-                ),
-                ...planets,
-              ],
-            )
-          : Column(
-              mainAxisSize: MainAxisSize.min,
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                // Rashi number label
-                Text(rashiNum,
-                  style: TextStyle(
-                    fontSize: s * 0.028 * textScale,
-                    fontWeight: FontWeight.w800,
-                    color: const Color(0xFF718096),
-                  ),
-                ),
-                // Planet chips
-                ...planets.take(5),
-              ],
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            // Rashi number label
+            Text(rashiNum,
+              style: TextStyle(
+                fontSize: s * 0.028 * textScale,
+                fontWeight: FontWeight.w800,
+                color: const Color(0xFF718096),
+              ),
             ),
+            // Planet chips
+            ...planets.take(5),
+          ],
+        ),
       ));
     }
 
@@ -388,24 +369,13 @@ class NorthIndianChart extends StatelessWidget {
 
       // D1 (Rashi) and Bhava: show rashi degree; Amshas: show amsha degree
       final bool showRashiDeg = (varga == 1) || isBhava;
-
-      if (showRashiDeg && SamshakaMode.isActive) {
-        // Samshaka mode: show navamsha rashi number with full planet name
-        final navNum = SamshakaMode.navamshaSign(info.longitude);
-        final fullName = appPlanetNames[name] ?? name;
-        displayText = '$fullName $navNum';
-      } else if (showRashiDeg && SingleLetterMode.isActive) {
-        // Single letter mode: abbreviation only, no degrees
-        displayText = shortName;
-      } else {
-        final double degToShow = showRashiDeg ? (info.longitude % 30) : (displayDeg ?? info.longitude % 30);
-        final totalSec = (degToShow * 3600).round();
-        int dg = totalSec ~/ 3600;
-        int mn = (totalSec % 3600) ~/ 60;
-        int sc = totalSec % 60;
-        if (showRashiDeg && dg == 30) { dg = 29; mn = 59; sc = 59; }
-        displayText = '$shortName $dg°${mn.toString().padLeft(2, '0')}\'';
-      }
+      final double degToShow = showRashiDeg ? (info.longitude % 30) : (displayDeg ?? info.longitude % 30);
+      final totalSec = (degToShow * 3600).round();
+      int dg = totalSec ~/ 3600;
+      int mn = (totalSec % 3600) ~/ 60;
+      int sc = totalSec % 60;
+      if (showRashiDeg && dg == 30) { dg = 29; mn = 59; sc = 59; }
+      displayText = '$shortName $dg°${mn.toString().padLeft(2, '0')}\'';
 
       if (isVakri) displayText = '$displayText↩';
       if (isCombust) displayText = '($displayText)';

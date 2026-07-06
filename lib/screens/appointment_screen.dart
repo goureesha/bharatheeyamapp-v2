@@ -139,6 +139,17 @@ class _AppointmentScreenState extends State<AppointmentScreen> with SingleTicker
     if (mounted) setState(() => _isSyncing = true);
     await AppointmentService.loadAll();
     await ClientService.loadAll();
+
+    // Auto-sync with Google Calendar
+    if (GoogleAuthService.isSignedIn) {
+      try {
+        await CalendarService.loadLastSyncTime();
+        await CalendarService.fullSync();
+      } catch (e) {
+        debugPrint('AppointmentScreen: Calendar sync error: $e');
+      }
+    }
+
     if (mounted) {
       setState(() {
         _isSyncing = false;
@@ -148,11 +159,54 @@ class _AppointmentScreenState extends State<AppointmentScreen> with SingleTicker
   }
 
   Future<void> _syncData() async {
-    await _syncInBackground();
+    if (_isSyncing) return;
+    if (mounted) setState(() => _isSyncing = true);
+
+    await AppointmentService.loadAll();
+    await ClientService.loadAll();
+
+    // Sync with Google Calendar
+    if (GoogleAuthService.isSignedIn) {
+      try {
+        final result = await CalendarService.fullSync();
+        if (mounted) {
+          final debugInfo = CalendarService.lastSyncDebug ?? 'No debug info';
+          showDialog(
+            context: context,
+            builder: (_) => AlertDialog(
+              title: const Text('📅 Calendar Sync Result'),
+              content: Text(
+                '↑ Pushed: ${result.pushed}\n'
+                '↓ Pulled: ${result.pulled}\n'
+                '🗑 Deleted: ${result.deleted}\n\n'
+                '$debugInfo'
+              ),
+              actions: [TextButton(onPressed: () => Navigator.pop(context), child: const Text('OK'))],
+            ),
+          );
+        }
+      } catch (e) {
+        if (mounted) {
+          showDialog(
+            context: context,
+            builder: (_) => AlertDialog(
+              title: const Text('⚠️ Calendar Sync Error'),
+              content: Text('$e\n\nInit error: ${CalendarService.lastInitError ?? "none"}'),
+              actions: [TextButton(onPressed: () => Navigator.pop(context), child: const Text('OK'))],
+            ),
+          );
+        }
+      }
+    } else {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('✅ ಸಿಂಕ್ ಪೂರ್ಣವಾಗಿದೆ!'), duration: Duration(seconds: 2)),
+        );
+      }
+    }
+
     if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(AppLocale.l('syncDone')), duration: const Duration(seconds: 2)),
-      );
+      setState(() => _isSyncing = false);
     }
   }
 
@@ -170,7 +224,7 @@ class _AppointmentScreenState extends State<AppointmentScreen> with SingleTicker
     return Scaffold(
       backgroundColor: kBg,
       appBar: AppBar(
-        title: Text(AppLocale.l('apptTitle'), style: const TextStyle(fontWeight: FontWeight.bold)),
+        title: const Text('ಅಪಾಯಿಂಟ್\u200cಮೆಂಟ್‌ಗಳು', style: TextStyle(fontWeight: FontWeight.bold)),
         backgroundColor: kBg,
         foregroundColor: kText,
         elevation: 0,
@@ -181,12 +235,14 @@ class _AppointmentScreenState extends State<AppointmentScreen> with SingleTicker
             icon: _isSyncing
                 ? SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: kTeal))
                 : Icon(Icons.sync, color: kTeal),
-            tooltip: AppLocale.l('syncBtn'),
+            tooltip: CalendarService.lastSyncTime != null
+                ? 'ಸಿಂಕ್ ಮಾಡಿ (ಕೊನೆಯ: ${CalendarService.lastSyncTime})'
+                : 'Google Calendar ಸಿಂಕ್ ಮಾಡಿ',
             onPressed: _isSyncing ? null : () => _syncData(),
           ),
           IconButton(
             icon: Icon(Icons.share, color: kTeal),
-            tooltip: AppLocale.l('shareCalendar'),
+            tooltip: 'ಕ್ಯಾಲೆಂಡರ್ ಹಂಚಿಕೊಳ್ಳಿ',
             onPressed: () => _showShareConfigDialog(),
           ),
         ],
@@ -196,9 +252,9 @@ class _AppointmentScreenState extends State<AppointmentScreen> with SingleTicker
           labelColor: kTeal,
           unselectedLabelColor: kMuted,
           labelStyle: const TextStyle(fontWeight: FontWeight.w800, fontSize: 14),
-          tabs: [
-            Tab(icon: const Icon(Icons.calendar_today, size: 18), text: AppLocale.l('apptTab')),
-            Tab(icon: const Icon(Icons.people, size: 18), text: AppLocale.l('clientsTab')),
+          tabs: const [
+            Tab(icon: Icon(Icons.calendar_today, size: 18), text: 'ಅಪಾಯಿಂಟ್\u200cಮೆಂಟ್'),
+            Tab(icon: Icon(Icons.people, size: 18), text: 'ಗ್ರಾಹಕರು'),
           ],
         ),
       ),
@@ -226,7 +282,7 @@ class _AppointmentScreenState extends State<AppointmentScreen> with SingleTicker
                                 ),
                                 const Spacer(),
                                 Text(
-                                  '${dayAppointments.length} ${AppLocale.l('apptCount')}',
+                                  '${dayAppointments.length} ಅಪಾಯಿಂಟ್\u200cಮೆಂಟ್',
                                   style: TextStyle(fontSize: 13, color: kMuted),
                                 ),
                               ],
@@ -239,7 +295,7 @@ class _AppointmentScreenState extends State<AppointmentScreen> with SingleTicker
                                 children: [
                                   Icon(Icons.event_available, size: 60, color: kMuted.withOpacity(0.3)),
                                   const SizedBox(height: 12),
-                                  Text(AppLocale.l('noAppt'), style: TextStyle(color: kMuted, fontSize: 15)),
+                                  Text('ಯಾವುದೇ ಅಪಾಯಿಂಟ್\u200cಮೆಂಟ್ ಇಲ್ಲ', style: TextStyle(color: kMuted, fontSize: 15)),
                                 ],
                               ),
                             )
@@ -262,7 +318,7 @@ class _AppointmentScreenState extends State<AppointmentScreen> with SingleTicker
               backgroundColor: kTeal,
               foregroundColor: Colors.white,
               icon: const Icon(Icons.add),
-              label: Text(AppLocale.l('newAppt'), style: const TextStyle(fontWeight: FontWeight.bold)),
+              label: const Text('ಹೊಸ ಅಪಾಯಿಂಟ್\u200cಮೆಂಟ್', style: TextStyle(fontWeight: FontWeight.bold)),
             )
           : null,
     );
@@ -318,7 +374,7 @@ class _AppointmentScreenState extends State<AppointmentScreen> with SingleTicker
                 const Spacer(),
                 IconButton(
                   icon: Icon(Icons.add, color: kTeal, size: 22),
-                  tooltip: AppLocale.l('newAppt'),
+                  tooltip: 'ಹೊಸ ಅಪಾಯಿಂಟ್\u200cಮೆಂಟ್',
                   onPressed: () => _showAddAppointmentDialog(),
                 ),
                 GestureDetector(
@@ -466,9 +522,9 @@ class _AppointmentScreenState extends State<AppointmentScreen> with SingleTicker
           children: [
             Icon(Icons.login, size: 60, color: kMuted),
             const SizedBox(height: 16),
-            Text(AppLocale.l('googleSignInNeeded'), style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: kText)),
+            Text('Google ಸೈನ್ ಇನ್ ಅಗತ್ಯವಿದೆ', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: kText)),
             const SizedBox(height: 8),
-            Text(AppLocale.l('googleSignInDesc'),
+            Text('ಅಪಾಯಿಂಟ್\u200cಮೆಂಟ್ ನಿರ್ವಹಣೆಗಾಗಿ Settings ನಲ್ಲಿ Google ಸೈನ್ ಇನ್ ಮಾಡಿ.',
               textAlign: TextAlign.center, style: TextStyle(color: kMuted, fontSize: 14)),
           ],
         ),
@@ -489,7 +545,7 @@ class _AppointmentScreenState extends State<AppointmentScreen> with SingleTicker
           child: TextField(
             onChanged: (v) => setState(() => _clientSearch = v),
             decoration: InputDecoration(
-              hintText: AppLocale.l('searchHint'),
+              hintText: 'ಹೆಸರು, ಫೋನ್ ಅಥವಾ ID ಹುಡುಕಿ...',
               prefixIcon: Icon(Icons.search, color: kMuted),
               isDense: true,
               contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
@@ -509,7 +565,7 @@ class _AppointmentScreenState extends State<AppointmentScreen> with SingleTicker
             children: [
               Icon(Icons.people, color: kTeal, size: 18),
               const SizedBox(width: 6),
-              Text('${allClients.length} ${AppLocale.l('clientsCount')}', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: kText)),
+              Text('${allClients.length} \u0c97\u0ccd\u0cb0\u0cbe\u0cb9\u0c95\u0cb0\u0cc1', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: kText)),
             ],
           ),
         ),
@@ -524,7 +580,7 @@ class _AppointmentScreenState extends State<AppointmentScreen> with SingleTicker
                     children: [
                       Icon(Icons.person_off, size: 60, color: kMuted.withOpacity(0.3)),
                       const SizedBox(height: 12),
-                      Text(_clientSearch.isEmpty ? AppLocale.l('noClients') : AppLocale.l('noSearchResults'), style: TextStyle(color: kMuted)),
+                      Text(_clientSearch.isEmpty ? '\u0c97\u0ccd\u0cb0\u0cbe\u0cb9\u0c95\u0cb0\u0cc1 \u0c87\u0cb2\u0ccd\u0cb2' : '\u0caf\u0cbe\u0cb5\u0cc1\u0ca6\u0cc7 \u0cab\u0cb2\u0cbf\u0ca4\u0cbe\u0c82\u0cb6 \u0c87\u0cb2\u0ccd\u0cb2', style: TextStyle(color: kMuted)),
                     ],
                   ),
                 )
@@ -598,11 +654,11 @@ class _AppointmentScreenState extends State<AppointmentScreen> with SingleTicker
                         const SizedBox(width: 12),
                         Icon(Icons.event, size: 12, color: kMuted),
                         const SizedBox(width: 4),
-                        Text('$visits ${AppLocale.l('visitLabel')}', style: TextStyle(fontSize: 12, color: kMuted)),
+                        Text('$visits ಭೇಟಿ', style: TextStyle(fontSize: 12, color: kMuted)),
                         const SizedBox(width: 12),
                         Icon(Icons.people, size: 12, color: kMuted),
                         const SizedBox(width: 4),
-                        Text('${members.length} ${AppLocale.l('memberLabel')}', style: TextStyle(fontSize: 12, color: kMuted)),
+                        Text('${members.length} ಸದಸ್ಯ', style: TextStyle(fontSize: 12, color: kMuted)),
                       ],
                     ),
                   ],
@@ -633,13 +689,13 @@ class _AppointmentScreenState extends State<AppointmentScreen> with SingleTicker
       builder: (ctx) => AlertDialog(
         backgroundColor: kCard,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: Text(AppLocale.l('deleteClient'), style: TextStyle(color: kText)),
-        content: Text('${client.name} - ${AppLocale.l('deleteClientConfirm')}', style: TextStyle(color: kText)),
+        title: Text('\u0c97\u0ccd\u0cb0\u0cbe\u0cb9\u0c95\u0cb0\u0ca8\u0ccd\u0ca8\u0cc1 \u0c85\u0cb3\u0cbf\u0cb8\u0cbf', style: TextStyle(color: kText)),
+        content: Text('${client.name} \u0c85\u0cb5\u0cb0\u0ca8\u0ccd\u0ca8\u0cc1 \u0ca8\u0cbf\u0c9c\u0cb5\u0cbe\u0c97\u0cbf\u0caf\u0cc2 \u0c85\u0cb3\u0cbf\u0cb8\u0cb2\u0cc1 \u0cac\u0caf\u0cb8\u0cc1\u0ca4\u0ccd\u0ca4\u0cc0\u0cb0\u0cbe?', style: TextStyle(color: kText)),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(AppLocale.l('cancel'), style: TextStyle(color: kMuted))),
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text('\u0cb0\u0ca6\u0ccd\u0ca6\u0cc1', style: TextStyle(color: kMuted))), // Cancel
           TextButton(
             onPressed: () => Navigator.pop(ctx, true),
-            child: Text(AppLocale.l('delete'), style: const TextStyle(color: Colors.red, fontWeight: FontWeight.bold)),
+            child: const Text('\u0c85\u0cb3\u0cbf\u0cb8\u0cbf', style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold)), // Delete
           ),
         ],
       ),
@@ -652,11 +708,11 @@ class _AppointmentScreenState extends State<AppointmentScreen> with SingleTicker
       if (success) {
         await _loadData(); // reload clients list
         if (!mounted) return;
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(AppLocale.l('clientDeleted'))));
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('\u0c97\u0ccd\u0cb0\u0cbe\u0cb9\u0c95\u0cb0\u0ca8\u0ccd\u0ca8\u0cc1 \u0c85\u0cb3\u0cbf\u0cb8\u0cb2\u0cbe\u0c97\u0cbf\u0ca6\u0cc6'))); // Client deleted
       } else {
         setState(() => _isLoading = false);
         if (!mounted) return;
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(AppLocale.l('deleteError'))));
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('\u0cac\u0cc6\u0cb0\u0cb3\u0c9a\u0ccd\u0c9a\u0cc1 \u0ca6\u0ccb\u0cb7'))); // Error
       }
     }
   }
@@ -667,7 +723,7 @@ class _AppointmentScreenState extends State<AppointmentScreen> with SingleTicker
     final isCancelled = appt.status == 'cancelled';
     final statusColor = isCompleted ? Colors.green : (isCancelled ? Colors.red : kTeal);
     final statusIcon = isCompleted ? Icons.check_circle : (isCancelled ? Icons.cancel : Icons.schedule);
-    final statusText = isCompleted ? AppLocale.l('statusCompleted') : (isCancelled ? AppLocale.l('statusCancelled') : AppLocale.l('statusBooked'));
+    final statusText = isCompleted ? '\u0cae\u0cc1\u0c97\u0cbf\u0ca6\u0cbf\u0ca6\u0cc6' : (isCancelled ? '\u0cb0\u0ca6\u0ccd\u0ca6\u0cbe\u0c97\u0cbf\u0ca6\u0cc6' : '\u0cac\u0cc1\u0c95\u0ccd \u0c86\u0c97\u0cbf\u0ca6\u0cc6');
 
     // Check if returning client
     Client? client;
@@ -777,7 +833,7 @@ class _AppointmentScreenState extends State<AppointmentScreen> with SingleTicker
                     child: Row(mainAxisSize: MainAxisSize.min, children: [
                       Icon(Icons.repeat, size: 12, color: kOrange),
                       const SizedBox(width: 2),
-                      Text('$visitCount${AppLocale.l('nthVisit')}', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w800, color: kOrange)),
+                      Text('${visitCount}\u0ca8\u0cc7 \u0cad\u0cc7\u0c9f\u0cbf', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w800, color: kOrange)),
                     ]),
                   ),
                 Container(
@@ -818,20 +874,20 @@ class _AppointmentScreenState extends State<AppointmentScreen> with SingleTicker
               Row(
                 children: [
                   // WhatsApp confirmation
-                  _actionBtn(Icons.message, AppLocale.l('msgBtn'), Colors.green, () => _sendWhatsApp(appt, isReminder: false)),
+                  _actionBtn(Icons.message, 'ಸಂದೇಶ', Colors.green, () => _sendWhatsApp(appt, isReminder: false)),
                   const SizedBox(width: 8),
                   // WhatsApp reminder
-                  _actionBtn(Icons.notifications_active, AppLocale.l('reminderBtn'), kOrange, () => _sendWhatsApp(appt, isReminder: true)),
+                  _actionBtn(Icons.notifications_active, 'ಜ್ಞಾಪನೆ', kOrange, () => _sendWhatsApp(appt, isReminder: true)),
                   const Spacer(),
                   if (!isCompleted) ...[
                     // Mark completed
-                    _actionBtn(Icons.check, AppLocale.l('doneBtn'), Colors.green, () async {
+                    _actionBtn(Icons.check, 'ಮುಗಿದಿದೆ', Colors.green, () async {
                       final ok = await AppointmentService.updateStatus(appt, 'completed');
                       if (ok && mounted) setState(() {});
                     }),
                     const SizedBox(width: 8),
                     // Cancel
-                    _actionBtn(Icons.close, AppLocale.l('cancelBtn'), Colors.red, () async {
+                    _actionBtn(Icons.close, 'ರದ್ದು', Colors.red, () async {
                       final ok = await AppointmentService.updateStatus(appt, 'cancelled');
                       if (ok && mounted) setState(() {});
                     }),
@@ -895,14 +951,14 @@ class _AppointmentScreenState extends State<AppointmentScreen> with SingleTicker
                     child: Container(width: 40, height: 4, decoration: BoxDecoration(color: kMuted.withOpacity(0.3), borderRadius: BorderRadius.circular(2))),
                   ),
                   const SizedBox(height: 16),
-                  Text(AppLocale.l('newAppt'), style: TextStyle(fontSize: 20, fontWeight: FontWeight.w900, color: kText)),
+                  Text('ಹೊಸ ಅಪಾಯಿಂಟ್\u200cಮೆಂಟ್', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w900, color: kText)),
                   const SizedBox(height: 20),
 
                   // Client Name
                   TextField(
                     controller: nameCtrl,
                     decoration: InputDecoration(
-                      labelText: AppLocale.l('clientNameLabel'),
+                      labelText: 'ಗ್ರಾಹಕರ ಹೆಸರು *',
                       prefixIcon: Icon(Icons.person, color: kTeal),
                     ),
                     style: TextStyle(color: kText),
@@ -914,7 +970,7 @@ class _AppointmentScreenState extends State<AppointmentScreen> with SingleTicker
                     controller: phoneCtrl,
                     keyboardType: TextInputType.phone,
                     decoration: InputDecoration(
-                      labelText: AppLocale.l('phoneNumberLabel'),
+                      labelText: 'ಫೋನ್ ಸಂಖ್ಯೆ',
                       prefixIcon: Icon(Icons.phone, color: kTeal),
                     ),
                     style: TextStyle(color: kText),
@@ -945,10 +1001,10 @@ class _AppointmentScreenState extends State<AppointmentScreen> with SingleTicker
                   const SizedBox(height: 12),
 
                   // Available time slots
-                  Text(AppLocale.l('availableTime'), style: TextStyle(fontWeight: FontWeight.bold, color: kText)),
+                  Text('ಲಭ್ಯ ಸಮಯ:', style: TextStyle(fontWeight: FontWeight.bold, color: kText)),
                   const SizedBox(height: 8),
                   if (availableSlots.isEmpty)
-                    Text(AppLocale.l('noSlots'), style: TextStyle(color: kMuted))
+                    Text('ಈ ದಿನ ಯಾವುದೇ ಸ್ಲಾಟ್ ಲಭ್ಯವಿಲ್ಲ', style: TextStyle(color: kMuted))
                   else
                     Wrap(
                       spacing: 8,
@@ -975,7 +1031,7 @@ class _AppointmentScreenState extends State<AppointmentScreen> with SingleTicker
                     controller: notesCtrl,
                     maxLines: 2,
                     decoration: InputDecoration(
-                      labelText: AppLocale.l('notesOptional'),
+                      labelText: 'ಟಿಪ್ಪಣಿಗಳು (ಐಚ್ಛಿಕ)',
                       prefixIcon: Icon(Icons.note, color: kTeal),
                     ),
                     style: TextStyle(color: kText),
@@ -987,7 +1043,7 @@ class _AppointmentScreenState extends State<AppointmentScreen> with SingleTicker
                     width: double.infinity,
                     child: ElevatedButton.icon(
                       icon: const Icon(Icons.check),
-                      label: Text(AppLocale.l('bookAppt'), style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 16)),
+                      label: const Text('ಅಪಾಯಿಂಟ್\u200cಮೆಂಟ್ ಬುಕ್ ಮಾಡಿ', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 16)),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: kTeal,
                         foregroundColor: Colors.white,
@@ -1026,21 +1082,30 @@ class _AppointmentScreenState extends State<AppointmentScreen> with SingleTicker
                                 setState(() => _isLoading = false);
                                 if (ok) {
                                   ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(content: Text(AppLocale.l('apptBooked')), backgroundColor: Colors.green),
+                                    SnackBar(content: Text('✅ ಅಪಾಯಿಂಟ್\u200cಮೆಂಟ್ ಬುಕ್ ಆಗಿದೆ!'), backgroundColor: Colors.green),
                                   );
 
-                                  // Sync to Google Calendar
-                                  final startDt = DateTime(apptDate.year, apptDate.month, apptDate.day, startHour, startMin);
-                                  final calOk = await CalendarService.createAppointment(
-                                    title: nameCtrl.text,
-                                    start: startDt,
-                                    end: startDt.add(Duration(minutes: daySlot.slotMinutes)),
-                                    description: '${AppLocale.l('phonePrefix')}: ${phoneCtrl.text}\n${notesCtrl.text}'.trim(),
-                                  );
-                                  if (mounted && calOk) {
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      SnackBar(content: Text(AppLocale.l('addedToGCal')), backgroundColor: Colors.blueGrey),
-                                    );
+                                  // Sync to Google Calendar (2-way)
+                                  if (GoogleAuthService.isSignedIn) {
+                                    try {
+                                      final latestAppts = AppointmentService.getAppointmentsForDate(apptDate);
+                                      final justAdded = latestAppts.where((a) =>
+                                        a.startTime == selectedSlot! && a.clientName == nameCtrl.text
+                                      ).firstOrNull;
+                                      if (justAdded != null) {
+                                        final eventId = await CalendarService.pushAppointment(justAdded);
+                                        if (eventId != null) {
+                                          await AppointmentService.setGoogleEventId(justAdded, eventId);
+                                        }
+                                      }
+                                      if (mounted) {
+                                        ScaffoldMessenger.of(context).showSnackBar(
+                                          const SnackBar(content: Text('📅 Google Calendar ಗೆ ಸೇರಿಸಲಾಗಿದೆ'), backgroundColor: Colors.blueGrey),
+                                        );
+                                      }
+                                    } catch (e) {
+                                      debugPrint('Calendar push after booking failed: $e');
+                                    }
                                   }
 
                                   // Ask to send WhatsApp confirmation
@@ -1054,7 +1119,7 @@ class _AppointmentScreenState extends State<AppointmentScreen> with SingleTicker
                                   ));
                                 } else {
                                   ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(content: Text(AppLocale.l('apptFailed')), backgroundColor: Colors.red),
+                                    const SnackBar(content: Text('❌ ಅಪಾಯಿಂಟ್\u200cಮೆಂಟ್ ವಿಫಲ'), backgroundColor: Colors.red),
                                   );
                                 }
                               }
@@ -1135,15 +1200,15 @@ class _AppointmentScreenState extends State<AppointmentScreen> with SingleTicker
                     child: Container(width: 40, height: 4, decoration: BoxDecoration(color: kMuted.withOpacity(0.3), borderRadius: BorderRadius.circular(2))),
                   ),
                   const SizedBox(height: 16),
-                  Text(AppLocale.l('shareConfigTitle'), style: TextStyle(fontSize: 20, fontWeight: FontWeight.w900, color: kText)),
+                  Text('\u0c95\u0ccd\u0caf\u0cbe\u0cb2\u0cc6\u0c82\u0ca1\u0cb0\u0ccd \u0cb9\u0c82\u0c9a\u0cbf\u0c95\u0cca\u0cb3\u0ccd\u0cb3\u0cbf', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w900, color: kText)),
                   const SizedBox(height: 6),
-                  Text(AppLocale.l('shareConfigDesc'), style: TextStyle(color: kMuted, fontSize: 13)),
+                  Text('\u0ca6\u0cbf\u0ca8\u0cbe\u0c82\u0c95 \u0cae\u0ca4\u0ccd\u0ca4\u0cc1 \u0cb8\u0cae\u0caf \u0c86\u0caf\u0ccd\u0c95\u0cc6 \u0cae\u0cbe\u0ca1\u0cbf', style: TextStyle(color: kMuted, fontSize: 13)),
                   const SizedBox(height: 20),
 
                   // FROM DATE
                   _configTile(
                     icon: Icons.calendar_today,
-                    label: AppLocale.l('fromDateLabel'),
+                    label: '\u0caa\u0ccd\u0cb0\u0cbe\u0cb0\u0c82\u0cad \u0ca6\u0cbf\u0ca8\u0cbe\u0c82\u0c95',
                     value: _formatDate(fromDate),
                     onTap: () async {
                       final d = await showDatePicker(
@@ -1159,7 +1224,7 @@ class _AppointmentScreenState extends State<AppointmentScreen> with SingleTicker
                   // TO DATE
                   _configTile(
                     icon: Icons.event,
-                    label: AppLocale.l('toDateLabel'),
+                    label: '\u0c85\u0c82\u0ca4\u0ccd\u0caf \u0ca6\u0cbf\u0ca8\u0cbe\u0c82\u0c95',
                     value: _formatDate(toDate),
                     onTap: () async {
                       final d = await showDatePicker(
@@ -1175,7 +1240,7 @@ class _AppointmentScreenState extends State<AppointmentScreen> with SingleTicker
                   // FROM TIME
                   _configTile(
                     icon: Icons.access_time,
-                    label: AppLocale.l('fromTimeLabel'),
+                    label: '\u0caa\u0ccd\u0cb0\u0cbe\u0cb0\u0c82\u0cad \u0cb8\u0cae\u0caf',
                     value: fromTime.format(ctx),
                     onTap: () async {
                       final t = await showTimePicker(context: ctx, initialTime: fromTime);
@@ -1187,7 +1252,7 @@ class _AppointmentScreenState extends State<AppointmentScreen> with SingleTicker
                   // TO TIME
                   _configTile(
                     icon: Icons.access_time_filled,
-                    label: AppLocale.l('toTimeLabel'),
+                    label: '\u0c85\u0c82\u0ca4\u0ccd\u0caf \u0cb8\u0cae\u0caf',
                     value: toTime.format(ctx),
                     onTap: () async {
                       final t = await showTimePicker(context: ctx, initialTime: toTime);
@@ -1197,7 +1262,7 @@ class _AppointmentScreenState extends State<AppointmentScreen> with SingleTicker
                   const SizedBox(height: 16),
 
                   // PHONE NUMBER FOR WHATSAPP REQUESTS
-                  Text(AppLocale.l('whatsappNumber'), style: TextStyle(color: kMuted, fontSize: 13, fontWeight: FontWeight.w600)),
+                  Text('ನಿಮ್ಮ WhatsApp ಸಂಖ್ಯೆ', style: TextStyle(color: kMuted, fontSize: 13, fontWeight: FontWeight.w600)),
                   const SizedBox(height: 6),
                   TextField(
                     controller: phoneCtrl,
@@ -1225,7 +1290,7 @@ class _AppointmentScreenState extends State<AppointmentScreen> with SingleTicker
                     ),
                   ),
                   const SizedBox(height: 6),
-                  Text(AppLocale.l('whatsappDesc'), style: TextStyle(color: kMuted, fontSize: 11)),
+                  Text('ಗ್ರಾಹಕರ ಅಪಾಯಿಂಟ್\u200cಮೆಂಟ್ ವಿನಂತಿ WhatsApp ಮೂಲಕ ಬರುತ್ತದೆ', style: TextStyle(color: kMuted, fontSize: 11)),
 
                   const SizedBox(height: 24),
 
@@ -1234,7 +1299,7 @@ class _AppointmentScreenState extends State<AppointmentScreen> with SingleTicker
                     width: double.infinity,
                     child: ElevatedButton.icon(
                       icon: const Icon(Icons.share),
-                      label: Text(AppLocale.l('shareViaWA'), style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 15)),
+                      label: const Text('WhatsApp \u0ca8\u0cb2\u0ccd\u0cb2\u0cbf \u0cb9\u0c82\u0c9a\u0cbf\u0c95\u0cca\u0cb3\u0ccd\u0cb3\u0cbf', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 15)),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: const Color(0xFF25D366),
                         foregroundColor: Colors.white,
@@ -1254,6 +1319,36 @@ class _AppointmentScreenState extends State<AppointmentScreen> with SingleTicker
                     ),
                   ),
 
+                  const SizedBox(height: 10),
+
+                  // CREATE BOOKING LINK FOR CLIENTS
+                  SizedBox(
+                    width: double.infinity,
+                    child: OutlinedButton.icon(
+                      icon: Icon(Icons.link, color: kTeal),
+                      label: Text('ಬುಕಿಂಗ್ ಲಿಂಕ್ ಹಂಚಿಕೊಳ್ಳಿ', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 15, color: kTeal)),
+                      style: OutlinedButton.styleFrom(
+                        side: BorderSide(color: kTeal),
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      ),
+                      onPressed: () {
+                        Navigator.pop(ctx);
+                        final bookingUrl = AppointmentService.generateBookingPageUrl(
+                          fromDate: fromDate, toDate: toDate,
+                          fromHour: fromTime.hour, fromMinute: fromTime.minute,
+                          toHour: toTime.hour, toMinute: toTime.minute,
+                          phone: phoneCtrl.text,
+                        );
+                        final msg = '\u0ca8\u0cae\u0cb8\u0ccd\u0c95\u0cbe\u0cb0,\n\n'
+                            '\u0c85\u0caa\u0cbe\u0caf\u0cbf\u0c82\u0c9f\u0ccd\u200c\u0cae\u0cc6\u0c82\u0c9f\u0ccd \u0cac\u0cc1\u0c95\u0ccd \u0cae\u0cbe\u0ca1\u0cb2\u0cc1 \u0c88 \u0cb2\u0cbf\u0c82\u0c95\u0ccd \u0ca4\u0cc6\u0cb0\u0cc6\u0caf\u0cbf\u0cb0\u0cbf:\n'
+                            '$bookingUrl\n\n'
+                            '- \u0cad\u0cbe\u0cb0\u0ca4\u0cc0\u0caf\u0cae\u0ccd \u2728';
+                        final encoded = Uri.encodeComponent(msg);
+                        launchUrl(Uri.parse('https://wa.me/?text=$encoded'), mode: LaunchMode.externalApplication);
+                      },
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -1291,8 +1386,8 @@ class _AppointmentScreenState extends State<AppointmentScreen> with SingleTicker
   // ─── Helpers ───────────────────────────────────────────
 
   String _formatDate(DateTime d) {
-    final months = [AppLocale.l('month0'), AppLocale.l('month1'), AppLocale.l('month2'), AppLocale.l('month3'), AppLocale.l('month4'), AppLocale.l('month5'), AppLocale.l('month6'), AppLocale.l('month7'), AppLocale.l('month8'), AppLocale.l('month9'), AppLocale.l('month10'), AppLocale.l('month11')];
-    final days = [AppLocale.l('dayMon'), AppLocale.l('dayTue'), AppLocale.l('dayWed'), AppLocale.l('dayThu'), AppLocale.l('dayFri'), AppLocale.l('daySat'), AppLocale.l('daySun')];
+    const months = ['ಜನವರಿ', 'ಫೆಬ್ರವರಿ', 'ಮಾರ್ಚ್', 'ಏಪ್ರಿಲ್', 'ಮೇ', 'ಜೂನ್', 'ಜುಲೈ', 'ಆಗಸ್ಟ್', 'ಸೆಪ್ಟೆಂಬರ್', 'ಅಕ್ಟೋಬರ್', 'ನವೆಂಬರ್', 'ಡಿಸೆಂಬರ್'];
+    const days = ['ಸೋಮ', 'ಮಂಗಳ', 'ಬುಧ', 'ಗುರು', 'ಶುಕ್ರ', 'ಶನಿ', 'ರವಿ'];
     return '${days[d.weekday - 1]}, ${d.day} ${months[d.month - 1]}';
   }
 

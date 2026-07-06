@@ -95,33 +95,8 @@ class _MatchMakingTabState extends State<MatchMakingTab> {
         return m;
       }
 
-      // Extract bhava house (1-12) for each planet based on bhava cusps
-      Map<String, int> extractBhavaHouses(KundaliResult r) {
-        final m = <String, int>{};
-        final cusps = r.bhavas; // 12 house cusps (longitudes)
-        for (final e in r.planets.entries) {
-          if (e.key == 'ಲಗ್ನ') continue; // skip lagna
-          final pLon = e.value.longitude;
-          int house = 1;
-          for (int i = 0; i < 12; i++) {
-            final start = cusps[i];
-            final end = cusps[(i + 1) % 12];
-            if (end > start) {
-              if (pLon >= start && pLon < end) { house = i + 1; break; }
-            } else {
-              // wraps around 360°
-              if (pLon >= start || pLon < end) { house = i + 1; break; }
-            }
-          }
-          m[e.key] = house;
-        }
-        return m;
-      }
-
       final bRashis = extractRashis(brideR);
       final gRashis = extractRashis(groomR);
-      final bBhavaHouses = extractBhavaHouses(brideR);
-      final gBhavaHouses = extractBhavaHouses(groomR);
       final bLagnaRashi = brideR.planets['ಲಗ್ನ']?.rashiIndex ?? 0;
       final gLagnaRashi = groomR.planets['ಲಗ್ನ']?.rashiIndex ?? 0;
       final bMoonRashi = brideR.planets['ಚಂದ್ರ']?.rashiIndex ?? 0;
@@ -140,7 +115,6 @@ class _MatchMakingTabState extends State<MatchMakingTab> {
         brideNavLagnaRashi: bNavLagna, brideNavMoonRashi: bNavMoon,
         groomNakIdx: gNakIdx, groomMoonRashi: gMoonRashi, groomLagnaRashi: gLagnaRashi, groomPlanetRashis: gRashis,
         groomNavLagnaRashi: gNavLagna, groomNavMoonRashi: gNavMoon,
-        brideBhavaHouses: bBhavaHouses, groomBhavaHouses: gBhavaHouses,
       );
 
       setState(() {
@@ -640,181 +614,8 @@ class _MatchMakingTabState extends State<MatchMakingTab> {
       _sectionHeader(AppLocale.l('matchResult'), Icons.stars, kPurple1),
       _buildAshtaKootaTable(fr['ashtaKoota']),
 
-      // ── DASHA SANDHI ──
-      _sectionHeader(AppLocale.l('dashaSandhi'), Icons.swap_horiz, Colors.deepPurple),
-      _buildDashaSandhiSection(br, gr),
-
       const SizedBox(height: 32),
     ]);
-  }
-
-  /// Check if any mahadasha of bride and groom end within 6 months of each other
-  Widget _buildDashaSandhiSection(KundaliResult br, KundaliResult gr) {
-    final bName = _bNameCtrl.text.isNotEmpty ? _bNameCtrl.text : AppLocale.l('brideDetails');
-    final gName = _gNameCtrl.text.isNotEmpty ? _gNameCtrl.text : AppLocale.l('groomDetails');
-
-    // Only consider mahadashas ending in the future
-    final now = DateTime.now();
-    final bDashas = br.dashas.where((d) => d.end.isAfter(now)).toList();
-    final gDashas = gr.dashas.where((d) => d.end.isAfter(now)).toList();
-
-    // Find pairs where both have a mahadasha ending within 6 months of each other
-    final matches = <Map<String, dynamic>>[];
-    const sixMonths = Duration(days: 183);
-
-    for (final bd in bDashas) {
-      for (final gd in gDashas) {
-        final diff = bd.end.difference(gd.end).abs();
-        if (diff <= sixMonths) {
-          matches.add({
-            'brideLord': bd.lord,
-            'brideEnd': bd.end,
-            'groomLord': gd.lord,
-            'groomEnd': gd.end,
-          });
-        }
-      }
-    }
-
-    final hasSandhi = matches.isNotEmpty;
-    final verdict = hasSandhi ? AppLocale.l('dashaSandhiYes') : AppLocale.l('dashaSandhiNo');
-    final vColor = hasSandhi ? Colors.red.shade700 : Colors.green.shade700;
-
-    String _fmtDate(DateTime d) => '${d.day.toString().padLeft(2, "0")}-${d.month.toString().padLeft(2, "0")}-${d.year}';
-
-    return AppCard(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-      // ── Current Dasha Details for both ──
-      _buildCurrentDashaInfo(br, bName, Icons.female, kOrange),
-      const SizedBox(height: 10),
-      _buildCurrentDashaInfo(gr, gName, Icons.male, kTeal),
-      const SizedBox(height: 14),
-      Divider(color: kBorder),
-      const SizedBox(height: 10),
-      // Verdict
-      Container(
-        padding: const EdgeInsets.all(10),
-        decoration: BoxDecoration(color: vColor.withOpacity(0.08), borderRadius: BorderRadius.circular(8)),
-        child: Row(children: [
-          Icon(hasSandhi ? Icons.warning : Icons.check_circle, color: vColor, size: 20),
-          const SizedBox(width: 8),
-          Flexible(child: Text(verdict, style: TextStyle(fontWeight: FontWeight.w800, fontSize: 13, color: vColor))),
-        ]),
-      ),
-      if (matches.isNotEmpty) ...[
-        const SizedBox(height: 12),
-        Text('${AppLocale.l('mahadashaEnds')} (${AppLocale.l('within6Months')})',
-          style: TextStyle(fontWeight: FontWeight.w700, fontSize: 12, color: kMuted)),
-        const SizedBox(height: 8),
-        ...matches.map((m) => Padding(
-          padding: const EdgeInsets.only(bottom: 8),
-          child: Container(
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(
-              color: Colors.orange.withOpacity(0.06),
-              borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: Colors.orange.withOpacity(0.2)),
-            ),
-            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Row(children: [
-                Icon(Icons.male, size: 16, color: kTeal),
-                const SizedBox(width: 4),
-                Text('$gName: ', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: kMuted)),
-                Text('${trAll(m['groomLord'])} → ${_fmtDate(m['groomEnd'])}',
-                  style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: kText)),
-              ]),
-              const SizedBox(height: 4),
-              Row(children: [
-                Icon(Icons.female, size: 16, color: kOrange),
-                const SizedBox(width: 4),
-                Text('$bName: ', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: kMuted)),
-                Text('${trAll(m['brideLord'])} → ${_fmtDate(m['brideEnd'])}',
-                  style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: kText)),
-              ]),
-            ]),
-          ),
-        )),
-      ],
-    ]));
-  }
-
-  /// Build current running dasha info for a person
-  Widget _buildCurrentDashaInfo(KundaliResult r, String name, IconData icon, Color accent) {
-    final now = DateTime.now();
-    String _fmtD(DateTime d) => '${d.day.toString().padLeft(2, "0")}-${d.month.toString().padLeft(2, "0")}-${d.year}';
-
-    // Find current Mahadasha
-    String mdLord = '', mdEnd = '';
-    String adLord = '', adEnd = '';
-    String pdLord = '', pdEnd = '';
-    String sdLord = '', sdEnd = '';
-
-    for (final md in r.dashas) {
-      if (now.isBefore(md.end) && (now.isAfter(md.start) || now.isAtSameMomentAs(md.start))) {
-        mdLord = trAll(md.lord);
-        mdEnd = _fmtD(md.end);
-        for (final ad in md.antardashas) {
-          if (now.isBefore(ad.end) && (now.isAfter(ad.start) || now.isAtSameMomentAs(ad.start))) {
-            adLord = trAll(ad.lord);
-            adEnd = _fmtD(ad.end);
-            for (final pd in ad.antardashas) {
-              if (now.isBefore(pd.end) && (now.isAfter(pd.start) || now.isAtSameMomentAs(pd.start))) {
-                pdLord = trAll(pd.lord);
-                pdEnd = _fmtD(pd.end);
-                for (final sd in pd.antardashas) {
-                  if (now.isBefore(sd.end) && (now.isAfter(sd.start) || now.isAtSameMomentAs(sd.start))) {
-                    sdLord = trAll(sd.lord);
-                    sdEnd = _fmtD(sd.end);
-                    break;
-                  }
-                }
-                break;
-              }
-            }
-            break;
-          }
-        }
-        break;
-      }
-    }
-
-    return Container(
-      padding: const EdgeInsets.all(10),
-      decoration: BoxDecoration(
-        color: accent.withOpacity(0.06),
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: accent.withOpacity(0.2)),
-      ),
-      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Row(children: [
-          Icon(icon, size: 18, color: accent),
-          const SizedBox(width: 6),
-          Text(name, style: TextStyle(fontWeight: FontWeight.w900, fontSize: 13, color: accent)),
-          const Spacer(),
-          Text(AppLocale.l('currentDasha'), style: TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: kMuted)),
-        ]),
-        const SizedBox(height: 8),
-        if (mdLord.isNotEmpty)
-          _dashaRow(AppLocale.l('mahadasha'), mdLord, mdEnd, FontWeight.w900, 12),
-        if (adLord.isNotEmpty)
-          _dashaRow(AppLocale.l('bhukti'), adLord, adEnd, FontWeight.w700, 11),
-        if (pdLord.isNotEmpty)
-          _dashaRow(AppLocale.l('pratyantara'), pdLord, pdEnd, FontWeight.w600, 11),
-        if (sdLord.isNotEmpty)
-          _dashaRow(AppLocale.l('sookshma'), sdLord, sdEnd, FontWeight.w600, 10),
-      ]),
-    );
-  }
-
-  Widget _dashaRow(String label, String lord, String endDate, FontWeight fw, double fs) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 3),
-      child: Row(children: [
-        SizedBox(width: 80, child: Text(label, style: TextStyle(fontSize: fs, fontWeight: FontWeight.w600, color: kMuted))),
-        Text(lord, style: TextStyle(fontSize: fs, fontWeight: fw, color: kText)),
-        const Spacer(),
-        Text('→ $endDate', style: TextStyle(fontSize: fs - 1, fontWeight: FontWeight.w600, color: kMuted)),
-      ]),
-    );
   }
 
   Widget _buildPersonSummary(KundaliResult r, String name, DateTime dob, int hour, int minute, String ampm, String place) {
