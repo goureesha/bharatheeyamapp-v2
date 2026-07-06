@@ -375,7 +375,7 @@ class _PanchangaScreenState extends State<PanchangaScreen> {
         Row(children: [
           Icon(Icons.local_fire_department, color: kOrange, size: 22),
           const SizedBox(width: 8),
-          Text(AppLocale.l('agniVasa') + ' / Agni Vasa', style: TextStyle(
+          Text(AppLocale.l('agniVasa'), style: TextStyle(
             fontWeight: FontWeight.w900, fontSize: 14, color: kOrange)),
         ]),
         const SizedBox(height: 6),
@@ -397,7 +397,7 @@ class _PanchangaScreenState extends State<PanchangaScreen> {
                 fontSize: 16, fontWeight: FontWeight.w900, color: color)),
               const SizedBox(height: 2),
               Text(
-                isPrithvi ? 'Agni on Earth — Auspicious' : agni.contains('ಆಕಾಶ') || agni.contains('आकाश') ? 'Agni in Sky — Inauspicious' : 'Agni in Netherworld — Inauspicious',
+                trAll(_panchang!.agniVasa),
                 style: TextStyle(fontSize: 12, color: kMuted),
               ),
             ])),
@@ -415,7 +415,7 @@ class _PanchangaScreenState extends State<PanchangaScreen> {
       backgroundColor: kBg,
       appBar: AppBar(
         backgroundColor: kCard,
-        title: Text(AppLocale.l('panchanga') + ' / Panchang',
+        title: Text(AppLocale.l('panchanga'),
             style: TextStyle(color: kText, fontSize: 16, fontWeight: FontWeight.w800)),
         iconTheme: IconThemeData(color: kText),
         elevation: 0,
@@ -521,7 +521,7 @@ class _PanchangaScreenState extends State<PanchangaScreen> {
                     AppCard(
                       padding: EdgeInsets.zero,
                       child: Column(children: [
-                        _sectionHeader(Icons.auto_awesome, AppLocale.l('panchanga') + ' / Five Limbs', kPurple2),
+                        _sectionHeader(Icons.auto_awesome, AppLocale.l('panchanga'), kPurple2),
                         _tableRow([AppLocale.l('tithi'), _formatEnd(trAll(_panchang!.tithi), _panchang!.tithiEndTime, _panchang!.tithiEndsNextDay)]),
                         _tableRow([AppLocale.l('vara'), trAll(_panchang!.vara)]),
                         _tableRow([AppLocale.l('chandraNak'), _formatEnd('${trAll(_panchang!.nakshatra)} - ${AppLocale.l('pada')} ${_chandraPada()}', _panchang!.nakEndTime, _panchang!.nakEndsNextDay)]),
@@ -534,7 +534,7 @@ class _PanchangaScreenState extends State<PanchangaScreen> {
                     AppCard(
                       padding: EdgeInsets.zero,
                       child: Column(children: [
-                        _sectionHeader(Icons.wb_sunny, AppLocale.l('surya') + ' / Sun', kOrange),
+                        _sectionHeader(Icons.wb_sunny, AppLocale.l('surya'), kOrange),
                         _tableRow([AppLocale.l('sunrise'), _panchang!.sunrise]),
                         _tableRow([AppLocale.l('sunset'), _panchang!.sunset]),
                         _tableRow([AppLocale.l('suryaNak'), '${trAll(_panchang!.suryaNakshatra)} - ${AppLocale.l('pada')} ${_panchang!.suryaPada}']),
@@ -547,7 +547,7 @@ class _PanchangaScreenState extends State<PanchangaScreen> {
                     AppCard(
                       padding: EdgeInsets.zero,
                       child: Column(children: [
-                        _sectionHeader(Icons.nightlight_round, AppLocale.l('chandra') + ' / Moon', kTeal),
+                        _sectionHeader(Icons.nightlight_round, AppLocale.l('chandra'), kTeal),
                         _tableRow([AppLocale.l('chandraRashi'), trAll(_panchang!.chandraRashi)]),
                         _tableRow([AppLocale.l('chandraMasa'), trAll(_panchang!.chandraMasa)]),
 
@@ -559,7 +559,7 @@ class _PanchangaScreenState extends State<PanchangaScreen> {
                     AppCard(
                       padding: EdgeInsets.zero,
                       child: Column(children: [
-                        _sectionHeader(Icons.access_time, AppLocale.l('kala') + ' / Time', kPurple1),
+                        _sectionHeader(Icons.access_time, AppLocale.l('kala'), kPurple1),
                         _tableRow([AppLocale.l('samvatsara'), trAll(_panchang!.samvatsara)]),
                         _tableRow([AppLocale.l('ayana'), trAll(_panchang!.ayana)]),
                         _tableRow([AppLocale.l('rutu'), trAll(_panchang!.rutu)]),
@@ -622,7 +622,7 @@ class _PanchangaScreenState extends State<PanchangaScreen> {
         Row(children: [
           Icon(Icons.schedule, color: const Color(0xFF5B2C6F), size: 22),
           const SizedBox(width: 8),
-          Text(AppLocale.l('dayMuhurta') + ' / Day Muhurtas', style: TextStyle(
+          Text(AppLocale.l('dayMuhurta'), style: TextStyle(
             fontWeight: FontWeight.w900, fontSize: 14, color: const Color(0xFF5B2C6F))),
         ]),
         const SizedBox(height: 6),
@@ -703,7 +703,7 @@ class _PanchangaScreenState extends State<PanchangaScreen> {
       'name': AppLocale.l('abhijit'), 'nameEn': 'Abhijit Muhurta',
       'start': _minutesToTimeStr(abhijitStart), 'end': _minutesToTimeStr(abhijitEnd),
       'icon': Icons.star, 'color': Colors.green,
-      'desc': AppLocale.l('abhijitDesc') + 'Most auspicious (midday ± ½ muhurta)',
+      'desc': AppLocale.l('abhijitDesc'),
     });
 
     // ═══ Durmuhurta — fixed offsets from sunrise per weekday ═══
@@ -734,7 +734,7 @@ class _PanchangaScreenState extends State<PanchangaScreen> {
         'nameEn': weekdayDurs.length > 1 ? 'Durmuhurta ${i + 1}' : 'Durmuhurta',
         'start': _minutesToTimeStr(dStart % (24 * 60)), 'end': _minutesToTimeStr(dEnd % (24 * 60)),
         'icon': Icons.dangerous, 'color': Colors.red,
-        'desc': AppLocale.l('durmuhurtaDesc') + 'Inauspicious (${dur.toInt()} min)',
+        'desc': AppLocale.l('durmuhurtaDesc'),
       });
     }
 
@@ -755,7 +755,7 @@ class _PanchangaScreenState extends State<PanchangaScreen> {
       'start': _minutesToTimeStr(varjyaStartMins % (24 * 60)),
       'end': _minutesToTimeStr(varjyaEndMins % (24 * 60)),
       'icon': Icons.block, 'color': Colors.orange,
-      'desc': AppLocale.l('varjyaDesc') + 'Avoid (nakshatra ghati: $varjyaStartGhati-${varjyaStartGhati + 4})',
+      'desc': AppLocale.l('varjyaDesc'),
     });
 
     // ═══ Amrita Siddhi Yoga ═══
@@ -789,7 +789,7 @@ class _PanchangaScreenState extends State<PanchangaScreen> {
         Row(children: [
           Icon(Icons.access_alarm, color: kOrange, size: 22),
           const SizedBox(width: 8),
-          Text(AppLocale.l('muhurtaTimings') + ' / Muhurta Timings', style: TextStyle(
+          Text(AppLocale.l('muhurtaTimings'), style: TextStyle(
             fontWeight: FontWeight.w900, fontSize: 14, color: kOrange)),
         ]),
         const SizedBox(height: 6),
@@ -835,7 +835,7 @@ class _PanchangaScreenState extends State<PanchangaScreen> {
         Row(children: [
           Icon(Icons.warning_amber_rounded, color: Colors.red, size: 22),
           const SizedBox(width: 8),
-          Text(AppLocale.l('ashubhaKala') + ' / Inauspicious Periods', style: TextStyle(
+          Text(AppLocale.l('ashubhaKala'), style: TextStyle(
             fontWeight: FontWeight.w900, fontSize: 14, color: Colors.red)),
         ]),
         const SizedBox(height: 12),
@@ -875,7 +875,7 @@ class _PanchangaScreenState extends State<PanchangaScreen> {
           Icon(isDay ? Icons.wb_sunny : Icons.nightlight_round,
             color: isDay ? kOrange : kPurple2, size: 22),
           const SizedBox(width: 8),
-          Text(isDay ? AppLocale.l('dayChougadiya') + ' / Day Chougadiya' : AppLocale.l('nightChougadiya') + ' / Night Chougadiya',
+          Text(isDay ? AppLocale.l('dayChougadiya') : AppLocale.l('nightChougadiya'),
             style: TextStyle(fontWeight: FontWeight.w900, fontSize: 14, color: isDay ? kOrange : kPurple2)),
         ]),
         const SizedBox(height: 10),
@@ -918,7 +918,7 @@ class _PanchangaScreenState extends State<PanchangaScreen> {
           Icon(isDay ? Icons.access_time : Icons.access_time_filled,
             color: isDay ? kTeal : kPurple1, size: 22),
           const SizedBox(width: 8),
-          Text(isDay ? AppLocale.l('dayHora') + ' / Day Hora' : AppLocale.l('nightHora') + ' / Night Hora',
+          Text(isDay ? AppLocale.l('dayHora') : AppLocale.l('nightHora'),
             style: TextStyle(fontWeight: FontWeight.w900, fontSize: 14, color: isDay ? kTeal : kPurple1)),
         ]),
         const SizedBox(height: 10),

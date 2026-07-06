@@ -160,14 +160,14 @@ class HomeScreen extends StatelessWidget {
       builder: (ctx) => StatefulBuilder(
         builder: (ctx, setDialogState) => AlertDialog(
           backgroundColor: kCard,
-          title: Text('ಅಪಾಯಿಂಟ್\u200cಮೆಂಟ್ ರಚಿಸಿ', style: TextStyle(color: kText)),
+          title: Text(AppLocale.l('createAppt'), style: TextStyle(color: kText)),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               TextField(
                 controller: clientNameCtrl,
                 decoration: InputDecoration(
-                  labelText: 'ಗ್ರಾಹಕರ ಹೆಸರು',
+                  labelText: AppLocale.l('clientName'),
                   labelStyle: TextStyle(color: kMuted),
                   isDense: true,
                 ),
@@ -197,7 +197,7 @@ class HomeScreen extends StatelessWidget {
               ),
               ListTile(
                 leading: Icon(Icons.timer, color: kPurple2),
-                title: Text('$durationMinutes ನಿಮಿಷ', style: TextStyle(color: kText)),
+                title: Text('$durationMinutes ${AppLocale.l('minutes')}', style: TextStyle(color: kText)),
                 trailing: Row(mainAxisSize: MainAxisSize.min, children: [
                   IconButton(icon: Icon(Icons.remove, color: kMuted), onPressed: () {
                     if (durationMinutes > 15) setDialogState(() => durationMinutes -= 15);
@@ -212,7 +212,7 @@ class HomeScreen extends StatelessWidget {
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(ctx),
-              child: Text('ರದ್ದು', style: TextStyle(color: kMuted)),
+              child: Text(AppLocale.l('cancel'), style: TextStyle(color: kMuted)),
             ),
             ElevatedButton(
               onPressed: () async {
@@ -222,19 +222,19 @@ class HomeScreen extends StatelessWidget {
                   selectedTime.hour, selectedTime.minute,
                 );
                 final ok = await CalendarService.createAppointment(
-                  title: clientNameCtrl.text.isNotEmpty ? clientNameCtrl.text : 'ಅಪಾಯಿಂಟ್\u200cಮೆಂಟ್',
+                  title: clientNameCtrl.text.isNotEmpty ? clientNameCtrl.text : AppLocale.l('appointment'),
                   start: startTime,
                   end: startTime.add(Duration(minutes: durationMinutes)),
-                  description: 'ಜಾತಕ ವಿಶ್ಲೇಷಣೆ',
+                  description: AppLocale.l('horoscope'),
                 );
                 if (context.mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                    content: Text(ok ? 'Calendar ಗೆ ಅಪಾಯಿಂಟ್\u200cಮೆಂಟ್ ಸೇರಿಸಲಾಗಿದೆ!' : 'ಅಪಾಯಿಂಟ್\u200cಮೆಂಟ್ ವಿಫಲ'),
+                    content: Text(ok ? AppLocale.l('apptAdded') : AppLocale.l('apptFailed')),
                   ));
                 }
               },
               style: ElevatedButton.styleFrom(backgroundColor: kTeal, foregroundColor: Colors.white),
-              child: Text('ರಚಿಸಿ'),
+              child: Text(AppLocale.l('create')),
             ),
           ],
         ),
