@@ -101,6 +101,53 @@ class ChartStyle {
 }
 
 // ─────────────────────────────────────────────
+// Samshaka mode: show navamsha number instead of degree
+// ─────────────────────────────────────────────
+class SamshakaMode {
+  static final ValueNotifier<bool> notifier = ValueNotifier(false);
+
+  static bool get isActive => notifier.value;
+
+  static void toggle(bool v) {
+    notifier.value = v;
+    SharedPreferences.getInstance().then((prefs) => prefs.setBool('samshaka_mode', v));
+  }
+
+  static Future<void> load() async {
+    final prefs = await SharedPreferences.getInstance();
+    notifier.value = prefs.getBool('samshaka_mode') ?? false;
+  }
+
+  /// Get navamsha rashi number (1-12) for a given longitude
+  static int navamshaSign(double longitude) {
+    final rashi = (longitude / 30).floor() % 12;
+    final block = rashi % 4; // 0=fire, 1=earth, 2=air, 3=water
+    final start = [0, 9, 6, 3][block]; // Aries, Cap, Libra, Cancer
+    final steps = ((longitude % 30) / 3.33333).floor();
+    return ((start + steps) % 12) + 1; // 1-based
+  }
+}
+
+// ─────────────────────────────────────────────
+// Single letter mode: show only abbreviation, no degrees
+// ─────────────────────────────────────────────
+class SingleLetterMode {
+  static final ValueNotifier<bool> notifier = ValueNotifier(false);
+
+  static bool get isActive => notifier.value;
+
+  static void toggle(bool v) {
+    notifier.value = v;
+    SharedPreferences.getInstance().then((prefs) => prefs.setBool('single_letter_mode', v));
+  }
+
+  static Future<void> load() async {
+    final prefs = await SharedPreferences.getInstance();
+    notifier.value = prefs.getBool('single_letter_mode') ?? false;
+  }
+}
+
+// ─────────────────────────────────────────────
 // App Language / Locale (5 languages)
 // ─────────────────────────────────────────────
 class AppLocale {
