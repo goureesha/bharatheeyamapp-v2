@@ -1,7 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'google_auth_service.dart';
 import 'client_service.dart';
+import '../widgets/common.dart';
 
 /// Appointment data model
 class Appointment {
@@ -15,7 +15,6 @@ class Appointment {
   final String notes;
   final String createdAt;
   final String clientId; // Links to Client.clientId (BH-2026-0001)
-  final String googleEventId; // Google Calendar event ID for 2-way sync
 
   Appointment({
     required this.id,
@@ -28,7 +27,6 @@ class Appointment {
     required this.notes,
     required this.createdAt,
     this.clientId = '',
-    this.googleEventId = '',
   });
 
   /// Parse from tab-separated cached row
@@ -52,43 +50,13 @@ class Appointment {
       notes: row.length > 6 ? row[6].toString() : '',
       createdAt: row.length > 7 ? row[7].toString() : '',
       clientId: row.length > 8 ? row[8].toString() : '',
-      googleEventId: row.length > 9 ? row[9].toString() : '',
     );
   }
 
   List<Object> toRow() => [
     '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}',
-    startTime, endTime, clientName, clientPhone, status, notes, createdAt, clientId, googleEventId,
+    startTime, endTime, clientName, clientPhone, status, notes, createdAt, clientId,
   ];
-
-  /// Create a copy with updated fields
-  Appointment copyWith({
-    String? id,
-    DateTime? date,
-    String? startTime,
-    String? endTime,
-    String? clientName,
-    String? clientPhone,
-    String? status,
-    String? notes,
-    String? createdAt,
-    String? clientId,
-    String? googleEventId,
-  }) {
-    return Appointment(
-      id: id ?? this.id,
-      date: date ?? this.date,
-      startTime: startTime ?? this.startTime,
-      endTime: endTime ?? this.endTime,
-      clientName: clientName ?? this.clientName,
-      clientPhone: clientPhone ?? this.clientPhone,
-      status: status ?? this.status,
-      notes: notes ?? this.notes,
-      createdAt: createdAt ?? this.createdAt,
-      clientId: clientId ?? this.clientId,
-      googleEventId: googleEventId ?? this.googleEventId,
-    );
-  }
 
   /// Human-readable time for WhatsApp
   String get timeRange => '$startTime - $endTime';
@@ -256,7 +224,6 @@ class AppointmentService {
           endTime: appt.endTime, clientName: appt.clientName,
           clientPhone: appt.clientPhone, status: newStatus,
           notes: appt.notes, createdAt: appt.createdAt, clientId: appt.clientId,
-          googleEventId: appt.googleEventId,
         );
         await _saveToCache();
         return true;
@@ -271,54 +238,6 @@ class AppointmentService {
   /// Delete an appointment
   static Future<bool> deleteAppointment(Appointment appt) async {
     return updateStatus(appt, 'cancelled');
-  }
-
-  /// Update a full appointment (replace by matching date+startTime+clientName)
-  static Future<bool> updateAppointment(Appointment updated) async {
-    try {
-      final idx = _appointments.indexWhere((a) =>
-          a.date == updated.date && a.startTime == updated.startTime && a.clientName == updated.clientName);
-      if (idx >= 0) {
-        _appointments[idx] = updated;
-        await _saveToCache();
-        updateNotifier.value++;
-        return true;
-      }
-      return false;
-    } catch (e) {
-      debugPrint('AppointmentService: UpdateAppointment error: $e');
-      return false;
-    }
-  }
-
-  /// Set Google Calendar event ID on an appointment (after push to GCal)
-  static Future<bool> setGoogleEventId(Appointment appt, String eventId) async {
-    try {
-      final idx = _appointments.indexWhere((a) =>
-          a.date == appt.date && a.startTime == appt.startTime && a.clientName == appt.clientName);
-      if (idx >= 0) {
-        _appointments[idx] = _appointments[idx].copyWith(googleEventId: eventId);
-        await _saveToCache();
-        return true;
-      }
-      return false;
-    } catch (e) {
-      debugPrint('AppointmentService: setGoogleEventId error: $e');
-      return false;
-    }
-  }
-
-  /// Add an appointment directly (used by calendar sync for pulled events)
-  static Future<bool> addAppointmentDirect(Appointment appt) async {
-    try {
-      _appointments.add(appt);
-      await _saveToCache();
-      updateNotifier.value++;
-      return true;
-    } catch (e) {
-      debugPrint('AppointmentService: addAppointmentDirect error: $e');
-      return false;
-    }
   }
 
   // ─── Queries ─────────────────────────────────────────────
@@ -379,32 +298,32 @@ class AppointmentService {
 
   /// Generate WhatsApp confirmation message
   static String confirmationMessage(Appointment appt) {
-    final idLine = appt.clientId.isNotEmpty ? '🆔 ಗ್ರಾಹಕ ID: ${appt.clientId}\n' : '';
-    return 'ನಮಸ್ಕಾರ ${appt.clientName},\n\n'
-        'ನಿಮ್ಮ ಅಪಾಯಿಂಟ್\u200cಮೆಂಟ್ ದೃಢಪಡಿಸಲಾಗಿದೆ ✅\n\n'
-        '📅 ದಿನಾಂಕ: ${appt.dateStr}\n'
-        '⏰ ಸಮಯ: ${appt.timeRange}\n'
+    final idLine = appt.clientId.isNotEmpty ? '🆔 ${AppLocale.l("waClientId")}: ${appt.clientId}\n' : '';
+    return '${AppLocale.l("bookingMsgNamaskara")} ${appt.clientName},\n\n'
+        '${AppLocale.l("waConfirmed")}\n\n'
+        '📅 ${AppLocale.l("waDate")}: ${appt.dateStr}\n'
+        '⏰ ${AppLocale.l("waTime")}: ${appt.timeRange}\n'
         '$idLine\n'
-        'ದಯವಿಟ್ಟು ಸಮಯಕ್ಕೆ ಸರಿಯಾಗಿ ಬನ್ನಿ.\n\n'
-        '- ಭಾರತೀಯಮ್ ✨';
+        '${AppLocale.l("waComeOnTime")}\n\n'
+        '${AppLocale.l("bookingMsgSign")}';
   }
 
   /// Generate WhatsApp reminder message
   static String reminderMessage(Appointment appt) {
-    final idLine = appt.clientId.isNotEmpty ? '🆔 ಗ್ರಾಹಕ ID: ${appt.clientId}\n' : '';
-    return 'ನಮಸ್ಕಾರ ${appt.clientName},\n\n'
-        'ನಿಮ್ಮ ಅಪಾಯಿಂಟ್\u200cಮೆಂಟ್ ನಾಳೆಯ ಜ್ಞಾಪನೆ 🔔\n\n'
-        '📅 ದಿನಾಂಕ: ${appt.dateStr}\n'
-        '⏰ ಸಮಯ: ${appt.timeRange}\n'
+    final idLine = appt.clientId.isNotEmpty ? '🆔 ${AppLocale.l("waClientId")}: ${appt.clientId}\n' : '';
+    return '${AppLocale.l("bookingMsgNamaskara")} ${appt.clientName},\n\n'
+        '${AppLocale.l("waReminder")}\n\n'
+        '📅 ${AppLocale.l("waDate")}: ${appt.dateStr}\n'
+        '⏰ ${AppLocale.l("waTime")}: ${appt.timeRange}\n'
         '$idLine\n'
-        'ದಯವಿಟ್ಟು ಸಮಯಕ್ಕೆ ಸರಿಯಾಗಿ ಬನ್ನಿ.\n\n'
-        '- ಭಾರತೀಯಮ್ ✨';
+        '${AppLocale.l("waComeOnTime")}\n\n'
+        '${AppLocale.l("bookingMsgSign")}';
   }
 
   /// Generate available slots message to share with clients
   static String availableSlotsMessage(DateTime date) {
     final slots = getAvailableSlotsForDate(date);
-    if (slots.isEmpty) return 'ಈ ದಿನಾಂಕದಲ್ಲಿ ಯಾವುದೇ ಸ್ಲಾಟ್ ಲಭ್ಯವಿಲ್ಲ.';
+    if (slots.isEmpty) return AppLocale.l('waNoSlots');
 
     final dateStr = '${date.day}/${date.month}/${date.year}';
     final slotStr = slots.map((s) {
@@ -415,26 +334,26 @@ class AppointmentService {
       return '  ⏰ $h12:${parts[1]} $amPm';
     }).join('\n');
 
-    return 'ನಮಸ್ಕಾರ,\n\n'
-        '📅 $dateStr ದಿನಾಂಕದಲ್ಲಿ ಲಭ್ಯವಿರುವ ಸ್ಲಾಟ್‌ಗಳು:\n\n'
+    return '${AppLocale.l("bookingMsgNamaskara")}\n\n'
+        '📅 $dateStr ${AppLocale.l("waSlotsOn")}\n\n'
         '$slotStr\n\n'
-        'ಬುಕ್ ಮಾಡಲು ದಯವಿಟ್ಟು ಸಂಪರ್ಕಿಸಿ.\n\n'
-        '- ಭಾರತೀಯಮ್ ✨';
+        '${AppLocale.l("waBookContact")}\n\n'
+        '${AppLocale.l("bookingMsgSign")}';
   }
 
   /// Generate a full weekly/monthly calendar of available slots for sharing
   static String weeklyCalendarMessage({int days = 7}) {
-    const dayNames = ['ಸೋಮವಾರ', 'ಮಂಗಳವಾರ', 'ಬುಧವಾರ', 'ಗುರುವಾರ', 'ಶುಕ್ರವಾರ', 'ಶನಿವಾರ', 'ರವಿವಾರ'];
-    const months = ['ಜನವರಿ', 'ಫೆಬ್ರವರಿ', 'ಮಾರ್ಚ್', 'ಏಪ್ರಿಲ್', 'ಮೇ', 'ಜೂನ್', 'ಜುಲೈ', 'ಆಗಸ್ಟ್', 'ಸೆಪ್ಟೆಂಬರ್', 'ಅಕ್ಟೋಬರ್', 'ನವೆಂಬರ್', 'ಡಿಸೆಂಬರ್'];
+    final dayNames = [AppLocale.l('dayFullMon'), AppLocale.l('dayFullTue'), AppLocale.l('dayFullWed'), AppLocale.l('dayFullThu'), AppLocale.l('dayFullFri'), AppLocale.l('dayFullSat'), AppLocale.l('dayFullSun')];
+    final months = [AppLocale.l('month0'), AppLocale.l('month1'), AppLocale.l('month2'), AppLocale.l('month3'), AppLocale.l('month4'), AppLocale.l('month5'), AppLocale.l('month6'), AppLocale.l('month7'), AppLocale.l('month8'), AppLocale.l('month9'), AppLocale.l('month10'), AppLocale.l('month11')];
 
     final today = DateTime.now();
     final buf = StringBuffer();
 
-    buf.writeln('🙏 *ಭಾರತೀಯಮ್ - ಅಪಾಯಿಂಟ್\u200cಮೆಂಟ್ ಕ್ಯಾಲೆಂಡರ್*');
+    buf.writeln('🙏 *${AppLocale.l("waCalTitle")}*');
     buf.writeln('━━━━━━━━━━━━━━━━━━━━━');
     buf.writeln('');
-    buf.writeln('ಕೆಳಗಿನ ದಿನಾಂಕಗಳಲ್ಲಿ ಲಭ್ಯವಿರುವ ಸಮಯಗಳನ್ನು ನೋಡಿ.');
-    buf.writeln('ನಿಮಗೆ ಬೇಕಾದ ದಿನಾಂಕ ಮತ್ತು ಸಮಯವನ್ನು ಆಯ್ಕೆ ಮಾಡಿ ಉತ್ತರಿಸಿ.');
+    buf.writeln(AppLocale.l('waCalView'));
+    buf.writeln(AppLocale.l('waCalSelect'));
     buf.writeln('');
 
     bool anySlots = false;
@@ -459,13 +378,13 @@ class AppointmentService {
     }
 
     if (!anySlots) {
-      buf.writeln('❌ ಮುಂದಿನ $days ದಿನಗಳಲ್ಲಿ ಯಾವುದೇ ಸ್ಲಾಟ್ ಲಭ್ಯವಿಲ್ಲ.');
+      buf.writeln('❌ ${AppLocale.l("waCalNoSlots").replaceAll("{d}", days.toString())}');
     }
 
     buf.writeln('━━━━━━━━━━━━━━━━━━━━━');
-    buf.writeln('ಬುಕ್ ಮಾಡಲು: ನಿಮ್ಮ ಹೆಸರು, ಫೋನ್ ಸಂಖ್ಯೆ, ಮತ್ತು ಬೇಕಾದ ದಿನಾಂಕ+ಸಮಯವನ್ನು ಕಳುಹಿಸಿ.');
+    buf.writeln(AppLocale.l('waCalBook'));
     buf.writeln('');
-    buf.writeln('- *ಭಾರತೀಯಮ್* ✨');
+    buf.writeln('- *${AppLocale.l("bookingMsgSign")}*');
 
     return buf.toString();
   }
@@ -479,14 +398,14 @@ class AppointmentService {
     required int toHour,
     required int toMinute,
   }) {
-    const dayNames = ['ಸೋಮವಾರ', 'ಮಂಗಳವಾರ', 'ಬುಧವಾರ', 'ಗುರುವಾರ', 'ಶುಕ್ರವಾರ', 'ಶನಿವಾರ', 'ರವಿವಾರ'];
-    const months = ['ಜನವರಿ', 'ಫೆಬ್ರವರಿ', 'ಮಾರ್ಚ್', 'ಏಪ್ರಿಲ್', 'ಮೇ', 'ಜೂನ್', 'ಜುಲೈ', 'ಆಗಸ್ಟ್', 'ಸೆಪ್ಟೆಂಬರ್', 'ಅಕ್ಟೋಬರ್', 'ನವೆಂಬರ್', 'ಡಿಸೆಂಬರ್'];
+    final dayNames = [AppLocale.l('dayFullMon'), AppLocale.l('dayFullTue'), AppLocale.l('dayFullWed'), AppLocale.l('dayFullThu'), AppLocale.l('dayFullFri'), AppLocale.l('dayFullSat'), AppLocale.l('dayFullSun')];
+    final months = [AppLocale.l('month0'), AppLocale.l('month1'), AppLocale.l('month2'), AppLocale.l('month3'), AppLocale.l('month4'), AppLocale.l('month5'), AppLocale.l('month6'), AppLocale.l('month7'), AppLocale.l('month8'), AppLocale.l('month9'), AppLocale.l('month10'), AppLocale.l('month11')];
 
     final customFromMin = fromHour * 60 + fromMinute;
     final customToMin = toHour * 60 + toMinute;
 
     final buf = StringBuffer();
-    buf.writeln('🙏 *ಭಾರತೀಯಮ್ - ಅಪಾಯಿಂಟ್\u200cಮೆಂಟ್ ಕ್ಯಾಲೆಂಡರ್*');
+    buf.writeln('🙏 *${AppLocale.l("waCalTitle")}*');
     buf.writeln('━━━━━━━━━━━━━━━━━━━━━');
     buf.writeln('');
 
@@ -497,8 +416,8 @@ class AppointmentService {
       return '$h12:${m.toString().padLeft(2, '0')} $amPm';
     }
 
-    buf.writeln('⏰ ಸಮಯ: ${_fmt(fromHour, fromMinute)} - ${_fmt(toHour, toMinute)}');
-    buf.writeln('ನಿಮಗೆ ಬೇಕಾದ ಸ್ಲಾಟ್ ಆಯ್ಕೆ ಮಾಡಿ ಉತ್ತರಿಸಿ.');
+    buf.writeln('⏰ ${AppLocale.l("waTime")}: ${_fmt(fromHour, fromMinute)} - ${_fmt(toHour, toMinute)}');
+    buf.writeln(AppLocale.l('waCalSlotSel'));
     buf.writeln('');
 
     bool anySlots = false;
@@ -530,72 +449,20 @@ class AppointmentService {
     }
 
     if (!anySlots) {
-      buf.writeln('❌ ಈ ಅವಧಿಯಲ್ಲಿ ಯಾವುದೇ ಸ್ಲಾಟ್ ಲಭ್ಯವಿಲ್ಲ.');
+      buf.writeln('❌ ${AppLocale.l("waCalNoSlotsP")}');
     }
 
     buf.writeln('━━━━━━━━━━━━━━━━━━━━━');
-    buf.writeln('*ಬುಕ್ ಮಾಡಲು:*');
-    buf.writeln('✅ ನಿಮಗೆ ಬೇಕಾದ ಸ್ಲಾಟ್ ಆಯ್ಕೆ ಮಾಡಿ');
-    buf.writeln('✅ ನಿಮ್ಮ ಹೆಸರು ಮತ್ತು ಫೋನ್ ಸಂಖ್ಯೆ ಕಳುಹಿಸಿ');
+    buf.writeln('*${AppLocale.l("waCalBookTo")}*');
+    buf.writeln('✅ ${AppLocale.l("waCalSelSlot")}');
+    buf.writeln('✅ ${AppLocale.l("waCalSendInfo")}');
     buf.writeln('');
-    buf.writeln('- *ಭಾರತೀಯಮ್* ✨');
+    buf.writeln('- *${AppLocale.l("bookingMsgSign")}*');
 
     return buf.toString();
   }
 
-  /// Generate a booking page URL with available slots encoded in the hash
-  static String generateBookingPageUrl({
-    required DateTime fromDate,
-    required DateTime toDate,
-    required int fromHour,
-    required int fromMinute,
-    required int toHour,
-    required int toMinute,
-    String phone = '',
-  }) {
-    final customFromMin = fromHour * 60 + fromMinute;
-    final customToMin = toHour * 60 + toMinute;
 
-    final slotsMap = <String, List<String>>{};
-    int slotDuration = 60;
-    DateTime current = fromDate;
-    while (!current.isAfter(toDate)) {
-      final allSlots = getAvailableSlotsForDate(current);
-      final filtered = allSlots.where((s) {
-        final parts = s.split(':');
-        final slotMin = int.parse(parts[0]) * 60 + int.parse(parts[1]);
-        return slotMin >= customFromMin && slotMin < customToMin;
-      }).toList();
-
-      if (filtered.isNotEmpty) {
-        final dateKey = '${current.year}-${current.month.toString().padLeft(2, '0')}-${current.day.toString().padLeft(2, '0')}';
-        slotsMap[dateKey] = filtered;
-        final daySlot = _availableSlots.firstWhere(
-          (s) => s.dayOfWeek == current.weekday,
-          orElse: () => AvailableSlot(dayOfWeek: 1, startTime: '09:00', endTime: '17:00', slotMinutes: 60),
-        );
-        slotDuration = daySlot.slotMinutes;
-      }
-      current = current.add(const Duration(days: 1));
-    }
-
-    final email = GoogleAuthService.userEmail ?? '';
-    final cleanPhone = phone.replaceAll(RegExp(r'[^0-9+]'), '');
-
-    final jsonStr = '{"slots":${_slotsToJson(slotsMap)},"email":"$email","phone":"$cleanPhone","slotMin":$slotDuration}';
-    final encoded = Uri.encodeComponent(jsonStr);
-
-    return 'https://goureesha.github.io/bharatheeyamapp/booking.html#$encoded';
-  }
-
-  /// Simple JSON serialization for slots map
-  static String _slotsToJson(Map<String, List<String>> slots) {
-    final entries = slots.entries.map((e) {
-      final times = e.value.map((t) => '"$t"').join(',');
-      return '"${e.key}":[$times]';
-    }).join(',');
-    return '{$entries}';
-  }
 
   /// Clear all cached data
   static void clearCache() {

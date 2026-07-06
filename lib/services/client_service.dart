@@ -432,6 +432,19 @@ class ClientService {
     }
   }
 
+  /// Remove a family member by clientId + memberName
+  static Future<bool> removeFamilyMember(String clientId, String memberName) async {
+    try {
+      _members.removeWhere((m) => m.clientId == clientId && m.memberName == memberName);
+      await _saveToLocal();
+      debugPrint('ClientService: removed member $memberName from $clientId');
+      return true;
+    } catch (e) {
+      debugPrint('ClientService: remove member error: $e');
+      return false;
+    }
+  }
+
   /// Get appointment count for a client (needs appointments from AppointmentService)
   static int getVisitCount(String clientId, List<dynamic> appointments) {
     return appointments.where((a) {

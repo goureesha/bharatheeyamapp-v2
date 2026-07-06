@@ -3,8 +3,10 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:uuid/uuid.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_core/firebase_core.dart';
-import '../config/secrets.dart';
+import 'package:device_info_plus/device_info_plus.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 import 'google_auth_service.dart';
+import 'subscription_service.dart';
 
 /// Manages one-Gmail-one-device binding using Firestore for cross-device enforcement.
 ///
@@ -28,6 +30,8 @@ class DeviceBindingService {
   static String? _deviceId;
   static bool _isDeviceBound = false; // FAIL-CLOSED: default to blocked until verified
   static bool _hasCheckedOnce = false;
+  static bool isDeviceBlocked = false;
+  static String deviceBlockedReason = '';
 
   static bool get isDeviceBound => _isDeviceBound;
   static bool get hasCheckedOnce => _hasCheckedOnce;
@@ -46,6 +50,67 @@ class DeviceBindingService {
     return _deviceId!;
   }
 
+  /// Collect rich device + subscription details for Firestore
+  static Future<Map<String, dynamic>> _getDeviceDetails(String email, String devId) async {
+    final data = <String, dynamic>{
+      'deviceId': devId,
+      'email': email.toLowerCase(),
+      'lastSeen': FieldValue.serverTimestamp(),
+    };
+
+    // Device info
+    try {
+      if (!kIsWeb) {
+        final deviceInfo = DeviceInfoPlugin();
+        if (defaultTargetPlatform == TargetPlatform.android) {
+          final android = await deviceInfo.androidInfo;
+          data['deviceName'] = '${android.brand} ${android.model}';
+          data['deviceBrand'] = android.brand;
+          data['deviceModel'] = android.model;
+          data['androidVersion'] = android.version.release;
+          data['sdkInt'] = android.version.sdkInt;
+          data['manufacturer'] = android.manufacturer;
+          data['product'] = android.product;
+          data['fingerprint'] = android.fingerprint;
+        } else if (defaultTargetPlatform == TargetPlatform.iOS) {
+          final ios = await deviceInfo.iosInfo;
+          data['deviceName'] = ios.name;
+          data['deviceModel'] = ios.model;
+          data['iosVersion'] = ios.systemVersion;
+        }
+      }
+    } catch (e) {
+      debugPrint('DeviceBinding: device info error: $e');
+    }
+
+    // App version
+    try {
+      final pkgInfo = await PackageInfo.fromPlatform();
+      data['appVersion'] = pkgInfo.version;
+      data['buildNumber'] = pkgInfo.buildNumber;
+    } catch (_) {}
+
+    // Trial details
+    data['isTrialActive'] = SubscriptionService.isTrialActive;
+    data['trialMinutesRemaining'] = SubscriptionService.trialMinutesRemaining;
+    if (SubscriptionService.trialStartDate != null) {
+      data['trialStartedAt'] = Timestamp.fromDate(SubscriptionService.trialStartDate!);
+    }
+
+    // NOTE: Do NOT write premiumActive or premiumDaysRemaining from the app.
+    // Only manualPremium (admin-set) controls access.
+    // Writing these fields from the app was causing lockout failures.
+
+    // Clean up all stale/app-written fields — admin uses manualPremium only
+    data['premiumActive'] = FieldValue.delete();
+    data['premiumDaysRemaining'] = FieldValue.delete();
+    data['subscribedAt'] = FieldValue.delete();
+    data['subscriptionDaysRemaining'] = FieldValue.delete();
+    data['hasSubscription'] = FieldValue.delete();
+
+    return data;
+  }
+
   /// Ensure Firebase is initialized (reuse the centralized init)
   static Future<bool> _ensureFirebase() async {
     try {
@@ -53,12 +118,13 @@ class DeviceBindingService {
       if (kIsWeb) {
         await Firebase.initializeApp(
           options: const FirebaseOptions(
-            apiKey: AppSecrets.firebaseApiKey,
-            appId: AppSecrets.firebaseAppId,
-            messagingSenderId: AppSecrets.firebaseMessagingSenderId,
-            projectId: AppSecrets.firebaseProjectId,
-            authDomain: AppSecrets.firebaseAuthDomain,
-            storageBucket: AppSecrets.firebaseStorageBucket,
+            apiKey: 'AIzaSyAkG1hdauVlL9b8nHM5o2B25yPQ6IANci4',
+            appId: '1:212430902387:web:149c933fd3d29aa5014606',
+            messagingSenderId: '212430902387',
+            projectId: 'bharatheeyam-app',
+            authDomain: 'bharatheeyam-app.firebaseapp.com',
+            storageBucket: 'bharatheeyam-app.firebasestorage.app',
+            measurementId: 'G-BNTGY2WSLZ',
           ),
         );
       } else {
@@ -102,6 +168,14 @@ class DeviceBindingService {
         return _strictLocalFallback(email, devId);
       }
 
+      // Ensure Firebase Auth is active before any Firestore operations.
+      // Without this, new devices fail to register due to permission-denied.
+      final authOk = await GoogleAuthService.ensureFirebaseAuth();
+      if (!authOk) {
+        debugPrint('DeviceBinding: Firebase Auth NOT active — falling back to local');
+        return _strictLocalFallback(email, devId);
+      }
+
       final docRef = FirebaseFirestore.instance
           .collection(_firestoreCollection)
           .doc(email.toLowerCase());
@@ -115,12 +189,10 @@ class DeviceBindingService {
 
       if (!doc.exists || doc.data() == null) {
         // No binding exists → register this device (FIRST TIME)
-        await docRef.set({
-          'deviceId': devId,
-          'email': email.toLowerCase(),
-          'boundAt': FieldValue.serverTimestamp(),
-          'lastSeen': FieldValue.serverTimestamp(),
-        });
+        final details = await _getDeviceDetails(email, devId);
+        details['boundAt'] = FieldValue.serverTimestamp();
+        details['bindEvent'] = 'first_bind';
+        await docRef.set(details, SetOptions(merge: true));
         await _cacheLocalBinding(email, devId);
         _isDeviceBound = true;
         _hasCheckedOnce = true;
@@ -132,12 +204,10 @@ class DeviceBindingService {
 
       if (storedDeviceId == null || storedDeviceId.isEmpty) {
         // Corrupted entry → re-register
-        await docRef.set({
-          'deviceId': devId,
-          'email': email.toLowerCase(),
-          'boundAt': FieldValue.serverTimestamp(),
-          'lastSeen': FieldValue.serverTimestamp(),
-        });
+        final details = await _getDeviceDetails(email, devId);
+        details['boundAt'] = FieldValue.serverTimestamp();
+        details['bindEvent'] = 'rebind_corrupted';
+        await docRef.set(details, SetOptions(merge: true));
         await _cacheLocalBinding(email, devId);
         _isDeviceBound = true;
         _hasCheckedOnce = true;
@@ -146,8 +216,20 @@ class DeviceBindingService {
       }
 
       if (storedDeviceId == devId) {
-        // SAME device → allowed
-        await docRef.update({'lastSeen': FieldValue.serverTimestamp()}).catchError((_) {});
+        // SAME device → allowed — update with full details
+        try {
+          final details = await _getDeviceDetails(email, devId);
+          await docRef.update(details);
+          debugPrint('DeviceBinding: MATCH ✅ full update OK email=$email');
+        } catch (e) {
+          debugPrint('DeviceBinding: full update failed=$e, trying lastSeen only');
+          try {
+            await docRef.update({'lastSeen': FieldValue.serverTimestamp()});
+            debugPrint('DeviceBinding: lastSeen update OK');
+          } catch (e2) {
+            debugPrint('DeviceBinding: lastSeen update ALSO failed=$e2');
+          }
+        }
         await _cacheLocalBinding(email, devId);
         _isDeviceBound = true;
         _hasCheckedOnce = true;
@@ -155,28 +237,9 @@ class DeviceBindingService {
         return true;
       }
 
-      // DIFFERENT device → check if one-time rebind is allowed (app update/reinstall)
-      // v39 force-rebind: auto-migrate on first mismatch after update
-      final prefs = await SharedPreferences.getInstance();
-      final rebindVersion = prefs.getInt('bharatheeyam_rebind_version') ?? 0;
-      if (rebindVersion < 39) {
-        // One-time auto-migrate for this version
-        await docRef.set({
-          'deviceId': devId,
-          'email': email.toLowerCase(),
-          'boundAt': FieldValue.serverTimestamp(),
-          'lastSeen': FieldValue.serverTimestamp(),
-          'migratedAt': FieldValue.serverTimestamp(),
-          'autoMigrateVersion': 39,
-        });
-        await _cacheLocalBinding(email, devId);
-        await prefs.setInt('bharatheeyam_rebind_version', 39);
-        _isDeviceBound = true;
-        _hasCheckedOnce = true;
-        debugPrint('DeviceBinding: AUTO-MIGRATE v39 ✅ email=$email devId=$devId');
-        return true;
-      }
-
+      // ── DEVICE MISMATCH ──
+      // Different device detected → BLOCK for ALL users
+      // User must tap "Migrate Device" button in settings to switch
       _isDeviceBound = false;
       _hasCheckedOnce = true;
       await _clearLocalBinding();
@@ -187,7 +250,6 @@ class DeviceBindingService {
       return _strictLocalFallback(email, devId);
     }
   }
-
   /// Cache a successful Firestore verification locally
   static Future<void> _cacheLocalBinding(String email, String devId) async {
     final prefs = await SharedPreferences.getInstance();
@@ -266,24 +328,48 @@ class DeviceBindingService {
   /// Migrate: bind current device to the signed-in email (overwrites old binding in Firestore)
   static Future<bool> migrateDevice() async {
     final email = GoogleAuthService.userEmail;
-    if (email == null) return false;
+    if (email == null) {
+      debugPrint('DeviceBinding migrate: NO EMAIL — user not signed in');
+      return false;
+    }
 
     try {
       final firebaseReady = await _ensureFirebase();
-      if (!firebaseReady) return false;
+      if (!firebaseReady) {
+        debugPrint('DeviceBinding migrate: Firebase NOT ready');
+        return false;
+      }
+
+      // Ensure Firebase Auth is active for Firestore rules
+      final authOk = await GoogleAuthService.ensureFirebaseAuth();
+      if (!authOk) {
+        debugPrint('DeviceBinding migrate: Firebase Auth NOT active — cannot write to Firestore');
+        return false;
+      }
+      debugPrint('DeviceBinding migrate: Firebase Auth confirmed ✅');
 
       final devId = await getDeviceId();
       final docRef = FirebaseFirestore.instance
           .collection(_firestoreCollection)
           .doc(email.toLowerCase());
 
-      await docRef.set({
-        'deviceId': devId,
-        'email': email.toLowerCase(),
-        'boundAt': FieldValue.serverTimestamp(),
-        'lastSeen': FieldValue.serverTimestamp(),
-        'migratedAt': FieldValue.serverTimestamp(),
-      });
+      // Try full details, fallback to minimal if _getDeviceDetails fails
+      Map<String, dynamic> details;
+      try {
+        details = await _getDeviceDetails(email, devId);
+      } catch (e) {
+        debugPrint('DeviceBinding migrate: details error=$e, using minimal');
+        details = {
+          'deviceId': devId,
+          'email': email.toLowerCase(),
+          'lastSeen': FieldValue.serverTimestamp(),
+        };
+      }
+
+      details['boundAt'] = FieldValue.serverTimestamp();
+      details['migratedAt'] = FieldValue.serverTimestamp();
+      details['bindEvent'] = 'manual_migrate';
+      await docRef.set(details, SetOptions(merge: true));
 
       // Cache locally
       await _cacheLocalBinding(email, devId);
@@ -292,9 +378,124 @@ class DeviceBindingService {
       _hasCheckedOnce = true;
       debugPrint('DeviceBinding: MIGRATED ✅ email=$email devId=$devId');
       return true;
-    } catch (e) {
+    } catch (e, stack) {
+      final errStr = e.toString();
+      if (errStr.contains('permission-denied')) {
+        debugPrint('DeviceBinding migrate PERMISSION DENIED: Firestore rules must allow write to device_bindings/${email.toLowerCase()}');
+        debugPrint('DeviceBinding: Ensure Firebase Auth is active and email matches doc ID');
+      }
       debugPrint('DeviceBinding migrate error: $e');
+      debugPrint('DeviceBinding migrate stack: $stack');
       return false;
     }
   }
+
+  /// Track every device install/launch in Firestore (installs/{deviceId})
+  /// This gives you visibility into ALL devices, not just per-email bindings.
+  static Future<void> trackInstall() async {
+    try {
+      if (kIsWeb) return; // Skip web
+
+      final firebaseReady = await _ensureFirebase();
+      if (!firebaseReady) return;
+
+      final devId = await getDeviceId();
+      final email = GoogleAuthService.userEmail;
+
+      final data = <String, dynamic>{
+        'deviceId': devId,
+        'email': email?.toLowerCase() ?? 'not_signed_in',
+        'lastLaunch': FieldValue.serverTimestamp(),
+        'platform': defaultTargetPlatform.name,
+      };
+
+      // Device info
+      try {
+        final deviceInfo = DeviceInfoPlugin();
+        if (defaultTargetPlatform == TargetPlatform.android) {
+          final android = await deviceInfo.androidInfo;
+          data['deviceName'] = '${android.brand} ${android.model}';
+          data['brand'] = android.brand;
+          data['model'] = android.model;
+          data['androidVersion'] = android.version.release;
+          data['sdkInt'] = android.version.sdkInt;
+        } else if (defaultTargetPlatform == TargetPlatform.iOS) {
+          final ios = await deviceInfo.iosInfo;
+          data['deviceName'] = ios.name;
+          data['model'] = ios.model;
+          data['iosVersion'] = ios.systemVersion;
+        }
+      } catch (_) {}
+
+      // App version
+      try {
+        final pkgInfo = await PackageInfo.fromPlatform();
+        data['appVersion'] = pkgInfo.version;
+        data['buildNumber'] = pkgInfo.buildNumber;
+      } catch (_) {}
+
+      // NOTE: Do not write premium status — admin-controlled via device_bindings only
+
+      final docRef = FirebaseFirestore.instance
+          .collection('installs')
+          .doc(devId);
+
+      final doc = await docRef.get().timeout(const Duration(seconds: 5));
+      if (!doc.exists) {
+        data['firstInstall'] = FieldValue.serverTimestamp();
+        data['launchCount'] = 1;
+        await docRef.set(data);
+        debugPrint('InstallTracker: NEW install ✅ devId=$devId');
+      } else {
+        final prevCount = (doc.data()?['launchCount'] as int?) ?? 0;
+        data['launchCount'] = prevCount + 1;
+        await docRef.update(data);
+        debugPrint('InstallTracker: UPDATE ✅ devId=$devId launches=${prevCount + 1}');
+      }
+
+    } catch (e) {
+      debugPrint('InstallTracker error: $e');
+    }
+  }
+
+  /// Check if this device is blocked via installs/{deviceId}
+  /// Called during deferred init. Has its own timeout. Fail-OPEN.
+  static Future<void> checkDeviceBlock() async {
+    try {
+      if (kIsWeb) return;
+
+      // Load cached value first
+      final prefs = await SharedPreferences.getInstance();
+      isDeviceBlocked = prefs.getBool('device_blocked') ?? false;
+      deviceBlockedReason = prefs.getString('device_blocked_reason') ?? '';
+
+      final firebaseReady = await _ensureFirebase();
+      if (!firebaseReady) return; // use cached
+
+      final devId = await getDeviceId();
+      final doc = await FirebaseFirestore.instance
+          .collection('installs')
+          .doc(devId)
+          .get()
+          .timeout(const Duration(seconds: 5));
+
+      if (doc.exists && doc.data() != null) {
+        final data = doc.data()!;
+        final blocked = data['blocked'] == true;
+        final reason = data['blockedReason'] as String? ?? '';
+        isDeviceBlocked = blocked;
+        deviceBlockedReason = reason;
+        await prefs.setBool('device_blocked', blocked);
+        await prefs.setString('device_blocked_reason', reason);
+        if (blocked) {
+          debugPrint('🚫 DEVICE BLOCKED: $devId reason=$reason');
+        }
+      }
+    } catch (e) {
+      debugPrint('DeviceBlock check error: $e');
+      // Fail-open: use cached value
+    }
+  }
+
+
 }

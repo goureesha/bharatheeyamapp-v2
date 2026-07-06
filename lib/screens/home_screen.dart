@@ -31,29 +31,29 @@ class HomeScreen extends StatelessWidget {
       _Section(AppLocale.l('panchanga'), 'Panchanga', Icons.calendar_month, kPurple2, () {
         Navigator.push(context, MaterialPageRoute(builder: (_) => const PanchangaScreen()));
       }),
-      _Section(AppLocale.l('panchangaSearch'), 'Panchanga Search', Icons.search, const Color(0xFF2980B9), () {
+      _Section(AppLocale.l('panchangaSearch'), 'Panchanga Search', Icons.search, Color(0xFF2980B9), () {
         Navigator.push(context, MaterialPageRoute(builder: (_) => const PanchangaSearchScreen()));
       }),
       _Section(AppLocale.l('taranukoola'), 'Taranukoola', Icons.stars_rounded, kGreen, () {
         Navigator.push(context, MaterialPageRoute(builder: (_) => const TaranukoolaScreen()));
       }),
-      _Section(AppLocale.l('matchMaking'), 'Match Making', Icons.favorite, const Color(0xFFE53E3E), () {
+      _Section(AppLocale.l('matchMaking'), 'Match Making', Icons.favorite, Color(0xFFE53E3E), () {
         Navigator.push(context, MaterialPageRoute(builder: (_) => const MatchMakingScreen()));
       }),
-      _Section(AppLocale.l('planets'), 'Planets', Icons.blur_circular, const Color(0xFFc0392b), () {
+      _Section(AppLocale.l('planets'), 'Planets', Icons.blur_circular, Color(0xFFc0392b), () {
         Navigator.push(context, MaterialPageRoute(builder: (_) => const PlanetsScreen()));
       }),
 
-      _Section(AppLocale.l('vedicClock'), 'Vedic Clock', Icons.watch_later_rounded, const Color(0xFF5B2C6F), () {
+      _Section(AppLocale.l('vedicClock'), 'Vedic Clock', Icons.watch_later_rounded, Color(0xFF5B2C6F), () {
         Navigator.push(context, MaterialPageRoute(builder: (_) => const VedicClockScreen()));
       }),
       _Section(AppLocale.l('appointment'), 'Appointments', Icons.event_note, kTeal, () {
         Navigator.push(context, MaterialPageRoute(builder: (_) => const AppointmentScreen()));
       }),
-      _Section(AppLocale.l('poojaLists'), 'Pooja Lists', Icons.list_alt_rounded, const Color(0xFF8E44AD), () {
+      _Section(AppLocale.l('poojaLists'), 'Pooja Lists', Icons.list_alt_rounded, Color(0xFF8E44AD), () {
         Navigator.push(context, MaterialPageRoute(builder: (_) => const PoojaListsScreen()));
       }),
-      _Section(AppLocale.l('vastuLabel'), 'Vastu', Icons.home_work_rounded, const Color(0xFFD4A017), () {
+      _Section(AppLocale.l('vastuLabel'), 'Vastu', Icons.home_work_rounded, Color(0xFFD4A017), () {
         Navigator.push(context, MaterialPageRoute(builder: (_) => const VastuScreen()));
       }),
       _Section('ಪ್ರಶ್ನ', 'Prashna', Icons.help_outline_rounded, const Color(0xFF1565C0), () {
@@ -71,6 +71,8 @@ class HomeScreen extends StatelessWidget {
         Navigator.push(context, MaterialPageRoute(builder: (_) => const AshtamangalaScreen()));
       }),
     ];
+
+
 
     return ValueListenableBuilder<String>(
       valueListenable: AppLocale.langNotifier,

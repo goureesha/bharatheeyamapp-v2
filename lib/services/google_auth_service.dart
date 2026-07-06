@@ -1,14 +1,13 @@
 import 'package:google_sign_in/google_sign_in.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
-import 'package:extension_google_sign_in_as_googleapis_auth/extension_google_sign_in_as_googleapis_auth.dart';
-import 'package:googleapis_auth/googleapis_auth.dart' as gapis_auth;
 import 'tester_service.dart';
 
-/// Google Sign-In service — email + calendar scopes.
-/// Used for user identity and Google Calendar 2-way sync.
+/// Google Sign-In service — email-only (no sensitive scopes).
+/// Used for user identity (1-Gmail-1-device binding) + Firebase Auth for Firestore rules.
 class GoogleAuthService {
   static const _webClientId =
-      '149255394829-167dod55vdctebqpqacn5n5in5rfiift.apps.googleusercontent.com';
+      '212430902387-ko5eqtpf1044c7bs0jok7uldqbpnu8a2.apps.googleusercontent.com';
 
   static GoogleSignIn? _googleSignIn;
   static GoogleSignInAccount? _currentUser;
@@ -18,8 +17,6 @@ class GoogleAuthService {
       scopes: const [
         'email',
         'https://www.googleapis.com/auth/drive.appdata',
-        'https://www.googleapis.com/auth/calendar',
-        'https://www.googleapis.com/auth/calendar.events',
       ],
       clientId: kIsWeb ? _webClientId : null,
       serverClientId: _webClientId,
@@ -32,22 +29,17 @@ class GoogleAuthService {
   static String? get userName => _currentUser?.displayName;
   static String? get userPhoto => _currentUser?.photoUrl;
 
+  /// Check if Firebase Auth is active (needed for Firestore rules)
+  static bool get isFirebaseAuthActive =>
+      FirebaseAuth.instance.currentUser != null;
+
+  /// Get the Firebase Auth email (may differ from Google Sign-In email if bridge failed)
+  static String? get firebaseAuthEmail =>
+      FirebaseAuth.instance.currentUser?.email;
+
   /// Get auth headers for Google API calls (e.g., Drive API)
   static Future<Map<String, String>?> getAuthHeaders() async {
     return _currentUser?.authHeaders;
-  }
-
-  /// Get an authenticated HTTP client for googleapis (Calendar, etc.)
-  /// Returns null if not signed in or auth fails.
-  static Future<gapis_auth.AuthClient?> getAuthenticatedClient() async {
-    if (_currentUser == null) return null;
-    try {
-      final client = await _instance.authenticatedClient();
-      return client;
-    } catch (e) {
-      debugPrint('GoogleAuthService: getAuthenticatedClient error: $e');
-      return null;
-    }
   }
 
   /// Request Drive scope if not already granted (for existing sessions).
@@ -65,24 +57,51 @@ class GoogleAuthService {
     }
   }
 
-  /// Stub: clone doesn't use Firebase Auth for Firestore rules.
-  /// Always returns true so TesterService can proceed.
-  static Future<bool> ensureFirebaseAuth() async => true;
-
-  /// Request Calendar scopes if not already granted.
-  /// Returns true if scopes are available, false if user denied.
-  static Future<bool> ensureCalendarScope() async {
-    if (_currentUser == null) return false;
+  /// Bridge Google Sign-In credentials to Firebase Auth.
+  /// Returns true if Firebase Auth is now active.
+  static Future<bool> _signInToFirebaseAuth(GoogleSignInAccount account) async {
     try {
-      final granted = await _instance.requestScopes([
-        'https://www.googleapis.com/auth/calendar',
-        'https://www.googleapis.com/auth/calendar.events',
-      ]);
-      return granted;
+      final googleAuth = await account.authentication;
+      final credential = GoogleAuthProvider.credential(
+        accessToken: googleAuth.accessToken,
+        idToken: googleAuth.idToken,
+      );
+      final result = await FirebaseAuth.instance.signInWithCredential(credential);
+      final ok = result.user != null;
+      debugPrint('Firebase Auth: ${ok ? "✅ signed in" : "❌ failed"} as ${account.email}');
+      return ok;
     } catch (e) {
-      debugPrint('Calendar scope request failed: $e');
+      debugPrint('Firebase Auth bridge error: $e');
       return false;
     }
+  }
+
+  /// Ensure Firebase Auth is active. If not, attempt to re-bridge.
+  /// Call this before any Firestore operation that needs auth.
+  static Future<bool> ensureFirebaseAuth() async {
+    // Already active
+    if (FirebaseAuth.instance.currentUser != null) return true;
+
+    // Try to re-bridge from current Google Sign-In account
+    if (_currentUser != null) {
+      debugPrint('Firebase Auth: re-bridging from existing Google Sign-In...');
+      final ok = await _signInToFirebaseAuth(_currentUser!);
+      if (ok) return true;
+    }
+
+    // Try silent sign-in as last resort
+    try {
+      final account = await _instance.signInSilently();
+      if (account != null) {
+        _currentUser = account;
+        return await _signInToFirebaseAuth(account);
+      }
+    } catch (e) {
+      debugPrint('Firebase Auth: silent re-auth failed: $e');
+    }
+
+    debugPrint('Firebase Auth: ❌ could not establish auth session');
+    return false;
   }
 
   static Future<bool> signIn() async {
@@ -90,6 +109,10 @@ class GoogleAuthService {
       _currentUser = await _instance.signIn();
       if (_currentUser != null) {
         debugPrint('Google Sign-In success: ${_currentUser!.email}');
+        final authOk = await _signInToFirebaseAuth(_currentUser!);
+        if (!authOk) {
+          debugPrint('WARNING: Google Sign-In OK but Firebase Auth bridge FAILED');
+        }
         TesterService.checkTesterStatus(_currentUser!.email);
       }
       return _currentUser != null;
@@ -100,7 +123,12 @@ class GoogleAuthService {
   }
 
   static Future<void> signOut() async {
-    await _instance.signOut();
+    try {
+      await _instance.disconnect(); // Fully clear cached account so user can pick a different Gmail
+    } catch (_) {
+      await _instance.signOut(); // Fallback if disconnect fails
+    }
+    await FirebaseAuth.instance.signOut();
     _currentUser = null;
     await TesterService.onSignOut();
   }
@@ -109,6 +137,10 @@ class GoogleAuthService {
     try {
       _currentUser = await _instance.signInSilently();
       if (_currentUser != null) {
+        final authOk = await _signInToFirebaseAuth(_currentUser!);
+        if (!authOk) {
+          debugPrint('WARNING: Silent sign-in OK but Firebase Auth bridge FAILED');
+        }
         TesterService.checkTesterStatus(_currentUser!.email);
       }
       return _currentUser != null;
