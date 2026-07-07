@@ -9,7 +9,11 @@ class GrahaPhala {
   final String rashiShloka;
   final String saravaliRashiPhala;
   final String navamshaPhala;
+  final String navamshaShloka;
+  final String saravaliNavamshaPhala;
   final String dvadashamshaPhala;
+  final String dvadamshaShloka;
+  final String saravaliDvadashamshaPhala;
   final String drekkanaPhala;
   final String rashi;
   final String navamshaRashi;
@@ -22,7 +26,11 @@ class GrahaPhala {
     this.rashiShloka = '',
     this.saravaliRashiPhala = '',
     required this.navamshaPhala,
+    this.navamshaShloka = '',
+    this.saravaliNavamshaPhala = '',
     required this.dvadashamshaPhala,
+    this.dvadamshaShloka = '',
+    this.saravaliDvadashamshaPhala = '',
     required this.drekkanaPhala,
     required this.rashi,
     required this.navamshaRashi,
@@ -383,8 +391,12 @@ class GrahaPhala {
         rashiPhala: signPhalas[pEng]?[r] ?? '',
         rashiShloka: shlokaMap[pEng]?[r] ?? '',
         saravaliRashiPhala: SaravaliPhala.getPhala(pEng, r),
-        navamshaPhala: _navamshaPhalaFor(pEng, d9r),
-        dvadashamshaPhala: _dvadamshaPhalaFor(pEng, d12r),
+        navamshaPhala: signPhalas[pEng]?[d9r] ?? '',
+        navamshaShloka: shlokaMap[pEng]?[d9r] ?? '',
+        saravaliNavamshaPhala: SaravaliPhala.getPhala(pEng, d9r),
+        dvadashamshaPhala: signPhalas[pEng]?[d12r] ?? '',
+        dvadamshaShloka: shlokaMap[pEng]?[d12r] ?? '',
+        saravaliDvadashamshaPhala: SaravaliPhala.getPhala(pEng, d12r),
         drekkanaPhala: _drekPhala[d3r] ?? '',
       ));
     }

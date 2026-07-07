@@ -685,8 +685,10 @@ class _PrashnaDashboardScreenState extends State<PrashnaDashboardScreen>
             // ── Planet Phalas ──
             ...phalas.map((gp) {
               final pColor = planetColors[gp.planet] ?? kTeal;
-              final rashiPhalaText = _selectedBook == 0 ? gp.rashiPhala : gp.saravaliRashiPhala;
-              final shlokaText = _selectedBook == 0 ? gp.rashiShloka : '';
+              final rashiPhalaText = _selectedBook == 0 ? gp.rashiShloka : gp.saravaliRashiPhala;
+              final shlokaText = _selectedBook == 0 ? '' : '';
+              final navPhalaText = _selectedBook == 0 ? gp.navamshaShloka : gp.saravaliNavamshaPhala;
+              final dvadPhalaText = _selectedBook == 0 ? gp.dvadamshaShloka : gp.saravaliDvadashamshaPhala;
               return Container(
                 margin: const EdgeInsets.only(top: 8),
                 padding: const EdgeInsets.all(10),
@@ -709,16 +711,10 @@ class _PrashnaDashboardScreenState extends State<PrashnaDashboardScreen>
                       Text(gp.rashi, style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: kText)),
                     ]),
                     const SizedBox(height: 8),
-                    // Shloka (only for Brihat Jataka)
-                    if (shlokaText.isNotEmpty)
-                      Padding(
-                        padding: const EdgeInsets.only(bottom: 6),
-                        child: Text(shlokaText, style: TextStyle(fontSize: 10, fontStyle: FontStyle.italic, color: kMuted, height: 1.4)),
-                      ),
                     // Phala rows
                     _phalaRow('ರಾಶಿ ಫಲ', gp.rashi, rashiPhalaText, pColor),
-                    _phalaRow('ನವಾಂಶ ಫಲ', gp.navamshaRashi, gp.navamshaPhala, pColor),
-                    _phalaRow('ದ್ವಾದಶಾಂಶ ಫಲ', gp.dvadamshaRashi, gp.dvadashamshaPhala, pColor),
+                    _phalaRow('ನವಾಂಶ ಫಲ', gp.navamshaRashi, navPhalaText, pColor),
+                    _phalaRow('ದ್ವಾದಶಾಂಶ ಫಲ', gp.dvadamshaRashi, dvadPhalaText, pColor),
                     _phalaRow('ದ್ರೇಕ್ಕಾಣ ಫಲ', gp.drekkanaRashi, gp.drekkanaPhala, pColor),
                   ],
                 ),
