@@ -162,7 +162,7 @@ class _AshtamangalaScreenState extends State<AshtamangalaScreen> with SingleTick
     _lonCtrl = TextEditingController(text: LocationService.lon.toStringAsFixed(4));
     _tzCtrl = TextEditingController(text: '${LocationService.tzOffset >= 0 ? '+' : ''}${LocationService.tzOffset}');
     
-    _tabCtrl = TabController(length: 4, vsync: this);
+    _tabCtrl = TabController(length: 5, vsync: this);
   }
 
   @override
@@ -345,13 +345,14 @@ class _AshtamangalaScreenState extends State<AshtamangalaScreen> with SingleTick
             controller: _tabCtrl, isScrollable: true,
             labelColor: kPurple2, unselectedLabelColor: kMuted, indicatorColor: kPurple2,
             labelStyle: TextStyle(fontSize: 11, fontWeight: FontWeight.w800),
-            tabs: const [Tab(text:'ಪ್ರಶ್ನೆ ಸಂಖ್ಯಾ ಗಣಿತ'), Tab(text:'ಪ್ರಶ್ನೆ ಸಮಯದ ಗುಣ'), Tab(text:'ಸೂತ್ರಗಳು/ಇತರೆ ಅಂಶ'), Tab(text:'ವಿಶೇಷ ಸ್ಫುಟಗಳು')],
+            tabs: const [Tab(text:'ಪ್ರಶ್ನೆ ಸಂಖ್ಯಾ ಗಣಿತ'), Tab(text:'ಪ್ರಶ್ನೆ ಸಮಯದ ಗುಣ'), Tab(text:'ಸೂತ್ರಗಳು/ಇತರೆ ಅಂಶ'), Tab(text:'ವಿಶೇಷ ಸ್ಫುಟಗಳು'), Tab(text:'ಭಾವ ಷಡ್ವರ್ಗ')],
           )),
-          SizedBox(height: 900, child: TabBarView(controller: _tabCtrl, children: [
+          SizedBox(height: 1100, child: TabBarView(controller: _tabCtrl, children: [
             _buildSankhyaTab(),
             _buildSamayaGunaTab(),
             _buildSutrasTab(),
             _buildVisheshaSputasTab(),
+            _buildPrashnaBhavaShadvargaTab(),
           ])),
         ],
         const SizedBox(height: 24),
@@ -1041,4 +1042,130 @@ class _AshtamangalaScreenState extends State<AshtamangalaScreen> with SingleTick
     padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
     decoration: BoxDecoration(color: (isEven ? Colors.red : Colors.green).withOpacity(0.08), borderRadius: BorderRadius.circular(6)),
     child: Text(text, style: TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: isEven ? Colors.red : Colors.green)));
+  // ─────────────────────────────────────────────
+  // TAB 5: BHAVA SHADVARGA (Prashna)
+  // ─────────────────────────────────────────────
+  Widget _buildPrashnaBhavaShadvargaTab() {
+    if (_prashnaResult == null) return Center(child: Text('Loading...', style: TextStyle(color: kMuted)));
+    final r = _prashnaResult!;
+
+    String getRashiLord(String rashiNameKn) {
+      int idx = _rashiNames.indexOf(rashiNameKn);
+      if (idx < 0) return rashiNameKn;
+      const lordAbbr = ['ಕು','ಶು','ಬು','ಚ','ರ','ಬು','ಶು','ಕು','ಗು','ಶ','ಶ','ಗು'];
+      return lordAbbr[idx];
+    }
+
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        children: [
+          // Title
+          Container(
+            padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 16),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(colors: [kPurple1.withOpacity(0.12), kPurple2.withOpacity(0.06)]),
+              borderRadius: const BorderRadius.only(
+                topLeft: Radius.circular(14), topRight: Radius.circular(14),
+              ),
+              border: Border(bottom: BorderSide(color: kPurple2.withOpacity(0.3), width: 2)),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.home_work_rounded, size: 18, color: kPurple2),
+                const SizedBox(width: 8),
+                Text('ಭಾವ ಷಡ್ವರ್ಗ', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 16, color: kPurple2)),
+              ],
+            ),
+          ),
+          // Shadvarga Table
+          Container(
+            decoration: BoxDecoration(
+              color: kCard,
+              borderRadius: const BorderRadius.only(
+                bottomLeft: Radius.circular(14), bottomRight: Radius.circular(14),
+              ),
+              border: Border.all(color: kBorder),
+              boxShadow: [
+                BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 10, offset: const Offset(0, 4)),
+              ],
+            ),
+            child: ClipRRect(
+              borderRadius: const BorderRadius.only(
+                bottomLeft: Radius.circular(14), bottomRight: Radius.circular(14),
+              ),
+              child: SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: Table(
+                  border: TableBorder.symmetric(
+                    inside: BorderSide(color: kBorder.withOpacity(0.6), width: 0.5),
+                  ),
+                  defaultColumnWidth: const FixedColumnWidth(52),
+                  columnWidths: const {0: FixedColumnWidth(48)},
+                  children: [
+                    // Header row
+                    TableRow(
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(colors: [kPurple1.withOpacity(0.15), kPurple2.withOpacity(0.08)]),
+                      ),
+                      children: ['ಭಾವ', 'D1', 'D3', 'D2', 'D9', 'D12', 'D30', 'ನ.ದ್ರೇ', 'ದ್ವಾ.ದ್ರೇ', 'D81'].map((h) =>
+                        Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 4),
+                          child: Text(h, textAlign: TextAlign.center, style: TextStyle(
+                            fontWeight: FontWeight.w900, fontSize: 11, color: kPurple2,
+                          )),
+                        ),
+                      ).toList(),
+                    ),
+                    // Data rows — one per bhava
+                    ...List.generate(12, (i) {
+                      final deg = r.bhavas[i];
+                      final details = AstroCalculator.getPlanetDetail('ಲಗ್ನ', deg, 0, 0);
+                      final isEvenRow = i % 2 == 0;
+
+                      return TableRow(
+                        decoration: BoxDecoration(
+                          color: isEvenRow ? kBg.withOpacity(0.5) : kCard,
+                        ),
+                        children: [
+                          // Bhava number
+                          Padding(padding: const EdgeInsets.symmetric(vertical: 10), child: Text(
+                            '${i + 1}', textAlign: TextAlign.center,
+                            style: TextStyle(fontWeight: FontWeight.w900, fontSize: 13, color: kTeal),
+                          )),
+                          // D1, D3, D2, D9, D12, D30
+                          ...[details['d1'], details['d3'], details['d2'], details['d9'], details['d12'], details['d30']].map((v) =>
+                            Padding(padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 2), child: Text(
+                              getRashiLord(v as String), textAlign: TextAlign.center,
+                              style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: kText),
+                            )),
+                          ),
+                          // Navamsha Drekkana
+                          Padding(padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 2), child: Text(
+                            details['subDrekD9'] as String, textAlign: TextAlign.center,
+                            style: TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: kText),
+                          )),
+                          // Dvadashamsha Drekkana
+                          Padding(padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 2), child: Text(
+                            details['subDrekD12'] as String, textAlign: TextAlign.center,
+                            style: TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: kText),
+                          )),
+                          // Nava Navamsha (D81)
+                          Padding(padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 2), child: Text(
+                            getRashiLord(details['d9OfD9'] as String), textAlign: TextAlign.center,
+                            style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: kOrange),
+                          )),
+                        ],
+                      );
+                    }),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 }
