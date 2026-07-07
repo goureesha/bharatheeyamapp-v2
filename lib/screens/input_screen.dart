@@ -1200,6 +1200,29 @@ class _InputScreenState extends State<InputScreen> {
               ),
             ),
           ),
+          const SizedBox(height: 8),
+          // Samshaka Mode toggle
+          ValueListenableBuilder<bool>(
+            valueListenable: SamshakaMode.notifier,
+            builder: (context, isActive, _) => Container(
+              decoration: BoxDecoration(
+                color: isActive ? kPurple2.withOpacity(0.08) : kCard,
+                border: Border.all(color: isActive ? kPurple2.withOpacity(0.3) : kBorder),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: SwitchListTile(
+                dense: true,
+                contentPadding: const EdgeInsets.symmetric(horizontal: 12),
+                title: Text(
+                  AppLocale.l('samshakaLabel'),
+                  style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: isActive ? kPurple2 : kText),
+                ),
+                value: isActive,
+                activeColor: kPurple2,
+                onChanged: (v) => SamshakaMode.toggle(v),
+              ),
+            ),
+          ),
           const SizedBox(height: 14),
 
           // Advanced options
