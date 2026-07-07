@@ -1682,19 +1682,18 @@ class _DashboardScreenState extends State<DashboardScreen>
   }
 
   Widget _buildPersonDasha(String name, KundaliResult result) {
+    final pan = result.panchang;
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
-      child: AppCard(
-        padding: EdgeInsets.zero,
-        child: Column(children: [
-          _tableHeader([AppLocale.l('hMahaDasha'), AppLocale.l('hEnd'), AppLocale.l('hYears')]),
-          ...result.dashas.map((d) => _tableRow([
-            trAll(d.planet),
-            '${d.endDate.year}-${d.endDate.month.toString().padLeft(2,'0')}-${d.endDate.day.toString().padLeft(2,'0')}',
-            d.years.toStringAsFixed(1),
-          ], bold0: true)),
-        ]),
-      ),
+      child: Column(children: [
+        AppCard(
+          child: Text(
+            '${AppLocale.l('dashaLord')}: ${trAll(pan.dashaLord)}  ${AppLocale.l('dashaBalance')}: ${_trDashaBalance(pan.dashaBalance)}',
+            style: TextStyle(color: kOrange, fontWeight: FontWeight.w900, fontSize: 14),
+          ),
+        ),
+        DashaWidget(dashas: result.dashas),
+      ]),
     );
   }
 
@@ -1750,7 +1749,7 @@ class _DashboardScreenState extends State<DashboardScreen>
   Widget _buildPersonAshtaka(String name, KundaliResult result) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
-      child: AshtakavargaWidget(result: result),
+      child: AshtakaVargaWidget(result: result),
     );
   }
 
