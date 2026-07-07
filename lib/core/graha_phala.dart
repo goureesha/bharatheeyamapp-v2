@@ -1,4 +1,5 @@
 import 'calculator.dart';
+import 'saravali_phala.dart';
 
 /// Graha Phala — per-planet results based on Rashi, Navamsha, Dvadashamsha, Drekkana.
 /// Based on Brihat Jataka Chapter 18 (Graha Bhava Phala) and related texts.
@@ -6,6 +7,7 @@ class GrahaPhala {
   final String planet;
   final String rashiPhala;
   final String rashiShloka;
+  final String saravaliRashiPhala;
   final String navamshaPhala;
   final String dvadashamshaPhala;
   final String drekkanaPhala;
@@ -18,6 +20,7 @@ class GrahaPhala {
     required this.planet,
     required this.rashiPhala,
     this.rashiShloka = '',
+    this.saravaliRashiPhala = '',
     required this.navamshaPhala,
     required this.dvadashamshaPhala,
     required this.drekkanaPhala,
@@ -379,6 +382,7 @@ class GrahaPhala {
         drekkanaRashi: _rashiNames[d3r],
         rashiPhala: signPhalas[pEng]?[r] ?? '',
         rashiShloka: shlokaMap[pEng]?[r] ?? '',
+        saravaliRashiPhala: SaravaliPhala.getPhala(pEng, r),
         navamshaPhala: _navamshaPhalaFor(pEng, d9r),
         dvadashamshaPhala: _dvadamshaPhalaFor(pEng, d12r),
         drekkanaPhala: _drekPhala[d3r] ?? '',

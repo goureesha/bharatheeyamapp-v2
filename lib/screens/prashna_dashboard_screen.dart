@@ -45,6 +45,7 @@ class _PrashnaDashboardScreenState extends State<PrashnaDashboardScreen>
   late int _minute;
   late String _ampm;
   bool _recalculating = false;
+  int _selectedBook = 0; // 0 = Brihat Jataka, 1 = Saravali
 
 
 
@@ -645,6 +646,7 @@ class _PrashnaDashboardScreenState extends State<PrashnaDashboardScreen>
       'ಶುಕ್ರ': Color(0xFFEC407A),
       'ಶನಿ': Color(0xFF5C6BC0),
     };
+    const bookNames = ['ಬೃಹತ್ ಜಾತಕ', 'ಸಾರಾವಳಿ'];
     return [
       AppCard(
         padding: EdgeInsets.zero,
@@ -654,45 +656,75 @@ class _PrashnaDashboardScreenState extends State<PrashnaDashboardScreen>
           initiallyExpanded: false,
           title: Text('ಗ್ರಹ ಫಲ', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w900, color: kText)),
           subtitle: Text('ರಾಶಿ · ನವಾಂಶ · ದ್ವಾದಶಾಂಶ · ದ್ರೇಕ್ಕಾಣ', style: TextStyle(fontSize: 10, color: kMuted)),
-          children: phalas.map((gp) {
-            final pColor = planetColors[gp.planet] ?? kTeal;
-            return Container(
-              margin: const EdgeInsets.only(top: 8),
-              padding: const EdgeInsets.all(10),
-              decoration: BoxDecoration(
-                color: pColor.withOpacity(0.05),
-                borderRadius: BorderRadius.circular(10),
-                border: Border.all(color: pColor.withOpacity(0.2)),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Planet name header
-                  Row(children: [
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                      decoration: BoxDecoration(color: pColor.withOpacity(0.15), borderRadius: BorderRadius.circular(6)),
-                      child: Text(gp.planet, style: TextStyle(fontSize: 13, fontWeight: FontWeight.w900, color: pColor)),
+          children: [
+            // ── Book Switcher ──
+            Padding(
+              padding: const EdgeInsets.only(bottom: 10),
+              child: Row(
+                children: List.generate(bookNames.length, (i) {
+                  final sel = _selectedBook == i;
+                  return Padding(
+                    padding: const EdgeInsets.only(right: 8),
+                    child: ChoiceChip(
+                      label: Text(bookNames[i], style: TextStyle(
+                        fontSize: 11, fontWeight: FontWeight.w700,
+                        color: sel ? Colors.white : kPurple2,
+                      )),
+                      selected: sel,
+                      selectedColor: kPurple2,
+                      backgroundColor: kPurple2.withOpacity(0.08),
+                      side: BorderSide(color: sel ? kPurple2 : kPurple2.withOpacity(0.3)),
+                      onSelected: (_) => setState(() => _selectedBook = i),
+                      visualDensity: VisualDensity.compact,
+                      materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
                     ),
-                    const SizedBox(width: 8),
-                    Text(gp.rashi, style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: kText)),
-                  ]),
-                  const SizedBox(height: 8),
-                  // Shloka
-                  if (gp.rashiShloka.isNotEmpty)
-                    Padding(
-                      padding: const EdgeInsets.only(bottom: 6),
-                      child: Text(gp.rashiShloka, style: TextStyle(fontSize: 10, fontStyle: FontStyle.italic, color: kMuted, height: 1.4)),
-                    ),
-                  // Phala rows
-                  _phalaRow('ರಾಶಿ ಫಲ', gp.rashi, gp.rashiPhala, pColor),
-                  _phalaRow('ನವಾಂಶ ಫಲ', gp.navamshaRashi, gp.navamshaPhala, pColor),
-                  _phalaRow('ದ್ವಾದಶಾಂಶ ಫಲ', gp.dvadamshaRashi, gp.dvadashamshaPhala, pColor),
-                  _phalaRow('ದ್ರೇಕ್ಕಾಣ ಫಲ', gp.drekkanaRashi, gp.drekkanaPhala, pColor),
-                ],
+                  );
+                }),
               ),
-            );
-          }).toList(),
+            ),
+            // ── Planet Phalas ──
+            ...phalas.map((gp) {
+              final pColor = planetColors[gp.planet] ?? kTeal;
+              final rashiPhalaText = _selectedBook == 0 ? gp.rashiPhala : gp.saravaliRashiPhala;
+              final shlokaText = _selectedBook == 0 ? gp.rashiShloka : '';
+              return Container(
+                margin: const EdgeInsets.only(top: 8),
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: pColor.withOpacity(0.05),
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(color: pColor.withOpacity(0.2)),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Planet name header
+                    Row(children: [
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                        decoration: BoxDecoration(color: pColor.withOpacity(0.15), borderRadius: BorderRadius.circular(6)),
+                        child: Text(gp.planet, style: TextStyle(fontSize: 13, fontWeight: FontWeight.w900, color: pColor)),
+                      ),
+                      const SizedBox(width: 8),
+                      Text(gp.rashi, style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: kText)),
+                    ]),
+                    const SizedBox(height: 8),
+                    // Shloka (only for Brihat Jataka)
+                    if (shlokaText.isNotEmpty)
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: 6),
+                        child: Text(shlokaText, style: TextStyle(fontSize: 10, fontStyle: FontStyle.italic, color: kMuted, height: 1.4)),
+                      ),
+                    // Phala rows
+                    _phalaRow('ರಾಶಿ ಫಲ', gp.rashi, rashiPhalaText, pColor),
+                    _phalaRow('ನವಾಂಶ ಫಲ', gp.navamshaRashi, gp.navamshaPhala, pColor),
+                    _phalaRow('ದ್ವಾದಶಾಂಶ ಫಲ', gp.dvadamshaRashi, gp.dvadashamshaPhala, pColor),
+                    _phalaRow('ದ್ರೇಕ್ಕಾಣ ಫಲ', gp.drekkanaRashi, gp.drekkanaPhala, pColor),
+                  ],
+                ),
+              );
+            }),
+          ],
         ),
       ),
     ];
