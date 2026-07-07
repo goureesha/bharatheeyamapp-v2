@@ -135,6 +135,7 @@ class _DashboardScreenState extends State<DashboardScreen>
   late String _primaryPlace;
 
   bool _syncing = false;
+  int _resumeKey = 0; // Forces full rebuild on app resume to fix scrambled text
 
   /// Translate dasha balance suffixes (ವ=years, ತಿ=months, ದಿ=days)
   String _trDashaBalance(String bal) {
@@ -224,10 +225,11 @@ class _DashboardScreenState extends State<DashboardScreen>
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    // Lightweight repaint on resume — fixes blank charts without destroying widget tree
     if (state == AppLifecycleState.resumed && mounted) {
-      Future.delayed(const Duration(milliseconds: 100), () {
-        if (mounted) setState(() {});
+      // Force full widget rebuild to fix scrambled Kannada/Devanagari text
+      // Flutter's glyph cache for complex scripts can corrupt on resume
+      Future.delayed(const Duration(milliseconds: 150), () {
+        if (mounted) setState(() => _resumeKey++);
       });
     }
   }
