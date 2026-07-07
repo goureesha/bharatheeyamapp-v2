@@ -135,7 +135,6 @@ class _DashboardScreenState extends State<DashboardScreen>
   late String _primaryPlace;
 
   bool _syncing = false;
-  int _resumeKey = 0; // Forces full rebuild on app resume to fix scrambled text
 
   /// Translate dasha balance suffixes (ವ=years, ತಿ=months, ದಿ=days)
   String _trDashaBalance(String bal) {
