@@ -121,6 +121,7 @@ class _DashboardScreenState extends State<DashboardScreen>
 
   // Multi-person support
   final List<_PersonEntry> _extraPersons = [];
+  final Map<String, int> _personTabIndices = {}; // Per-person selected tab index
 
   // Mutable primary person (editable)
   late String _primaryName;
@@ -1414,41 +1415,342 @@ class _DashboardScreenState extends State<DashboardScreen>
                 ],
               ),
             ),
-
-            // Tab bar
-            Container(
-              color: kCard,
-              child: TabBar(
-                controller: _tabCtrl,
-                isScrollable: true,
-                tabs: _tabs.map((t) => Tab(text: t)).toList(),
+            // Tab bar + content
+            if (_extraPersons.isEmpty) ...[
+              Container(
+                color: kCard,
+                child: TabBar(
+                  controller: _tabCtrl,
+                  isScrollable: true,
+                  tabs: _tabs.map((t) => Tab(text: t)).toList(),
+                ),
               ),
-            ),
-
-            // Tab content
-            Expanded(
-              child: TabBarView(
-                controller: _tabCtrl,
-                children: [
-                  _buildPanchangTab(),
-                  _buildKundaliTab(),
-                  _buildSphutas(),
-                  _buildAroodhaTab(),
-                  _buildDashaTab(),
-                  _buildBhavaTab(),
-                  _buildGrahaShadvargaTab(),
-                  _buildShadbalaTab(),
-                  _buildAshtakaTab(),
-                  _buildNotesTab(),
-                  _buildJanmaPatrikeTab(),
-                ],
+              Expanded(
+                child: TabBarView(
+                  controller: _tabCtrl,
+                  children: [
+                    _buildPanchangTab(),
+                    _buildKundaliTab(),
+                    _buildSphutas(),
+                    _buildAroodhaTab(),
+                    _buildDashaTab(),
+                    _buildBhavaTab(),
+                    _buildGrahaShadvargaTab(),
+                    _buildShadbalaTab(),
+                    _buildAshtakaTab(),
+                    _buildNotesTab(),
+                    _buildJanmaPatrikeTab(),
+                  ],
+                ),
               ),
-            ),
+            ] else ...[
+              Expanded(child: _buildMultiPersonView()),
+            ],
 
           ],
         ),
       ),
       ),
+    );
+  }
+
+  // ─────────────────────────────────────────────
+  // MULTI-PERSON VIEW: Per-person tab switching
+  // ─────────────────────────────────────────────
+  Widget _buildMultiPersonView() {
+    final allPersons = <Map<String, dynamic>>[
+      {'name': _primaryName, 'result': _primaryResult, 'isPrimary': true, 'entry': null},
+      ..._extraPersons.map((p) => {'name': p.name, 'result': p.result, 'isPrimary': false, 'entry': p}),
+    ];
+
+    final tabLabels = _tabs;
+    // Use only essential tabs for multi-person to save space
+    final multiTabIndices = [0, 1, 2, 4, 5, 6, 7, 8]; // Panchanga, Kundali, Sphuta, Dasha, Bhava, Shadvarga, Shadbala, Ashtaka
+
+    return SingleChildScrollView(
+      child: Column(
+        children: [
+          const SizedBox(height: 8),
+          ...allPersons.map((person) {
+            final personName = person['name'] as String;
+            final personResult = person['result'] as KundaliResult;
+            final isPrimary = person['isPrimary'] as bool;
+            final selectedTab = _personTabIndices[personName] ?? 1; // Default to Kundali
+
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Person header
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                  child: Row(
+                    children: [
+                      Icon(Icons.person, size: 18, color: isPrimary ? kPurple2 : kTeal),
+                      const SizedBox(width: 6),
+                      Expanded(
+                        child: Text(personName, style: TextStyle(fontSize: 15, fontWeight: FontWeight.w900, color: isPrimary ? kPurple2 : kTeal)),
+                      ),
+                      IconButton(
+                        icon: Icon(Icons.edit, size: 18, color: kPurple2),
+                        tooltip: AppLocale.l('editTooltip'),
+                        onPressed: () => isPrimary ? _showEditPrimaryDialog() : _showEditPersonDialog(personName),
+                      ),
+                      if (!isPrimary)
+                        IconButton(
+                          icon: Icon(Icons.close, size: 18, color: Colors.redAccent),
+                          onPressed: () => setState(() => _extraPersons.removeWhere((p) => p.name == personName)),
+                        ),
+                    ],
+                  ),
+                ),
+                // Per-person tab chips
+                SizedBox(
+                  height: 38,
+                  child: ListView(
+                    scrollDirection: Axis.horizontal,
+                    padding: const EdgeInsets.symmetric(horizontal: 12),
+                    children: multiTabIndices.map((i) {
+                      final isSelected = selectedTab == i;
+                      return Padding(
+                        padding: const EdgeInsets.only(right: 6),
+                        child: ChoiceChip(
+                          label: Text(tabLabels[i], style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: isSelected ? Colors.white : kText)),
+                          selected: isSelected,
+                          selectedColor: kPurple2,
+                          backgroundColor: kCard,
+                          side: BorderSide(color: isSelected ? kPurple2 : kBorder),
+                          onSelected: (_) => setState(() => _personTabIndices[personName] = i),
+                          padding: const EdgeInsets.symmetric(horizontal: 6),
+                          materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                          visualDensity: VisualDensity.compact,
+                        ),
+                      );
+                    }).toList(),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                // Per-person tab content
+                _buildPersonTabContent(selectedTab, personName, personResult, isPrimary, person['entry'] as _PersonEntry?),
+                Divider(thickness: 1, color: kBorder),
+                const SizedBox(height: 8),
+              ],
+            );
+          }),
+          // Add person button
+          Padding(
+            padding: const EdgeInsets.all(16),
+            child: OutlinedButton.icon(
+              onPressed: _showAddPersonDialog,
+              icon: Icon(Icons.person_add, color: kPurple2),
+              label: Text(AppLocale.l('addPerson'), style: TextStyle(color: kPurple2, fontWeight: FontWeight.w800)),
+              style: OutlinedButton.styleFrom(
+                side: BorderSide(color: kPurple2),
+                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              ),
+            ),
+          ),
+          const SizedBox(height: 24),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPersonTabContent(int tabIdx, String name, KundaliResult result, bool isPrimary, _PersonEntry? entry) {
+    switch (tabIdx) {
+      case 0: return _buildPersonPanchang(name, result);
+      case 1: return _buildPersonKundali(name, result);
+      case 2: return _buildPersonSphuta(name, result);
+      case 4: return _buildPersonDasha(name, result);
+      case 5: return _buildPersonBhava(name, result);
+      case 6: return _buildPersonShadvarga(name, result);
+      case 7: return _buildPersonShadbala(name, result);
+      case 8: return _buildPersonAshtaka(name, result);
+      default: return _buildPersonKundali(name, result);
+    }
+  }
+
+  Widget _buildPersonPanchang(String name, KundaliResult result) {
+    final pan = result.panchang;
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: AppCard(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _kvRow(AppLocale.l('pVara'), pan.vara),
+            _kvRow(AppLocale.l('pTithi'), pan.tithi),
+            _kvRow(AppLocale.l('pNakshatra'), pan.nakshatra),
+            _kvRow(AppLocale.l('pYoga'), pan.yoga),
+            _kvRow(AppLocale.l('pKarana'), pan.karana),
+            _kvRow(AppLocale.l('pChandraRashi'), pan.chandraRashi),
+            if (pan.sunrise.isNotEmpty) _kvRow(AppLocale.l('pSunrise'), pan.sunrise),
+            if (pan.sunset.isNotEmpty) _kvRow(AppLocale.l('pSunset'), pan.sunset),
+            if (pan.udayadiGhati.isNotEmpty) _kvRow(AppLocale.l('udayadiGhati'), pan.udayadiGhati),
+            if (pan.divamana.isNotEmpty) _kvRow(AppLocale.l('divamana'), pan.divamana),
+            if (pan.ratrimana.isNotEmpty) _kvRow(AppLocale.l('ratrimana'), pan.ratrimana),
+            _kvRow(AppLocale.l('pDasha'), '${trAll(pan.dashaLord)} ${_trDashaBalance(pan.dashaBalance)}'),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPersonKundali(String name, KundaliResult result) {
+    final charts = [
+      {'label': AppLocale.l('rashiKundali'), 'varga': 1, 'isBhava': false},
+      {'label': AppLocale.l('navamshaKundali'), 'varga': 9, 'isBhava': false},
+      {'label': AppLocale.l('bhavaKundali'), 'varga': 1, 'isBhava': true},
+      {'label': AppLocale.l('horaKundali'), 'varga': 2, 'isBhava': false},
+      {'label': AppLocale.l('drekkanaKundali'), 'varga': 3, 'isBhava': false},
+      {'label': AppLocale.l('dvadashamsha'), 'varga': 12, 'isBhava': false},
+      {'label': AppLocale.l('trimshamsha'), 'varga': 30, 'isBhava': false},
+    ];
+    final screenWidth = MediaQuery.of(context).size.width;
+    final chartSize = screenWidth * 0.85;
+
+    return SizedBox(
+      height: chartSize + 10,
+      child: ScrollConfiguration(
+        behavior: ScrollConfiguration.of(context).copyWith(
+          dragDevices: {PointerDeviceKind.touch, PointerDeviceKind.mouse},
+        ),
+        child: ListView.builder(
+          scrollDirection: Axis.horizontal,
+          padding: const EdgeInsets.symmetric(horizontal: 8),
+          itemCount: charts.length,
+          itemBuilder: (context, i) {
+            final chart = charts[i];
+            return SizedBox(
+              width: chartSize,
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 4),
+                child: KundaliChart(
+                  result: result,
+                  varga: chart['varga'] as int,
+                  isBhava: chart['isBhava'] as bool,
+                  showSphutas: false,
+                  centerLabel: chart['label'] as String,
+                  onPlanetTap: _showPlanetDetail,
+                ),
+              ),
+            );
+          },
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPersonSphuta(String name, KundaliResult result) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: Column(children: [
+        Text(AppLocale.l('grahaSphuta'), style: TextStyle(fontWeight: FontWeight.w800, fontSize: 15, color: kPurple2)),
+        const SizedBox(height: 8),
+        AppCard(
+          padding: EdgeInsets.zero,
+          child: Column(children: [
+            _tableHeader([AppLocale.l('hGraha'), AppLocale.l('hRashi'), AppLocale.l('hSphuta'), AppLocale.l('hNakPada')]),
+            ...planetOrder.map((p) {
+              final info = result.planets[p];
+              if (info == null) return const SizedBox.shrink();
+              final ri = (info.longitude / 30).floor() % 12;
+              return _tableRow([tr(p), appRashi[ri], formatDeg(info.longitude), '${trAll(info.nakshatra)} - ${info.pada}'], bold0: true);
+            }),
+          ]),
+        ),
+        const SizedBox(height: 16),
+        Text(AppLocale.l('upagrahaTitle'), style: TextStyle(fontWeight: FontWeight.w800, fontSize: 15, color: kPurple2)),
+        const SizedBox(height: 8),
+        AppCard(
+          padding: EdgeInsets.zero,
+          child: Column(children: [
+            _tableHeader([AppLocale.l('hUpagraha'), AppLocale.l('hRashi'), AppLocale.l('hDegree'), AppLocale.l('hNakshatraCol')]),
+            ...sphutas16Order.map((sp) {
+              final deg = result.advSphutas[sp];
+              if (deg == null) return const SizedBox.shrink();
+              final ri = (deg / 30).floor() % 12;
+              final nakIdx = (deg / 13.333333).floor() % 27;
+              final pada = ((deg % 13.333333) / 3.333333).floor() + 1;
+              return _tableRow([trAll(sp), appRashi[ri], formatDeg(deg), '${appNak[nakIdx]}-$pada'], bold0: true);
+            }),
+          ]),
+        ),
+        const SizedBox(height: 16),
+      ]),
+    );
+  }
+
+  Widget _buildPersonDasha(String name, KundaliResult result) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: AppCard(
+        padding: EdgeInsets.zero,
+        child: Column(children: [
+          _tableHeader([AppLocale.l('hMahaDasha'), AppLocale.l('hEnd'), AppLocale.l('hYears')]),
+          ...result.dashas.map((d) => _tableRow([
+            trAll(d.planet),
+            '${d.endDate.year}-${d.endDate.month.toString().padLeft(2,'0')}-${d.endDate.day.toString().padLeft(2,'0')}',
+            d.years.toStringAsFixed(1),
+          ], bold0: true)),
+        ]),
+      ),
+    );
+  }
+
+  Widget _buildPersonBhava(String name, KundaliResult result) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: AppCard(
+        padding: EdgeInsets.zero,
+        child: Column(children: [
+          _tableHeader([AppLocale.l('hBhava'), AppLocale.l('hRashi'), AppLocale.l('hDegree')]),
+          ...List.generate(12, (i) {
+            final deg = result.bhavas[i];
+            final ri = (deg / 30).floor() % 12;
+            return _tableRow(['${i + 1}', appRashi[ri], formatDeg(deg)], bold0: true);
+          }),
+        ]),
+      ),
+    );
+  }
+
+  Widget _buildPersonShadvarga(String name, KundaliResult result) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: AppCard(
+        padding: EdgeInsets.zero,
+        child: Column(children: [
+          _tableHeader([AppLocale.l('hGraha'), 'D1', 'D2', 'D3', 'D9', 'D12', 'D30']),
+          ...planetOrder.map((p) {
+            final info = result.planets[p];
+            if (info == null) return const SizedBox.shrink();
+            final lon = info.longitude;
+            int rashiOf(double l) => ((l ~/ 30) % 12).toInt();
+            int d2(double l) => (l % 30) < 15 ? rashiOf(l) : (rashiOf(l) + 6) % 12;
+            int d3(double l) { final dr = l % 30; return dr < 10 ? rashiOf(l) : dr < 20 ? (rashiOf(l)+4)%12 : (rashiOf(l)+8)%12; }
+            int d9(double l) { final is2 = (l % 30) / (30/9); final fs = [0,3,6,9]; return (fs[rashiOf(l)%4] + is2.floor()) % 12; }
+            int d12(double l) => (rashiOf(l) + ((l%30)/2.5).floor()) % 12;
+            int d30(double l) { final d = l % 30; if (d < 5) return 0; if (d < 10) return 10; if (d < 18) return 8; if (d < 25) return 2; return 11; }
+            return _tableRow([tr(p), appRashi[rashiOf(lon)], appRashi[d2(lon)], appRashi[d3(lon)], appRashi[d9(lon)], appRashi[d12(lon)], appRashi[d30(lon)]], bold0: true);
+          }),
+        ]),
+      ),
+    );
+  }
+
+  Widget _buildPersonShadbala(String name, KundaliResult result) {
+    if (result.shadbala.isEmpty) return Padding(padding: const EdgeInsets.all(16), child: Text('No Shadbala data', style: TextStyle(color: kMuted)));
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: ShadbalaWidget(shadbala: result.shadbala),
+    );
+  }
+
+  Widget _buildPersonAshtaka(String name, KundaliResult result) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: AshtakavargaWidget(result: result),
     );
   }
 
@@ -1541,8 +1843,6 @@ class _DashboardScreenState extends State<DashboardScreen>
                           padding: const EdgeInsets.symmetric(horizontal: 4),
                           child: Column(
                             children: [
-                              Text(label, style: TextStyle(fontSize: 15 * textScale, fontWeight: FontWeight.w800, color: kPurple2)),
-                              SizedBox(height: 4 * textScale),
                               Expanded(
                                 child: KundaliChart(
                                   result: personResult,
