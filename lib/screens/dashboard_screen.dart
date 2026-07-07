@@ -159,11 +159,11 @@ class _DashboardScreenState extends State<DashboardScreen>
 
   static List<String> get _tabs {
     switch (AppLocale.current) {
-      case 'hi': return ['पंचांग', 'कुंडली', 'स्फुट', 'आरूढ', 'दशा', 'भाव', 'ग्रह षड्वर्ग', 'षड्बल', 'अष्टक', 'टिप्पणी', 'पत्रिका'];
-      case 'ta': return ['பஞ்சாங்கம்', 'ஜாதகம்', 'ஸ்புடம்', 'ஆரூடம்', 'தசை', 'பாவம்', 'ஷட்வர்கம்', 'ஷட்பலம்', 'அஷ்டகம்', 'குறிப்பு', 'பத்ரிகை'];
-      case 'te': return ['పంచాంగం', 'కుండలి', 'స్ఫుటం', 'ఆరూఢం', 'దశ', 'భావం', 'షడ్వర్గం', 'షడ్బలం', 'అష్టకం', 'గమనికలు', 'పత్రిక'];
-      case 'ml': return ['പഞ്ചാംഗം', 'ജാതകം', 'സ്ഫുടം', 'ആരൂഢം', 'ദശ', 'ഭാവം', 'ഷഡ്വർഗം', 'ഷഡ്ബലം', 'അഷ്ടകം', 'കുറിപ്പുകൾ', 'പത്രിക'];
-      default: return ['ಪಂಚಾಂಗ', 'ಕುಂಡಲಿ', 'ಸ್ಫುಟ', 'ಆರೂಢ', 'ದಶ', 'ಭಾವ', 'ಗ್ರಹ ಷಡ್ವರ್ಗ', 'ಷಡ್ಬಲ', 'ಅಷ್ಟಕ', 'ಟಿಪ್ಪಣಿ', 'ಪತ್ರಿಕೆ'];
+      case 'hi': return ['पंचांग', 'कुंडली', 'स्फुट', 'आरूढ', 'दशा', 'भाव', 'ग्रह षड्वर्ग', 'भाव षड्वर्ग', 'षड्बल', 'अष्टक', 'टिप्पणी', 'पत्रिका'];
+      case 'ta': return ['பஞ்சாங்கம்', 'ஜாதகம்', 'ஸ்புடம்', 'ஆரூடம்', 'தசை', 'பாவம்', 'ஷட்வர்கம்', 'பாவ ஷட்வர்கம்', 'ஷட்பலம்', 'அஷ்டகம்', 'குறிப்பு', 'பத்ரிகை'];
+      case 'te': return ['పంచాంగం', 'కుండలి', 'స్ఫుటం', 'ఆరూఢం', 'దశ', 'భావం', 'షడ్వర్గం', 'భావ షడ్వర్గం', 'షడ్బలం', 'అష్టకం', 'గమనికలు', 'పత్రిక'];
+      case 'ml': return ['പഞ്ചാംഗം', 'ജാതകം', 'സ്ഫുടം', 'ആരൂഢം', 'ദശ', 'ഭാവം', 'ഷഡ്വർഗം', 'ഭാവ ഷഡ്വർഗം', 'ഷഡ്ബലം', 'അഷ്ടകം', 'കുറിപ്പുകൾ', 'പത്രിക'];
+      default: return ['ಪಂಚಾಂಗ', 'ಕುಂಡಲಿ', 'ಸ್ಫುಟ', 'ಆರೂಢ', 'ದಶ', 'ಭಾವ', 'ಗ್ರಹ ಷಡ್ವರ್ಗ', 'ಭಾವ ಷಡ್ವರ್ಗ', 'ಷಡ್ಬಲ', 'ಅಷ್ಟಕ', 'ಟಿಪ್ಪಣಿ', 'ಪತ್ರಿಕೆ'];
     }
   }
 
@@ -1500,6 +1500,7 @@ class _DashboardScreenState extends State<DashboardScreen>
                   _buildDashaTab(),
                   _buildBhavaTab(),
                   _buildGrahaShadvargaTab(),
+                  _buildBhavaShadvargaTab(),
                   _buildShadbalaTab(),
                   _buildAshtakaTab(),
                   _buildNotesTab(),
@@ -2829,6 +2830,175 @@ class _DashboardScreenState extends State<DashboardScreen>
                         );
                       }).toList(),
                     ],
+                  ),
+                ),
+              ),
+              if (allPersons.length > 1) const SizedBox(height: 24),
+            ]
+          );
+        }).toList(),
+      ),
+    );
+  }
+
+  // ─────────────────────────────────────────────
+  // TAB: BHAVA SHADVARGA
+  // ─────────────────────────────────────────────
+  Widget _buildBhavaShadvargaTab() {
+    var allPersons = <Map<String, dynamic>>[
+      {'name': _primaryName, 'result': _primaryResult},
+      ..._extraPersons.map((p) => {'name': p.name, 'result': p.result}),
+    ];
+    allPersons = _filterPersons(allPersons);
+
+    String getRashiLord(String rashiNameKn) {
+      int idx = knRashi.indexOf(rashiNameKn);
+      if (idx < 0) return rashiNameKn;
+      final lordAbbr = const <String, List<String>>{
+        'kn': ['ಕು','ಶು','ಬು','ಚ','ರ','ಬು','ಶು','ಕು','ಗು','ಶ','ಶ','ಗು'],
+        'hi': ['मं','शु','बु','चं','सू','बु','शु','मं','गु','श','श','गु'],
+        'ta': ['செ','சு','பு','சந்','சூ','பு','சு','செ','கு','ச','ச','கு'],
+        'te': ['కు','శు','బు','చం','ర','బు','శు','కు','గు','శ','శ','గు'],
+        'ml': ['കു','ശു','ബു','ചം','ര','ബു','ശു','കു','ഗു','ശ','ശ','ഗു'],
+      };
+      return (lordAbbr[AppLocale.current] ?? lordAbbr['kn']!)[idx];
+    }
+
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        children: allPersons.map((person) {
+          final r = person['result'] as KundaliResult;
+          final pName = person['name'] as String;
+
+          return Column(
+            children: [
+              if (allPersons.length > 1)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 8),
+                  child: Text(pName, style: TextStyle(fontSize: 15, fontWeight: FontWeight.w900, color: kTeal)),
+                ),
+              // Title
+              Container(
+                padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 16),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(colors: [kPurple1.withOpacity(0.12), kPurple2.withOpacity(0.06)]),
+                  borderRadius: const BorderRadius.only(
+                    topLeft: Radius.circular(14), topRight: Radius.circular(14),
+                  ),
+                  border: Border(bottom: BorderSide(color: kPurple2.withOpacity(0.3), width: 2)),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(Icons.home_work_rounded, size: 18, color: kPurple2),
+                    const SizedBox(width: 8),
+                    Text(AppLocale.current == 'hi' ? 'भाव षड्वर्ग' :
+                         AppLocale.current == 'ta' ? 'பாவ ஷட்வர்கம்' :
+                         AppLocale.current == 'te' ? 'భావ షడ్వర్గం' :
+                         AppLocale.current == 'ml' ? 'ഭാവ ഷഡ്വർഗം' :
+                         'ಭಾವ ಷಡ್ವರ್ಗ',
+                      style: TextStyle(fontWeight: FontWeight.w900, fontSize: 16, color: kPurple2)),
+                  ],
+                ),
+              ),
+              // Shadvarga Table
+              Container(
+                decoration: BoxDecoration(
+                  color: kCard,
+                  borderRadius: const BorderRadius.only(
+                    bottomLeft: Radius.circular(14), bottomRight: Radius.circular(14),
+                  ),
+                  border: Border.all(color: kBorder),
+                  boxShadow: [
+                    BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 10, offset: const Offset(0, 4)),
+                  ],
+                ),
+                child: ClipRRect(
+                  borderRadius: const BorderRadius.only(
+                    bottomLeft: Radius.circular(14), bottomRight: Radius.circular(14),
+                  ),
+                  child: SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    child: Table(
+                      border: TableBorder.symmetric(
+                        inside: BorderSide(color: kBorder.withOpacity(0.6), width: 0.5),
+                      ),
+                      defaultColumnWidth: const FixedColumnWidth(52),
+                      columnWidths: const {0: FixedColumnWidth(48)},
+                      children: [
+                        // Header row
+                        TableRow(
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(colors: [kPurple1.withOpacity(0.15), kPurple2.withOpacity(0.08)]),
+                          ),
+                          children: [
+                            AppLocale.current == 'hi' ? 'भाव' :
+                            AppLocale.current == 'ta' ? 'பா' :
+                            AppLocale.current == 'te' ? 'భా' :
+                            AppLocale.current == 'ml' ? 'ഭാ' : 'ಭಾವ',
+                            'D1', 'D3', 'D2', 'D9', 'D12', 'D30',
+                            AppLocale.current == 'hi' ? 'ना.द्रे' :
+                            AppLocale.current == 'ta' ? 'ந.த்ரே' :
+                            AppLocale.current == 'te' ? 'న.ద్రే' :
+                            AppLocale.current == 'ml' ? 'ന.ദ്രേ' : 'ನ.ದ್ರೇ',
+                            AppLocale.current == 'hi' ? 'द्वा.द्रे' :
+                            AppLocale.current == 'ta' ? 'த்வா.த்ரே' :
+                            AppLocale.current == 'te' ? 'ద్వా.ద్రే' :
+                            AppLocale.current == 'ml' ? 'ദ്വാ.ദ്രേ' : 'ದ್ವಾ.ದ್ರೇ',
+                            'D81',
+                          ].map((h) =>
+                            Padding(
+                              padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 4),
+                              child: Text(h, textAlign: TextAlign.center, style: TextStyle(
+                                fontWeight: FontWeight.w900, fontSize: 11, color: kPurple2,
+                              )),
+                            ),
+                          ).toList(),
+                        ),
+                        // Data rows — one per bhava
+                        ...List.generate(12, (i) {
+                          final deg = r.bhavas[i];
+                          final details = AstroCalculator.getPlanetDetail('ಲಗ್ನ', deg, 0, 0);
+                          final isEvenRow = i % 2 == 0;
+
+                          return TableRow(
+                            decoration: BoxDecoration(
+                              color: isEvenRow ? kBg.withOpacity(0.5) : kCard,
+                            ),
+                            children: [
+                              // Bhava number
+                              Padding(padding: const EdgeInsets.symmetric(vertical: 10), child: Text(
+                                '${i + 1}', textAlign: TextAlign.center,
+                                style: TextStyle(fontWeight: FontWeight.w900, fontSize: 13, color: kTeal),
+                              )),
+                              // D1, D3, D2, D9, D12, D30
+                              ...[details['d1'], details['d3'], details['d2'], details['d9'], details['d12'], details['d30']].map((v) =>
+                                Padding(padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 2), child: Text(
+                                  getRashiLord(v as String), textAlign: TextAlign.center,
+                                  style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: kText),
+                                )),
+                              ),
+                              // Navamsha Drekkana (D3 of D9)
+                              Padding(padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 2), child: Text(
+                                details['subDrekD9'] as String, textAlign: TextAlign.center,
+                                style: TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: kText),
+                              )),
+                              // Dvadashamsha Drekkana (D3 of D12)
+                              Padding(padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 2), child: Text(
+                                details['subDrekD12'] as String, textAlign: TextAlign.center,
+                                style: TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: kText),
+                              )),
+                              // Nava Navamsha (D81)
+                              Padding(padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 2), child: Text(
+                                getRashiLord(details['d9OfD9'] as String), textAlign: TextAlign.center,
+                                style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: kOrange),
+                              )),
+                            ],
+                          );
+                        }),
+                      ],
+                    ),
                   ),
                 ),
               ),
