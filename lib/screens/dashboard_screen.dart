@@ -121,7 +121,7 @@ class _DashboardScreenState extends State<DashboardScreen>
 
   // Multi-person support
   final List<_PersonEntry> _extraPersons = [];
-  final Map<String, int> _personTabIndices = {}; // Per-person selected tab index
+  int _selectedPersonIdx = -1; // -1 = show all, 0+ = show specific person
 
   // Mutable primary person (editable)
   late String _primaryName;
@@ -1415,342 +1415,110 @@ class _DashboardScreenState extends State<DashboardScreen>
                 ],
               ),
             ),
-            // Tab bar + content
-            if (_extraPersons.isEmpty) ...[
+            // Person selector (multi-person only)
+            if (_extraPersons.isNotEmpty)
               Container(
                 color: kCard,
-                child: TabBar(
-                  controller: _tabCtrl,
-                  isScrollable: true,
-                  tabs: _tabs.map((t) => Tab(text: t)).toList(),
-                ),
-              ),
-              Expanded(
-                child: TabBarView(
-                  controller: _tabCtrl,
-                  children: [
-                    _buildPanchangTab(),
-                    _buildKundaliTab(),
-                    _buildSphutas(),
-                    _buildAroodhaTab(),
-                    _buildDashaTab(),
-                    _buildBhavaTab(),
-                    _buildGrahaShadvargaTab(),
-                    _buildShadbalaTab(),
-                    _buildAshtakaTab(),
-                    _buildNotesTab(),
-                    _buildJanmaPatrikeTab(),
-                  ],
-                ),
-              ),
-            ] else ...[
-              Expanded(child: _buildMultiPersonView()),
-            ],
-
-          ],
-        ),
-      ),
-      ),
-    );
-  }
-
-  // ─────────────────────────────────────────────
-  // MULTI-PERSON VIEW: Per-person tab switching
-  // ─────────────────────────────────────────────
-  Widget _buildMultiPersonView() {
-    final allPersons = <Map<String, dynamic>>[
-      {'name': _primaryName, 'result': _primaryResult, 'isPrimary': true, 'entry': null},
-      ..._extraPersons.map((p) => {'name': p.name, 'result': p.result, 'isPrimary': false, 'entry': p}),
-    ];
-
-    final tabLabels = _tabs;
-    // Use only essential tabs for multi-person to save space
-    final multiTabIndices = [0, 1, 2, 4, 5, 6, 7, 8]; // Panchanga, Kundali, Sphuta, Dasha, Bhava, Shadvarga, Shadbala, Ashtaka
-
-    return SingleChildScrollView(
-      child: Column(
-        children: [
-          const SizedBox(height: 8),
-          ...allPersons.map((person) {
-            final personName = person['name'] as String;
-            final personResult = person['result'] as KundaliResult;
-            final isPrimary = person['isPrimary'] as bool;
-            final selectedTab = _personTabIndices[personName] ?? 1; // Default to Kundali
-
-            return Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Person header
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-                  child: Row(
-                    children: [
-                      Icon(Icons.person, size: 18, color: isPrimary ? kPurple2 : kTeal),
-                      const SizedBox(width: 6),
-                      Expanded(
-                        child: Text(personName, style: TextStyle(fontSize: 15, fontWeight: FontWeight.w900, color: isPrimary ? kPurple2 : kTeal)),
-                      ),
-                      IconButton(
-                        icon: Icon(Icons.edit, size: 18, color: kPurple2),
-                        tooltip: AppLocale.l('editTooltip'),
-                        onPressed: () => isPrimary ? _showEditPrimaryDialog() : _showEditPersonDialog(personName),
-                      ),
-                      if (!isPrimary)
-                        IconButton(
-                          icon: Icon(Icons.close, size: 18, color: Colors.redAccent),
-                          onPressed: () => setState(() => _extraPersons.removeWhere((p) => p.name == personName)),
-                        ),
-                    ],
-                  ),
-                ),
-                // Per-person tab chips
-                SizedBox(
-                  height: 38,
+                padding: const EdgeInsets.symmetric(vertical: 4),
+                child: SizedBox(
+                  height: 36,
                   child: ListView(
                     scrollDirection: Axis.horizontal,
                     padding: const EdgeInsets.symmetric(horizontal: 12),
-                    children: multiTabIndices.map((i) {
-                      final isSelected = selectedTab == i;
-                      return Padding(
+                    children: [
+                      // "All" chip
+                      Padding(
                         padding: const EdgeInsets.only(right: 6),
                         child: ChoiceChip(
-                          label: Text(tabLabels[i], style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: isSelected ? Colors.white : kText)),
-                          selected: isSelected,
+                          label: Text('ಎಲ್ಲ / All', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: _selectedPersonIdx == -1 ? Colors.white : kText)),
+                          selected: _selectedPersonIdx == -1,
                           selectedColor: kPurple2,
                           backgroundColor: kCard,
-                          side: BorderSide(color: isSelected ? kPurple2 : kBorder),
-                          onSelected: (_) => setState(() => _personTabIndices[personName] = i),
-                          padding: const EdgeInsets.symmetric(horizontal: 6),
+                          side: BorderSide(color: _selectedPersonIdx == -1 ? kPurple2 : kBorder),
+                          onSelected: (_) => setState(() => _selectedPersonIdx = -1),
                           materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
                           visualDensity: VisualDensity.compact,
                         ),
-                      );
-                    }).toList(),
+                      ),
+                      // Primary person chip
+                      Padding(
+                        padding: const EdgeInsets.only(right: 6),
+                        child: ChoiceChip(
+                          label: Text(_primaryName, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: _selectedPersonIdx == 0 ? Colors.white : kText)),
+                          selected: _selectedPersonIdx == 0,
+                          selectedColor: kPurple2,
+                          backgroundColor: kCard,
+                          side: BorderSide(color: _selectedPersonIdx == 0 ? kPurple2 : kBorder),
+                          onSelected: (_) => setState(() => _selectedPersonIdx = 0),
+                          materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                          visualDensity: VisualDensity.compact,
+                        ),
+                      ),
+                      // Extra person chips
+                      ...List.generate(_extraPersons.length, (i) {
+                        final idx = i + 1;
+                        return Padding(
+                          padding: const EdgeInsets.only(right: 6),
+                          child: ChoiceChip(
+                            label: Text(_extraPersons[i].name, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: _selectedPersonIdx == idx ? Colors.white : kText)),
+                            selected: _selectedPersonIdx == idx,
+                            selectedColor: kTeal,
+                            backgroundColor: kCard,
+                            side: BorderSide(color: _selectedPersonIdx == idx ? kTeal : kBorder),
+                            onSelected: (_) => setState(() => _selectedPersonIdx = idx),
+                            materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                            visualDensity: VisualDensity.compact,
+                          ),
+                        );
+                      }),
+                    ],
                   ),
                 ),
-                const SizedBox(height: 8),
-                // Per-person tab content
-                _buildPersonTabContent(selectedTab, personName, personResult, isPrimary, person['entry'] as _PersonEntry?),
-                Divider(thickness: 1, color: kBorder),
-                const SizedBox(height: 8),
-              ],
-            );
-          }),
-          // Add person button
-          Padding(
-            padding: const EdgeInsets.all(16),
-            child: OutlinedButton.icon(
-              onPressed: _showAddPersonDialog,
-              icon: Icon(Icons.person_add, color: kPurple2),
-              label: Text(AppLocale.l('addPerson'), style: TextStyle(color: kPurple2, fontWeight: FontWeight.w800)),
-              style: OutlinedButton.styleFrom(
-                side: BorderSide(color: kPurple2),
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              ),
+
+            // Tab bar
+            Container(
+              color: kCard,
+              child: TabBar(
+                controller: _tabCtrl,
+                isScrollable: true,
+                tabs: _tabs.map((t) => Tab(text: t)).toList(),
               ),
             ),
-          ),
-          const SizedBox(height: 24),
-        ],
-      ),
-    );
-  }
 
-  Widget _buildPersonTabContent(int tabIdx, String name, KundaliResult result, bool isPrimary, _PersonEntry? entry) {
-    switch (tabIdx) {
-      case 0: return _buildPersonPanchang(name, result);
-      case 1: return _buildPersonKundali(name, result);
-      case 2: return _buildPersonSphuta(name, result);
-      case 4: return _buildPersonDasha(name, result);
-      case 5: return _buildPersonBhava(name, result);
-      case 6: return _buildPersonShadvarga(name, result);
-      case 7: return _buildPersonShadbala(name, result);
-      case 8: return _buildPersonAshtaka(name, result);
-      default: return _buildPersonKundali(name, result);
-    }
-  }
+            // Tab content
+            Expanded(
+              child: TabBarView(
+                controller: _tabCtrl,
+                children: [
+                  _buildPanchangTab(),
+                  _buildKundaliTab(),
+                  _buildSphutas(),
+                  _buildAroodhaTab(),
+                  _buildDashaTab(),
+                  _buildBhavaTab(),
+                  _buildGrahaShadvargaTab(),
+                  _buildShadbalaTab(),
+                  _buildAshtakaTab(),
+                  _buildNotesTab(),
+                  _buildJanmaPatrikeTab(),
+                ],
+              ),
+            ),
 
-  Widget _buildPersonPanchang(String name, KundaliResult result) {
-    final pan = result.panchang;
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      child: AppCard(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _kv(AppLocale.l('pVara'), pan.vara),
-            _kv(AppLocale.l('pTithi'), pan.tithi),
-            _kv(AppLocale.l('pNakshatra'), pan.nakshatra),
-            _kv(AppLocale.l('pYoga'), pan.yoga),
-            _kv(AppLocale.l('pKarana'), pan.karana),
-            _kv(AppLocale.l('pChandraRashi'), pan.chandraRashi),
-            if (pan.sunrise.isNotEmpty) _kv(AppLocale.l('pSunrise'), pan.sunrise),
-            if (pan.sunset.isNotEmpty) _kv(AppLocale.l('pSunset'), pan.sunset),
-            if (pan.udayadiGhati.isNotEmpty) _kv(AppLocale.l('udayadiGhati'), pan.udayadiGhati),
-            if (pan.divamana.isNotEmpty) _kv(AppLocale.l('divamana'), pan.divamana),
-            if (pan.ratrimana.isNotEmpty) _kv(AppLocale.l('ratrimana'), pan.ratrimana),
-            _kv(AppLocale.l('pDasha'), '${trAll(pan.dashaLord)} ${_trDashaBalance(pan.dashaBalance)}'),
           ],
         ),
       ),
-    );
-  }
-
-  Widget _buildPersonKundali(String name, KundaliResult result) {
-    final charts = [
-      {'label': AppLocale.l('rashiKundali'), 'varga': 1, 'isBhava': false},
-      {'label': AppLocale.l('navamshaKundali'), 'varga': 9, 'isBhava': false},
-      {'label': AppLocale.l('bhavaKundali'), 'varga': 1, 'isBhava': true},
-      {'label': AppLocale.l('horaKundali'), 'varga': 2, 'isBhava': false},
-      {'label': AppLocale.l('drekkanaKundali'), 'varga': 3, 'isBhava': false},
-      {'label': AppLocale.l('dvadashamsha'), 'varga': 12, 'isBhava': false},
-      {'label': AppLocale.l('trimshamsha'), 'varga': 30, 'isBhava': false},
-    ];
-    final screenWidth = MediaQuery.of(context).size.width;
-    final chartSize = screenWidth * 0.85;
-
-    return SizedBox(
-      height: chartSize + 10,
-      child: ScrollConfiguration(
-        behavior: ScrollConfiguration.of(context).copyWith(
-          dragDevices: {PointerDeviceKind.touch, PointerDeviceKind.mouse},
-        ),
-        child: ListView.builder(
-          scrollDirection: Axis.horizontal,
-          padding: const EdgeInsets.symmetric(horizontal: 8),
-          itemCount: charts.length,
-          itemBuilder: (context, i) {
-            final chart = charts[i];
-            return SizedBox(
-              width: chartSize,
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 4),
-                child: KundaliChart(
-                  result: result,
-                  varga: chart['varga'] as int,
-                  isBhava: chart['isBhava'] as bool,
-                  showSphutas: false,
-                  centerLabel: chart['label'] as String,
-                  onPlanetTap: _showPlanetDetail,
-                ),
-              ),
-            );
-          },
-        ),
       ),
     );
   }
 
-  Widget _buildPersonSphuta(String name, KundaliResult result) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      child: Column(children: [
-        Text(AppLocale.l('grahaSphuta'), style: TextStyle(fontWeight: FontWeight.w800, fontSize: 15, color: kPurple2)),
-        const SizedBox(height: 8),
-        AppCard(
-          padding: EdgeInsets.zero,
-          child: Column(children: [
-            _tableHeader([AppLocale.l('hGraha'), AppLocale.l('hRashi'), AppLocale.l('hSphuta'), AppLocale.l('hNakPada')]),
-            ...planetOrder.map((p) {
-              final info = result.planets[p];
-              if (info == null) return const SizedBox.shrink();
-              final ri = (info.longitude / 30).floor() % 12;
-              return _tableRow([tr(p), appRashi[ri], formatDeg(info.longitude), '${trAll(info.nakshatra)} - ${info.pada}'], bold0: true);
-            }),
-          ]),
-        ),
-        const SizedBox(height: 16),
-        Text(AppLocale.l('upagrahaTitle'), style: TextStyle(fontWeight: FontWeight.w800, fontSize: 15, color: kPurple2)),
-        const SizedBox(height: 8),
-        AppCard(
-          padding: EdgeInsets.zero,
-          child: Column(children: [
-            _tableHeader([AppLocale.l('hUpagraha'), AppLocale.l('hRashi'), AppLocale.l('hDegree'), AppLocale.l('hNakshatraCol')]),
-            ...sphutas16Order.map((sp) {
-              final deg = result.advSphutas[sp];
-              if (deg == null) return const SizedBox.shrink();
-              final ri = (deg / 30).floor() % 12;
-              final nakIdx = (deg / 13.333333).floor() % 27;
-              final pada = ((deg % 13.333333) / 3.333333).floor() + 1;
-              return _tableRow([trAll(sp), appRashi[ri], formatDeg(deg), '${appNak[nakIdx]}-$pada'], bold0: true);
-            }),
-          ]),
-        ),
-        const SizedBox(height: 16),
-      ]),
-    );
-  }
-
-  Widget _buildPersonDasha(String name, KundaliResult result) {
-    final pan = result.panchang;
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      child: Column(children: [
-        AppCard(
-          child: Text(
-            '${AppLocale.l('dashaLord')}: ${trAll(pan.dashaLord)}  ${AppLocale.l('dashaBalance')}: ${_trDashaBalance(pan.dashaBalance)}',
-            style: TextStyle(color: kOrange, fontWeight: FontWeight.w900, fontSize: 14),
-          ),
-        ),
-        DashaWidget(dashas: result.dashas),
-      ]),
-    );
-  }
-
-  Widget _buildPersonBhava(String name, KundaliResult result) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      child: AppCard(
-        padding: EdgeInsets.zero,
-        child: Column(children: [
-          _tableHeader([AppLocale.l('hBhava'), AppLocale.l('hRashi'), AppLocale.l('hDegree')]),
-          ...List.generate(12, (i) {
-            final deg = result.bhavas[i];
-            final ri = (deg / 30).floor() % 12;
-            return _tableRow(['${i + 1}', appRashi[ri], formatDeg(deg)], bold0: true);
-          }),
-        ]),
-      ),
-    );
-  }
-
-  Widget _buildPersonShadvarga(String name, KundaliResult result) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      child: AppCard(
-        padding: EdgeInsets.zero,
-        child: Column(children: [
-          _tableHeader([AppLocale.l('hGraha'), 'D1', 'D2', 'D3', 'D9', 'D12', 'D30']),
-          ...planetOrder.map((p) {
-            final info = result.planets[p];
-            if (info == null) return const SizedBox.shrink();
-            final lon = info.longitude;
-            int rashiOf(double l) => ((l ~/ 30) % 12).toInt();
-            int d2(double l) => (l % 30) < 15 ? rashiOf(l) : (rashiOf(l) + 6) % 12;
-            int d3(double l) { final dr = l % 30; return dr < 10 ? rashiOf(l) : dr < 20 ? (rashiOf(l)+4)%12 : (rashiOf(l)+8)%12; }
-            int d9(double l) { final is2 = (l % 30) / (30/9); final fs = [0,3,6,9]; return (fs[rashiOf(l)%4] + is2.floor()) % 12; }
-            int d12(double l) => (rashiOf(l) + ((l%30)/2.5).floor()) % 12;
-            int d30(double l) { final d = l % 30; if (d < 5) return 0; if (d < 10) return 10; if (d < 18) return 8; if (d < 25) return 2; return 11; }
-            return _tableRow([tr(p), appRashi[rashiOf(lon)], appRashi[d2(lon)], appRashi[d3(lon)], appRashi[d9(lon)], appRashi[d12(lon)], appRashi[d30(lon)]], bold0: true);
-          }),
-        ]),
-      ),
-    );
-  }
-
-  Widget _buildPersonShadbala(String name, KundaliResult result) {
-    if (result.shadbala.isEmpty) return Padding(padding: const EdgeInsets.all(16), child: Text('No Shadbala data', style: TextStyle(color: kMuted)));
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      child: ShadbalaWidget(shadbala: result.shadbala),
-    );
-  }
-
-  Widget _buildPersonAshtaka(String name, KundaliResult result) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      child: AshtakaVargaWidget(result: result),
-    );
+  // ─────────────────────────────────────────────
+  // Filter allPersons by selected person index
+  // ─────────────────────────────────────────────
+  List<Map<String, dynamic>> _filterPersons(List<Map<String, dynamic>> allPersons) {
+    if (_selectedPersonIdx < 0 || _selectedPersonIdx >= allPersons.length) return allPersons;
+    return [allPersons[_selectedPersonIdx]];
   }
 
   // ─────────────────────────────────────────────
@@ -1768,10 +1536,11 @@ class _DashboardScreenState extends State<DashboardScreen>
     ];
 
     // All persons: primary + extras
-    final allPersons = <Map<String, dynamic>>[
+    var allPersons = <Map<String, dynamic>>[
       {'name': _primaryName, 'result': _primaryResult, 'isPrimary': true},
       ..._extraPersons.map((p) => {'name': p.name, 'result': p.result, 'isPrimary': false}),
     ];
+    allPersons = _filterPersons(allPersons);
 
     final screenWidth = MediaQuery.of(context).size.width;
     final isLandscape = MediaQuery.of(context).orientation == Orientation.landscape;
@@ -1908,10 +1677,11 @@ class _DashboardScreenState extends State<DashboardScreen>
   // TAB 2: UPAGRAHA SPHUTA (multi-person)
   // ─────────────────────────────────────────────
   Widget _buildSphutas() {
-    final allPersons = <Map<String, dynamic>>[
+    var allPersons = <Map<String, dynamic>>[
       {'name': _primaryName, 'result': _primaryResult},
       ..._extraPersons.map((p) => {'name': p.name, 'result': p.result}),
     ];
+    allPersons = _filterPersons(allPersons);
 
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
@@ -2453,10 +2223,11 @@ class _DashboardScreenState extends State<DashboardScreen>
   // TAB 5: DASHA
   // ─────────────────────────────────────────────
   Widget _buildDashaTab() {
-    final allPersons = <Map<String, dynamic>>[
+    var allPersons = <Map<String, dynamic>>[
       {'name': _primaryName, 'result': _primaryResult},
       ..._extraPersons.map((p) => {'name': p.name, 'result': p.result}),
     ];
+    allPersons = _filterPersons(allPersons);
     return SingleChildScrollView(
       child: Column(
         children: allPersons.map((person) {
@@ -2489,10 +2260,11 @@ class _DashboardScreenState extends State<DashboardScreen>
   // TAB 6: PANCHANG
   // ─────────────────────────────────────────────
   Widget _buildPanchangTab() {
-    final allPersons = <Map<String, dynamic>>[
+    var allPersons = <Map<String, dynamic>>[
       {'name': _primaryName, 'result': _primaryResult, 'dob': _primaryDob, 'hour': _primaryHour, 'minute': _primaryMinute, 'ampm': _primaryAmpm, 'place': _primaryPlace},
       ..._extraPersons.map((p) => {'name': p.name, 'result': p.result, 'dob': p.dob, 'hour': p.hour, 'minute': p.minute, 'ampm': p.ampm, 'place': p.place}),
     ];
+    allPersons = _filterPersons(allPersons);
 
     return SingleChildScrollView(
       padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
@@ -2603,10 +2375,11 @@ class _DashboardScreenState extends State<DashboardScreen>
   // TAB 7.5: BHAVA DREKKAANA
   // ─────────────────────────────────────────────
   Widget _buildBhavaDrekkaanaTab() {
-    final allPersons = <Map<String, dynamic>>[
+    var allPersons = <Map<String, dynamic>>[
       {'name': _primaryName, 'result': _primaryResult},
       ..._extraPersons.map((p) => {'name': p.name, 'result': p.result}),
     ];
+    allPersons = _filterPersons(allPersons);
 
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
@@ -2751,10 +2524,11 @@ class _DashboardScreenState extends State<DashboardScreen>
   // TAB 7: BHAVA
   // ─────────────────────────────────────────────
   Widget _buildBhavaTab() {
-    final allPersons = <Map<String, dynamic>>[
+    var allPersons = <Map<String, dynamic>>[
       {'name': _primaryName, 'result': _primaryResult},
       ..._extraPersons.map((p) => {'name': p.name, 'result': p.result}),
     ];
+    allPersons = _filterPersons(allPersons);
 
     // Planet selector list
     final selectablePlanets = planetOrder.where((p) => p != 'ಲಗ್ನ' && p != 'ಮಾಂದಿ').toList();
@@ -2914,10 +2688,11 @@ class _DashboardScreenState extends State<DashboardScreen>
   // TAB 7.6: GRAHA SHADVARGA
   // ─────────────────────────────────────────────
   Widget _buildGrahaShadvargaTab() {
-    final allPersons = <Map<String, dynamic>>[
+    var allPersons = <Map<String, dynamic>>[
       {'name': _primaryName, 'result': _primaryResult},
       ..._extraPersons.map((p) => {'name': p.name, 'result': p.result}),
     ];
+    allPersons = _filterPersons(allPersons);
 
     final hGraha = AppLocale.l('hGraha');
     final hD3 = AppLocale.l('hD3');
@@ -3070,10 +2845,11 @@ class _DashboardScreenState extends State<DashboardScreen>
   // TAB 8: ASHTAKA VARGA (multi-person)
   // ─────────────────────────────────────────────
   Widget _buildAshtakaTab() {
-    final allPersons = <Map<String, dynamic>>[
+    var allPersons = <Map<String, dynamic>>[
       {'name': _primaryName, 'result': _primaryResult},
       ..._extraPersons.map((p) => {'name': p.name, 'result': p.result}),
     ];
+    allPersons = _filterPersons(allPersons);
 
     if (allPersons.length == 1) {
       return AshtakaVargaWidget(result: widget.result);
@@ -3100,10 +2876,11 @@ class _DashboardScreenState extends State<DashboardScreen>
   }
 
   Widget _buildShadbalaTab() {
-    final allPersons = <Map<String, dynamic>>[
+    var allPersons = <Map<String, dynamic>>[
       {'name': _primaryName, 'result': _primaryResult},
       ..._extraPersons.map((p) => {'name': p.name, 'result': p.result}),
     ];
+    allPersons = _filterPersons(allPersons);
 
     if (allPersons.length == 1) {
       return ShadbalaWidget(key: UniqueKey(), shadbala: widget.result.shadbala);
@@ -3383,10 +3160,11 @@ class _DashboardScreenState extends State<DashboardScreen>
   }
 
   Widget _buildNotesTab() {
-    final allPersons = <Map<String, dynamic>>[
+    var allPersons = <Map<String, dynamic>>[
       {'name': _primaryName, 'isPrimary': true, 'entry': null},
       ..._extraPersons.map((p) => {'name': p.name, 'isPrimary': false, 'entry': p}),
     ];
+    allPersons = _filterPersons(allPersons);
 
     return ListView.builder(
       itemCount: allPersons.length,
