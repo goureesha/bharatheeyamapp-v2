@@ -1,5 +1,6 @@
 import 'calculator.dart';
 import 'saravali_phala.dart';
+import 'drekkana_phala.dart';
 
 /// Graha Phala — per-planet results based on Rashi, Navamsha, Dvadashamsha, Drekkana.
 /// Based on Brihat Jataka Chapter 18 (Graha Bhava Phala) and related texts.
@@ -15,10 +16,14 @@ class GrahaPhala {
   final String dvadamshaShloka;
   final String saravaliDvadashamshaPhala;
   final String drekkanaPhala;
+  final String d9DrekkanaPhala;
+  final String d12DrekkanaPhala;
   final String rashi;
   final String navamshaRashi;
   final String dvadamshaRashi;
   final String drekkanaRashi;
+  final String d9DrekkanaRashi;
+  final String d12DrekkanaRashi;
 
   const GrahaPhala({
     required this.planet,
@@ -32,10 +37,14 @@ class GrahaPhala {
     this.dvadamshaShloka = '',
     this.saravaliDvadashamshaPhala = '',
     required this.drekkanaPhala,
+    this.d9DrekkanaPhala = '',
+    this.d12DrekkanaPhala = '',
     required this.rashi,
     required this.navamshaRashi,
     required this.dvadamshaRashi,
     required this.drekkanaRashi,
+    this.d9DrekkanaRashi = '',
+    this.d12DrekkanaRashi = '',
   });
 
   static const _rashiNames = ['ಮೇಷ','ವೃಷಭ','ಮಿಥುನ','ಕರ್ಕ','ಸಿಂಹ','ಕನ್ಯಾ','ತುಲಾ','ವೃಶ್ಚಿಕ','ಧನು','ಮಕರ','ಕುಂಭ','ಮೀನ'];
@@ -377,6 +386,15 @@ class GrahaPhala {
       final d12r = _d12Rashi(lon);
       final d3r = _d3Rashi(lon);
 
+      // Drekkana number (1,2,3) for D1, D9, D12
+      final d1Drek = DrekkanaPhala.drekkanaNumber(lon);
+      final d9Lon = (lon * 9) % 360;
+      final d9Drek = DrekkanaPhala.drekkanaNumber(d9Lon);
+      final d9DrekRashi = _rashiOf(d9Lon);
+      final d12Lon = (lon * 12) % 360;
+      final d12Drek = DrekkanaPhala.drekkanaNumber(d12Lon);
+      final d12DrekRashi = _rashiOf(d12Lon);
+
       const shlokaMap = {
         'Sun': _sunShloka, 'Moon': _moonShloka, 'Mars': _marsShloka,
         'Mercury': _mercuryShloka, 'Jupiter': _jupiterShloka,
@@ -387,7 +405,9 @@ class GrahaPhala {
         rashi: _rashiNames[r],
         navamshaRashi: _rashiNames[d9r],
         dvadamshaRashi: _rashiNames[d12r],
-        drekkanaRashi: _rashiNames[d3r],
+        drekkanaRashi: '${_rashiNames[r]} ${d1Drek}ನೇ',
+        d9DrekkanaRashi: '${_rashiNames[d9DrekRashi]} ${d9Drek}ನೇ',
+        d12DrekkanaRashi: '${_rashiNames[d12DrekRashi]} ${d12Drek}ನೇ',
         rashiPhala: signPhalas[pEng]?[r] ?? '',
         rashiShloka: shlokaMap[pEng]?[r] ?? '',
         saravaliRashiPhala: SaravaliPhala.getPhala(pEng, r),
@@ -397,7 +417,9 @@ class GrahaPhala {
         dvadashamshaPhala: signPhalas[pEng]?[d12r] ?? '',
         dvadamshaShloka: shlokaMap[pEng]?[d12r] ?? '',
         saravaliDvadashamshaPhala: SaravaliPhala.getPhala(pEng, d12r),
-        drekkanaPhala: _drekPhala[d3r] ?? '',
+        drekkanaPhala: DrekkanaPhala.getPhala(r, d1Drek),
+        d9DrekkanaPhala: DrekkanaPhala.getPhala(d9DrekRashi, d9Drek),
+        d12DrekkanaPhala: DrekkanaPhala.getPhala(d12DrekRashi, d12Drek),
       ));
     }
     return results;

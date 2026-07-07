@@ -716,6 +716,8 @@ class _PrashnaDashboardScreenState extends State<PrashnaDashboardScreen>
                     _phalaRow('ನವಾಂಶ ಫಲ', gp.navamshaRashi, navPhalaText, pColor),
                     _phalaRow('ದ್ವಾದಶಾಂಶ ಫಲ', gp.dvadamshaRashi, dvadPhalaText, pColor),
                     _phalaRow('ದ್ರೇಕ್ಕಾಣ ಫಲ', gp.drekkanaRashi, gp.drekkanaPhala, pColor),
+                    _phalaRow('D9 ದ್ರೇಕ್ಕಾಣ', gp.d9DrekkanaRashi, gp.d9DrekkanaPhala, pColor),
+                    _phalaRow('D12 ದ್ರೇಕ್ಕಾಣ', gp.d12DrekkanaRashi, gp.d12DrekkanaPhala, pColor),
                   ],
                 ),
               );
