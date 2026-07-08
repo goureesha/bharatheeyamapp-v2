@@ -55,7 +55,7 @@ class _PrashnaDashboardScreenState extends State<PrashnaDashboardScreen>
 
 
 
-  static const _tabs = ['ಕುಂಡಲಿ', 'ಸ್ಫುಟ', 'ಪಂಚಾಂಗ', 'ಷಡ್ವರ್ಗ', 'ದಶಾ', 'ಭಾವ ಫಲ'];
+  static const _tabs = ['ಕುಂಡಲಿ', 'ಸ್ಫುಟ', 'ಪಂಚಾಂಗ', 'ಷಡ್ವರ್ಗ', 'ದಶಾ'];
 
   @override
   void initState() {
@@ -320,7 +320,6 @@ class _PrashnaDashboardScreenState extends State<PrashnaDashboardScreen>
                 _buildPanchangTab(),
                 _buildShadvargaTab(),
                 _buildDashaTab(),
-                _buildBhavaPhalaTab(),
               ],
             ),
           ),
@@ -371,6 +370,7 @@ class _PrashnaDashboardScreenState extends State<PrashnaDashboardScreen>
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 ..._buildGrahaPhalas(_result),
+                ..._buildBhavaPhalas(_result),
               ],
             ),
           ),
@@ -728,124 +728,6 @@ class _PrashnaDashboardScreenState extends State<PrashnaDashboardScreen>
   }
 
   // ═══════════════════════════════════════════
-  // TAB 6: BHAVA PHALA
-  // ═══════════════════════════════════════════
-  Widget _buildBhavaPhalaTab() {
-    final r = _result;
-    const planetNames = ['ರವಿ', 'ಚಂದ್ರ', 'ಕುಜ', 'ಬುಧ', 'ಗುರು', 'ಶುಕ್ರ', 'ಶನಿ', 'ರಾಹು', 'ಕೇತು'];
-    // Lagna options: main lagna + planet lagnas + 12 rashis
-    final lagnaOptions = ['ಲಗ್ನ', ...planetNames, ...knRashi];
-
-    // Determine the lagna rashi index based on selection
-    int lagnaRashiIdx;
-    if (_bhavaLagnaMode == 'ಲಗ್ನ') {
-      // Main lagna — use accurate ascendant from planets map
-      final ascLon = r.planets['ಲಗ್ನ']?.longitude ?? (r.bhavas.isNotEmpty ? r.bhavas[0] : 0.0);
-      lagnaRashiIdx = (ascLon / 30).floor() % 12;
-    } else if (planetNames.contains(_bhavaLagnaMode)) {
-      // Planet lagna — use that planet's accurate longitude
-      final pLon = r.planets[_bhavaLagnaMode]?.longitude ?? 0.0;
-      lagnaRashiIdx = (pLon / 30).floor() % 12;
-    } else {
-      // Rashi lagna: direct rashi index
-      lagnaRashiIdx = knRashi.indexOf(_bhavaLagnaMode);
-      if (lagnaRashiIdx < 0) lagnaRashiIdx = 0;
-    }
-
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(8),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Source label
-          Padding(
-            padding: const EdgeInsets.only(bottom: 6),
-            child: Text('ಚಮತ್ಕಾರ ಚಿಂತಾಮಣಿ',
-                style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: kMuted, fontStyle: FontStyle.italic)),
-          ),
-          // Lagna selector
-          AppCard(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(children: [
-                  Icon(Icons.filter_alt, color: kOrange, size: 18),
-                  const SizedBox(width: 6),
-                  Text('ಲಗ್ನ ಆಯ್ಕೆ', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w900, color: kOrange)),
-                ]),
-                const SizedBox(height: 8),
-                Wrap(
-                  spacing: 6,
-                  runSpacing: 6,
-                  children: lagnaOptions.map((opt) {
-                    final sel = _bhavaLagnaMode == opt;
-                    return GestureDetector(
-                      onTap: () => setState(() => _bhavaLagnaMode = opt),
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                        decoration: BoxDecoration(
-                          color: sel ? kPurple2 : kPurple2.withOpacity(0.08),
-                          borderRadius: BorderRadius.circular(8),
-                          border: Border.all(color: sel ? kPurple2 : kBorder),
-                        ),
-                        child: Text(opt,
-                            style: TextStyle(
-                              fontSize: 12,
-                              fontWeight: sel ? FontWeight.w900 : FontWeight.w600,
-                              color: sel ? Colors.white : kText,
-                            )),
-                      ),
-                    );
-                  }).toList(),
-                ),
-                const SizedBox(height: 6),
-                Text('ಲಗ್ನ ರಾಶಿ: ${knRashi[lagnaRashiIdx]}',
-                    style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: kTeal)),
-              ],
-            ),
-          ),
-          const SizedBox(height: 8),
-          // Show bhava phala for each planet
-          ...planetNames.map((planet) {
-            final pInfo = r.planets[planet];
-            if (pInfo == null) return const SizedBox.shrink();
-            final pRashiIdx = (pInfo.longitude / 30).floor() % 12;
-            final bhava = ((pRashiIdx - lagnaRashiIdx) % 12) + 1;
-            final shloka = BhavaPhala.getPhala(planet, bhava);
-            if (shloka.isEmpty) return const SizedBox.shrink();
-            return Padding(
-              padding: const EdgeInsets.only(bottom: 8),
-              child: AppCard(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(children: [
-                      Text(planet, style: TextStyle(fontSize: 14, fontWeight: FontWeight.w900, color: kPurple2)),
-                      const Spacer(),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                        decoration: BoxDecoration(
-                          color: kOrange.withOpacity(0.12),
-                          borderRadius: BorderRadius.circular(6),
-                        ),
-                        child: Text('ಭಾವ $bhava • ${knRashi[pRashiIdx]}',
-                            style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: kOrange)),
-                      ),
-                    ]),
-                    const SizedBox(height: 8),
-                    Text(shloka,
-                        style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: kText, height: 1.6)),
-                  ],
-                ),
-              ),
-            );
-          }),
-        ],
-      ),
-    );
-  }
-
-  // ═══════════════════════════════════════════
   // TAB 5: DASHA
   // ═══════════════════════════════════════════
   Widget _buildDashaTab() {
@@ -938,6 +820,159 @@ class _PrashnaDashboardScreenState extends State<PrashnaDashboardScreen>
         ],
       ),
     );
+  }
+
+  // ═══════════════════════════════════════════
+  // HELPER: planet bhava from cusp boundaries
+  // ═══════════════════════════════════════════
+  int _planetBhavaNum(double planetLon, List<double> madhyas) {
+    // Calculate boundaries (sandhi) between adjacent bhava madhyas
+    List<double> boundaries = List.filled(12, 0.0);
+    for (int i = 0; i < 12; i++) {
+      final m1 = madhyas[i];
+      final m2 = madhyas[(i + 1) % 12];
+      double diff = (m2 - m1 + 360.0) % 360.0;
+      boundaries[i] = (m1 + (diff / 2.0)) % 360.0;
+    }
+    int bhavaIdx = 0;
+    for (int i = 0; i < 12; i++) {
+      final start = boundaries[(i + 11) % 12];
+      final end = boundaries[i];
+      if (start < end) {
+        if (planetLon >= start && planetLon < end) { bhavaIdx = i; break; }
+      } else {
+        if (planetLon >= start || planetLon < end) { bhavaIdx = i; break; }
+      }
+    }
+    return bhavaIdx + 1; // 1-based bhava number
+  }
+
+  // ═══════════════════════════════════════════
+  // BHAVA PHALA CARDS (below Graha Phala)
+  // ═══════════════════════════════════════════
+  List<Widget> _buildBhavaPhalas(KundaliResult r) {
+    const planetNames = ['ರವಿ', 'ಚಂದ್ರ', 'ಕುಜ', 'ಬುಧ', 'ಗುರು', 'ಶುಕ್ರ', 'ಶನಿ', 'ರಾಹು', 'ಕೇತು'];
+    if (r.bhavas.isEmpty) return [];
+
+    // Lagna options: main lagna + planet lagnas + 12 rashis
+    final lagnaOptions = ['ಲಗ್ನ', ...planetNames, ...knRashi];
+    final lagnaLon = r.planets['ಲಗ್ನ']?.longitude ?? (r.bhavas.isNotEmpty ? r.bhavas[0] : 0.0);
+    final lagnaIdx = (lagnaLon / 30).floor() % 12;
+
+    // Compute bhava madhyas based on lagna selection
+    List<double> madhyas;
+    int displayLagnaIdx;
+    if (_bhavaLagnaMode == 'ಲಗ್ನ') {
+      madhyas = r.bhavas;
+      displayLagnaIdx = lagnaIdx;
+    } else if (planetNames.contains(_bhavaLagnaMode)) {
+      // Planet lagna: shift bhava cusps by offset
+      final refLon = r.planets[_bhavaLagnaMode]?.longitude ?? 0.0;
+      final offset = (refLon - lagnaLon + 360.0) % 360.0;
+      madhyas = List.generate(12, (i) => (r.bhavas[i] + offset) % 360.0);
+      displayLagnaIdx = (refLon / 30).floor() % 12;
+    } else {
+      // Rashi lagna: shift bhava cusps to that rashi
+      final rashiIdx = knRashi.indexOf(_bhavaLagnaMode);
+      final refLon = (rashiIdx < 0 ? 0 : rashiIdx) * 30.0;
+      final offset = (refLon - lagnaLon + 360.0) % 360.0;
+      madhyas = List.generate(12, (i) => (r.bhavas[i] + offset) % 360.0);
+      displayLagnaIdx = rashiIdx < 0 ? 0 : rashiIdx;
+    }
+
+    return [
+      const SizedBox(height: 16),
+      // Header
+      Padding(
+        padding: const EdgeInsets.only(bottom: 4),
+        child: Row(children: [
+          Icon(Icons.auto_awesome, color: kTeal, size: 18),
+          const SizedBox(width: 6),
+          Text('ಭಾವ ಫಲ', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w900, color: kTeal)),
+          const Spacer(),
+          Text('ಚಮತ್ಕಾರ ಚಿಂತಾಮಣಿ',
+              style: TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: kMuted, fontStyle: FontStyle.italic)),
+        ]),
+      ),
+      const SizedBox(height: 4),
+      // Lagna selector
+      AppCard(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(children: [
+              Icon(Icons.filter_alt, color: kOrange, size: 16),
+              const SizedBox(width: 4),
+              Text('ಲಗ್ನ ಆಯ್ಕೆ', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w900, color: kOrange)),
+            ]),
+            const SizedBox(height: 6),
+            Wrap(
+              spacing: 5,
+              runSpacing: 5,
+              children: lagnaOptions.map((opt) {
+                final sel = _bhavaLagnaMode == opt;
+                return GestureDetector(
+                  onTap: () => setState(() => _bhavaLagnaMode = opt),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: sel ? kTeal : kTeal.withOpacity(0.07),
+                      borderRadius: BorderRadius.circular(7),
+                      border: Border.all(color: sel ? kTeal : kBorder),
+                    ),
+                    child: Text(opt,
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: sel ? FontWeight.w900 : FontWeight.w600,
+                          color: sel ? Colors.white : kText,
+                        )),
+                  ),
+                );
+              }).toList(),
+            ),
+            const SizedBox(height: 4),
+            Text('ಲಗ್ನ ರಾಶಿ: ${knRashi[displayLagnaIdx]}',
+                style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: kTeal)),
+          ],
+        ),
+      ),
+      const SizedBox(height: 6),
+      // Planet bhava phala cards
+      ...planetNames.map((planet) {
+        final pInfo = r.planets[planet];
+        if (pInfo == null) return const SizedBox.shrink();
+        final bhava = _planetBhavaNum(pInfo.longitude, madhyas);
+        final pRashiIdx = (pInfo.longitude / 30).floor() % 12;
+        final shloka = BhavaPhala.getPhala(planet, bhava);
+        if (shloka.isEmpty) return const SizedBox.shrink();
+        return Padding(
+          padding: const EdgeInsets.only(bottom: 6),
+          child: AppCard(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(children: [
+                  Text(planet, style: TextStyle(fontSize: 14, fontWeight: FontWeight.w900, color: kPurple2)),
+                  const Spacer(),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: kTeal.withOpacity(0.12),
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: Text('ಭಾವ $bhava • ${knRashi[pRashiIdx]}',
+                        style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: kTeal)),
+                  ),
+                ]),
+                const SizedBox(height: 8),
+                Text(shloka,
+                    style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: kText, height: 1.6)),
+              ],
+            ),
+          ),
+        );
+      }),
+    ];
   }
 
   // ═══════════════════════════════════════════
