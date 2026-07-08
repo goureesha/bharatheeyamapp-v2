@@ -7,6 +7,8 @@ import '../widgets/common.dart';
 import '../widgets/prashna_chart.dart';
 import '../widgets/planet_detail_sheet.dart';
 import '../widgets/dasha_widget.dart';
+import '../services/storage_service.dart';
+import '../services/backup_service.dart';
 
 class PrashnaDashboardScreen extends StatefulWidget {
   final KundaliResult result;
@@ -150,6 +152,82 @@ class _PrashnaDashboardScreenState extends State<PrashnaDashboardScreen>
     }
   }
 
+  Future<void> _savePrashna() async {
+    // Build a name with date/time for easy identification
+    final dateStr = '${_dob.day.toString().padLeft(2, "0")}/${_dob.month.toString().padLeft(2, "0")}/${_dob.year}';
+    final timeStr = '$_hour:${_minute.toString().padLeft(2, "0")} $_ampm';
+    final defaultName = widget.name.isNotEmpty
+        ? widget.name
+        : 'ಪ್ರಶ್ನ $dateStr $timeStr';
+
+    // Ask user for a name
+    final controller = TextEditingController(text: defaultName);
+    final name = await showDialog<String>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: kCard,
+        title: Text('ಪ್ರಶ್ನ ಉಳಿಸಿ', style: TextStyle(color: kText, fontWeight: FontWeight.w900)),
+        content: TextField(
+          controller: controller,
+          autofocus: true,
+          style: TextStyle(color: kText),
+          decoration: InputDecoration(
+            hintText: 'ಹೆಸರು ನಮೂದಿಸಿ',
+            hintStyle: TextStyle(color: kMuted),
+            enabledBorder: UnderlineInputBorder(borderSide: BorderSide(color: kBorder)),
+            focusedBorder: UnderlineInputBorder(borderSide: BorderSide(color: kPurple2)),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: Text('ರದ್ದು', style: TextStyle(color: kMuted)),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: kPurple2),
+            onPressed: () => Navigator.pop(ctx, controller.text.trim()),
+            child: const Text('ಉಳಿಸಿ'),
+          ),
+        ],
+      ),
+    );
+
+    if (name == null || name.isEmpty || !mounted) return;
+
+    final profile = Profile(
+      name: name,
+      date: '${_dob.year}-${_dob.month.toString().padLeft(2, "0")}-${_dob.day.toString().padLeft(2, "0")}',
+      hour: _hour,
+      minute: _minute,
+      ampm: _ampm,
+      lat: widget.lat,
+      lon: widget.lon,
+      place: widget.place,
+    );
+    await StorageService.save(profile);
+
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('✅ "$name" ಉಳಿಸಲಾಗಿದೆ'),
+        backgroundColor: kTeal,
+      ),
+    );
+  }
+
+  Future<void> _backupData() async {
+    final success = await BackupService.exportData();
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(success
+            ? '✅ ಬ್ಯಾಕಪ್ ಯಶಸ್ವಿ'
+            : '❌ ಬ್ಯಾಕಪ್ ವಿಫಲ'),
+        backgroundColor: success ? kTeal : Colors.red,
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -160,6 +238,18 @@ class _PrashnaDashboardScreenState extends State<PrashnaDashboardScreen>
             style: TextStyle(color: kText, fontSize: 16, fontWeight: FontWeight.w900)),
         iconTheme: IconThemeData(color: kText),
         elevation: 0,
+        actions: [
+          IconButton(
+            icon: Icon(Icons.save_outlined, color: kPurple2),
+            tooltip: 'ಉಳಿಸಿ',
+            onPressed: _savePrashna,
+          ),
+          IconButton(
+            icon: Icon(Icons.backup_outlined, color: kTeal),
+            tooltip: 'ಬ್ಯಾಕಪ್',
+            onPressed: _backupData,
+          ),
+        ],
       ),
       body: Column(
         children: [
