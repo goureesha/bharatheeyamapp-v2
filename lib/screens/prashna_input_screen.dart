@@ -7,6 +7,7 @@ import '../core/calculator.dart';
 import '../constants/places.dart';
 // ephemeris not needed
 import '../services/location_service.dart';
+import '../services/storage_service.dart';
 import 'prashna_dashboard_screen.dart';
 
 /// Simplified input screen for Prashna (horary) charts.
@@ -189,6 +190,96 @@ class _PrashnaInputScreenState extends State<PrashnaInputScreen> {
     setState(() => _loading = false);
   }
 
+  Future<void> _showRecords() async {
+    final profiles = await StorageService.loadAll();
+    if (!mounted) return;
+    if (profiles.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('ಯಾವುದೇ ದಾಖಲೆ ಇಲ್ಲ'), backgroundColor: kOrange),
+      );
+      return;
+    }
+    final sortedNames = profiles.keys.toList()..sort();
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: kBg,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+      builder: (ctx) => DraggableScrollableSheet(
+        expand: false,
+        initialChildSize: 0.5,
+        minChildSize: 0.3,
+        maxChildSize: 0.85,
+        builder: (_, scrollCtrl) => Column(
+          children: [
+            Padding(
+              padding: const EdgeInsets.all(16),
+              child: Row(
+                children: [
+                  Icon(Icons.folder_open, color: kPurple2, size: 22),
+                  const SizedBox(width: 8),
+                  Text('ಉಳಿಸಿದ ದಾಖಲೆಗಳು', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: kPurple2)),
+                  const Spacer(),
+                  Text('${sortedNames.length}', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: kMuted)),
+                ],
+              ),
+            ),
+            Divider(height: 1, color: kBorder),
+            Expanded(
+              child: ListView.separated(
+                controller: scrollCtrl,
+                itemCount: sortedNames.length,
+                separatorBuilder: (_, __) => Divider(height: 1, color: kBorder),
+                itemBuilder: (_, i) {
+                  final name = sortedNames[i];
+                  final p = profiles[name]!;
+                  final parts = p.date.split('-');
+                  final dateDisplay = parts.length == 3
+                      ? '${parts[2]}/${parts[1]}/${parts[0]}'
+                      : p.date;
+                  return ListTile(
+                    leading: CircleAvatar(
+                      backgroundColor: kPurple2.withOpacity(0.1),
+                      child: Icon(Icons.person, color: kPurple2, size: 20),
+                    ),
+                    title: Text(name, style: TextStyle(fontSize: 14, fontWeight: FontWeight.w800, color: kText)),
+                    subtitle: Text(
+                      '$dateDisplay  ${p.hour}:${p.minute.toString().padLeft(2, "0")} ${p.ampm}  •  ${p.place}',
+                      style: TextStyle(fontSize: 11, color: kMuted),
+                    ),
+                    trailing: Icon(Icons.chevron_right, color: kMuted),
+                    onTap: () {
+                      Navigator.pop(ctx);
+                      // Fill form with selected record
+                      final dateParts = p.date.split('-');
+                      final dob = dateParts.length == 3
+                          ? DateTime(int.parse(dateParts[0]), int.parse(dateParts[1]), int.parse(dateParts[2]))
+                          : DateTime.now();
+                      setState(() {
+                        _nameCtrl.text = p.name;
+                        _placeCtrl.text = p.place;
+                        _latCtrl.text = p.lat.toStringAsFixed(4);
+                        _lonCtrl.text = p.lon.toStringAsFixed(4);
+                        _tzCtrl.text = '${p.tzOffset >= 0 ? '+' : ''}${p.tzOffset}';
+                        _dob = dob;
+                        _hour = p.hour;
+                        _minute = p.minute;
+                        _ampm = p.ampm;
+                      });
+                      _hourCtrl.animateToItem(_hour - 1, duration: const Duration(milliseconds: 300), curve: Curves.easeOut);
+                      _minuteCtrl.animateToItem(_minute, duration: const Duration(milliseconds: 300), curve: Curves.easeOut);
+                      _ampmCtrl.animateToItem(_ampm == 'AM' ? 0 : 1, duration: const Duration(milliseconds: 300), curve: Curves.easeOut);
+                    },
+                  );
+                },
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -332,10 +423,26 @@ class _PrashnaInputScreenState extends State<PrashnaInputScreen> {
                     ),
                     const SizedBox(height: 16),
 
-                    // ── ಪ್ರಸ್ತುತ + ಲೆಕ್ಕ ಹಾಕಿ buttons ──
+                    // ── ದಾಖಲೆ + ಪ್ರಸ್ತುತ + ಲೆಕ್ಕ ಹಾಕಿ buttons ──
                     Row(children: [
+                      // Records button
                       Expanded(
-                        child: ElevatedButton(
+                        child: ElevatedButton.icon(
+                          icon: Icon(Icons.folder_open, size: 18),
+                          label: Text('ದಾಖಲೆ', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 13)),
+                          onPressed: _showRecords,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: kPurple2,
+                            padding: const EdgeInsets.symmetric(vertical: 14),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      // Prastuta button
+                      Expanded(
+                        child: ElevatedButton.icon(
+                          icon: Icon(Icons.access_time, size: 18),
+                          label: Text('ಪ್ರಸ್ತುತ', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 13)),
                           onPressed: () {
                             final now = DateTime.now();
                             setState(() {
@@ -357,20 +464,21 @@ class _PrashnaInputScreenState extends State<PrashnaInputScreen> {
                             backgroundColor: kTeal,
                             padding: const EdgeInsets.symmetric(vertical: 14),
                           ),
-                          child: Text('ಪ್ರಸ್ತುತ', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 13)),
                         ),
                       ),
                       const SizedBox(width: 8),
+                      // Calculate button
                       Expanded(
-                        child: ElevatedButton(
+                        child: ElevatedButton.icon(
+                          icon: Icon(Icons.calculate, size: 18),
+                          label: _loading
+                              ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                              : Text('ಲೆಕ್ಕ ಹಾಕಿ', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 13)),
                           onPressed: _loading ? null : _calculate,
                           style: ElevatedButton.styleFrom(
                             backgroundColor: kOrange,
                             padding: const EdgeInsets.symmetric(vertical: 14),
                           ),
-                          child: _loading
-                              ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-                              : Text('ಲೆಕ್ಕ ಹಾಕಿ', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 13)),
                         ),
                       ),
                     ]),
