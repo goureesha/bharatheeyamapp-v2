@@ -739,13 +739,13 @@ class _PrashnaDashboardScreenState extends State<PrashnaDashboardScreen>
     // Determine the lagna rashi index based on selection
     int lagnaRashiIdx;
     if (_bhavaLagnaMode == 'ಲಗ್ನ') {
-      // Main lagna from ascendant
-      final ascLon = r.bhavas.isNotEmpty ? r.bhavas[0] : 0.0;
+      // Main lagna — use accurate ascendant from planets map
+      final ascLon = r.planets['ಲಗ್ನ']?.longitude ?? (r.bhavas.isNotEmpty ? r.bhavas[0] : 0.0);
       lagnaRashiIdx = (ascLon / 30).floor() % 12;
     } else if (planetNames.contains(_bhavaLagnaMode)) {
-      // Planet lagna: use that planet's rashi
-      final pInfo = r.planets[_bhavaLagnaMode];
-      lagnaRashiIdx = pInfo != null ? (pInfo.longitude / 30).floor() % 12 : 0;
+      // Planet lagna — use that planet's accurate longitude
+      final pLon = r.planets[_bhavaLagnaMode]?.longitude ?? 0.0;
+      lagnaRashiIdx = (pLon / 30).floor() % 12;
     } else {
       // Rashi lagna: direct rashi index
       lagnaRashiIdx = knRashi.indexOf(_bhavaLagnaMode);
