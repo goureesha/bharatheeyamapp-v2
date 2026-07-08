@@ -6,6 +6,7 @@ import '../constants/strings.dart';
 import '../widgets/common.dart';
 import '../widgets/prashna_chart.dart';
 import '../widgets/planet_detail_sheet.dart';
+import '../widgets/dasha_widget.dart';
 
 class PrashnaDashboardScreen extends StatefulWidget {
   final KundaliResult result;
@@ -50,7 +51,7 @@ class _PrashnaDashboardScreenState extends State<PrashnaDashboardScreen>
 
 
 
-  static const _tabs = ['ಕುಂಡಲಿ', 'ಸ್ಫುಟ', 'ಪಂಚಾಂಗ', 'ಷಡ್ವರ್ಗ'];
+  static const _tabs = ['ಕುಂಡಲಿ', 'ಸ್ಫುಟ', 'ಪಂಚಾಂಗ', 'ಷಡ್ವರ್ಗ', 'ದಶಾ'];
 
   @override
   void initState() {
@@ -226,6 +227,7 @@ class _PrashnaDashboardScreenState extends State<PrashnaDashboardScreen>
                 _buildSphutas(),
                 _buildPanchangTab(),
                 _buildShadvargaTab(),
+                _buildDashaTab(),
               ],
             ),
           ),
@@ -627,6 +629,101 @@ class _PrashnaDashboardScreenState extends State<PrashnaDashboardScreen>
             ),
           ),
           const SizedBox(height: 24),
+        ],
+      ),
+    );
+  }
+
+  // ═══════════════════════════════════════════
+  // TAB 5: DASHA
+  // ═══════════════════════════════════════════
+  Widget _buildDashaTab() {
+    final r = _result;
+    final pan = r.panchang;
+    final now = DateTime.now();
+
+    // Find current running Mahadasha, Bhukti, Pratyantara
+    String currentMD = '', mdEnd = '';
+    String currentAD = '', adEnd = '';
+    String currentPD = '', pdEnd = '';
+    for (final md in r.dashas) {
+      if (now.isAfter(md.start) && now.isBefore(md.end)) {
+        currentMD = md.lord;
+        mdEnd = '${md.end.day.toString().padLeft(2, "0")}-${md.end.month.toString().padLeft(2, "0")}-${md.end.year}';
+        for (final ad in md.antardashas) {
+          if (now.isAfter(ad.start) && now.isBefore(ad.end)) {
+            currentAD = ad.lord;
+            adEnd = '${ad.end.day.toString().padLeft(2, "0")}-${ad.end.month.toString().padLeft(2, "0")}-${ad.end.year}';
+            for (final pd in ad.antardashas) {
+              if (now.isAfter(pd.start) && now.isBefore(pd.end)) {
+                currentPD = pd.lord;
+                pdEnd = '${pd.end.day.toString().padLeft(2, "0")}-${pd.end.month.toString().padLeft(2, "0")}-${pd.end.year}';
+                break;
+              }
+            }
+            break;
+          }
+        }
+        break;
+      }
+    }
+
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(8),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Dasha balance info
+          AppCard(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(children: [
+                  Icon(Icons.auto_awesome, color: kOrange, size: 18),
+                  const SizedBox(width: 6),
+                  Text('ದಶಾ ಶೇಷ', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w900, color: kOrange)),
+                ]),
+                const SizedBox(height: 8),
+                _dashaInfoRow('ಜನನ ದಶಾ ನಾಥ', pan.dashaLord),
+                _dashaInfoRow('ದಶಾ ಶೇಷ', pan.dashaBalance),
+                if (currentMD.isNotEmpty) ...[
+                  const Divider(height: 16),
+                  Row(children: [
+                    Icon(Icons.timeline, color: kPurple2, size: 18),
+                    const SizedBox(width: 6),
+                    Text('ಪ್ರಸ್ತುತ ದಶಾ', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w900, color: kPurple2)),
+                  ]),
+                  const SizedBox(height: 8),
+                  _dashaInfoRow('ಮಹಾದಶಾ', '$currentMD  →  $mdEnd'),
+                  if (currentAD.isNotEmpty)
+                    _dashaInfoRow('ಅಂತರ್ದಶಾ', '$currentAD  →  $adEnd'),
+                  if (currentPD.isNotEmpty)
+                    _dashaInfoRow('ಪ್ರತ್ಯಂತರ', '$currentPD  →  $pdEnd'),
+                ],
+              ],
+            ),
+          ),
+          const SizedBox(height: 8),
+          // Full Dasha widget (expandable tree)
+          DashaWidget(dashas: r.dashas),
+        ],
+      ),
+    );
+  }
+
+  Widget _dashaInfoRow(String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 4),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(
+            width: 120,
+            child: Text(label, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: kMuted)),
+          ),
+          Expanded(
+            child: Text(value, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: kText)),
+          ),
         ],
       ),
     );
