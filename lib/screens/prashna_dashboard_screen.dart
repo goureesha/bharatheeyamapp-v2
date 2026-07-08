@@ -46,6 +46,7 @@ class _PrashnaDashboardScreenState extends State<PrashnaDashboardScreen>
   late String _ampm;
   bool _recalculating = false;
   int _selectedBook = 0; // 0 = Brihat Jataka, 1 = Saravali
+  String? _selectedGraha; // null = show all planets
 
 
 
@@ -682,8 +683,20 @@ class _PrashnaDashboardScreenState extends State<PrashnaDashboardScreen>
                 }),
               ),
             ),
+            // ── Planet Selector ──
+            Padding(
+              padding: const EdgeInsets.only(bottom: 10),
+              child: Wrap(
+                spacing: 6,
+                runSpacing: 6,
+                children: [
+                  _grahaChip(null, 'ಎಲ್ಲಾ', kTeal),
+                  ...phalas.map((gp) => _grahaChip(gp.planet, gp.planet, planetColors[gp.planet] ?? kTeal)),
+                ],
+              ),
+            ),
             // ── Planet Phalas ──
-            ...phalas.map((gp) {
+            ...phalas.where((gp) => _selectedGraha == null || gp.planet == _selectedGraha).map((gp) {
               final pColor = planetColors[gp.planet] ?? kTeal;
               final rashiPhalaText = _selectedBook == 0 ? gp.rashiShloka : gp.saravaliRashiPhala;
               final shlokaText = _selectedBook == 0 ? '' : '';
@@ -726,6 +739,25 @@ class _PrashnaDashboardScreenState extends State<PrashnaDashboardScreen>
         ),
       ),
     ];
+  }
+
+  Widget _grahaChip(String? value, String label, Color color) {
+    final sel = _selectedGraha == value;
+    return GestureDetector(
+      onTap: () => setState(() => _selectedGraha = value),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+        decoration: BoxDecoration(
+          color: sel ? color : color.withOpacity(0.08),
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: sel ? color : color.withOpacity(0.3)),
+        ),
+        child: Text(label, style: TextStyle(
+          fontSize: 11, fontWeight: FontWeight.w800,
+          color: sel ? Colors.white : color,
+        )),
+      ),
+    );
   }
 
   Widget _phalaRow(String label, String rashi, String phala, Color accent) {
