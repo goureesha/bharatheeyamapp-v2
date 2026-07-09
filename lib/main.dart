@@ -340,6 +340,22 @@ class _MasterLockScreenState extends State<_MasterLockScreen> {
   String _entered = '';
   bool _error = false;
   bool _unlocked = false;
+  bool _checking = true; // checking if already unlocked
+
+  @override
+  void initState() {
+    super.initState();
+    _checkPrevUnlock();
+  }
+
+  Future<void> _checkPrevUnlock() async {
+    final prefs = await SharedPreferences.getInstance();
+    if (prefs.getBool('master_unlocked') == true) {
+      if (mounted) setState(() { _unlocked = true; _checking = false; });
+    } else {
+      if (mounted) setState(() => _checking = false);
+    }
+  }
 
   void _onDigit(String d) {
     if (_entered.length >= 10) return;
@@ -357,10 +373,12 @@ class _MasterLockScreenState extends State<_MasterLockScreen> {
     });
   }
 
-  void _onSubmit() {
+  void _onSubmit() async {
     final hash = sha256.convert(utf8.encode(_entered)).toString();
     if (hash == _masterHash) {
-      setState(() => _unlocked = true);
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setBool('master_unlocked', true);
+      if (mounted) setState(() => _unlocked = true);
     } else {
       setState(() {
         _error = true;
@@ -371,6 +389,9 @@ class _MasterLockScreenState extends State<_MasterLockScreen> {
 
   @override
   Widget build(BuildContext context) {
+    if (_checking) {
+      return Scaffold(backgroundColor: kBg, body: Center(child: CircularProgressIndicator(color: kPurple2)));
+    }
     if (_unlocked) {
       return GoogleAuthService.isSignedIn
           ? const _AuthGate()
