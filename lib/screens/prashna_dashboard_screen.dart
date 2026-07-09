@@ -53,6 +53,8 @@ class _PrashnaDashboardScreenState extends State<PrashnaDashboardScreen>
   int _selectedBook = 0; // 0 = Brihat Jataka, 1 = Saravali
   String? _selectedGraha; // null = show all planets
   String _bhavaLagnaMode = 'ಲಗ್ನ'; // lagna selector for bhava phala
+  bool _yogaNavamsha = false;
+  bool _yogaDvadashamsha = false;
 
 
 
@@ -980,7 +982,7 @@ class _PrashnaDashboardScreenState extends State<PrashnaDashboardScreen>
   // YOGA SECTION
   // ═══════════════════════════════════════════
   List<Widget> _buildYogaSection(KundaliResult r) {
-    final yogas = YogaPhala.evaluate(r);
+    final yogas = YogaPhala.evaluate(r, navamsha: _yogaNavamsha, dvadashamsha: _yogaDvadashamsha);
     if (yogas.isEmpty) return [];
 
     return [
@@ -993,29 +995,74 @@ class _PrashnaDashboardScreenState extends State<PrashnaDashboardScreen>
           initiallyExpanded: false,
           title: Text('ಯೋಗ', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w900, color: kText)),
           subtitle: Text('ಬೃಹಜ್ಜಾತಕ • ${yogas.length} ಯೋಗಗಳು', style: TextStyle(fontSize: 10, color: kMuted)),
-          children: yogas.map((y) {
-            return Container(
-              margin: const EdgeInsets.only(bottom: 6),
-              padding: const EdgeInsets.all(10),
-              decoration: BoxDecoration(
-                color: kOrange.withOpacity(0.04),
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: kOrange.withOpacity(0.15)),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // ── Toggle buttons ──
+            Padding(
+              padding: const EdgeInsets.only(bottom: 10),
+              child: Row(
                 children: [
-                  Text(y.name, style: TextStyle(fontSize: 13, fontWeight: FontWeight.w900, color: kOrange)),
-                  const SizedBox(height: 6),
-                  Text(y.shloka,
-                      style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: kText, height: 1.6)),
+                  _yogaChip('ನವಾಂಶ (D9)', _yogaNavamsha, (v) => setState(() => _yogaNavamsha = v)),
+                  const SizedBox(width: 8),
+                  _yogaChip('ದ್ವಾದಶಾಂಶ (D12)', _yogaDvadashamsha, (v) => setState(() => _yogaDvadashamsha = v)),
                 ],
               ),
-            );
-          }).toList(),
+            ),
+            // ── Yoga cards ──
+            ...yogas.map((y) {
+              final isDiv = y.chart != 'ರಾಶಿ';
+              return Container(
+                margin: const EdgeInsets.only(bottom: 6),
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: isDiv ? Colors.deepPurple.withOpacity(0.04) : kOrange.withOpacity(0.04),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: isDiv ? Colors.deepPurple.withOpacity(0.2) : kOrange.withOpacity(0.15)),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(y.name, style: TextStyle(fontSize: 13, fontWeight: FontWeight.w900, color: isDiv ? Colors.deepPurple : kOrange)),
+                        ),
+                        if (isDiv)
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: Colors.deepPurple.withOpacity(0.12),
+                              borderRadius: BorderRadius.circular(4),
+                            ),
+                            child: Text(y.chart, style: TextStyle(fontSize: 9, fontWeight: FontWeight.w700, color: Colors.deepPurple)),
+                          ),
+                      ],
+                    ),
+                    const SizedBox(height: 6),
+                    Text(y.shloka,
+                        style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: kText, height: 1.6)),
+                  ],
+                ),
+              );
+            }),
+          ],
         ),
       ),
     ];
+  }
+
+  Widget _yogaChip(String label, bool selected, ValueChanged<bool> onChanged) {
+    return GestureDetector(
+      onTap: () => onChanged(!selected),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+        decoration: BoxDecoration(
+          color: selected ? kOrange.withOpacity(0.15) : Colors.transparent,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: selected ? kOrange : kMuted.withOpacity(0.3)),
+        ),
+        child: Text(label, style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: selected ? kOrange : kMuted)),
+      ),
+    );
   }
 
   // ═══════════════════════════════════════════

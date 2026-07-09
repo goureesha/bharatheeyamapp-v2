@@ -6,7 +6,8 @@ import '../constants/strings.dart';
 class YogaResult {
   final String name;
   final String shloka;
-  YogaResult({required this.name, required this.shloka});
+  final String chart; // 'ರಾಶಿ', 'ನವಾಂಶ', 'ದ್ವಾದಶಾಂಶ'
+  YogaResult({required this.name, required this.shloka, this.chart = 'ರಾಶಿ'});
 }
 
 class YogaPhala {
@@ -172,10 +173,31 @@ class YogaPhala {
     8: 'ತೊಡೆ', 9: 'ಮೊಣಕಾಲು', 10: 'ಕಾಲು (ಮೊಳ)', 11: 'ಪಾದ',
   };
 
+  /// Dvadashamsha rashi (D12, 0-indexed)
+  static int _dvadashamshaRashi(double lon) {
+    final sign = _rashiOf(lon);
+    final deg = lon % 30;
+    final part = (deg / 2.5).floor().clamp(0, 11);
+    return (sign + part) % 12;
+  }
+
+  /// Compute divisional chart house map
+  static Map<String, int> _divHouses(KundaliResult r, int Function(double) rashiCalc) {
+    final lagnaLon = r.planets['ಲಗ್ನ']?.longitude ?? (r.bhavas.isNotEmpty ? r.bhavas[0] : 0.0);
+    final lagnaDiv = rashiCalc(lagnaLon);
+    final houses = <String, int>{};
+    for (final e in r.planets.entries) {
+      if (e.key == 'ಲಗ್ನ' || e.key == 'ಮಾಂದಿ') continue;
+      final divR = rashiCalc(e.value.longitude);
+      houses[e.key] = ((divR - lagnaDiv + 12) % 12) + 1;
+    }
+    return houses;
+  }
+
   // ═══════════════════════════════════════════
   // MAIN EVALUATOR
   // ═══════════════════════════════════════════
-  static List<YogaResult> evaluate(KundaliResult r) {
+  static List<YogaResult> evaluate(KundaliResult r, {bool navamsha = false, bool dvadashamsha = false}) {
     final lagnaLon = r.planets['ಲಗ್ನ']?.longitude ?? (r.bhavas.isNotEmpty ? r.bhavas[0] : 0.0);
     final lagnaRashi = _rashiOf(lagnaLon);
 
@@ -188,7 +210,29 @@ class YogaPhala {
 
     final results = <YogaResult>[];
 
-    // Evaluate each yoga
+    // ── Rashi chart yogas ──
+    results.addAll(_evaluateAll(r, houses, lagnaRashi, lagnaLon, 'ರಾಶಿ'));
+
+    // ── Navamsha chart yogas ──
+    if (navamsha) {
+      final navH = _divHouses(r, _navamshaRashi);
+      final navLagnaR = _navamshaRashi(lagnaLon);
+      results.addAll(_evaluateHouseYogas(navH, navLagnaR, 'ನವಾಂಶ'));
+    }
+
+    // ── Dvadashamsha chart yogas ──
+    if (dvadashamsha) {
+      final dvH = _divHouses(r, _dvadashamshaRashi);
+      final dvLagnaR = _dvadashamshaRashi(lagnaLon);
+      results.addAll(_evaluateHouseYogas(dvH, dvLagnaR, 'ದ್ವಾದಶಾಂಶ'));
+    }
+
+    return results;
+  }
+
+  /// Run ALL yogas (rashi chart only — uses longitude data)
+  static List<YogaResult> _evaluateAll(KundaliResult r, Map<String, int> houses, int lagnaRashi, double lagnaLon, String chart) {
+    final results = <YogaResult>[];
     final y1 = _yoga1(houses);
     if (y1 != null) results.add(y1);
 
@@ -263,6 +307,42 @@ class YogaPhala {
     results.addAll(_jkl28(houses));
 
     return results;
+  }
+
+  /// Run HOUSE-BASED yogas only (for divisional charts — no longitude needed)
+  static List<YogaResult> _evaluateHouseYogas(Map<String, int> houses, int lagnaRashi, String chart) {
+    final results = <YogaResult>[];
+
+    // Nisheka yogas (house-based)
+    final y1 = _yoga1(houses);
+    if (y1 != null) results.add(y1);
+    final y2 = _yoga2(houses);
+    if (y2 != null) results.add(y2);
+    final y4 = _yoga4(houses);
+    if (y4 != null) results.add(y4);
+    final y5 = _yoga5(houses);
+    if (y5 != null) results.add(y5);
+    final y6 = _yoga6(houses);
+    if (y6 != null) results.add(y6);
+    final y7 = _yoga7(houses);
+    if (y7 != null) results.add(y7);
+    final y10 = _yoga10(houses);
+    if (y10 != null) results.add(y10);
+
+    // JKL yogas (house-based)
+    final j4 = _jkl4(houses, lagnaRashi);
+    if (j4 != null) results.add(j4);
+    results.addAll(_jkl11(houses));
+    results.addAll(_jkl13(houses));
+    results.addAll(_jkl14(houses));
+    final j15 = _jkl15(houses);
+    if (j15 != null) results.add(j15);
+    final j17 = _jkl17(houses);
+    if (j17 != null) results.add(j17);
+    results.addAll(_jkl28(houses));
+
+    // Tag all results with chart name
+    return results.map((y) => YogaResult(name: y.name, shloka: y.shloka, chart: chart)).toList();
   }
 
   // ═══════════════════════════════════════════
