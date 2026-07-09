@@ -178,8 +178,7 @@ class YogaPhala {
     final y10 = _yoga10(houses);
     if (y10 != null) results.add(y10);
 
-    final y11 = _yoga11(r, houses);
-    if (y11 != null) results.add(y11);
+    results.addAll(_yoga11(r, houses));
 
     final y17 = _yoga17(r, houses);
     if (y17 != null) results.add(y17);
@@ -405,21 +404,23 @@ class YogaPhala {
   }
 
   // ═══════════════════════════════════════════
-  // YOGA 11: Shubha in 5,9,2,4,10 AND papa in 3,11
-  //          with Surya/Guru drishti
+  // YOGA 11: Three SEPARATE conditions (not combined)
+  //   11a: Shubha in 5,9,2,4,10 from lagna/Chandra + papa in 3,11
+  //   11b: Surya drishti on lagna
+  //   11c: Guru drishti on lagna
   // ═══════════════════════════════════════════
-  static YogaResult? _yoga11(KundaliResult r, Map<String, int> houses) {
-    const shubhaHouses = [5, 9, 2, 4, 10];
-    const papaHouses = [3, 11];
+  static List<YogaResult> _yoga11(KundaliResult r, Map<String, int> houses) {
+    final results = <YogaResult>[];
+    const shloka = 'ಶಶಾಂಕಲಗೋಪಗತೈ: ಶುಭಗ್ರಹೈಸ್ತಿಕೋಣಚಾಯಾರ್ಥಸುಖಾಸ್ಪದಸ್ಥಿತೈಃ ।\nತೃತೀಯಲಾಭರ್ಕ್ಷಗತೈರಶೋಭನೈ: ಸುಖೀ ಚ ಗರ್ಭೋ ರವಿಣಾಭಿವೀಕ್ಷಿತಃ';
 
-    // Check from lagna
+    // ── Condition 11a: shubha in 5,9,2,4,10 AND papa in 3,11 ──
     bool shubhaOk = false;
     bool papaOk = false;
 
-    for (final h in shubhaHouses) {
+    for (final h in [5, 9, 2, 4, 10]) {
       if (_anyShubhaInHouse(houses, h)) { shubhaOk = true; break; }
     }
-    for (final h in papaHouses) {
+    for (final h in [3, 11]) {
       if (_anyPapaInHouse(houses, h)) { papaOk = true; break; }
     }
 
@@ -436,20 +437,32 @@ class YogaPhala {
       }
     }
 
-    // Need Surya or Guru drishti on lagna
-    final surya = _planetAspectsHouse('ರವಿ', houses, 1) || houses['ರವಿ'] == 1;
-    final guru = _planetAspectsHouse('ಗುರು', houses, 1) || houses['ಗುರು'] == 1;
+    if (shubhaOk && papaOk) {
+      results.add(YogaResult(
+        name: 'ಗರ್ಭ ಸುಖ ಯೋಗ',
+        shloka: shloka,
+      ));
+    }
 
-    if (!(shubhaOk && papaOk && (surya || guru))) return null;
+    // ── Condition 11b: Surya drishti on lagna ──
+    final suryaSees = _planetAspectsHouse('ರವಿ', houses, 1) || houses['ರವಿ'] == 1;
+    if (suryaSees) {
+      results.add(YogaResult(
+        name: 'ಗರ್ಭ ಸುಖ ಯೋಗ (ಸೂರ್ಯ ದೃಷ್ಟಿ)',
+        shloka: '$shloka\nಸೂರ್ಯನ ದೃಷ್ಟಿಯಿದ್ದರೆ ಗರ್ಭವು ಸುಖಕರವಾಗಿರುತ್ತದೆ',
+      ));
+    }
 
-    String extra = '';
-    if (surya) extra += '\nಸೂರ್ಯನ ದೃಷ್ಟಿಯಿದ್ದರೆ ಗರ್ಭವು ಸುಖಕರವಾಗಿರುತ್ತದೆ';
-    if (guru) extra += '\nಗುರುವಿನ ದೃಷ್ಟಿಯಿದ್ದರೆ ಗರ್ಭವು ಸುಖಕರವಾಗಿರುತ್ತದೆ';
+    // ── Condition 11c: Guru drishti on lagna ──
+    final guruSees = _planetAspectsHouse('ಗುರು', houses, 1) || houses['ಗುರು'] == 1;
+    if (guruSees) {
+      results.add(YogaResult(
+        name: 'ಗರ್ಭ ಸುಖ ಯೋಗ (ಗುರು ದೃಷ್ಟಿ)',
+        shloka: '$shloka\nಗುರುವಿನ ದೃಷ್ಟಿಯಿದ್ದರೆ ಗರ್ಭವು ಸುಖಕರವಾಗಿರುತ್ತದೆ',
+      ));
+    }
 
-    return YogaResult(
-      name: 'ಗರ್ಭ ಸುಖ ಯೋಗ',
-      shloka: 'ಶಶಾಂಕಲಗೋಪಗತೈ: ಶುಭಗ್ರಹೈಸ್ತಿಕೋಣಚಾಯಾರ್ಥಸುಖಾಸ್ಪದಸ್ಥಿತೈಃ ।\nತೃತೀಯಲಾಭರ್ಕ್ಷಗತೈರಶೋಭನೈ: ಸುಖೀ ಚ ಗರ್ಭೋ ರವಿಣಾಭಿವೀಕ್ಷಿತಃ$extra',
-    );
+    return results;
   }
 
   // ═══════════════════════════════════════════
