@@ -954,8 +954,15 @@ class _PrashnaDashboardScreenState extends State<PrashnaDashboardScreen>
                       ),
                     ]),
                     const SizedBox(height: 8),
+                    // Chamatkara Chintamani shloka
                     Text(shloka,
                         style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: kText, height: 1.6)),
+                    // Common bhava phala shlokas
+                    ...BhavaPhala.getCommonPhala(bhava).map((cs) => Padding(
+                      padding: const EdgeInsets.only(top: 8),
+                      child: Text(cs,
+                          style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500, color: kMuted, height: 1.5)),
+                    )),
                   ],
                 ),
               );
