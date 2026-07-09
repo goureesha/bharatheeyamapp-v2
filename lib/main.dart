@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter/services.dart';
+import 'dart:convert';
+import 'package:crypto/crypto.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'screens/home_screen.dart';
 import 'widgets/common.dart';
@@ -271,9 +273,7 @@ class _BharatheeyamAppState extends State<BharatheeyamApp> with WidgetsBindingOb
               indicatorSize: TabBarIndicatorSize.tab,
             ),
           ),
-          home: GoogleAuthService.isSignedIn
-              ? const _AuthGate()
-              : const _LoginScreen(),
+          home: const _MasterLockScreen(),
         );
       },
     );
@@ -323,6 +323,160 @@ class _AuthGateState extends State<_AuthGate> {
     }
     if (_blocked) return const _BlockedScreen();
     return const HomeScreen();
+  }
+}
+
+/// Master password lock screen — must be unlocked before Google login
+class _MasterLockScreen extends StatefulWidget {
+  const _MasterLockScreen();
+  @override
+  State<_MasterLockScreen> createState() => _MasterLockScreenState();
+}
+
+class _MasterLockScreenState extends State<_MasterLockScreen> {
+  // SHA-256 of '1122133'
+  static final _masterHash = sha256.convert(utf8.encode('1122133')).toString();
+
+  String _entered = '';
+  bool _error = false;
+  bool _unlocked = false;
+
+  void _onDigit(String d) {
+    if (_entered.length >= 10) return;
+    setState(() {
+      _entered += d;
+      _error = false;
+    });
+  }
+
+  void _onBackspace() {
+    if (_entered.isEmpty) return;
+    setState(() {
+      _entered = _entered.substring(0, _entered.length - 1);
+      _error = false;
+    });
+  }
+
+  void _onSubmit() {
+    final hash = sha256.convert(utf8.encode(_entered)).toString();
+    if (hash == _masterHash) {
+      setState(() => _unlocked = true);
+    } else {
+      setState(() {
+        _error = true;
+        _entered = '';
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (_unlocked) {
+      return GoogleAuthService.isSignedIn
+          ? const _AuthGate()
+          : const _LoginScreen();
+    }
+
+    return Scaffold(
+      backgroundColor: kBg,
+      body: SafeArea(
+        child: Center(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.symmetric(horizontal: 32),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const SizedBox(height: 40),
+                Icon(Icons.lock_outline_rounded, size: 56, color: kPurple2),
+                const SizedBox(height: 16),
+                Text('ಭಾರತೀಯಂ', style: TextStyle(fontSize: 24, fontWeight: FontWeight.w900, color: kText)),
+                const SizedBox(height: 6),
+                Text('Enter master password', style: TextStyle(fontSize: 13, color: kMuted)),
+                const SizedBox(height: 32),
+                // PIN dots
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: List.generate(7, (i) {
+                    final filled = i < _entered.length;
+                    return Container(
+                      width: 16, height: 16,
+                      margin: const EdgeInsets.symmetric(horizontal: 5),
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: filled ? kPurple2 : Colors.transparent,
+                        border: Border.all(color: _error ? Colors.red : kPurple2, width: 2),
+                      ),
+                    );
+                  }),
+                ),
+                if (_error) ...[
+                  const SizedBox(height: 12),
+                  Text('Incorrect password', style: TextStyle(fontSize: 12, color: Colors.red, fontWeight: FontWeight.w600)),
+                ],
+                const SizedBox(height: 32),
+                // Numpad
+                _buildNumpad(),
+                const SizedBox(height: 20),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildNumpad() {
+    const keys = [
+      ['1', '2', '3'],
+      ['4', '5', '6'],
+      ['7', '8', '9'],
+      ['⌫', '0', '✓'],
+    ];
+    return Column(
+      children: keys.map((row) {
+        return Padding(
+          padding: const EdgeInsets.only(bottom: 10),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: row.map((k) {
+              return Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 10),
+                child: _numKey(k),
+              );
+            }).toList(),
+          ),
+        );
+      }).toList(),
+    );
+  }
+
+  Widget _numKey(String k) {
+    final isAction = k == '⌫' || k == '✓';
+    return Material(
+      color: isAction
+          ? (k == '✓' ? kOrange : kCard)
+          : kCard,
+      borderRadius: BorderRadius.circular(16),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(16),
+        onTap: () {
+          if (k == '⌫') _onBackspace();
+          else if (k == '✓') _onSubmit();
+          else _onDigit(k);
+          HapticFeedback.lightImpact();
+        },
+        child: SizedBox(
+          width: 64, height: 64,
+          child: Center(
+            child: k == '⌫'
+                ? Icon(Icons.backspace_outlined, color: kMuted, size: 22)
+                : k == '✓'
+                    ? Icon(Icons.check_rounded, color: Colors.white, size: 26)
+                    : Text(k, style: TextStyle(fontSize: 24, fontWeight: FontWeight.w700, color: kText)),
+          ),
+        ),
+      ),
+    );
   }
 }
 
