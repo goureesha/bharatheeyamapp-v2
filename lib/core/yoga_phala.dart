@@ -935,7 +935,7 @@ class YogaPhala {
       // 12th from Chandra also has Shani?
       final from_moon_12 = ((hC - 1 + 11) % 12) + 1;
       if (hShani == 12 || hShani == from_moon_12) {
-        if (_anyPapaAspects(houses, hShani)) {
+        if (_anyPapaAspects(houses, hShani!)) {
           return YogaResult(name: 'ಗುಪ್ತ ಸ್ಥಳ ಜನನ ಯೋಗ', shloka: '$shloka\nಶನಿ ೧೨ರಲ್ಲಿ + ಪಾಪ ದೃಷ್ಟಿ — ಗುಪ್ತ ಪ್ರದೇಶದಲ್ಲಿ ಜನನ');
         }
       }
