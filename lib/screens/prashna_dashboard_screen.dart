@@ -992,7 +992,7 @@ class _PrashnaDashboardScreenState extends State<PrashnaDashboardScreen>
           childrenPadding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
           initiallyExpanded: false,
           title: Text('ಯೋಗ', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w900, color: kText)),
-          subtitle: Text('ಬೃಹಜ್ಜಾತಕ — ಜನ್ಮ ಲಕ್ಷಣಾಧ್ಯಾಯ • ${yogas.length} ಯೋಗಗಳು', style: TextStyle(fontSize: 10, color: kMuted)),
+          subtitle: Text('ಬೃಹಜ್ಜಾತಕ — ನಿಷೇಕಾಧ್ಯಾಯ • ${yogas.length} ಯೋಗಗಳು', style: TextStyle(fontSize: 10, color: kMuted)),
           children: yogas.map((y) {
             return Container(
               margin: const EdgeInsets.only(bottom: 6),
