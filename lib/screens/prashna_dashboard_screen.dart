@@ -3,6 +3,7 @@ import '../core/calculator.dart';
 
 import '../core/graha_phala.dart';
 import '../core/bhava_phala.dart';
+import '../core/yoga_phala.dart';
 import '../constants/strings.dart';
 import '../widgets/common.dart';
 import '../widgets/prashna_chart.dart';
@@ -372,6 +373,7 @@ class _PrashnaDashboardScreenState extends State<PrashnaDashboardScreen>
                 ..._buildGrahaPhalas(_result),
                 ..._buildBhavaPhalas(_result),
                 ..._buildChandraRashiPhala(_result),
+                ..._buildYogaSection(_result),
               ],
             ),
           ),
@@ -969,6 +971,48 @@ class _PrashnaDashboardScreenState extends State<PrashnaDashboardScreen>
               );
             }),
           ],
+        ),
+      ),
+    ];
+  }
+
+  // ═══════════════════════════════════════════
+  // YOGA SECTION
+  // ═══════════════════════════════════════════
+  List<Widget> _buildYogaSection(KundaliResult r) {
+    final yogas = YogaPhala.evaluate(r);
+    if (yogas.isEmpty) return [];
+
+    return [
+      const SizedBox(height: 8),
+      AppCard(
+        padding: EdgeInsets.zero,
+        child: ExpansionTile(
+          tilePadding: const EdgeInsets.symmetric(horizontal: 12),
+          childrenPadding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
+          initiallyExpanded: false,
+          title: Text('ಯೋಗ', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w900, color: kText)),
+          subtitle: Text('${yogas.length} ಯೋಗಗಳು ಕಂಡುಬಂದಿವೆ', style: TextStyle(fontSize: 10, color: kMuted)),
+          children: yogas.map((y) {
+            return Container(
+              margin: const EdgeInsets.only(bottom: 6),
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: kOrange.withOpacity(0.04),
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: kOrange.withOpacity(0.15)),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(y.name, style: TextStyle(fontSize: 13, fontWeight: FontWeight.w900, color: kOrange)),
+                  const SizedBox(height: 6),
+                  Text(y.shloka,
+                      style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: kText, height: 1.6)),
+                ],
+              ),
+            );
+          }).toList(),
         ),
       ),
     ];
