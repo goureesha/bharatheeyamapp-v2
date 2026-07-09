@@ -371,6 +371,7 @@ class _PrashnaDashboardScreenState extends State<PrashnaDashboardScreen>
               children: [
                 ..._buildGrahaPhalas(_result),
                 ..._buildBhavaPhalas(_result),
+                ..._buildChandraRashiPhala(_result),
               ],
             ),
           ),
@@ -967,6 +968,63 @@ class _PrashnaDashboardScreenState extends State<PrashnaDashboardScreen>
                 ),
               );
             }),
+          ],
+        ),
+      ),
+    ];
+  }
+
+  // ═══════════════════════════════════════════
+  // CHANDRA RASHI PHALA
+  // ═══════════════════════════════════════════
+  List<Widget> _buildChandraRashiPhala(KundaliResult r) {
+    final moonInfo = r.planets['ಚಂದ್ರ'];
+    if (moonInfo == null) return [];
+    final moonRashiIdx = (moonInfo.longitude / 30).floor() % 12;
+    final moonRashi = knRashi[moonRashiIdx];
+    final shloka = BhavaPhala.getChandraRashiPhala(moonRashi);
+    if (shloka.isEmpty) return [];
+
+    return [
+      const SizedBox(height: 8),
+      AppCard(
+        padding: EdgeInsets.zero,
+        child: ExpansionTile(
+          tilePadding: const EdgeInsets.symmetric(horizontal: 12),
+          childrenPadding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
+          initiallyExpanded: false,
+          title: Text('ಚಂದ್ರ ರಾಶಿ ಫಲ', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w900, color: kText)),
+          subtitle: Text('ಚಂದ್ರ ರಾಶಿ: $moonRashi', style: TextStyle(fontSize: 10, color: kMuted)),
+          children: [
+            Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: const Color(0xFF90CAF9).withOpacity(0.06),
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: const Color(0xFF90CAF9).withOpacity(0.2)),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(children: [
+                    Text('ಚಂದ್ರ', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w900, color: const Color(0xFF90CAF9))),
+                    const Spacer(),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF90CAF9).withOpacity(0.12),
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      child: Text(moonRashi,
+                          style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: const Color(0xFF1565C0))),
+                    ),
+                  ]),
+                  const SizedBox(height: 8),
+                  Text(shloka,
+                      style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: kText, height: 1.6)),
+                ],
+              ),
+            ),
           ],
         ),
       ),
