@@ -1165,40 +1165,36 @@ class _PrashnaDashboardScreenState extends State<PrashnaDashboardScreen>
                         const SizedBox(height: 6),
                         Text(y.shloka,
                             style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: kText, height: 1.6)),
-                        // Yoga trigger explanation
-                        if (y.houses.isNotEmpty) ...[
-                          const SizedBox(height: 6),
-                          Builder(builder: (_) {
-                            final lagnaRashi = (r.planets['ಲಗ್ನ']?.longitude ?? 0) ~/ 30 % 12;
-                            const rNames = ['ಮೇಷ','ವೃಷಭ','ಮಿಥುನ','ಕರ್ಕ','ಸಿಂಹ','ಕನ್ಯಾ','ತುಲಾ','ವೃಶ್ಚಿಕ','ಧನು','ಮಕರ','ಕುಂಭ','ಮೀನ'];
-                            // Build explanation: "ಲಗ್ನ: ಮೇಷ | ರವಿ ಮೇಷದಲ್ಲಿ (1ನೇ), ಶನಿ ತುಲಾದಲ್ಲಿ (7ನೇ)"
-                            final planetParts = y.houses.entries.map((e) {
-                              final rashiIdx = (lagnaRashi + e.value - 1) % 12;
-                              return '${e.key} ${rNames[rashiIdx]}ದಲ್ಲಿ (${e.value}ನೇ ಮನೆ)';
-                            }).join(', ');
-                            final explanation = 'ಲಗ್ನ: ${rNames[lagnaRashi]} | $planetParts';
-                            return Container(
-                              width: double.infinity,
-                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-                              decoration: BoxDecoration(
-                                color: Colors.blue.withOpacity(0.04),
-                                borderRadius: BorderRadius.circular(6),
-                                border: Border.all(color: Colors.blue.withOpacity(0.15)),
-                              ),
-                              child: Row(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text('💡 ', style: TextStyle(fontSize: 11)),
-                                  Expanded(
-                                    child: Text(explanation,
-                                        style: TextStyle(fontSize: 10, fontWeight: FontWeight.w600,
-                                            color: kText.withOpacity(0.7), height: 1.5)),
-                                  ),
-                                ],
-                              ),
-                            );
-                          }),
-                        ],
+                        // All planet positions — grouped by house
+                        const SizedBox(height: 6),
+                        Builder(builder: (_) {
+                          final lagnaLon = r.planets['ಲಗ್ನ']?.longitude ?? 0;
+                          final lagnaRashi = (lagnaLon ~/ 30) % 12;
+                          const allPlanets = ['ರವಿ','ಚಂದ್ರ','ಕುಜ','ಬುಧ','ಗುರು','ಶುಕ್ರ','ಶನಿ','ರಾಹು','ಕೇತು'];
+                          // Compute house for each planet
+                          final byHouse = <int, List<String>>{};
+                          for (final pn in allPlanets) {
+                            final pInfo = r.planets[pn];
+                            if (pInfo == null) continue;
+                            final pRashi = (pInfo.longitude ~/ 30) % 12;
+                            final house = ((pRashi - lagnaRashi + 12) % 12) + 1;
+                            byHouse.putIfAbsent(house, () => []).add(pn);
+                          }
+                          final sorted = byHouse.keys.toList()..sort();
+                          final posText = sorted.map((h) => '$h:${byHouse[h]!.join(',')}').join('  ');
+                          return Container(
+                            width: double.infinity,
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
+                            decoration: BoxDecoration(
+                              color: kMuted.withOpacity(0.06),
+                              borderRadius: BorderRadius.circular(6),
+                              border: Border.all(color: kMuted.withOpacity(0.12)),
+                            ),
+                            child: Text(posText,
+                                style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700,
+                                    color: kMuted, fontFamily: 'monospace', letterSpacing: 0.5)),
+                          );
+                        }),
                       ],
                     ),
                   );
