@@ -359,6 +359,17 @@ class GrahaPhala {
   }
 
   /// Generate GrahaPhala for all 7 planets.
+  /// Uses AstroCalculator.getPlanetDetail as the single source of truth
+  /// for all divisional chart positions (D1, D9, D12, drekkana).
+
+  /// Extract drekkana number (1,2,3) from subDrek string like "ಮಿಥುನ 1ನೇ"
+  static int _extractDrekNumber(String s) {
+    if (s.contains('1')) return 1;
+    if (s.contains('2')) return 2;
+    if (s.contains('3')) return 3;
+    return 1;
+  }
+
   static List<GrahaPhala> generate(KundaliResult chart) {
     const planetMap = {
       'Sun': 'ರವಿ', 'Moon': 'ಚಂದ್ರ', 'Mars': 'ಕುಜ',
@@ -378,19 +389,21 @@ class GrahaPhala {
       if (info == null) continue;
 
       final lon = info.longitude;
-      final r = _rashiOf(lon);
-      final d9r = _d9Rashi(lon);
-      final d12r = _d12Rashi(lon);
-      final d3r = _d3Rashi(lon);
+      final sunLon = chart.planets['ರವಿ']?.longitude ?? 0;
+      final detail = AstroCalculator.getPlanetDetail(pKn, lon, info.speed, sunLon);
 
-      // Drekkana number (1,2,3) for D1, D9, D12
-      final d1Drek = DrekkanaPhala.drekkanaNumber(lon);
-      final d9Lon = (lon * 9) % 360;
-      final d9Drek = DrekkanaPhala.drekkanaNumber(d9Lon);
-      final d9DrekRashi = _rashiOf(d9Lon);
-      // D12 drekkana: expand D12 degree within rashi (each D12 part = 2.5°, expand to 0-30°)
-      final d12DegInRashi = ((lon % 30) % 2.5) / 2.5 * 30;
-      final d12Drek = d12DegInRashi < 10 ? 1 : (d12DegInRashi < 20 ? 2 : 3);
+      // Use calculator's divisional data (source of truth)
+      final r = _rashiNames.indexOf(detail['d1'] as String);
+      final d9r = _rashiNames.indexOf(detail['d9'] as String);
+      final d12r = _rashiNames.indexOf(detail['d12'] as String);
+      final d3Str = detail['subDrekD1'] as String;    // e.g., "ಮಿಥುನ 1ನೇ"
+      final d3D9Str = detail['subDrekD9'] as String;  // e.g., "ವೃಷಭ 2ನೇ"
+      final d3D12Str = detail['subDrekD12'] as String; // e.g., "ಮೀನ 3ನೇ"
+
+      // Extract drekkana number from subDrek strings for phala lookup
+      final d1Drek = _extractDrekNumber(d3Str);
+      final d9Drek = _extractDrekNumber(d3D9Str);
+      final d12Drek = _extractDrekNumber(d3D12Str);
 
       const shlokaMap = {
         'Sun': _sunShloka, 'Moon': _moonShloka, 'Mars': _marsShloka,
@@ -399,24 +412,24 @@ class GrahaPhala {
       };
       results.add(GrahaPhala(
         planet: pKn,
-        rashi: _rashiNames[r],
-        navamshaRashi: _rashiNames[d9r],
-        dvadamshaRashi: _rashiNames[d12r],
-        drekkanaRashi: '${_rashiNames[r]} ${d1Drek}ನೇ',
-        d9DrekkanaRashi: '${_rashiNames[d9DrekRashi]} ${d9Drek}ನೇ',
-        d12DrekkanaRashi: '${_rashiNames[d12r]} ${d12Drek}ನೇ',
-        rashiPhala: signPhalas[pEng]?[r] ?? '',
-        rashiShloka: shlokaMap[pEng]?[r] ?? '',
-        saravaliRashiPhala: SaravaliPhala.getPhala(pEng, r),
-        navamshaPhala: signPhalas[pEng]?[d9r] ?? '',
-        navamshaShloka: shlokaMap[pEng]?[d9r] ?? '',
-        saravaliNavamshaPhala: SaravaliPhala.getPhala(pEng, d9r),
-        dvadashamshaPhala: signPhalas[pEng]?[d12r] ?? '',
-        dvadamshaShloka: shlokaMap[pEng]?[d12r] ?? '',
-        saravaliDvadashamshaPhala: SaravaliPhala.getPhala(pEng, d12r),
-        drekkanaPhala: DrekkanaPhala.getPhala(r, d1Drek),
-        d9DrekkanaPhala: DrekkanaPhala.getPhala(d9DrekRashi, d9Drek),
-        d12DrekkanaPhala: DrekkanaPhala.getPhala(d12r, d12Drek),
+        rashi: _rashiNames[r < 0 ? 0 : r],
+        navamshaRashi: _rashiNames[d9r < 0 ? 0 : d9r],
+        dvadamshaRashi: _rashiNames[d12r < 0 ? 0 : d12r],
+        drekkanaRashi: d3Str,
+        d9DrekkanaRashi: d3D9Str,
+        d12DrekkanaRashi: d3D12Str,
+        rashiPhala: signPhalas[pEng]?[r < 0 ? 0 : r] ?? '',
+        rashiShloka: shlokaMap[pEng]?[r < 0 ? 0 : r] ?? '',
+        saravaliRashiPhala: SaravaliPhala.getPhala(pEng, r < 0 ? 0 : r),
+        navamshaPhala: signPhalas[pEng]?[d9r < 0 ? 0 : d9r] ?? '',
+        navamshaShloka: shlokaMap[pEng]?[d9r < 0 ? 0 : d9r] ?? '',
+        saravaliNavamshaPhala: SaravaliPhala.getPhala(pEng, d9r < 0 ? 0 : d9r),
+        dvadashamshaPhala: signPhalas[pEng]?[d12r < 0 ? 0 : d12r] ?? '',
+        dvadamshaShloka: shlokaMap[pEng]?[d12r < 0 ? 0 : d12r] ?? '',
+        saravaliDvadashamshaPhala: SaravaliPhala.getPhala(pEng, d12r < 0 ? 0 : d12r),
+        drekkanaPhala: DrekkanaPhala.getPhala(r < 0 ? 0 : r, d1Drek),
+        d9DrekkanaPhala: DrekkanaPhala.getPhala(d9r < 0 ? 0 : d9r, d9Drek),
+        d12DrekkanaPhala: DrekkanaPhala.getPhala(d12r < 0 ? 0 : d12r, d12Drek),
       ));
     }
     return results;
