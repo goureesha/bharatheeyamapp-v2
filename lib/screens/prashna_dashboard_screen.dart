@@ -53,8 +53,7 @@ class _PrashnaDashboardScreenState extends State<PrashnaDashboardScreen>
   int _selectedBook = 0; // 0 = Brihat Jataka, 1 = Saravali
   String? _selectedGraha; // null = show all planets
   String _bhavaLagnaMode = 'ಲಗ್ನ'; // lagna selector for bhava phala
-  bool _yogaNavamsha = false;
-  bool _yogaDvadashamsha = false;
+  int _yogaDivMode = 0; // 0=ರಾಶಿ, 1=D9, 2=D12, 3=D9+D12, 4=ರಾಶಿ∩ನವಾಂಶ
   int? _yogaRashiMode; // null = actual lagna, -1 = all rashis, 0-11 = specific rashi
 
 
@@ -985,18 +984,23 @@ class _PrashnaDashboardScreenState extends State<PrashnaDashboardScreen>
   List<Widget> _buildYogaSection(KundaliResult r) {
     const rashiNames = ['ಮೇಷ', 'ವೃಷಭ', 'ಮಿಥುನ', 'ಕರ್ಕ', 'ಸಿಂಹ', 'ಕನ್ಯಾ', 'ತುಲಾ', 'ವೃಶ್ಚಿಕ', 'ಧನು', 'ಮಕರ', 'ಕುಂಭ', 'ಮೀನ'];
 
+    // Divisional mode flags
+    final useNav = _yogaDivMode == 1 || _yogaDivMode == 3;
+    final useDva = _yogaDivMode == 2 || _yogaDivMode == 3;
+    final isIntersect = _yogaDivMode == 4; // ರಾಶಿ∩ನವಾಂಶ
+
     // Build yoga list(s) based on mode
     List<MapEntry<String, List<YogaResult>>> yogaGroups = [];
 
     if (_yogaRashiMode == -1) {
       // All 12 rashis
       for (int i = 0; i < 12; i++) {
-        final yList = YogaPhala.evaluate(r, navamsha: _yogaNavamsha, dvadashamsha: _yogaDvadashamsha, aroodhaRashi: i);
+        final yList = _evaluateWithMode(r, i, useNav, useDva, isIntersect);
         if (yList.isNotEmpty) yogaGroups.add(MapEntry(rashiNames[i], yList));
       }
     } else {
-      final yList = YogaPhala.evaluate(r, navamsha: _yogaNavamsha, dvadashamsha: _yogaDvadashamsha,
-          aroodhaRashi: (_yogaRashiMode != null && _yogaRashiMode! >= 0) ? _yogaRashiMode : null);
+      final aroodha = (_yogaRashiMode != null && _yogaRashiMode! >= 0) ? _yogaRashiMode : null;
+      final yList = _evaluateWithMode(r, aroodha, useNav, useDva, isIntersect);
       if (yList.isNotEmpty) yogaGroups.add(MapEntry('', yList));
     }
 
@@ -1026,18 +1030,22 @@ class _PrashnaDashboardScreenState extends State<PrashnaDashboardScreen>
                 ],
               ),
             ),
-            const SizedBox(height: 8),
-            // ── Toggle buttons ──
-            Padding(
-              padding: const EdgeInsets.only(bottom: 10),
-              child: Row(
+            const SizedBox(height: 6),
+            // ── Divisional chart mode ──
+            SizedBox(
+              height: 32,
+              child: ListView(
+                scrollDirection: Axis.horizontal,
                 children: [
-                  _yogaChip('ನವಾಂಶ (D9)', _yogaNavamsha, (v) => setState(() => _yogaNavamsha = v)),
-                  const SizedBox(width: 8),
-                  _yogaChip('ದ್ವಾದಶಾಂಶ (D12)', _yogaDvadashamsha, (v) => setState(() => _yogaDvadashamsha = v)),
+                  _yogaDivChip('ರಾಶಿ', 0),
+                  _yogaDivChip('D9', 1),
+                  _yogaDivChip('D12', 2),
+                  _yogaDivChip('D9+D12', 3),
+                  _yogaDivChip('ರಾಶಿ∩ನವಾಂಶ', 4),
                 ],
               ),
             ),
+            const SizedBox(height: 8),
             // ── Yoga cards ──
             if (totalCount == 0)
               Padding(
@@ -1121,19 +1129,37 @@ class _PrashnaDashboardScreenState extends State<PrashnaDashboardScreen>
     );
   }
 
-  Widget _yogaChip(String label, bool selected, ValueChanged<bool> onChanged) {
-    return GestureDetector(
-      onTap: () => onChanged(!selected),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-        decoration: BoxDecoration(
-          color: selected ? kOrange.withOpacity(0.15) : Colors.transparent,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: selected ? kOrange : kMuted.withOpacity(0.3)),
+  Widget _yogaDivChip(String label, int value) {
+    final selected = _yogaDivMode == value;
+    return Padding(
+      padding: const EdgeInsets.only(right: 6),
+      child: GestureDetector(
+        onTap: () => setState(() => _yogaDivMode = value),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+          decoration: BoxDecoration(
+            color: selected ? kOrange.withOpacity(0.15) : Colors.transparent,
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: selected ? kOrange : kMuted.withOpacity(0.3)),
+          ),
+          child: Text(label, style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: selected ? kOrange : kMuted)),
         ),
-        child: Text(label, style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: selected ? kOrange : kMuted)),
       ),
     );
+  }
+
+  /// Evaluate yogas with divisional mode logic
+  List<YogaResult> _evaluateWithMode(KundaliResult r, int? aroodha, bool useNav, bool useDva, bool isIntersect) {
+    if (isIntersect) {
+      // ರಾಶಿ∩ನವಾಂಶ: only yogas found in BOTH rashi and navamsha
+      final rashiYogas = YogaPhala.evaluate(r, aroodhaRashi: aroodha);
+      final navYogas = YogaPhala.evaluate(r, navamsha: true, aroodhaRashi: aroodha);
+      final navNames = navYogas.where((y) => y.chart == 'ನವಾಂಶ').map((y) => y.name).toSet();
+      final common = rashiYogas.where((y) => navNames.contains(y.name)).toList();
+      // Tag as intersection
+      return common.map((y) => YogaResult(name: y.name, shloka: y.shloka, chart: 'ರಾಶಿ∩ನವಾಂಶ')).toList();
+    }
+    return YogaPhala.evaluate(r, navamsha: useNav, dvadashamsha: useDva, aroodhaRashi: aroodha);
   }
 
   // ═══════════════════════════════════════════
