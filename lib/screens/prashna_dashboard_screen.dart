@@ -55,6 +55,7 @@ class _PrashnaDashboardScreenState extends State<PrashnaDashboardScreen>
   String _bhavaLagnaMode = 'ಲಗ್ನ'; // lagna selector for bhava phala
   bool _yogaNavamsha = false;
   bool _yogaDvadashamsha = false;
+  int? _yogaRashiMode; // null = actual lagna, -1 = all rashis, 0-11 = specific rashi
 
 
 
@@ -982,8 +983,25 @@ class _PrashnaDashboardScreenState extends State<PrashnaDashboardScreen>
   // YOGA SECTION
   // ═══════════════════════════════════════════
   List<Widget> _buildYogaSection(KundaliResult r) {
-    final yogas = YogaPhala.evaluate(r, navamsha: _yogaNavamsha, dvadashamsha: _yogaDvadashamsha);
-    if (yogas.isEmpty) return [];
+    const rashiNames = ['ಮೇಷ', 'ವೃಷಭ', 'ಮಿಥುನ', 'ಕರ್ಕ', 'ಸಿಂಹ', 'ಕನ್ಯಾ', 'ತುಲಾ', 'ವೃಶ್ಚಿಕ', 'ಧನು', 'ಮಕರ', 'ಕುಂಭ', 'ಮೀನ'];
+
+    // Build yoga list(s) based on mode
+    List<MapEntry<String, List<YogaResult>>> yogaGroups = [];
+
+    if (_yogaRashiMode == -1) {
+      // All 12 rashis
+      for (int i = 0; i < 12; i++) {
+        final yList = YogaPhala.evaluate(r, navamsha: _yogaNavamsha, dvadashamsha: _yogaDvadashamsha, aroodhaRashi: i);
+        if (yList.isNotEmpty) yogaGroups.add(MapEntry(rashiNames[i], yList));
+      }
+    } else {
+      final yList = YogaPhala.evaluate(r, navamsha: _yogaNavamsha, dvadashamsha: _yogaDvadashamsha,
+          aroodhaRashi: (_yogaRashiMode != null && _yogaRashiMode! >= 0) ? _yogaRashiMode : null);
+      if (yList.isNotEmpty) yogaGroups.add(MapEntry('', yList));
+    }
+
+    final totalCount = yogaGroups.fold<int>(0, (sum, g) => sum + g.value.length);
+    if (totalCount == 0 && _yogaRashiMode != -1) return [];
 
     return [
       const SizedBox(height: 8),
@@ -994,8 +1012,21 @@ class _PrashnaDashboardScreenState extends State<PrashnaDashboardScreen>
           childrenPadding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
           initiallyExpanded: false,
           title: Text('ಯೋಗ', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w900, color: kText)),
-          subtitle: Text('ಬೃಹಜ್ಜಾತಕ • ${yogas.length} ಯೋಗಗಳು', style: TextStyle(fontSize: 10, color: kMuted)),
+          subtitle: Text('ಬೃಹಜ್ಜಾತಕ • $totalCount ಯೋಗಗಳು', style: TextStyle(fontSize: 10, color: kMuted)),
           children: [
+            // ── Rashi selector ──
+            SizedBox(
+              height: 32,
+              child: ListView(
+                scrollDirection: Axis.horizontal,
+                children: [
+                  _yogaRashiChip('ಲಗ್ನ', null),
+                  _yogaRashiChip('ಎಲ್ಲಾ', -1),
+                  for (int i = 0; i < 12; i++) _yogaRashiChip(rashiNames[i], i),
+                ],
+              ),
+            ),
+            const SizedBox(height: 8),
             // ── Toggle buttons ──
             Padding(
               padding: const EdgeInsets.only(bottom: 10),
@@ -1008,46 +1039,86 @@ class _PrashnaDashboardScreenState extends State<PrashnaDashboardScreen>
               ),
             ),
             // ── Yoga cards ──
-            ...yogas.map((y) {
-              final isDiv = y.chart != 'ರಾಶಿ';
-              return Container(
-                margin: const EdgeInsets.only(bottom: 6),
-                padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(
-                  color: isDiv ? Colors.deepPurple.withOpacity(0.04) : kOrange.withOpacity(0.04),
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: isDiv ? Colors.deepPurple.withOpacity(0.2) : kOrange.withOpacity(0.15)),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
+            if (totalCount == 0)
+              Padding(
+                padding: const EdgeInsets.all(16),
+                child: Text('ಯಾವುದೇ ಯೋಗಗಳು ಕಂಡುಬಂದಿಲ್ಲ', style: TextStyle(fontSize: 12, color: kMuted)),
+              ),
+            ...yogaGroups.expand((group) {
+              final showHeader = group.key.isNotEmpty; // show rashi header in "all" mode
+              return [
+                if (showHeader)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 8, bottom: 4),
+                    child: Row(children: [
+                      Container(width: 4, height: 16, decoration: BoxDecoration(color: kPurple2, borderRadius: BorderRadius.circular(2))),
+                      const SizedBox(width: 6),
+                      Text(group.key, style: TextStyle(fontSize: 13, fontWeight: FontWeight.w800, color: kPurple2)),
+                      const SizedBox(width: 6),
+                      Text('(${group.value.length})', style: TextStyle(fontSize: 11, color: kMuted)),
+                    ]),
+                  ),
+                ...group.value.map((y) {
+                  final isDiv = y.chart != 'ರಾಶಿ';
+                  return Container(
+                    margin: const EdgeInsets.only(bottom: 6),
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: isDiv ? Colors.deepPurple.withOpacity(0.04) : kOrange.withOpacity(0.04),
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: isDiv ? Colors.deepPurple.withOpacity(0.2) : kOrange.withOpacity(0.15)),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Expanded(
-                          child: Text(y.name, style: TextStyle(fontSize: 13, fontWeight: FontWeight.w900, color: isDiv ? Colors.deepPurple : kOrange)),
-                        ),
-                        if (isDiv)
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                            decoration: BoxDecoration(
-                              color: Colors.deepPurple.withOpacity(0.12),
-                              borderRadius: BorderRadius.circular(4),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: Text(y.name, style: TextStyle(fontSize: 13, fontWeight: FontWeight.w900, color: isDiv ? Colors.deepPurple : kOrange)),
                             ),
-                            child: Text(y.chart, style: TextStyle(fontSize: 9, fontWeight: FontWeight.w700, color: Colors.deepPurple)),
-                          ),
+                            if (isDiv)
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                decoration: BoxDecoration(
+                                  color: Colors.deepPurple.withOpacity(0.12),
+                                  borderRadius: BorderRadius.circular(4),
+                                ),
+                                child: Text(y.chart, style: TextStyle(fontSize: 9, fontWeight: FontWeight.w700, color: Colors.deepPurple)),
+                              ),
+                          ],
+                        ),
+                        const SizedBox(height: 6),
+                        Text(y.shloka,
+                            style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: kText, height: 1.6)),
                       ],
                     ),
-                    const SizedBox(height: 6),
-                    Text(y.shloka,
-                        style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: kText, height: 1.6)),
-                  ],
-                ),
-              );
+                  );
+                }),
+              ];
             }),
           ],
         ),
       ),
     ];
+  }
+
+  Widget _yogaRashiChip(String label, int? value) {
+    final selected = _yogaRashiMode == value;
+    return Padding(
+      padding: const EdgeInsets.only(right: 6),
+      child: GestureDetector(
+        onTap: () => setState(() => _yogaRashiMode = value),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+          decoration: BoxDecoration(
+            color: selected ? kPurple2.withOpacity(0.15) : Colors.transparent,
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: selected ? kPurple2 : kMuted.withOpacity(0.3)),
+          ),
+          child: Text(label, style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: selected ? kPurple2 : kMuted)),
+        ),
+      ),
+    );
   }
 
   Widget _yogaChip(String label, bool selected, ValueChanged<bool> onChanged) {

@@ -197,33 +197,49 @@ class YogaPhala {
   // ═══════════════════════════════════════════
   // MAIN EVALUATOR
   // ═══════════════════════════════════════════
-  static List<YogaResult> evaluate(KundaliResult r, {bool navamsha = false, bool dvadashamsha = false}) {
+  static List<YogaResult> evaluate(KundaliResult r, {bool navamsha = false, bool dvadashamsha = false, int? aroodhaRashi}) {
     final lagnaLon = r.planets['ಲಗ್ನ']?.longitude ?? (r.bhavas.isNotEmpty ? r.bhavas[0] : 0.0);
-    final lagnaRashi = _rashiOf(lagnaLon);
 
-    // Compute house positions (1-12)
-    final houses = <String, int>{};
-    for (final e in r.planets.entries) {
-      if (e.key == 'ಲಗ್ನ' || e.key == 'ಮಾಂದಿ') continue;
-      houses[e.key] = _houseOf(e.value.longitude, lagnaLon);
+    // If aroodhaRashi is provided, use it as lagna; otherwise use actual lagna
+    final int lagnaRashi;
+    final Map<String, int> houses;
+
+    if (aroodhaRashi != null) {
+      lagnaRashi = aroodhaRashi;
+      houses = <String, int>{};
+      for (final e in r.planets.entries) {
+        if (e.key == 'ಲಗ್ನ' || e.key == 'ಮಾಂದಿ') continue;
+        final pR = _rashiOf(e.value.longitude);
+        houses[e.key] = ((pR - aroodhaRashi + 12) % 12) + 1;
+      }
+    } else {
+      lagnaRashi = _rashiOf(lagnaLon);
+      houses = <String, int>{};
+      for (final e in r.planets.entries) {
+        if (e.key == 'ಲಗ್ನ' || e.key == 'ಮಾಂದಿ') continue;
+        houses[e.key] = _houseOf(e.value.longitude, lagnaLon);
+      }
     }
+
+    // Effective lagnaLon for longitude-dependent yogas
+    final effectiveLagnaLon = aroodhaRashi != null ? aroodhaRashi * 30.0 : lagnaLon;
 
     final results = <YogaResult>[];
 
     // ── Rashi chart yogas ──
-    results.addAll(_evaluateAll(r, houses, lagnaRashi, lagnaLon, 'ರಾಶಿ'));
+    results.addAll(_evaluateAll(r, houses, lagnaRashi, effectiveLagnaLon, 'ರಾಶಿ'));
 
     // ── Navamsha chart yogas ──
     if (navamsha) {
       final navH = _divHouses(r, _navamshaRashi);
-      final navLagnaR = _navamshaRashi(lagnaLon);
+      final navLagnaR = _navamshaRashi(effectiveLagnaLon);
       results.addAll(_evaluateHouseYogas(navH, navLagnaR, 'ನವಾಂಶ'));
     }
 
     // ── Dvadashamsha chart yogas ──
     if (dvadashamsha) {
       final dvH = _divHouses(r, _dvadashamshaRashi);
-      final dvLagnaR = _dvadashamshaRashi(lagnaLon);
+      final dvLagnaR = _dvadashamshaRashi(effectiveLagnaLon);
       results.addAll(_evaluateHouseYogas(dvH, dvLagnaR, 'ದ್ವಾದಶಾಂಶ'));
     }
 
