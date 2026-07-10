@@ -1294,6 +1294,8 @@ class _DashboardScreenState extends State<DashboardScreen>
 
   @override
   Widget build(BuildContext context) {
+    final isLandscape = MediaQuery.of(context).orientation == Orientation.landscape;
+
     return Scaffold(
       backgroundColor: kBg,
       body: KeyedSubtree(
@@ -1477,36 +1479,90 @@ class _DashboardScreenState extends State<DashboardScreen>
                 ),
               ),
 
-            // Tab bar
-            Container(
-              color: kCard,
-              child: TabBar(
-                controller: _tabCtrl,
-                isScrollable: true,
-                tabs: _tabs.map((t) => Tab(text: t)).toList(),
+            // ── LANDSCAPE: Panchang left + Tabs right ──
+            if (isLandscape)
+              Expanded(
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // LEFT: Panchang (fixed)
+                    SizedBox(
+                      width: MediaQuery.of(context).size.width * 0.35,
+                      child: _buildPanchangTab(),
+                    ),
+                    // Divider
+                    Container(width: 1, color: kBorder),
+                    // RIGHT: Tab bar + content
+                    Expanded(
+                      child: Column(
+                        children: [
+                          Container(
+                            color: kCard,
+                            child: TabBar(
+                              controller: _tabCtrl,
+                              isScrollable: true,
+                              tabs: _tabs.map((t) => Tab(text: t)).toList(),
+                            ),
+                          ),
+                          Expanded(
+                            child: TabBarView(
+                              controller: _tabCtrl,
+                              children: [
+                                _buildPanchangTab(),
+                                _buildKundaliTab(),
+                                _buildSphutas(),
+                                _buildAroodhaTab(),
+                                _buildDashaTab(),
+                                _buildBhavaTab(),
+                                _buildGrahaShadvargaTab(),
+                                _buildBhavaShadvargaTab(),
+                                _buildShadbalaTab(),
+                                _buildAshtakaTab(),
+                                _buildNotesTab(),
+                                _buildJanmaPatrikeTab(),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
               ),
-            ),
 
-            // Tab content
-            Expanded(
-              child: TabBarView(
-                controller: _tabCtrl,
-                children: [
-                  _buildPanchangTab(),
-                  _buildKundaliTab(),
-                  _buildSphutas(),
-                  _buildAroodhaTab(),
-                  _buildDashaTab(),
-                  _buildBhavaTab(),
-                  _buildGrahaShadvargaTab(),
-                  _buildBhavaShadvargaTab(),
-                  _buildShadbalaTab(),
-                  _buildAshtakaTab(),
-                  _buildNotesTab(),
-                  _buildJanmaPatrikeTab(),
-                ],
+            // ── PORTRAIT: Normal tab layout ──
+            if (!isLandscape) ...[
+              // Tab bar
+              Container(
+                color: kCard,
+                child: TabBar(
+                  controller: _tabCtrl,
+                  isScrollable: true,
+                  tabs: _tabs.map((t) => Tab(text: t)).toList(),
+                ),
               ),
-            ),
+
+              // Tab content
+              Expanded(
+                child: TabBarView(
+                  controller: _tabCtrl,
+                  children: [
+                    _buildPanchangTab(),
+                    _buildKundaliTab(),
+                    _buildSphutas(),
+                    _buildAroodhaTab(),
+                    _buildDashaTab(),
+                    _buildBhavaTab(),
+                    _buildGrahaShadvargaTab(),
+                    _buildBhavaShadvargaTab(),
+                    _buildShadbalaTab(),
+                    _buildAshtakaTab(),
+                    _buildNotesTab(),
+                    _buildJanmaPatrikeTab(),
+                  ],
+                ),
+              ),
+            ],
 
           ],
         ),
