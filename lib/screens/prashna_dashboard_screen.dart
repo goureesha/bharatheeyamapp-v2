@@ -337,8 +337,14 @@ class _PrashnaDashboardScreenState extends State<PrashnaDashboardScreen>
   // ═══════════════════════════════════════════
   Widget _buildKundaliTab() {
     final screenWidth = MediaQuery.of(context).size.width;
+    final screenHeight = MediaQuery.of(context).size.height;
     final isLandscape = MediaQuery.of(context).orientation == Orientation.landscape;
-    final isLargeScreen = screenWidth > 600 || isLandscape;
+
+    if (isLandscape) {
+      return _buildLandscapeKundaliTab(screenWidth, screenHeight);
+    }
+
+    final isLargeScreen = screenWidth > 600;
     final chartSize = isLargeScreen
         ? (screenWidth * 0.45).clamp(350.0, 550.0)
         : screenWidth * 0.92;
@@ -382,6 +388,70 @@ class _PrashnaDashboardScreenState extends State<PrashnaDashboardScreen>
           const SizedBox(height: 24),
         ],
       ),
+    );
+  }
+
+  /// Landscape layout: charts on left, phalas on right
+  Widget _buildLandscapeKundaliTab(double screenWidth, double screenHeight) {
+    final leftWidth = screenWidth * 0.45;
+    final chartSize = (leftWidth * 0.85).clamp(250.0, 500.0);
+    final textScale = (chartSize / 350.0).clamp(0.9, 1.3);
+
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // ── LEFT: Kundali Charts ──
+        SizedBox(
+          width: leftWidth,
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.only(left: 8, right: 4, top: 8, bottom: 16),
+            child: Column(
+              children: [
+                _chartSection(
+                  label: 'ರಾಶಿ ಕುಂಡಲಿ',
+                  isBhava: false,
+                  chartSize: chartSize,
+                  textScale: textScale,
+                ),
+                const SizedBox(height: 12),
+                _buildBhavaControls(),
+                const SizedBox(height: 8),
+                _chartSection(
+                  label: _bhavaPlanet != null
+                      ? 'ಭಾವ ಕುಂಡಲಿ ($_bhavaPlanet ಕೇಂದ್ರ)'
+                      : 'ಭಾವ ಕುಂಡಲಿ',
+                  isBhava: true,
+                  chartSize: chartSize,
+                  textScale: textScale,
+                ),
+              ],
+            ),
+          ),
+        ),
+
+        // ── Divider ──
+        Container(
+          width: 1,
+          height: screenHeight,
+          color: kBorder,
+        ),
+
+        // ── RIGHT: Graha Phala + Bhava Phala + Yogas ──
+        Expanded(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.only(left: 8, right: 12, top: 8, bottom: 16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                ..._buildGrahaPhalas(_result),
+                ..._buildBhavaPhalas(_result),
+                ..._buildYogaSection(_result),
+                const SizedBox(height: 24),
+              ],
+            ),
+          ),
+        ),
+      ],
     );
   }
 
