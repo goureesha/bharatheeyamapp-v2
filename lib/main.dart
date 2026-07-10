@@ -14,7 +14,7 @@ import 'services/festival_cache_service.dart';
 import 'services/location_service.dart';
 import 'services/tester_service.dart';
 import 'package:flutter/foundation.dart';
-import 'package:sweph/sweph.dart';
+import 'package:sweph/sweph.dart' hide kIsWeb;
 import 'core/ephemeris.dart';
 import 'core/calculator.dart';
 
