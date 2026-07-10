@@ -1343,11 +1343,9 @@ class _PrashnaDashboardScreenState extends State<PrashnaDashboardScreen>
                       Text(gp.rashi, style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: kText)),
                     ]),
                     const SizedBox(height: 8),
-                    // Phala rows
-                    _phalaRow('ರಾಶಿ ಫಲ', gp.rashi, rashiPhalaText, pColor),
-                    // Chandra Rashi Phala — Kannada shloka for Moon
-                    if (gp.planet == 'ಚಂದ್ರ')
-                      _phalaRow('ಚಂದ್ರ ರಾಶಿ ಫಲ', gp.rashi, BhavaPhala.getChandraRashiPhala(gp.rashi), pColor),
+                    // Phala rows — for Chandra use Kannada shloka instead of Sanskrit
+                    _phalaRow('ರಾಶಿ ಫಲ', gp.rashi,
+                        gp.planet == 'ಚಂದ್ರ' ? BhavaPhala.getChandraRashiPhala(gp.rashi) : rashiPhalaText, pColor),
                     _phalaRow('ನವಾಂಶ ಫಲ', gp.navamshaRashi, navPhalaText, pColor),
                     _phalaRow('ದ್ವಾದಶಾಂಶ ಫಲ', gp.dvadamshaRashi, dvadPhalaText, pColor),
                     _phalaRow('ದ್ರೇಕ್ಕಾಣ ಫಲ', gp.drekkanaRashi, gp.drekkanaPhala, pColor),
