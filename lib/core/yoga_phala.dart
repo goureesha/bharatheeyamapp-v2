@@ -246,6 +246,59 @@ class YogaPhala {
     return results;
   }
 
+  /// Union mode: yoga satisfied if each planet's condition met in EITHER rashi OR navamsha.
+  /// Brute-forces all combinations of rashi/navamsha positions for planets that differ.
+  static List<YogaResult> evaluateUnion(KundaliResult r, {int? aroodhaRashi}) {
+    final lagnaLon = r.planets['ಲಗ್ನ']?.longitude ?? (r.bhavas.isNotEmpty ? r.bhavas[0] : 0.0);
+    final effectiveLagnaRashi = aroodhaRashi ?? _rashiOf(lagnaLon);
+    final effectiveLagnaLon = aroodhaRashi != null ? aroodhaRashi * 30.0 : lagnaLon;
+
+    // Compute rashi houses
+    final rashiH = <String, int>{};
+    for (final e in r.planets.entries) {
+      if (e.key == 'ಲಗ್ನ' || e.key == 'ಮಾಂದಿ') continue;
+      if (aroodhaRashi != null) {
+        rashiH[e.key] = ((_rashiOf(e.value.longitude) - aroodhaRashi + 12) % 12) + 1;
+      } else {
+        rashiH[e.key] = _houseOf(e.value.longitude, lagnaLon);
+      }
+    }
+
+    // Compute navamsha houses
+    final navLagnaR = _navamshaRashi(effectiveLagnaLon);
+    final navH = <String, int>{};
+    for (final e in r.planets.entries) {
+      if (e.key == 'ಲಗ್ನ' || e.key == 'ಮಾಂದಿ') continue;
+      final nr = _navamshaRashi(e.value.longitude);
+      navH[e.key] = ((nr - navLagnaR + 12) % 12) + 1;
+    }
+
+    // Find planets where rashi ≠ navamsha house
+    final dualPlanets = <String>[];
+    for (final key in rashiH.keys) {
+      if (rashiH[key] != navH[key]) dualPlanets.add(key);
+    }
+
+    // Brute-force all 2^n combinations
+    final n = dualPlanets.length;
+    final allResults = <String, YogaResult>{}; // deduplicate by name
+
+    for (int mask = 0; mask < (1 << n); mask++) {
+      final merged = Map<String, int>.from(rashiH);
+      for (int i = 0; i < n; i++) {
+        if (mask & (1 << i) != 0) {
+          merged[dualPlanets[i]] = navH[dualPlanets[i]]!;
+        }
+      }
+      final results = _evaluateAll(r, merged, effectiveLagnaRashi, effectiveLagnaLon, 'ರಾಶಿ∪ನವಾಂಶ');
+      for (final y in results) {
+        allResults.putIfAbsent(y.name, () => YogaResult(name: y.name, shloka: y.shloka, chart: 'ರಾಶಿ∪ನವಾಂಶ'));
+      }
+    }
+
+    return allResults.values.toList();
+  }
+
   /// Run ALL yogas (rashi chart only — uses longitude data)
   static List<YogaResult> _evaluateAll(KundaliResult r, Map<String, int> houses, int lagnaRashi, double lagnaLon, String chart) {
     final results = <YogaResult>[];

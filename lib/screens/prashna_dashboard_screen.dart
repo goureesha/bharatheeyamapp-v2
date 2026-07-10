@@ -53,7 +53,7 @@ class _PrashnaDashboardScreenState extends State<PrashnaDashboardScreen>
   int _selectedBook = 0; // 0 = Brihat Jataka, 1 = Saravali
   String? _selectedGraha; // null = show all planets
   String _bhavaLagnaMode = 'ಲಗ್ನ'; // lagna selector for bhava phala
-  int _yogaDivMode = 0; // 0=ರಾಶಿ, 1=D9, 2=D12, 3=D9+D12, 4=ರಾಶಿ∩ನವಾಂಶ
+  int _yogaDivMode = 0; // 0=ರಾಶಿ, 1=D9, 2=D12, 3=D9+D12, 4=ರಾಶಿ∩ನವಾಂಶ, 5=ರಾಶಿ∪ನವಾಂಶ
   int? _yogaRashiMode; // null = actual lagna, -1 = all rashis, 0-11 = specific rashi
 
 
@@ -988,6 +988,7 @@ class _PrashnaDashboardScreenState extends State<PrashnaDashboardScreen>
     final useNav = _yogaDivMode == 1 || _yogaDivMode == 3;
     final useDva = _yogaDivMode == 2 || _yogaDivMode == 3;
     final isIntersect = _yogaDivMode == 4; // ರಾಶಿ∩ನವಾಂಶ
+    final isUnion = _yogaDivMode == 5; // ರಾಶಿ∪ನವಾಂಶ
 
     // Build yoga list(s) based on mode
     List<MapEntry<String, List<YogaResult>>> yogaGroups = [];
@@ -995,12 +996,12 @@ class _PrashnaDashboardScreenState extends State<PrashnaDashboardScreen>
     if (_yogaRashiMode == -1) {
       // All 12 rashis
       for (int i = 0; i < 12; i++) {
-        final yList = _evaluateWithMode(r, i, useNav, useDva, isIntersect);
+        final yList = _evaluateWithMode(r, i, useNav, useDva, isIntersect, isUnion);
         if (yList.isNotEmpty) yogaGroups.add(MapEntry(rashiNames[i], yList));
       }
     } else {
       final aroodha = (_yogaRashiMode != null && _yogaRashiMode! >= 0) ? _yogaRashiMode : null;
-      final yList = _evaluateWithMode(r, aroodha, useNav, useDva, isIntersect);
+      final yList = _evaluateWithMode(r, aroodha, useNav, useDva, isIntersect, isUnion);
       if (yList.isNotEmpty) yogaGroups.add(MapEntry('', yList));
     }
 
@@ -1042,6 +1043,7 @@ class _PrashnaDashboardScreenState extends State<PrashnaDashboardScreen>
                   _yogaDivChip('D12', 2),
                   _yogaDivChip('D9+D12', 3),
                   _yogaDivChip('ರಾಶಿ∩ನವಾಂಶ', 4),
+                  _yogaDivChip('ರಾಶಿ∪ನವಾಂಶ', 5),
                 ],
               ),
             ),
@@ -1149,14 +1151,17 @@ class _PrashnaDashboardScreenState extends State<PrashnaDashboardScreen>
   }
 
   /// Evaluate yogas with divisional mode logic
-  List<YogaResult> _evaluateWithMode(KundaliResult r, int? aroodha, bool useNav, bool useDva, bool isIntersect) {
+  List<YogaResult> _evaluateWithMode(KundaliResult r, int? aroodha, bool useNav, bool useDva, bool isIntersect, bool isUnion) {
+    if (isUnion) {
+      // ರಾಶಿ∪ನವಾಂಶ: yoga satisfied if each planet's condition met in EITHER chart
+      return YogaPhala.evaluateUnion(r, aroodhaRashi: aroodha);
+    }
     if (isIntersect) {
       // ರಾಶಿ∩ನವಾಂಶ: only yogas found in BOTH rashi and navamsha
       final rashiYogas = YogaPhala.evaluate(r, aroodhaRashi: aroodha);
       final navYogas = YogaPhala.evaluate(r, navamsha: true, aroodhaRashi: aroodha);
       final navNames = navYogas.where((y) => y.chart == 'ನವಾಂಶ').map((y) => y.name).toSet();
       final common = rashiYogas.where((y) => navNames.contains(y.name)).toList();
-      // Tag as intersection
       return common.map((y) => YogaResult(name: y.name, shloka: y.shloka, chart: 'ರಾಶಿ∩ನವಾಂಶ')).toList();
     }
     return YogaPhala.evaluate(r, navamsha: useNav, dvadashamsha: useDva, aroodhaRashi: aroodha);
