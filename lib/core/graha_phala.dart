@@ -388,9 +388,9 @@ class GrahaPhala {
       final d9Lon = (lon * 9) % 360;
       final d9Drek = DrekkanaPhala.drekkanaNumber(d9Lon);
       final d9DrekRashi = _rashiOf(d9Lon);
-      final d12Lon = (lon * 12) % 360;
-      final d12Drek = DrekkanaPhala.drekkanaNumber(d12Lon);
-      final d12DrekRashi = _rashiOf(d12Lon);
+      // D12 drekkana: expand D12 degree within rashi (each D12 part = 2.5°, expand to 0-30°)
+      final d12DegInRashi = ((lon % 30) % 2.5) / 2.5 * 30;
+      final d12Drek = d12DegInRashi < 10 ? 1 : (d12DegInRashi < 20 ? 2 : 3);
 
       const shlokaMap = {
         'Sun': _sunShloka, 'Moon': _moonShloka, 'Mars': _marsShloka,
@@ -404,7 +404,7 @@ class GrahaPhala {
         dvadamshaRashi: _rashiNames[d12r],
         drekkanaRashi: '${_rashiNames[r]} ${d1Drek}ನೇ',
         d9DrekkanaRashi: '${_rashiNames[d9DrekRashi]} ${d9Drek}ನೇ',
-        d12DrekkanaRashi: '${_rashiNames[d12DrekRashi]} ${d12Drek}ನೇ',
+        d12DrekkanaRashi: '${_rashiNames[d12r]} ${d12Drek}ನೇ',
         rashiPhala: signPhalas[pEng]?[r] ?? '',
         rashiShloka: shlokaMap[pEng]?[r] ?? '',
         saravaliRashiPhala: SaravaliPhala.getPhala(pEng, r),
@@ -416,7 +416,7 @@ class GrahaPhala {
         saravaliDvadashamshaPhala: SaravaliPhala.getPhala(pEng, d12r),
         drekkanaPhala: DrekkanaPhala.getPhala(r, d1Drek),
         d9DrekkanaPhala: DrekkanaPhala.getPhala(d9DrekRashi, d9Drek),
-        d12DrekkanaPhala: DrekkanaPhala.getPhala(d12DrekRashi, d12Drek),
+        d12DrekkanaPhala: DrekkanaPhala.getPhala(d12r, d12Drek),
       ));
     }
     return results;
