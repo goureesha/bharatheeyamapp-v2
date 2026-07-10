@@ -375,7 +375,6 @@ class _PrashnaDashboardScreenState extends State<PrashnaDashboardScreen>
               children: [
                 ..._buildGrahaPhalas(_result),
                 ..._buildBhavaPhalas(_result),
-                ..._buildChandraRashiPhala(_result),
                 ..._buildYogaSection(_result),
               ],
             ),
@@ -1346,6 +1345,9 @@ class _PrashnaDashboardScreenState extends State<PrashnaDashboardScreen>
                     const SizedBox(height: 8),
                     // Phala rows
                     _phalaRow('ರಾಶಿ ಫಲ', gp.rashi, rashiPhalaText, pColor),
+                    // Chandra Rashi Phala — Kannada shloka for Moon
+                    if (gp.planet == 'ಚಂದ್ರ')
+                      _phalaRow('ಚಂದ್ರ ರಾಶಿ ಫಲ', gp.rashi, BhavaPhala.getChandraRashiPhala(gp.rashi), pColor),
                     _phalaRow('ನವಾಂಶ ಫಲ', gp.navamshaRashi, navPhalaText, pColor),
                     _phalaRow('ದ್ವಾದಶಾಂಶ ಫಲ', gp.dvadamshaRashi, dvadPhalaText, pColor),
                     _phalaRow('ದ್ರೇಕ್ಕಾಣ ಫಲ', gp.drekkanaRashi, gp.drekkanaPhala, pColor),
