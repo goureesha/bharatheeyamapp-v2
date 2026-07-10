@@ -53,7 +53,7 @@ class _PrashnaDashboardScreenState extends State<PrashnaDashboardScreen>
   int _selectedBook = 0; // 0 = Brihat Jataka, 1 = Saravali
   String? _selectedGraha; // null = show all planets
   String _bhavaLagnaMode = 'ಲಗ್ನ'; // lagna selector for bhava phala
-  int _yogaDivMode = 0; // 0=ರಾಶಿ, 1=D9, 2=D12, 3=D9+D12, 4=ರಾಶಿ∩ನವಾಂಶ, 5=ರಾಶಿ∪ನವಾಂಶ
+  int _yogaDivMode = 0; // 0=ರಾಶಿ, 1=ರಾಶಿ∪ನವಾಂಶ, 2=ರಾಶಿ∪ದ್ವಾದಶಾಂಶ, 3=ರಾಶಿ∪ನವಾಂಶ∪ದ್ವಾದಶಾಂಶ, 4=ನವಾಂಶ∪ದ್ವಾದಶಾಂಶ
   int? _yogaRashiMode; // null = actual lagna, -1 = all rashis, 0-11 = specific rashi
 
 
@@ -984,24 +984,19 @@ class _PrashnaDashboardScreenState extends State<PrashnaDashboardScreen>
   List<Widget> _buildYogaSection(KundaliResult r) {
     const rashiNames = ['ಮೇಷ', 'ವೃಷಭ', 'ಮಿಥುನ', 'ಕರ್ಕ', 'ಸಿಂಹ', 'ಕನ್ಯಾ', 'ತುಲಾ', 'ವೃಶ್ಚಿಕ', 'ಧನು', 'ಮಕರ', 'ಕುಂಭ', 'ಮೀನ'];
 
-    // Divisional mode flags
-    final useNav = _yogaDivMode == 1 || _yogaDivMode == 3;
-    final useDva = _yogaDivMode == 2 || _yogaDivMode == 3;
-    final isIntersect = _yogaDivMode == 4; // ರಾಶಿ∩ನವಾಂಶ
-    final isUnion = _yogaDivMode == 5; // ರಾಶಿ∪ನವಾಂಶ
+    final isUnion = _yogaDivMode >= 1; // all modes except 0 are union modes
 
     // Build yoga list(s) based on mode
     List<MapEntry<String, List<YogaResult>>> yogaGroups = [];
 
     if (_yogaRashiMode == -1) {
-      // All 12 rashis
       for (int i = 0; i < 12; i++) {
-        final yList = _evaluateWithMode(r, i, useNav, useDva, isIntersect, isUnion);
+        final yList = _evaluateWithMode(r, i, isUnion);
         if (yList.isNotEmpty) yogaGroups.add(MapEntry(rashiNames[i], yList));
       }
     } else {
       final aroodha = (_yogaRashiMode != null && _yogaRashiMode! >= 0) ? _yogaRashiMode : null;
-      final yList = _evaluateWithMode(r, aroodha, useNav, useDva, isIntersect, isUnion);
+      final yList = _evaluateWithMode(r, aroodha, isUnion);
       if (yList.isNotEmpty) yogaGroups.add(MapEntry('', yList));
     }
 
@@ -1039,11 +1034,10 @@ class _PrashnaDashboardScreenState extends State<PrashnaDashboardScreen>
                 scrollDirection: Axis.horizontal,
                 children: [
                   _yogaDivChip('ರಾಶಿ', 0),
-                  _yogaDivChip('D9', 1),
-                  _yogaDivChip('D12', 2),
-                  _yogaDivChip('D9+D12', 3),
-                  _yogaDivChip('ರಾಶಿ∩ನವಾಂಶ', 4),
-                  _yogaDivChip('ರಾಶಿ∪ನವಾಂಶ', 5),
+                  _yogaDivChip('ರಾಶಿ∪ನವಾಂಶ', 1),
+                  _yogaDivChip('ರಾಶಿ∪ದ್ವಾದಶಾಂಶ', 2),
+                  _yogaDivChip('ರಾಶಿ∪ನವಾಂಶ∪ದ್ವಾದಶಾಂಶ', 3),
+                  _yogaDivChip('ನವಾಂಶ∪ದ್ವಾದಶಾಂಶ', 4),
                 ],
               ),
             ),
@@ -1151,20 +1145,24 @@ class _PrashnaDashboardScreenState extends State<PrashnaDashboardScreen>
   }
 
   /// Evaluate yogas with divisional mode logic
-  List<YogaResult> _evaluateWithMode(KundaliResult r, int? aroodha, bool useNav, bool useDva, bool isIntersect, bool isUnion) {
-    if (isUnion) {
-      // ರಾಶಿ∪ನವಾಂಶ: yoga satisfied if each planet's condition met in EITHER chart
-      return YogaPhala.evaluateUnion(r, aroodhaRashi: aroodha);
+  List<YogaResult> _evaluateWithMode(KundaliResult r, int? aroodha, bool isUnion) {
+    if (!isUnion) {
+      // Mode 0: rashi only
+      return YogaPhala.evaluate(r, aroodhaRashi: aroodha);
     }
-    if (isIntersect) {
-      // ರಾಶಿ∩ನವಾಂಶ: only yogas found in BOTH rashi and navamsha
-      final rashiYogas = YogaPhala.evaluate(r, aroodhaRashi: aroodha);
-      final navYogas = YogaPhala.evaluate(r, navamsha: true, aroodhaRashi: aroodha);
-      final navNames = navYogas.where((y) => y.chart == 'ನವಾಂಶ').map((y) => y.name).toSet();
-      final common = rashiYogas.where((y) => navNames.contains(y.name)).toList();
-      return common.map((y) => YogaResult(name: y.name, shloka: y.shloka, chart: 'ರಾಶಿ∩ನವಾಂಶ')).toList();
+    // Union modes
+    switch (_yogaDivMode) {
+      case 1: // ರಾಶಿ∪ನವಾಂಶ
+        return YogaPhala.evaluateUnion(r, aroodhaRashi: aroodha, useRashi: true, useNavamsha: true, useDvadashamsha: false);
+      case 2: // ರಾಶಿ∪ದ್ವಾದಶಾಂಶ
+        return YogaPhala.evaluateUnion(r, aroodhaRashi: aroodha, useRashi: true, useNavamsha: false, useDvadashamsha: true);
+      case 3: // ರಾಶಿ∪ನವಾಂಶ∪ದ್ವಾದಶಾಂಶ
+        return YogaPhala.evaluateUnion(r, aroodhaRashi: aroodha, useRashi: true, useNavamsha: true, useDvadashamsha: true);
+      case 4: // ನವಾಂಶ∪ದ್ವಾದಶಾಂಶ
+        return YogaPhala.evaluateUnion(r, aroodhaRashi: aroodha, useRashi: false, useNavamsha: true, useDvadashamsha: true);
+      default:
+        return YogaPhala.evaluate(r, aroodhaRashi: aroodha);
     }
-    return YogaPhala.evaluate(r, navamsha: useNav, dvadashamsha: useDva, aroodhaRashi: aroodha);
   }
 
   // ═══════════════════════════════════════════

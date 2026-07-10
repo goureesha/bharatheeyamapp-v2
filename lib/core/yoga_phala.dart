@@ -246,53 +246,85 @@ class YogaPhala {
     return results;
   }
 
-  /// Union mode: yoga satisfied if each planet's condition met in EITHER rashi OR navamsha.
-  /// Brute-forces all combinations of rashi/navamsha positions for planets that differ.
-  static List<YogaResult> evaluateUnion(KundaliResult r, {int? aroodhaRashi}) {
+  /// Union mode: yoga satisfied if each planet's condition met in ANY enabled chart.
+  /// Brute-forces all combinations of chart positions for planets that differ.
+  static List<YogaResult> evaluateUnion(KundaliResult r, {
+    int? aroodhaRashi,
+    bool useRashi = true,
+    bool useNavamsha = true,
+    bool useDvadashamsha = false,
+  }) {
     final lagnaLon = r.planets['ಲಗ್ನ']?.longitude ?? (r.bhavas.isNotEmpty ? r.bhavas[0] : 0.0);
     final effectiveLagnaRashi = aroodhaRashi ?? _rashiOf(lagnaLon);
     final effectiveLagnaLon = aroodhaRashi != null ? aroodhaRashi * 30.0 : lagnaLon;
 
-    // Compute rashi houses
+    // Compute houses for each enabled chart
     final rashiH = <String, int>{};
-    for (final e in r.planets.entries) {
-      if (e.key == 'ಲಗ್ನ' || e.key == 'ಮಾಂದಿ') continue;
-      if (aroodhaRashi != null) {
-        rashiH[e.key] = ((_rashiOf(e.value.longitude) - aroodhaRashi + 12) % 12) + 1;
-      } else {
-        rashiH[e.key] = _houseOf(e.value.longitude, lagnaLon);
-      }
-    }
-
-    // Compute navamsha houses
-    final navLagnaR = _navamshaRashi(effectiveLagnaLon);
     final navH = <String, int>{};
+    final dvaH = <String, int>{};
+
     for (final e in r.planets.entries) {
       if (e.key == 'ಲಗ್ನ' || e.key == 'ಮಾಂದಿ') continue;
-      final nr = _navamshaRashi(e.value.longitude);
-      navH[e.key] = ((nr - navLagnaR + 12) % 12) + 1;
-    }
-
-    // Find planets where rashi ≠ navamsha house
-    final dualPlanets = <String>[];
-    for (final key in rashiH.keys) {
-      if (rashiH[key] != navH[key]) dualPlanets.add(key);
-    }
-
-    // Brute-force all 2^n combinations
-    final n = dualPlanets.length;
-    final allResults = <String, YogaResult>{}; // deduplicate by name
-
-    for (int mask = 0; mask < (1 << n); mask++) {
-      final merged = Map<String, int>.from(rashiH);
-      for (int i = 0; i < n; i++) {
-        if (mask & (1 << i) != 0) {
-          merged[dualPlanets[i]] = navH[dualPlanets[i]]!;
+      // Rashi
+      if (useRashi) {
+        if (aroodhaRashi != null) {
+          rashiH[e.key] = ((_rashiOf(e.value.longitude) - aroodhaRashi + 12) % 12) + 1;
+        } else {
+          rashiH[e.key] = _houseOf(e.value.longitude, lagnaLon);
         }
       }
-      final results = _evaluateAll(r, merged, effectiveLagnaRashi, effectiveLagnaLon, 'ರಾಶಿ∪ನವಾಂಶ');
+      // Navamsha
+      if (useNavamsha) {
+        final navLagnaR = _navamshaRashi(effectiveLagnaLon);
+        final nr = _navamshaRashi(e.value.longitude);
+        navH[e.key] = ((nr - navLagnaR + 12) % 12) + 1;
+      }
+      // Dvadashamsha
+      if (useDvadashamsha) {
+        final dvaLagnaR = _dvadashamshaRashi(effectiveLagnaLon);
+        final dr = _dvadashamshaRashi(e.value.longitude);
+        dvaH[e.key] = ((dr - dvaLagnaR + 12) % 12) + 1;
+      }
+    }
+
+    // Build base house map (use first enabled chart as base)
+    final baseH = useRashi ? rashiH : (useNavamsha ? navH : dvaH);
+    final planetNames = baseH.keys.toList();
+
+    // For each planet, collect unique house positions across enabled charts
+    final options = <List<int>>[];
+    for (final name in planetNames) {
+      final positions = <int>{};
+      if (useRashi && rashiH.containsKey(name)) positions.add(rashiH[name]!);
+      if (useNavamsha && navH.containsKey(name)) positions.add(navH[name]!);
+      if (useDvadashamsha && dvaH.containsKey(name)) positions.add(dvaH[name]!);
+      options.add(positions.toList());
+    }
+
+    // Count total combinations
+    int totalCombs = 1;
+    for (final opt in options) totalCombs *= opt.length;
+
+    // Build chart label
+    final parts = <String>[];
+    if (useRashi) parts.add('ರಾಶಿ');
+    if (useNavamsha) parts.add('ನವಾಂಶ');
+    if (useDvadashamsha) parts.add('ದ್ವಾದಶಾಂಶ');
+    final chartLabel = parts.join('∪');
+
+    // Brute-force all combinations
+    final allResults = <String, YogaResult>{};
+
+    for (int combo = 0; combo < totalCombs; combo++) {
+      final merged = <String, int>{};
+      int idx = combo;
+      for (int i = 0; i < planetNames.length; i++) {
+        merged[planetNames[i]] = options[i][idx % options[i].length];
+        idx ~/= options[i].length;
+      }
+      final results = _evaluateAll(r, merged, effectiveLagnaRashi, effectiveLagnaLon, chartLabel);
       for (final y in results) {
-        allResults.putIfAbsent(y.name, () => YogaResult(name: y.name, shloka: y.shloka, chart: 'ರಾಶಿ∪ನವಾಂಶ'));
+        allResults.putIfAbsent(y.name, () => YogaResult(name: y.name, shloka: y.shloka, chart: chartLabel));
       }
     }
 
