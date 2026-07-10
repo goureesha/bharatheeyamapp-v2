@@ -7,7 +7,8 @@ class YogaResult {
   final String name;
   final String shloka;
   final String chart; // 'ರಾಶಿ', 'ನವಾಂಶ', 'ದ್ವಾದಶಾಂಶ'
-  YogaResult({required this.name, required this.shloka, this.chart = 'ರಾಶಿ'});
+  final Map<String, int> houses; // planet house positions when yoga was found
+  YogaResult({required this.name, required this.shloka, this.chart = 'ರಾಶಿ', this.houses = const {}});
 }
 
 class YogaPhala {
@@ -446,7 +447,8 @@ class YogaPhala {
     final an18 = _anishta18(houses);
     if (an18 != null) results.add(an18);
 
-    return results;
+    // Attach house positions to all results
+    return results.map((y) => YogaResult(name: y.name, shloka: y.shloka, chart: y.chart, houses: houses)).toList();
   }
 
   /// Run HOUSE-BASED yogas only (for divisional charts — no longitude needed)

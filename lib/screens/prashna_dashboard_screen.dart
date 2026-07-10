@@ -1095,6 +1095,31 @@ class _PrashnaDashboardScreenState extends State<PrashnaDashboardScreen>
                         const SizedBox(height: 6),
                         Text(y.shloka,
                             style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: kText, height: 1.6)),
+                        // Planet positions
+                        if (y.houses.isNotEmpty) ...[
+                          const SizedBox(height: 6),
+                          Builder(builder: (_) {
+                            // Group planets by house
+                            final byHouse = <int, List<String>>{};
+                            for (final e in y.houses.entries) {
+                              byHouse.putIfAbsent(e.value, () => []).add(e.key);
+                            }
+                            final sorted = byHouse.keys.toList()..sort();
+                            final posText = sorted.map((h) => '$h:${byHouse[h]!.join(',')}').join('  ');
+                            return Container(
+                              width: double.infinity,
+                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
+                              decoration: BoxDecoration(
+                                color: kMuted.withOpacity(0.06),
+                                borderRadius: BorderRadius.circular(6),
+                                border: Border.all(color: kMuted.withOpacity(0.12)),
+                              ),
+                              child: Text(posText,
+                                  style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700,
+                                      color: kMuted, fontFamily: 'monospace', letterSpacing: 0.5)),
+                            );
+                          }),
+                        ],
                       ],
                     ),
                   );
