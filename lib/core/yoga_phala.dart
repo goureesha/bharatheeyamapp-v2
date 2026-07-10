@@ -333,7 +333,7 @@ class YogaPhala {
       }
       final results = _evaluateAll(r, merged, effectiveLagnaRashi, effectiveLagnaLon, chartLabel);
       for (final y in results) {
-        allResults.putIfAbsent(y.name, () => YogaResult(name: y.name, shloka: y.shloka, chart: chartLabel));
+        allResults.putIfAbsent(y.name, () => YogaResult(name: y.name, shloka: y.shloka, chart: chartLabel, houses: y.houses));
       }
     }
 
