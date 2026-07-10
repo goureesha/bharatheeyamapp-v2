@@ -1412,10 +1412,12 @@ class _PrashnaDashboardScreenState extends State<PrashnaDashboardScreen>
             // ── Planet Phalas ──
             ...phalas.where((gp) => _selectedGraha == null || gp.planet == _selectedGraha).map((gp) {
               final pColor = planetColors[gp.planet] ?? kTeal;
-              final rashiPhalaText = _selectedBook == 0 ? gp.rashiShloka : gp.saravaliRashiPhala;
-              final shlokaText = _selectedBook == 0 ? '' : '';
-              final navPhalaText = _selectedBook == 0 ? gp.navamshaShloka : gp.saravaliNavamshaPhala;
-              final dvadPhalaText = _selectedBook == 0 ? gp.dvadamshaShloka : gp.saravaliDvadashamshaPhala;
+              // BJ: show Kannada phala text; Saravali: show Saravali phala
+              final rashiPhalaText = _selectedBook == 0 ? gp.rashiPhala : gp.saravaliRashiPhala;
+              final navPhalaText = _selectedBook == 0 ? gp.navamshaPhala : gp.saravaliNavamshaPhala;
+              final dvadPhalaText = _selectedBook == 0 ? gp.dvadashamshaPhala : gp.saravaliDvadashamshaPhala;
+              // Shloka reference (only for BJ)
+              final rashiShlokaRef = _selectedBook == 0 ? gp.rashiShloka : '';
               return Container(
                 margin: const EdgeInsets.only(top: 8),
                 padding: const EdgeInsets.all(10),
@@ -1438,9 +1440,13 @@ class _PrashnaDashboardScreenState extends State<PrashnaDashboardScreen>
                       Text(gp.rashi, style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: kText)),
                     ]),
                     const SizedBox(height: 8),
-                    // Phala rows — for Chandra use Kannada shloka instead of Sanskrit
-                    _phalaRow('ರಾಶಿ ಫಲ', gp.rashi,
-                        gp.planet == 'ಚಂದ್ರ' ? BhavaPhala.getChandraRashiPhala(gp.rashi) : rashiPhalaText, pColor),
+                    // Phala rows
+                    _phalaRow('ರಾಶಿ ಫಲ', gp.rashi, rashiPhalaText, pColor),
+                    if (rashiShlokaRef.isNotEmpty)
+                      Padding(
+                        padding: const EdgeInsets.only(left: 90, bottom: 4),
+                        child: Text(rashiShlokaRef, style: TextStyle(fontSize: 9, color: kMuted, fontStyle: FontStyle.italic)),
+                      ),
                     _phalaRow('ನವಾಂಶ ಫಲ', gp.navamshaRashi, navPhalaText, pColor),
                     _phalaRow('ದ್ವಾದಶಾಂಶ ಫಲ', gp.dvadamshaRashi, dvadPhalaText, pColor),
                     _phalaRow('ದ್ರೇಕ್ಕಾಣ ಫಲ', gp.drekkanaRashi, gp.drekkanaPhala, pColor),
