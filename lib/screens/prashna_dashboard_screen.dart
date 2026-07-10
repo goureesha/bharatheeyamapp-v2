@@ -54,7 +54,8 @@ class _PrashnaDashboardScreenState extends State<PrashnaDashboardScreen>
   String? _selectedGraha; // null = show all planets
   String _bhavaLagnaMode = 'ಲಗ್ನ'; // lagna selector for bhava phala
   int _yogaDivMode = 0; // 0=ರಾಶಿ, 1=ರಾಶಿ∪ನವಾಂಶ, 2=ರಾಶಿ∪ದ್ವಾದಶಾಂಶ, 3=ರಾಶಿ∪ನವಾಂಶ∪ದ್ವಾದಶಾಂಶ, 4=ನವಾಂಶ∪ದ್ವಾದಶಾಂಶ
-  int? _yogaRashiMode; // null = actual lagna, -1 = all rashis, 0-11 = specific rashi
+  bool _yogaUseLagna = true; // true = use actual lagna
+  Set<int> _yogaSelectedRashis = {}; // 0-11 selected rashis for multi-select
 
 
 
@@ -989,19 +990,20 @@ class _PrashnaDashboardScreenState extends State<PrashnaDashboardScreen>
     // Build yoga list(s) based on mode
     List<MapEntry<String, List<YogaResult>>> yogaGroups = [];
 
-    if (_yogaRashiMode == -1) {
-      for (int i = 0; i < 12; i++) {
+    if (_yogaUseLagna) {
+      // Use actual lagna
+      final yList = _evaluateWithMode(r, null, isUnion);
+      if (yList.isNotEmpty) yogaGroups.add(MapEntry('', yList));
+    } else {
+      // Evaluate selected rashis
+      for (final i in _yogaSelectedRashis.toList()..sort()) {
         final yList = _evaluateWithMode(r, i, isUnion);
         if (yList.isNotEmpty) yogaGroups.add(MapEntry(rashiNames[i], yList));
       }
-    } else {
-      final aroodha = (_yogaRashiMode != null && _yogaRashiMode! >= 0) ? _yogaRashiMode : null;
-      final yList = _evaluateWithMode(r, aroodha, isUnion);
-      if (yList.isNotEmpty) yogaGroups.add(MapEntry('', yList));
     }
 
     final totalCount = yogaGroups.fold<int>(0, (sum, g) => sum + g.value.length);
-    if (totalCount == 0 && _yogaRashiMode != -1) return [];
+    if (totalCount == 0 && !_yogaUseLagna) return [];
 
     return [
       const SizedBox(height: 8),
@@ -1014,14 +1016,14 @@ class _PrashnaDashboardScreenState extends State<PrashnaDashboardScreen>
           title: Text('ಯೋಗ', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w900, color: kText)),
           subtitle: Text('ಬೃಹಜ್ಜಾತಕ • $totalCount ಯೋಗಗಳು', style: TextStyle(fontSize: 10, color: kMuted)),
           children: [
-            // ── Rashi selector ──
+            // ── Rashi selector (multi-select) ──
             SizedBox(
               height: 32,
               child: ListView(
                 scrollDirection: Axis.horizontal,
                 children: [
-                  _yogaRashiChip('ಲಗ್ನ', null),
-                  _yogaRashiChip('ಎಲ್ಲಾ', -1),
+                  _yogaRashiChip('ಲಗ್ನ', -2), // special: use actual lagna
+                  _yogaRashiChip('ಎಲ್ಲಾ', -1), // special: select/deselect all
                   for (int i = 0; i < 12; i++) _yogaRashiChip(rashiNames[i], i),
                 ],
               ),
@@ -1106,12 +1108,40 @@ class _PrashnaDashboardScreenState extends State<PrashnaDashboardScreen>
     ];
   }
 
-  Widget _yogaRashiChip(String label, int? value) {
-    final selected = _yogaRashiMode == value;
+  Widget _yogaRashiChip(String label, int value) {
+    // value: -2 = lagna, -1 = all, 0-11 = specific rashi
+    bool selected;
+    if (value == -2) {
+      selected = _yogaUseLagna;
+    } else if (value == -1) {
+      selected = !_yogaUseLagna && _yogaSelectedRashis.length == 12;
+    } else {
+      selected = !_yogaUseLagna && _yogaSelectedRashis.contains(value);
+    }
     return Padding(
       padding: const EdgeInsets.only(right: 6),
       child: GestureDetector(
-        onTap: () => setState(() => _yogaRashiMode = value),
+        onTap: () => setState(() {
+          if (value == -2) {
+            _yogaUseLagna = true;
+            _yogaSelectedRashis.clear();
+          } else if (value == -1) {
+            _yogaUseLagna = false;
+            if (_yogaSelectedRashis.length == 12) {
+              _yogaSelectedRashis.clear();
+            } else {
+              _yogaSelectedRashis = {0,1,2,3,4,5,6,7,8,9,10,11};
+            }
+          } else {
+            _yogaUseLagna = false;
+            if (_yogaSelectedRashis.contains(value)) {
+              _yogaSelectedRashis.remove(value);
+              if (_yogaSelectedRashis.isEmpty) _yogaUseLagna = true;
+            } else {
+              _yogaSelectedRashis.add(value);
+            }
+          }
+        }),
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
           decoration: BoxDecoration(
