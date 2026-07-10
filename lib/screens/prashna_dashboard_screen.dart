@@ -1165,17 +1165,18 @@ class _PrashnaDashboardScreenState extends State<PrashnaDashboardScreen>
                         const SizedBox(height: 6),
                         Text(y.shloka,
                             style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: kText, height: 1.6)),
-                        // Planet positions
+                        // Planet positions — show planet → rashi (house)
                         if (y.houses.isNotEmpty) ...[
                           const SizedBox(height: 6),
                           Builder(builder: (_) {
-                            // Group planets by house
-                            final byHouse = <int, List<String>>{};
-                            for (final e in y.houses.entries) {
-                              byHouse.putIfAbsent(e.value, () => []).add(e.key);
-                            }
-                            final sorted = byHouse.keys.toList()..sort();
-                            final posText = sorted.map((h) => '$h:${byHouse[h]!.join(',')}').join('  ');
+                            // Get lagna rashi to compute rashi from house
+                            final lagnaRashi = (r.planets['ಲಗ್ನ']?.longitude ?? 0) ~/ 30 % 12;
+                            const rNames = ['ಮೇಷ','ವೃಷಭ','ಮಿಥುನ','ಕರ್ಕ','ಸಿಂಹ','ಕನ್ಯಾ','ತುಲಾ','ವೃಶ್ಚಿಕ','ಧನು','ಮಕರ','ಕುಂಭ','ಮೀನ'];
+                            // Build "planet → rashi (house)" entries
+                            final entries = y.houses.entries.map((e) {
+                              final rashiIdx = (lagnaRashi + e.value - 1) % 12;
+                              return '${e.key} → ${rNames[rashiIdx]} (${e.value})';
+                            }).toList();
                             return Container(
                               width: double.infinity,
                               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
@@ -1184,9 +1185,13 @@ class _PrashnaDashboardScreenState extends State<PrashnaDashboardScreen>
                                 borderRadius: BorderRadius.circular(6),
                                 border: Border.all(color: kMuted.withOpacity(0.12)),
                               ),
-                              child: Text(posText,
-                                  style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700,
-                                      color: kMuted, fontFamily: 'monospace', letterSpacing: 0.5)),
+                              child: Wrap(
+                                spacing: 12,
+                                runSpacing: 4,
+                                children: entries.map((e) => Text(e,
+                                    style: TextStyle(fontSize: 10, fontWeight: FontWeight.w600,
+                                        color: kMuted))).toList(),
+                              ),
                             );
                           }),
                         ],
