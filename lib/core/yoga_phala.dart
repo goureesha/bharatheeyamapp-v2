@@ -118,22 +118,9 @@ class YogaPhala {
     return _aspects(planet, h, targetH);
   }
 
-  /// Navamsha rashi (0-indexed)
+  /// Navamsha rashi (0-indexed) — same formula as calculator.dart
   static int _navamshaRashi(double longitude) {
-    final sign = _rashiOf(longitude);
-    final degInSign = longitude % 30;
-    final navNum = (degInSign / (30.0 / 9.0)).floor().clamp(0, 8);
-    // Starting rashi by element
-    final element = sign % 4;
-    int startRashi;
-    switch (element) {
-      case 0: startRashi = 0; break;  // Fire → Aries
-      case 1: startRashi = 9; break;  // Earth → Capricorn
-      case 2: startRashi = 6; break;  // Air → Libra
-      case 3: startRashi = 3; break;  // Water → Cancer
-      default: startRashi = 0;
-    }
-    return (startRashi + navNum) % 12;
+    return (((longitude * 9) % 360) / 30).floor() % 12;
   }
 
   /// Is Chandra waning? (Sun-Moon distance > 180°)

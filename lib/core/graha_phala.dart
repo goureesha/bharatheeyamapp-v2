@@ -52,11 +52,8 @@ class GrahaPhala {
 
   static int _rashiOf(double lon) => ((lon ~/ 30) % 12).toInt();
   static int _d9Rashi(double lon) {
-    final inSign = lon % 30;
-    final navPada = (inSign / (30.0 / 9.0)).floor();
-    final baseRashi = _rashiOf(lon);
-    final fireStart = [0, 9, 6, 3]; // Fire→Mesha, Earth→Makara, Air→Tula, Water→Kataka
-    return (fireStart[baseRashi % 4] + navPada) % 12;
+    // Same formula as calculator.dart — multiply by 9, mod 360
+    return (((lon * 9) % 360) / 30).floor() % 12;
   }
   static int _d12Rashi(double lon) {
     final inSign = lon % 30;
