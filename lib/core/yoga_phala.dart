@@ -18,6 +18,10 @@ class YogaPhala {
   static const _shubhaNames = ['ಗುರು', 'ಶುಕ್ರ', 'ಬುಧ'];
   static const _mainPlanets = ['ರವಿ', 'ಚಂದ್ರ', 'ಕುಜ', 'ಬುಧ', 'ಗುರು', 'ಶುಕ್ರ', 'ಶನಿ', 'ರಾಹು', 'ಕೇತು'];
 
+  /// Override map for drishti: when set, _aspects uses rashi positions instead of merged.
+  /// Set by evaluateUnion to ensure drishti is always from rashi chart.
+  static Map<String, int>? _rashiDrishtiMap;
+
   // Own sign rulership (0-indexed rashi)
   static const _ownSigns = <String, List<int>>{
     'ರವಿ': [4],      // Simha
@@ -62,8 +66,10 @@ class YogaPhala {
   }
 
   /// Does planet at planetHouse aspect targetHouse?
+  /// In union mode, drishti always comes from rashi position (_rashiDrishtiMap).
   static bool _aspects(String planet, int planetHouse, int targetHouse) {
-    return _aspectedHouses(planet, planetHouse).contains(targetHouse);
+    final drishtiFrom = _rashiDrishtiMap?[planet] ?? planetHouse;
+    return _aspectedHouses(planet, drishtiFrom).contains(targetHouse);
   }
 
   /// Mutual kendra (houses 1,4,7,10 from each other)
@@ -259,19 +265,18 @@ class YogaPhala {
     final effectiveLagnaLon = aroodhaRashi != null ? aroodhaRashi * 30.0 : lagnaLon;
 
     // Compute houses for each enabled chart
+    // Rashi houses are ALWAYS computed — needed for drishti even if useRashi is false
     final rashiH = <String, int>{};
     final navH = <String, int>{};
     final dvaH = <String, int>{};
 
     for (final e in r.planets.entries) {
       if (e.key == 'ಲಗ್ನ' || e.key == 'ಮಾಂದಿ') continue;
-      // Rashi
-      if (useRashi) {
-        if (aroodhaRashi != null) {
-          rashiH[e.key] = ((_rashiOf(e.value.longitude) - aroodhaRashi + 12) % 12) + 1;
-        } else {
-          rashiH[e.key] = _houseOf(e.value.longitude, lagnaLon);
-        }
+      // Rashi — always computed for drishti
+      if (aroodhaRashi != null) {
+        rashiH[e.key] = ((_rashiOf(e.value.longitude) - aroodhaRashi + 12) % 12) + 1;
+      } else {
+        rashiH[e.key] = _houseOf(e.value.longitude, lagnaLon);
       }
       // Navamsha
       if (useNavamsha) {
@@ -295,7 +300,7 @@ class YogaPhala {
     final options = <List<int>>[];
     for (final name in planetNames) {
       final positions = <int>{};
-      if (useRashi && rashiH.containsKey(name)) positions.add(rashiH[name]!);
+      if (useRashi) positions.add(rashiH[name]!);
       if (useNavamsha && navH.containsKey(name)) positions.add(navH[name]!);
       if (useDvadashamsha && dvaH.containsKey(name)) positions.add(dvaH[name]!);
       options.add(positions.toList());
@@ -312,6 +317,9 @@ class YogaPhala {
     if (useDvadashamsha) parts.add('ದ್ವಾದಶಾಂಶ');
     final chartLabel = parts.join('∪');
 
+    // Set rashi drishti override — all drishti uses rashi positions
+    _rashiDrishtiMap = rashiH;
+
     // Brute-force all combinations
     final allResults = <String, YogaResult>{};
 
@@ -327,6 +335,9 @@ class YogaPhala {
         allResults.putIfAbsent(y.name, () => YogaResult(name: y.name, shloka: y.shloka, chart: chartLabel));
       }
     }
+
+    // Clear drishti override
+    _rashiDrishtiMap = null;
 
     return allResults.values.toList();
   }
