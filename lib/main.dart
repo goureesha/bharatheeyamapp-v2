@@ -393,6 +393,8 @@ class _MasterLockScreenState extends State<_MasterLockScreen> {
       return Scaffold(backgroundColor: kBg, body: Center(child: CircularProgressIndicator(color: kPurple2)));
     }
     if (_unlocked) {
+      // On web, skip Google login — master password is sufficient
+      if (kIsWeb) return const HomeScreen();
       return GoogleAuthService.isSignedIn
           ? const _AuthGate()
           : const _LoginScreen();
