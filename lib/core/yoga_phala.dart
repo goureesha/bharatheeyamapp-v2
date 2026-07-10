@@ -418,6 +418,34 @@ class YogaPhala {
     results.addAll(_jkl27(r, houses));
     results.addAll(_jkl28(houses));
 
+    // ── Anishtadhyaya (Chapter on Misfortunes) ──
+    results.addAll(_anishta1(houses, lagnaRashi));
+    final an2 = _anishta2(houses);
+    if (an2 != null) results.add(an2);
+    results.addAll(_anishta3(houses));
+    results.addAll(_anishta4(houses, r));
+    final an5 = _anishta5(houses);
+    if (an5 != null) results.add(an5);
+    results.addAll(_anishta6(houses));
+    results.addAll(_anishta7(houses));
+    final an8 = _anishta8(houses);
+    if (an8 != null) results.add(an8);
+    final an9 = _anishta9(houses, r);
+    if (an9 != null) results.add(an9);
+    final an10 = _anishta10(houses);
+    if (an10 != null) results.add(an10);
+    results.addAll(_anishta11(houses));
+    final an12 = _anishta12(houses);
+    if (an12 != null) results.add(an12);
+    results.addAll(_anishta13(houses));
+    results.addAll(_anishta15(houses));
+    final an16 = _anishta16(houses);
+    if (an16 != null) results.add(an16);
+    final an17 = _anishta17(houses);
+    if (an17 != null) results.add(an17);
+    final an18 = _anishta18(houses);
+    if (an18 != null) results.add(an18);
+
     return results;
   }
 
@@ -1259,5 +1287,372 @@ class YogaPhala {
       }
     }
     return results;
+  }
+
+  // ═══════════════════════════════════════════
+  // ANISHTADHYAYA (Chapter on Misfortunes)
+  // ═══════════════════════════════════════════
+
+  /// Anishta 1: Kanya lagna + Sun in lagna + Saturn in 7th → wife danger; Mars in 5th → child loss
+  static List<YogaResult> _anishta1(Map<String, int> houses, int lagnaRashi) {
+    final results = <YogaResult>[];
+    // Sub-rule A: Kanya lagna, Sun in lagna, Saturn in 7th (Meena from Kanya)
+    if (lagnaRashi == 5 && houses['ರವಿ'] == 1 && houses['ಶನಿ'] == 7) {
+      results.add(YogaResult(
+        name: 'ಕಳತ್ರ ಮಾರಕ ಯೋಗ',
+        shloka: 'ಕನ್ಯಾ ಲಗ್ನದಲ್ಲಿ ಸೂರ್ಯನಿದ್ದು ಮೀನದಲ್ಲಿ ಶನಿ ಇದ್ದರೆ ಪತ್ನಿಗೆ ಮಾರಕ ಉಂಟಾಗುತ್ತದೆ',
+      ));
+    }
+    // Sub-rule B: Mars in 5th → death of children
+    if (houses['ಕುಜ'] == 5) {
+      results.add(YogaResult(
+        name: 'ಪುತ್ರ ನಾಶ ಯೋಗ',
+        shloka: 'ಕುಜನು ಐದನೇ ಮನೆಯಲ್ಲಿದ್ದರೆ ಪುತ್ರ ನಾಶವಾಗುತ್ತದೆ',
+      ));
+    }
+    return results;
+  }
+
+  /// Anishta 2: Papas in 4th & 8th from Venus, or Venus between papas, without shubha drishti → wife dies
+  static YogaResult? _anishta2(Map<String, int> houses) {
+    final venusH = houses['ಶುಕ್ರ'];
+    if (venusH == null) return null;
+
+    // 4th and 8th from Venus
+    final h4 = ((venusH - 1 + 3) % 12) + 1;
+    final h8 = ((venusH - 1 + 7) % 12) + 1;
+    final papasIn4and8 = _anyPapaInHouse(houses, h4) && _anyPapaInHouse(houses, h8);
+
+    // Venus between two papas (papa in adjacent houses)
+    final prev = ((venusH - 1 - 1 + 12) % 12) + 1;
+    final next = ((venusH - 1 + 1) % 12) + 1;
+    final venusBetweenPapas = _anyPapaInHouse(houses, prev) && _anyPapaInHouse(houses, next);
+
+    // No shubha drishti on Venus
+    final shubhaSees = _anyShubhaAspects(houses, venusH);
+
+    if ((papasIn4and8 || venusBetweenPapas) && !shubhaSees) {
+      return YogaResult(
+        name: 'ಪತ್ನಿ ಮರಣ ಯೋಗ',
+        shloka: 'ಶುಕ್ರನಿಂದ ನಾಲ್ಕು ಮತ್ತು ಎಂಟನೇ ಮನೆಗಳಲ್ಲಿ ಪಾಪಗ್ರಹರಿದ್ದರೆ ಅಥವಾ ಶುಕ್ರನು ಇಬ್ಬರು ಪಾಪಗ್ರಹರ ಮಧ್ಯೆ ಇದ್ದು ಯಾವುದೇ ಶುಭಗ್ರಹರ ದೃಷ್ಟಿ ಇಲ್ಲದಿದ್ದರೆ ಪತ್ನಿಗೆ ಬೆಂಕಿ ಮೇಲಿನಿಂದ ಬೀಳುವುದು ಅಥವಾ ಉರುಲು ಹಾಕಿಕೊಳ್ಳುವುದರಿಂದ ಮರಣ ಸಂಭವಿಸುತ್ತದೆ',
+      );
+    }
+    return null;
+  }
+
+  /// Anishta 3: Moon 12th + Sun 6th (or vice versa) → one-eyed; Venus+Sun in 7/9/5 → disabled wife
+  static List<YogaResult> _anishta3(Map<String, int> houses) {
+    final results = <YogaResult>[];
+    final moonH = houses['ಚಂದ್ರ'];
+    final sunH = houses['ರವಿ'];
+    // Sub-rule A: Moon in 12th AND Sun in 6th, or Moon in 6th AND Sun in 12th
+    if ((moonH == 12 && sunH == 6) || (moonH == 6 && sunH == 12)) {
+      results.add(YogaResult(
+        name: 'ಏಕ ನೇತ್ರ ಯೋಗ',
+        shloka: 'ಲಗ್ನದಿಂದ ಹನ್ನೆರಡು ಮತ್ತು ಆರನೇ ಮನೆಯಲ್ಲಿ ಚಂದ್ರ ಮತ್ತು ಸೂರ್ಯರಿದ್ದರೆ ಜಾತಕನು ಮತ್ತು ಅವನ ಪತ್ನಿ ಏಕ ನೇತ್ರವುಳ್ಳವರಾಗುತ್ತಾರೆ',
+      ));
+    }
+    // Sub-rule B: Venus and Sun both in 7th, or both in 9th, or both in 5th
+    final venusH = houses['ಶುಕ್ರ'];
+    if (venusH != null && sunH != null) {
+      if ((venusH == 7 && sunH == 7) ||
+          (venusH == 9 && sunH == 9) ||
+          (venusH == 5 && sunH == 5)) {
+        results.add(YogaResult(
+          name: 'ವಿಕಲ ಕಳತ್ರ ಯೋಗ',
+          shloka: 'ಸಪ್ತಮ ನವಮ ಅಥವಾ ಪಂಚಮದಲ್ಲಿ ಶುಕ್ರ ಮತ್ತು ಸೂರ್ಯರಿದ್ದರೆ ವಿಕಲಚೇತನ ಪತ್ನಿ ಲಭಿಸುತ್ತಾಳೆ',
+        ));
+      }
+    }
+    return results;
+  }
+
+  /// Anishta 4: Saturn 1st + Venus 7th → barren wife; Papas in 12/7/1 + waning Moon in 5th
+  static List<YogaResult> _anishta4(Map<String, int> houses, KundaliResult r) {
+    final results = <YogaResult>[];
+    // Sub-rule A: Saturn in 1st AND Venus in 7th
+    if (houses['ಶನಿ'] == 1 && houses['ಶುಕ್ರ'] == 7) {
+      results.add(YogaResult(
+        name: 'ವಂಧ್ಯಾ ಪತ್ನಿ ಯೋಗ',
+        shloka: 'ಶನಿ ಲಗ್ನದಲ್ಲಿದ್ದು ಶುಕ್ರನು ಏಳನೇ ಮನೆಯಲ್ಲಿದ್ದರೆ ಜಾತಕನ ಪತ್ನಿಯು ಬಂಜೆ ಆಗುತ್ತಾಳೆ',
+      ));
+    }
+    // Sub-rule B: Papas in 12th, 7th, 1st AND waning Moon in 5th
+    if (_anyPapaInHouse(houses, 12) &&
+        _anyPapaInHouse(houses, 7) &&
+        _anyPapaInHouse(houses, 1) &&
+        houses['ಚಂದ್ರ'] == 5) {
+      final moonLon = r.planets['ಚಂದ್ರ']?.longitude;
+      final sunLon = r.planets['ರವಿ']?.longitude;
+      if (moonLon != null && sunLon != null) {
+        final waning = ((moonLon - sunLon + 360) % 360) > 180;
+        if (waning) {
+          results.add(YogaResult(
+            name: 'ಅಸುತ ಅಕಳತ್ರ ಯೋಗ',
+            shloka: 'ಹನ್ನೆರಡು ಏಳು ಮತ್ತು ಲಗ್ನದಲ್ಲಿ ಪಾಪಗ್ರಹರಿದ್ದು ಐದನೇ ಮನೆಯಲ್ಲಿ ಕ್ಷೀಣ ಚಂದ್ರನಿದ್ದರೆ ಸಂತಾನ ಮತ್ತು ಪತ್ನಿ ಸುಖ ಇರುವುದಿಲ್ಲ',
+          ));
+        }
+      }
+    }
+    return results;
+  }
+
+  /// Anishta 5: Venus+Moon in 7th → no wife/children; with shubha drishti → happiness in old age
+  static YogaResult? _anishta5(Map<String, int> houses) {
+    if (houses['ಶುಕ್ರ'] == 7 && houses['ಚಂದ್ರ'] == 7) {
+      final shubhaSees = _anyShubhaAspects(houses, 7);
+      if (shubhaSees) {
+        // With shubha drishti → happiness in old age (not a misfortune, skip)
+        return null;
+      }
+      return YogaResult(
+        name: 'ಅಭಾರ್ಯ ಅಸುತ ಯೋಗ',
+        shloka: 'ಶುಕ್ರ ಚಂದ್ರರು ಏಳನೇ ಮನೆಯಲ್ಲಿದ್ದರೆ ಪತ್ನಿ ಮತ್ತು ಪುತ್ರರಿಲ್ಲದವನಾಗುತ್ತಾನೆ',
+      );
+    }
+    return null;
+  }
+
+  /// Anishta 6: Moon 10th + Venus 7th + papa 4th → dynasty ends; Sun+Moon 7th + Saturn drishti → lowly
+  static List<YogaResult> _anishta6(Map<String, int> houses) {
+    final results = <YogaResult>[];
+    // Sub-rule A: Moon in 10th, Venus in 7th, papa in 4th
+    if (houses['ಚಂದ್ರ'] == 10 && houses['ಶುಕ್ರ'] == 7 && _anyPapaInHouse(houses, 4)) {
+      results.add(YogaResult(
+        name: 'ವಂಶೋಚ್ಛೇದ ಯೋಗ',
+        shloka: 'ಹತ್ತು ಏಳು ಮತ್ತು ನಾಲ್ಕನೇ ಮನೆಗಳಲ್ಲಿ ಚಂದ್ರ ಶುಕ್ರ ಮತ್ತು ಪಾಪಗ್ರಹರಿದ್ದರೆ ವಂಶ ನಾಶವಾಗುತ್ತದೆ',
+      ));
+    }
+    // Sub-rule B: Sun and Moon in 7th with Saturn drishti
+    if (houses['ರವಿ'] == 7 && houses['ಚಂದ್ರ'] == 7 &&
+        _planetAspectsHouse('ಶನಿ', houses, 7)) {
+      results.add(YogaResult(
+        name: 'ನೀಚ ಯೋಗ',
+        shloka: 'ಸೂರ್ಯ ಚಂದ್ರರು ಏಳರಲ್ಲಿದ್ದು ಶನಿ ದೃಷ್ಟಿ ಇದ್ದರೆ ನೀಚನಾಗುತ್ತಾನೆ',
+      ));
+    }
+    return results;
+  }
+
+  /// Anishta 7: Venus+Mars in 7th + papa drishti → vata; Moon 10th + Mars 7th + Saturn 2nd → disabled
+  static List<YogaResult> _anishta7(Map<String, int> houses) {
+    final results = <YogaResult>[];
+    // Sub-rule A: Venus and Mars in 7th with papa drishti
+    if (houses['ಶುಕ್ರ'] == 7 && houses['ಕುಜ'] == 7 && _anyPapaAspects(houses, 7)) {
+      results.add(YogaResult(
+        name: 'ವಾತ ರೋಗ ಯೋಗ',
+        shloka: 'ಪಾಪಗ್ರಹರ ದೃಷ್ಟಿಯಿರುವ ಶುಕ್ರ ಮತ್ತು ಕುಜರು ಏಳನೇ ಮನೆಯಲ್ಲಿದ್ದರೆ ವಾತ ರೋಗ ಬರುತ್ತದೆ',
+      ));
+    }
+    // Sub-rule B: Moon in 10th, Mars in 7th, Saturn in 2nd
+    if (houses['ಚಂದ್ರ'] == 10 && houses['ಕುಜ'] == 7 && houses['ಶನಿ'] == 2) {
+      results.add(YogaResult(
+        name: 'ವಿಕಲಾಂಗ ಯೋಗ',
+        shloka: 'ಚಂದ್ರನು ಹತ್ತರಲ್ಲಿದ್ದು ಕುಜನು ಏಳರಲ್ಲಿದ್ದು ಶನಿಯು ದ್ವಿತೀಯದಲ್ಲಿದ್ದರೆ ವಿಕಲಚೇತನನಾಗುತ್ತಾನೆ',
+      ));
+    }
+    return results;
+  }
+
+  /// Anishta 8: Moon between papas + Sun in 7th → asthma/TB/tumors
+  static YogaResult? _anishta8(Map<String, int> houses) {
+    final moonH = houses['ಚಂದ್ರ'];
+    final sunH = houses['ರವಿ'];
+    if (moonH == null || sunH != 7) return null;
+
+    final prev = ((moonH - 1 - 1 + 12) % 12) + 1;
+    final next = ((moonH - 1 + 1) % 12) + 1;
+    final moonBetweenPapas = _anyPapaInHouse(houses, prev) && _anyPapaInHouse(houses, next);
+
+    if (moonBetweenPapas) {
+      return YogaResult(
+        name: 'ಶ್ವಾಸ ಕ್ಷಯ ಗುಲ್ಮ ರೋಗ ಯೋಗ',
+        shloka: 'ಪಾಪಗ್ರಹರ ಮಧ್ಯೆ ಚಂದ್ರನಿದ್ದು ಏಳನೇ ಮನೆಯಲ್ಲಿ ಸೂರ್ಯನಿದ್ದರೆ ಶ್ವಾಸ ಕ್ಷಯ ಮತ್ತು ಗುಲ್ಮ ರೋಗಗಳು ಬರುತ್ತವೆ',
+      );
+    }
+    return null;
+  }
+
+  /// Anishta 9: Moon in specific navamsha + Saturn/Mars drishti → leprosy
+  static YogaResult? _anishta9(Map<String, int> houses, KundaliResult r) {
+    final moonInfo = r.planets['ಚಂದ್ರ'];
+    if (moonInfo == null) return null;
+    final moonNav = _navamshaRashi(moonInfo.longitude);
+    // Dhanu=8, Meena=11, Kataka=3, Makara=9, Mesha=0
+    if ({0, 3, 8, 9, 11}.contains(moonNav)) {
+      final moonH = houses['ಚಂದ್ರ']!;
+      final saturnSees = _planetAspectsHouse('ಶನಿ', houses, moonH) || houses['ಶನಿ'] == moonH;
+      final marsSees = _planetAspectsHouse('ಕುಜ', houses, moonH) || houses['ಕುಜ'] == moonH;
+      if (saturnSees || marsSees) {
+        return YogaResult(
+          name: 'ಕುಷ್ಠ ರೋಗ ಯೋಗ',
+          shloka: 'ಚಂದ್ರನು ಧನುಸ್ಸು ಮೀನ ಕಟಕ ಮಕರ ಅಥವಾ ಮೇಷ ನವಾಂಶದಲ್ಲಿದ್ದು ಶನಿ ಕುಜರಿಂದ ನೋಡಲ್ಪಟ್ಟರೆ ಕುಷ್ಠ ರೋಗ ಬರುತ್ತದೆ',
+        );
+      }
+    }
+    return null;
+  }
+
+  /// Anishta 10: Sun 8th, Moon 6th, Mars 2nd, Saturn 12th → blindness
+  static YogaResult? _anishta10(Map<String, int> houses) {
+    if (houses['ರವಿ'] == 8 &&
+        houses['ಚಂದ್ರ'] == 6 &&
+        houses['ಕುಜ'] == 2 &&
+        houses['ಶನಿ'] == 12) {
+      return YogaResult(
+        name: 'ಅಂಧತ್ವ ಯೋಗ',
+        shloka: 'ಎಂಟು ಆರು ಎರಡು ಮತ್ತು ಹನ್ನೆರಡನೇ ಮನೆಗಳಲ್ಲಿ ಸೂರ್ಯ ಚಂದ್ರ ಕುಜ ಶನಿ ಇದ್ದರೆ ಕುರುಡನಾಗುತ್ತಾನೆ',
+      );
+    }
+    return null;
+  }
+
+  /// Anishta 11: Papas in 9/11/3/5 without shubha drishti → deafness; Papas in 7th → dental
+  static List<YogaResult> _anishta11(Map<String, int> houses) {
+    final results = <YogaResult>[];
+    // Sub-rule A: Papas in 9th, 11th, 3rd, 5th without shubha drishti
+    if (_anyPapaInHouse(houses, 9) &&
+        _anyPapaInHouse(houses, 11) &&
+        _anyPapaInHouse(houses, 3) &&
+        _anyPapaInHouse(houses, 5)) {
+      final noShubha = !_anyShubhaAspects(houses, 9) &&
+          !_anyShubhaAspects(houses, 11) &&
+          !_anyShubhaAspects(houses, 3) &&
+          !_anyShubhaAspects(houses, 5);
+      if (noShubha) {
+        results.add(YogaResult(
+          name: 'ಬಧಿರ ಯೋಗ',
+          shloka: 'ಒಂಬತ್ತು ಹನ್ನೊಂದು ಮೂರು ಮತ್ತು ಐದನೇ ಮನೆಗಳಲ್ಲಿ ಪಾಪಗ್ರಹರಿದ್ದು ಶುಭಗ್ರಹರ ದೃಷ್ಟಿ ಇಲ್ಲದಿದ್ದರೆ ಕಿವುಡನಾಗುತ್ತಾನೆ',
+        ));
+      }
+    }
+    // Sub-rule B: Papas in 7th → dental problems
+    if (_anyPapaInHouse(houses, 7)) {
+      results.add(YogaResult(
+        name: 'ದಂತ ವಿಕೃತಿ ಯೋಗ',
+        shloka: 'ಏಳನೇ ಮನೆಯಲ್ಲಿ ಪಾಪಗ್ರಹರಿದ್ದರೆ ಹಲ್ಲುಗಳ ವಿಕೃತಿ ಉಂಟಾಗುತ್ತದೆ',
+      ));
+    }
+    return results;
+  }
+
+  /// Anishta 12: Moon+Rahu in lagna + papas in trines → pishacha affliction
+  static YogaResult? _anishta12(Map<String, int> houses) {
+    if (houses['ಚಂದ್ರ'] == 1 && houses['ರಾಹು'] == 1) {
+      final papaInTrines = _anyPapaInHouse(houses, 5) || _anyPapaInHouse(houses, 9);
+      if (papaInTrines) {
+        return YogaResult(
+          name: 'ಪಿಶಾಚಿ ಬಾಧೆ ಯೋಗ',
+          shloka: 'ಲಗ್ನದಲ್ಲಿ ರಾಹುಗ್ರಸ್ತ ಚಂದ್ರನಿದ್ದು ತ್ರಿಕೋಣದಲ್ಲಿ ಪಾಪಗ್ರಹರಿದ್ದರೆ ಪಿಶಾಚಿ ಬಾಧೆ ಉಂಟಾಗುತ್ತದೆ',
+        );
+      }
+    }
+    return null;
+  }
+
+  /// Anishta 13: Jupiter/Saturn/Mars combinations → madness
+  static List<YogaResult> _anishta13(Map<String, int> houses) {
+    final results = <YogaResult>[];
+    // Sub-rule A: Jupiter in 1st AND Saturn in 7th
+    if (houses['ಗುರು'] == 1 && houses['ಶನಿ'] == 7) {
+      results.add(YogaResult(
+        name: 'ಉನ್ಮಾದ ಯೋಗ (೧)',
+        shloka: 'ಲಗ್ನದಲ್ಲಿ ಗುರುವಿದ್ದು ಏಳನೇ ಮನೆಯಲ್ಲಿ ಶನಿ ಇದ್ದರೆ ಉನ್ಮಾದ ರೋಗ ಬರುತ್ತದೆ',
+      ));
+    }
+    // Sub-rule B: Mars in 7th AND Jupiter in 1st
+    if (houses['ಕುಜ'] == 7 && houses['ಗುರು'] == 1) {
+      results.add(YogaResult(
+        name: 'ಉನ್ಮಾದ ಯೋಗ (೨)',
+        shloka: 'ಏಳನೇ ಮನೆಯಲ್ಲಿ ಕುಜನಿದ್ದು ಲಗ್ನದಲ್ಲಿ ಗುರುವಿದ್ದರೂ ಉನ್ಮಾದ ರೋಗ ಬರುತ್ತದೆ',
+      ));
+    }
+    // Sub-rule C: Saturn in 1st AND Mars in 9th or 5th or 7th
+    if (houses['ಶನಿ'] == 1 &&
+        (houses['ಕುಜ'] == 9 || houses['ಕುಜ'] == 5 || houses['ಕುಜ'] == 7)) {
+      results.add(YogaResult(
+        name: 'ಉನ್ಮಾದ ಯೋಗ (೩)',
+        shloka: 'ಲಗ್ನದಲ್ಲಿ ಶನಿಯಿದ್ದು ಒಂಬತ್ತು ಐದು ಏಳರಲ್ಲಿ ಕುಜನಿದ್ದರೂ ಉನ್ಮಾದ ರೋಗ ಬರುತ್ತದೆ',
+      ));
+    }
+    return results;
+  }
+
+  /// Anishta 15: Sun/Saturn/Mars in 9th or 5th with papa drishti → various afflictions
+  static List<YogaResult> _anishta15(Map<String, int> houses) {
+    final results = <YogaResult>[];
+    // Sub-rule A: Sun in 9th or 5th with papa drishti → eye defect
+    final sunH = houses['ರವಿ'];
+    if (sunH == 9 || sunH == 5) {
+      if (_anyPapaAspects(houses, sunH!)) {
+        results.add(YogaResult(
+          name: 'ದೃಷ್ಟಿ ದೋಷ ಯೋಗ',
+          shloka: 'ಒಂಬತ್ತು ಮತ್ತು ಐದರಲ್ಲಿ ಸೂರ್ಯನಿದ್ದು ಪಾಪ ದೃಷ್ಟಿ ಇದ್ದರೆ ದೃಷ್ಟಿ ದೋಷ ಬರುತ್ತದೆ',
+        ));
+      }
+    }
+    // Sub-rule B: Saturn in 9th or 5th with papa drishti → many diseases
+    final satH = houses['ಶನಿ'];
+    if (satH == 9 || satH == 5) {
+      if (_anyPapaAspects(houses, satH!)) {
+        results.add(YogaResult(
+          name: 'ಅನೇಕ ರೋಗ ಯೋಗ',
+          shloka: 'ಒಂಬತ್ತು ಮತ್ತು ಐದರಲ್ಲಿ ಶನಿಯಿದ್ದರೆ ಅನೇಕ ರೋಗಗಳು ಬರುತ್ತವೆ',
+        ));
+      }
+    }
+    // Sub-rule C: Mars in 9th or 5th with papa drishti → disabled
+    final marsH = houses['ಕುಜ'];
+    if (marsH == 9 || marsH == 5) {
+      if (_anyPapaAspects(houses, marsH!)) {
+        results.add(YogaResult(
+          name: 'ವಿಕಲಾಂಗ ಯೋಗ (೨)',
+          shloka: 'ಒಂಬತ್ತು ಮತ್ತು ಐದರಲ್ಲಿ ಕುಜನಿದ್ದರೆ ವಿಕಲಾಂಗನಾಗುತ್ತಾನೆ',
+        ));
+      }
+    }
+    return results;
+  }
+
+  /// Anishta 16: Papas in 12th, 2nd, 5th, 9th → imprisonment
+  static YogaResult? _anishta16(Map<String, int> houses) {
+    if (_anyPapaInHouse(houses, 12) &&
+        _anyPapaInHouse(houses, 2) &&
+        _anyPapaInHouse(houses, 5) &&
+        _anyPapaInHouse(houses, 9)) {
+      return YogaResult(
+        name: 'ಬಂಧನ ಯೋಗ',
+        shloka: 'ಹನ್ನೆರಡು ಎರಡು ಐದು ಮತ್ತು ಒಂಬತ್ತನೇ ಮನೆಗಳಲ್ಲಿ ಪಾಪಗ್ರಹರಿದ್ದರೆ ಜೈಲುವಾಸ ಅಥವಾ ಬಂಧನ ಪ್ರಾಪ್ತಿಯಾಗುತ್ತದೆ',
+      );
+    }
+    return null;
+  }
+
+  /// Anishta 17: Moon+Saturn same house + Mars drishti → epilepsy/TB
+  static YogaResult? _anishta17(Map<String, int> houses) {
+    final moonH = houses['ಚಂದ್ರ'];
+    final satH = houses['ಶನಿ'];
+    if (moonH != null && satH != null && moonH == satH) {
+      if (_planetAspectsHouse('ಕುಜ', houses, moonH)) {
+        return YogaResult(
+          name: 'ಅಪಸ್ಮಾರ ಕ್ಷಯ ಯೋಗ',
+          shloka: 'ಚಂದ್ರ ಮತ್ತು ಶನಿ ಒಟ್ಟಿಗೆ ಇದ್ದು ಕುಜನ ದೃಷ್ಟಿ ಇದ್ದರೆ ಅಪಸ್ಮಾರ ರೋಗಿ ಮತ್ತು ಕ್ಷಯ ರೋಗಿಯಾಗುತ್ತಾನೆ',
+        );
+      }
+    }
+    return null;
+  }
+
+  /// Anishta 18: Sun+Saturn+Mars in 10th without shubha drishti → servant
+  static YogaResult? _anishta18(Map<String, int> houses) {
+    if (houses['ರವಿ'] == 10 && houses['ಶನಿ'] == 10 && houses['ಕುಜ'] == 10) {
+      if (!_anyShubhaAspects(houses, 10)) {
+        return YogaResult(
+          name: 'ಭೃತಕ ಯೋಗ',
+          shloka: 'ಸೂರ್ಯ ಶನಿ ಮತ್ತು ಕುಜರು ಹತ್ತನೇ ಮನೆಯಲ್ಲಿದ್ದು ಶುಭಗ್ರಹರ ದೃಷ್ಟಿ ಇಲ್ಲದಿದ್ದರೆ ಜಾತಕನು ಇತರರ ಸೇವಕನಾಗುತ್ತಾನೆ',
+        );
+      }
+    }
+    return null;
   }
 }
