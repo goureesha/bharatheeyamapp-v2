@@ -55,7 +55,7 @@ class GrahaPhala {
     final inSign = lon % 30;
     final navPada = (inSign / (30.0 / 9.0)).floor();
     final baseRashi = _rashiOf(lon);
-    final fireStart = [0, 3, 6, 9]; // Fire sign starts for each element
+    final fireStart = [0, 9, 6, 3]; // Fire→Mesha, Earth→Makara, Air→Tula, Water→Kataka
     return (fireStart[baseRashi % 4] + navPada) % 12;
   }
   static int _d12Rashi(double lon) {
