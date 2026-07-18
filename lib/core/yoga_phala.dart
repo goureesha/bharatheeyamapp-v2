@@ -5,10 +5,11 @@ import '../constants/strings.dart';
 
 class YogaResult {
   final String name;
-  final String shloka;
-  final String chart; // 'ರಾಶಿ', 'ನವಾಂಶ', 'ದ್ವಾದಶಾಂಶ'
+  final String verse;   // Sanskrit shloka (original verse)
+  final String shloka;  // Satisfied condition explanation (Kannada)
+  final String chart;   // 'ರಾಶಿ', 'ನವಾಂಶ', 'ದ್ವಾದಶಾಂಶ'
   final Map<String, int> houses; // planet house positions when yoga was found
-  YogaResult({required this.name, required this.shloka, this.chart = 'ರಾಶಿ', this.houses = const {}});
+  YogaResult({required this.name, this.verse = '', required this.shloka, this.chart = 'ರಾಶಿ', this.houses = const {}});
 }
 
 class YogaPhala {
@@ -320,7 +321,7 @@ class YogaPhala {
       }
       final results = _evaluateAll(r, merged, effectiveLagnaRashi, effectiveLagnaLon, chartLabel);
       for (final y in results) {
-        allResults.putIfAbsent(y.name, () => YogaResult(name: y.name, shloka: y.shloka, chart: chartLabel, houses: y.houses));
+        allResults.putIfAbsent(y.name, () => YogaResult(name: y.name, verse: y.verse, shloka: y.shloka, chart: chartLabel, houses: y.houses));
       }
     }
 
@@ -435,7 +436,7 @@ class YogaPhala {
     if (an18 != null) results.add(an18);
 
     // Attach house positions to all results
-    return results.map((y) => YogaResult(name: y.name, shloka: y.shloka, chart: y.chart, houses: houses)).toList();
+    return results.map((y) => YogaResult(name: y.name, verse: y.verse, shloka: y.shloka, chart: y.chart, houses: houses)).toList();
   }
 
   /// Run HOUSE-BASED yogas only (for divisional charts — no longitude needed)
@@ -471,7 +472,7 @@ class YogaPhala {
     results.addAll(_jkl28(houses));
 
     // Tag all results with chart name
-    return results.map((y) => YogaResult(name: y.name, shloka: y.shloka, chart: chart)).toList();
+    return results.map((y) => YogaResult(name: y.name, verse: y.verse, shloka: y.shloka, chart: chart)).toList();
   }
 
   // ═══════════════════════════════════════════
@@ -489,7 +490,8 @@ class YogaPhala {
     if (!satisfied) return null;
     return YogaResult(
       name: 'ಕುಜ-ಚಂದ್ರ ಯೋಗ',
-      shloka: 'ಕುಜೇಂದುಹೇತು ಪ್ರತಿಮಾಸಮಾರ್ತವಂ ಗತೇ ತು ಪೀಡರ್ಕ್ಷಮನುಷ್ಣದೀಧಿತೌ ।\nಅತೋsನ್ಯಥಾಸ್ಥ ಶುಭಪುಂಗ್ರಹೇಕ್ಷಿತೇ ನರೇಣ ಸಂಯೋಗಮುಪೈತಿ ಕಾಮಿನೀ',
+      verse: 'ಕುಜೇಂದುಹೇತು ಪ್ರತಿಮಾಸಮಾರ್ತವಂ ಗತೇ ತು ಪೀಡರ್ಕ್ಷಮನುಷ್ಣದೀಧಿತೌ ।\nಅತೋsನ್ಯಥಾಸ್ಥ ಶುಭಪುಂಗ್ರಹೇಕ್ಷಿತೇ ನರೇಣ ಸಂಯೋಗಮುಪೈತಿ ಕಾಮಿನೀ',
+      shloka: 'ಕುಜ-ಚಂದ್ರರಲ್ಲಿ ಪರಸ್ಪರ ಕೇಂದ್ರ/ತ್ರಿಕೋಣ ಅಥವಾ ದೃಷ್ಟಿ ಇದ್ದರೆ',
     );
   }
 
@@ -503,7 +505,8 @@ class YogaPhala {
     if (!(hasShubha && hasPapa)) return null;
     return YogaResult(
       name: 'ಶುಭ-ಪಾಪ ಮಿಶ್ರ ಯೋಗ',
-      shloka: 'ಅಸದ್ಗ್ರಹಾಲೋಕಿತಸಂಯುತೇsಸ್ತೇ ಸರೋಷ ಇಷ್ಟೆ ಸವಿಲಾಸಹಾಸಃ',
+      verse: 'ಅಸದ್ಗ್ರಹಾಲೋಕಿತಸಂಯುತೇsಸ್ತೇ ಸರೋಷ ಇಷ್ಟೆ ಸವಿಲಾಸಹಾಸಃ',
+      shloka: 'ಲಗ್ನದಲ್ಲಿ ಶುಭ ಮತ್ತು ಪಾಪ ಗ್ರಹರ ಪ್ರಭಾವ ಇದ್ದರೆ',
     );
   }
 
@@ -533,7 +536,8 @@ class YogaPhala {
     if (!satisfied) return null;
     return YogaResult(
       name: 'ಸಂತಾನ ಯೋಗ',
-      shloka: 'ರವೀಂದುಶುಕ್ರಾವನಿಜೈಃ ಸ್ವಭಾಗಗೈರ್ಗುರೌ ತ್ರಿಕೋಣೋದಯಧರ್ಮಗೇsಪಿ ವಾ ।\nಭವತ್ಯಪತ್ಯಂ ಹಿ ವಿಬೀಜಿನಾಮಿಮೇ ಕರಾ ಹಿಮಾಂಶೋರ್ವಿದೃಶಾಮಿವಾಫಲಾಃ',
+      verse: 'ರವೀಂದುಶುಕ್ರಾವನಿಜೈಃ ಸ್ವಭಾಗಗೈರ್ಗುರೌ ತ್ರಿಕೋಣೋದಯಧರ್ಮಗೇsಪಿ ವಾ ।\nಭವತ್ಯಪತ್ಯಂ ಹಿ ವಿಬೀಜಿನಾಮಿಮೇ ಕರಾ ಹಿಮಾಂಶೋರ್ವಿದೃಶಾಮಿವಾಫಲಾಃ',
+      shloka: 'ರವಿ, ಚಂದ್ರ, ಕುಜರು ಸ್ವಕ್ಷೇತ್ರದಲ್ಲಿದ್ದರೆ ಅಥವಾ ಗುರು ತ್ರಿಕೋಣದಲ್ಲಿದ್ದರೆ',
     );
   }
 
@@ -563,7 +567,8 @@ class YogaPhala {
     if (!satisfied) return null;
     return YogaResult(
       name: 'ಗದ/ಮೃತ್ಯು ಯೋಗ',
-      shloka: 'ದಿವಾಕರೇಂದ್ವಃ ಸ್ಮರಗೌ ಕುಜಾರ್ಕಚೌ ಗದಪ್ರದೌ ಪುಂಗಲಯೋಷಿತೋಸ್ತದಾ ।\nವ್ಯಯಸ್ವಗೌ ಮೃತ್ಯುಕರೌ ತಥಾ ಯುತೌ ತದೇಕದೃಷ್ಟಾ ಮರಣಾಯ ಕಲ್ಪಿತೌ',
+      verse: 'ದಿವಾಕರೇಂದ್ವಃ ಸ್ಮರಗೌ ಕುಜಾರ್ಕಚೌ ಗದಪ್ರದೌ ಪುಂಗಲಯೋಷಿತೋಸ್ತದಾ ।\nವ್ಯಯಸ್ವಗೌ ಮೃತ್ಯುಕರೌ ತಥಾ ಯುತೌ ತದೇಕದೃಷ್ಟಾ ಮರಣಾಯ ಕಲ್ಪಿತೌ',
+      shloka: 'ರವಿ/ಚಂದ್ರರು 7ನೇ ಅಥವಾ 12/2ನೇ ಮನೆಯಲ್ಲಿದ್ದು ಕುಜ/ಶನಿ ದೃಷ್ಟಿ ಇದ್ದರೆ',
     );
   }
 
@@ -577,7 +582,8 @@ class YogaPhala {
     if (!(papaInLagna && !shubhaSees)) return null;
     return YogaResult(
       name: 'ಪಾಪ ಲಗ್ನ ಯೋಗ',
-      shloka: 'ಅಭಿಲಷದ್ಧಿರುದಯರ್ಕ್ಷಮಸದ್ಧಿರ್ಮರಣಮೇತಿ ಶುಭದೃಷ್ಟಿಮಯಾತೇ',
+      verse: 'ಅಭಿಲಷದ್ಧಿರುದಯರ್ಕ್ಷಮಸದ್ಧಿರ್ಮರಣಮೇತಿ ಶುಭದೃಷ್ಟಿಮಯಾತೇ',
+      shloka: 'ಲಗ್ನದಲ್ಲಿ ಪಾಪ ಗ್ರಹವಿದ್ದು ಶುಭ ದೃಷ್ಟಿ ಇಲ್ಲದಿದ್ದರೆ',
     );
   }
 
@@ -592,7 +598,8 @@ class YogaPhala {
     if (!(shaniInLagna && chandraSees && kujaSees)) return null;
     return YogaResult(
       name: 'ಶನಿ-ಚಂದ್ರ-ಕುಜ ಲಗ್ನ ಯೋಗ',
-      shloka: 'ಉದಯರಾಶಿಸಹಿತೇ ಚ ಯಮೇ ಸ್ತ್ರೀ ವಿಗಲಿತೋಡುಪತಿಭೂಸುತದೃಷ್ಟೇ',
+      verse: 'ಉದಯರಾಶಿಸಹಿತೇ ಚ ಯಮೇ ಸ್ತ್ರೀ ವಿಗಲಿತೋಡುಪತಿಭೂಸುತದೃಷ್ಟೇ',
+      shloka: 'ಲಗ್ನದಲ್ಲಿ ಶನಿಯಿದ್ದು ಚಂದ್ರ ಮತ್ತು ಕುಜರ ದೃಷ್ಟಿ ಇದ್ದರೆ',
     );
   }
 
@@ -610,7 +617,8 @@ class YogaPhala {
     if (papakartari(1)) {
       return YogaResult(
         name: 'ಪಾಪಕರ್ತರಿ ಯೋಗ',
-        shloka: 'ಅಶುಭದ್ವಯಮಧ್ಯಸಂಸ್ಥಿತೌ ಲಗ್ನೆoದೂ ನ ಚ ಸೌಮ್ಯವೀಕ್ಷಿತೌ ।\nಯುಗಪತ್ ಪೃಥಗೇವ ವಾ ವದೇನ್ನಾರೀ ಗರ್ಭಯುತಾ ವಿಪದ್ಯತೇ',
+        verse: 'ಅಶುಭದ್ವಯಮಧ್ಯಸಂಸ್ಥಿತೌ ಲಗ್ನೆoದೂ ನ ಚ ಸೌಮ್ಯವೀಕ್ಷಿತೌ ।\nಯುಗಪತ್ ಪೃಥಗೇವ ವಾ ವದೇನ್ನಾರೀ ಗರ್ಭಯುತಾ ವಿಪದ್ಯತೇ',
+        shloka: 'ಲಗ್ನ ಅಥವಾ ಚಂದ್ರನ ಎರಡು ಕಡೆ ಪಾಪ ಗ್ರಹರಿದ್ದರೆ',
       );
     }
     // Check Chandra
@@ -618,7 +626,8 @@ class YogaPhala {
     if (hChandra != null && papakartari(hChandra)) {
       return YogaResult(
         name: 'ಪಾಪಕರ್ತರಿ ಯೋಗ',
-        shloka: 'ಅಶುಭದ್ವಯಮಧ್ಯಸಂಸ್ಥಿತೌ ಲಗ್ನೆoದೂ ನ ಚ ಸೌಮ್ಯವೀಕ್ಷಿತೌ ।\nಯುಗಪತ್ ಪೃಥಗೇವ ವಾ ವದೇನ್ನಾರೀ ಗರ್ಭಯುತಾ ವಿಪದ್ಯತೇ',
+        verse: 'ಅಶುಭದ್ವಯಮಧ್ಯಸಂಸ್ಥಿತೌ ಲಗ್ನೆoದೂ ನ ಚ ಸೌಮ್ಯವೀಕ್ಷಿತೌ ।\nಯುಗಪತ್ ಪೃಥಗೇವ ವಾ ವದೇನ್ನಾರೀ ಗರ್ಭಯುತಾ ವಿಪದ್ಯತೇ',
+        shloka: 'ಲಗ್ನ ಅಥವಾ ಚಂದ್ರನ ಎರಡು ಕಡೆ ಪಾಪ ಗ್ರಹರಿದ್ದರೆ',
       );
     }
     return null;
@@ -658,7 +667,8 @@ class YogaPhala {
     if (!satisfied) return null;
     return YogaResult(
       name: 'ಗರ್ಭ ಪೀಡಾ ಯೋಗ',
-      shloka: 'ಶಶಿನಶ್ಚತುರ್ಥಗೇ ಲಗ್ನಾದ್ವಾ ನಿಧನಾಶ್ರಿತೇ ಕುಚೇ ।\nಬಂಧಂತ್ಯಗಯೋ ಕುಜಾರ್ಕಯೋಃ ಕ್ಷೀಣೇಂದೌ ನಿಧನಾಯ ಪೂರ್ವವತ್',
+      verse: 'ಶಶಿನಶ್ಚತುರ್ಥಗೇ ಲಗ್ನಾದ್ವಾ ನಿಧನಾಶ್ರಿತೇ ಕುಚೇ ।\nಬಂಧಂತ್ಯಗಯೋ ಕುಜಾರ್ಕಯೋಃ ಕ್ಷೀಣೇಂದೌ ನಿಧನಾಯ ಪೂರ್ವವತ್',
+      shloka: 'ಕುಜನು ಲಗ್ನ/ಚಂದ್ರನಿಂದ 4/8ರಲ್ಲಿ ಅಥವಾ ಕುಜ-ರವಿ 4/12ರಲ್ಲಿದ್ದು ಕ್ಷೀಣ ಚಂದ್ರನಿದ್ದರೆ',
     );
   }
 
@@ -675,7 +685,8 @@ class YogaPhala {
     if (!satisfied) return null;
     return YogaResult(
       name: 'ಶಸ್ತ್ರ ಮರಣ ಯೋಗ',
-      shloka: 'ಉದಯಾಸ್ತಗಯೋಃ ಕುಚಾರ್ಕಯೋರ್ನಿಧನಂ ಶಸ್ತ್ರಕೃತಂ ವದೇತ್ತದಾ ।\nಮಾಸಾಧಿಪತೌ ನಿಪೀಡಿತೇ ತತ್ಕಾಲೇ ಸ್ರವಣಂ ಸಮಾದಿಶೇತ್',
+      verse: 'ಉದಯಾಸ್ತಗಯೋಃ ಕುಚಾರ್ಕಯೋರ್ನಿಧನಂ ಶಸ್ತ್ರಕೃತಂ ವದೇತ್ತದಾ ।\nಮಾಸಾಧಿಪತೌ ನಿಪೀಡಿತೇ ತತ್ಕಾಲೇ ಸ್ರವಣಂ ಸಮಾದಿಶೇತ್',
+      shloka: 'ಕುಜ ಮತ್ತು ಸೂರ್ಯರು 1 ಮತ್ತು 7ನೇ ಮನೆಯಲ್ಲಿದ್ದರೆ',
     );
   }
 
@@ -687,7 +698,7 @@ class YogaPhala {
   // ═══════════════════════════════════════════
   static List<YogaResult> _yoga11(KundaliResult r, Map<String, int> houses) {
     final results = <YogaResult>[];
-    const shloka = 'ಶಶಾಂಕಲಗೋಪಗತೈ: ಶುಭಗ್ರಹೈಸ್ತಿಕೋಣಚಾಯಾರ್ಥಸುಖಾಸ್ಪದಸ್ಥಿತೈಃ ।\nತೃತೀಯಲಾಭರ್ಕ್ಷಗತೈರಶೋಭನೈ: ಸುಖೀ ಚ ಗರ್ಭೋ ರವಿಣಾಭಿವೀಕ್ಷಿತಃ';
+    const verse = 'ಶಶಾಂಕಲಗೋಪಗತೈ: ಶುಭಗ್ರಹೈಸ್ತಿಕೋಣಚಾಯಾರ್ಥಸುಖಾಸ್ಪದಸ್ಥಿತೈಃ ।\nತೃತೀಯಲಾಭರ್ಕ್ಷಗತೈರಶೋಭನೈ: ಸುಖೀ ಚ ಗರ್ಭೋ ರವಿಣಾಭಿವೀಕ್ಷಿತಃ';
 
     // ── Condition 11a: shubha in 5,9,2,4,10 AND papa in 3,11 ──
     bool shubhaOk = false;
@@ -716,7 +727,8 @@ class YogaPhala {
     if (shubhaOk && papaOk) {
       results.add(YogaResult(
         name: 'ಗರ್ಭ ಸುಖ ಯೋಗ',
-        shloka: shloka,
+        verse: verse,
+        shloka: 'ಶುಭ ಗ್ರಹರು 5,9,2,4,10ರಲ್ಲಿ ಮತ್ತು ಪಾಪ ಗ್ರಹರು 3,11ರಲ್ಲಿದ್ದರೆ',
       ));
     }
 
@@ -725,7 +737,8 @@ class YogaPhala {
     if (suryaSees) {
       results.add(YogaResult(
         name: 'ಗರ್ಭ ಸುಖ ಯೋಗ (ಸೂರ್ಯ ದೃಷ್ಟಿ)',
-        shloka: '$shloka\nಸೂರ್ಯನ ದೃಷ್ಟಿಯಿದ್ದರೆ ಗರ್ಭವು ಸುಖಕರವಾಗಿರುತ್ತದೆ',
+        verse: verse,
+        shloka: 'ಸೂರ್ಯನ ದೃಷ್ಟಿಯಿದ್ದರೆ ಗರ್ಭವು ಸುಖಕರವಾಗಿರುತ್ತದೆ',
       ));
     }
 
@@ -734,7 +747,8 @@ class YogaPhala {
     if (guruSees) {
       results.add(YogaResult(
         name: 'ಗರ್ಭ ಸುಖ ಯೋಗ (ಗುರು ದೃಷ್ಟಿ)',
-        shloka: '$shloka\nಗುರುವಿನ ದೃಷ್ಟಿಯಿದ್ದರೆ ಗರ್ಭವು ಸುಖಕರವಾಗಿರುತ್ತದೆ',
+        verse: verse,
+        shloka: 'ಗುರುವಿನ ದೃಷ್ಟಿಯಿದ್ದರೆ ಗರ್ಭವು ಸುಖಕರವಾಗಿರುತ್ತದೆ',
       ));
     }
 
@@ -772,7 +786,8 @@ class YogaPhala {
     if (!(papaInTrikona && moonInVrishabha && papaSeesMoon)) return null;
     return YogaResult(
       name: 'ವಾಕ್ ದೋಷ ಯೋಗ',
-      shloka: 'ತ್ರಿಕೋಣಗೇ ವಿಬಲೈಸ್ತತೋಽಪರೈರ್ಮುಖಾಂಫ್ರಿಹಸೊರ್ದ್ವಿಗುಣಸ್ತದಾ ಭವೇತ್ ।\nಅವಾಗ್ಗವೀಂದಾವಶುಭೈರ್ಭಸಂಧಿಗೈ: ಶುಭೇಕ್ಷಿತೇ ಚೇತ್ಕುರುತೇ ಗಿರಂ ಚಿರಾತ್',
+      verse: 'ತ್ರಿಕೋಣಗೇ ವಿಬಲೈಸ್ತತೋಽಪರೈರ್ಮುಖಾಂಫ್ರಿಹಸೊರ್ದ್ವಿಗುಣಸ್ತದಾ ಭವೇತ್ ।\nಅವಾಗ್ಗವೀಂದಾವಶುಭೈರ್ಭಸಂಧಿಗೈ: ಶುಭೇಕ್ಷಿತೇ ಚೇತ್ಕುರುತೇ ಗಿರಂ ಚಿರಾತ್',
+      shloka: 'ತ್ರಿಕೋಣದಲ್ಲಿ ಪಾಪ + ವೃಷಭದಲ್ಲಿ ಚಂದ್ರ + ಪಾಪ ದೃಷ್ಟಿ ಇದ್ದರೆ',
     );
   }
 
@@ -822,7 +837,8 @@ class YogaPhala {
     if (!satisfied) return null;
     return YogaResult(
       name: 'ಅಂಗ ದೋಷ ಯೋಗ',
-      shloka: 'ಸೌಮ್ಯರ್ಕ್ಷಾಂಶೇ ರವಿಜರುಧಿರೌ ಚೇತ್ಸದಂತೋsತ್ರ ಜಾತಃ\nಕುಬ್ಬಃ ಸ್ವರ್ಕ್ಷೆ ಶಶಿನಿ ತನುಗೇ ಮಂದಮಾಹೇಯದೃಷ್ಟೇ ।\nಪಂಗುರ್ಮೀನೇ ಯಮಶಶಿಕುಜೈರ್ವೀಕ್ಷಿತೇ ಲಗ್ನಸಂಸ್ಥೆ\nಸಂಧೇ ಪಾಪೇ ಶಶಿನಿ ಚ ಜಡಃ ಸ್ಯಾನ್ನ ಚೇತೌಮ್ಯದೃಷ್ಟಿ:',
+      verse: 'ಸೌಮ್ಯರ್ಕ್ಷಾಂಶೇ ರವಿಜರುಧಿರೌ ಚೇತ್ಸದಂತೋsತ್ರ ಜಾತಃ\nಕುಬ್ಬಃ ಸ್ವರ್ಕ್ಷೆ ಶಶಿನಿ ತನುಗೇ ಮಂದಮಾಹೇಯದೃಷ್ಟೇ ।\nಪಂಗುರ್ಮೀನೇ ಯಮಶಶಿಕುಜೈರ್ವೀಕ್ಷಿತೇ ಲಗ್ನಸಂಸ್ಥೆ\nಸಂಧೇ ಪಾಪೇ ಶಶಿನಿ ಚ ಜಡಃ ಸ್ಯಾನ್ನ ಚೇತೌಮ್ಯದೃಷ್ಟಿ:',
+      shloka: 'ಶನಿ-ಕುಜ ಬುಧ ನವಾಂಶದಲ್ಲಿ ಅಥವಾ ಕರ್ಕ/ಮೀನ ಲಗ್ನ ಪಾಪ ದೃಷ್ಟಿ ಇದ್ದರೆ',
     );
   }
 
@@ -858,7 +874,8 @@ class YogaPhala {
     if (!satisfied) return null;
     return YogaResult(
       name: 'ವಾಮನ/ಅಂಗಹೀನ ಯೋಗ',
-      shloka: 'ಸೌರಶಶಾಂಕದಿವಾಕರದೃಷ್ಟೇ ವಾಮನಕೋ ಮಕರಾಂತ್ಯವಿಲಗ್ನ ।\nಧೀನವಮೋದಯಗೈಶ್ಚ ದೃಗಾಣೈ: ಪಾಪಯುತೈರಭುಜಾಂಘಿಶಿರಾಃ ಸ್ಯಾತ್',
+      verse: 'ಸೌರಶಶಾಂಕದಿವಾಕರದೃಷ್ಟೇ ವಾಮನಕೋ ಮಕರಾಂತ್ಯವಿಲಗ್ನ ।\nಧೀನವಮೋದಯಗೈಶ್ಚ ದೃಗಾಣೈ: ಪಾಪಯುತೈರಭುಜಾಂಘಿಶಿರಾಃ ಸ್ಯಾತ್',
+      shloka: 'ಮಕರ ಅಂತ್ಯ ಲಗ್ನ + ಶನಿ/ಚಂದ್ರ/ಸೂರ್ಯ ದೃಷ್ಟಿ ಅಥವಾ ತ್ರಿಕೋಣದಲ್ಲಿ ಪಾಪ ಇದ್ದರೆ',
     );
   }
 
@@ -888,7 +905,8 @@ class YogaPhala {
     if (!satisfied) return null;
     return YogaResult(
       name: 'ನೇತ್ರ ದೋಷ ಯೋಗ',
-      shloka: 'ರವಿಶಶಿಯುತೇ ಸಿಂಹೇ ಲಗ್ನ ಕುಜಾರ್ಕಿನಿರೀಕ್ಷಿತೇ ನಯನರಹಿತಃ\nಸೌಮ್ಯಾಸೌಮ್ಯ: ಸಬುದ್ದುದಲೋಚನಃ ।\nವ್ಯಯಗೃಹಗತಶ್ಚಂದ್ರೋ ವಾಮಂ ಒನಸ್ತ್ರಪರಂ ರವಿ-\nಸ್ವಶುಭಗದಿತಾ ಯೋಗಾ ಯಾಪ್ಯಾ ಭವಂತಿ ಶುಭೇಕ್ಷಿತಾಃ',
+      verse: 'ರವಿಶಶಿಯುತೇ ಸಿಂಹೇ ಲಗ್ನ ಕುಜಾರ್ಕಿನಿರೀಕ್ಷಿತೇ ನಯನರಹಿತಃ\nಸೌಮ್ಯಾಸೌಮ್ಯ: ಸಬುದ್ದುದಲೋಚನಃ ।\nವ್ಯಯಗೃಹಗತಶ್ಚಂದ್ರೋ ವಾಮಂ ಒನಸ್ತ್ರಪರಂ ರವಿ-\nಸ್ವಶುಭಗದಿತಾ ಯೋಗಾ ಯಾಪ್ಯಾ ಭವಂತಿ ಶುಭೇಕ್ಷಿತಾಃ',
+      shloka: 'ಸಿಂಹ ಲಗ್ನ + ರವಿ-ಚಂದ್ರ ಲಗ್ನದಲ್ಲಿ + ಕುಜ/ಶನಿ ದೃಷ್ಟಿ ಅಥವಾ ಚಂದ್ರ/ಸೂರ್ಯ 12ರಲ್ಲಿದ್ದರೆ',
     );
   }
 
@@ -912,7 +930,8 @@ class YogaPhala {
     if (!satisfied) return null;
     return YogaResult(
       name: 'ಪ್ರಸವ ಯೋಗ',
-      shloka: 'ಉದಯತಿ ಮೃದುಭಾಂಶೇ ಸಪ್ತಮಸೇ ಚ ಮಂದೇ\nಯದಿ ಭವತಿ ನಿಷೇಕಃ ಸೂತಿರಬತ್ರಯೇಣ ।\nಶಶಿನಿ ತು ವಿಧಿರೇವಂ ದ್ವಾದಶಾದ್ದೇ ಪ್ರಕುರ್ಯಾ-\nನ್ನಿಗದಿತಮಿಹ ಚಿಂತ್ಯಂ ಸೂತಿಕಾಲೇsಪಿ ಯುಕ್ತಾ',
+      verse: 'ಉದಯತಿ ಮೃದುಭಾಂಶೇ ಸಪ್ತಮಸೇ ಚ ಮಂದೇ\nಯದಿ ಭವತಿ ನಿಷೇಕಃ ಸೂತಿರಬತ್ರಯೇಣ ।\nಶಶಿನಿ ತು ವಿಧಿರೇವಂ ದ್ವಾದಶಾದ್ದೇ ಪ್ರಕುರ್ಯಾ-\nನ್ನಿಗದಿತಮಿಹ ಚಿಂತ್ಯಂ ಸೂತಿಕಾಲೇsಪಿ ಯುಕ್ತಾ',
+      shloka: 'ಶನಿ/ಚಂದ್ರ ನವಾಂಶ ಲಗ್ನ + 7ನೇ ಮನೆಯಲ್ಲಿದ್ದರೆ',
     );
   }
 
@@ -923,7 +942,7 @@ class YogaPhala {
   // ── JKL 1: Father absent at birth ──
   static List<YogaResult> _jkl1(KundaliResult r, Map<String, int> houses, int lagnaRashi) {
     final results = <YogaResult>[];
-    const shloka = 'ಪಿತುರ್ಜಾತಃ ಪರೋಕ್ಷಸ್ಯ ಲಗ್ನಮಿಂದಾವಪಶ್ಯತಿ ।\nವಿದೇಶಸ್ಥಸ್ಯ ಚರಭೇ ಮಧ್ಯಾದ್ ಭ್ರಷ್ಟೇ ದಿವಾಕರೇ\nಉದಯಸ್ಥsಪಿ ವಾ ಮಂದೇ ಕುಜೇ ವಾಸ್ತಂ ಸಮಾಗತೇ ।\nಸ್ಥಿತೇ ವಾಂತಃ ಕ್ಷಪಾನಾಥೇ ಶಶಾಂಕಸುತಶುಕ್ರಯೋಃ';
+    const verse = 'ಪಿತುರ್ಜಾತಃ ಪರೋಕ್ಷಸ್ಯ ಲಗ್ನಮಿಂದಾವಪಶ್ಯತಿ ।\nವಿದೇಶಸ್ಥಸ್ಯ ಚರಭೇ ಮಧ್ಯಾದ್ ಭ್ರಷ್ಟೇ ದಿವಾಕರೇ\nಉದಯಸ್ಥsಪಿ ವಾ ಮಂದೇ ಕುಜೇ ವಾಸ್ತಂ ಸಮಾಗತೇ ।\nಸ್ಥಿತೇ ವಾಂತಃ ಕ್ಷಪಾನಾಥೇ ಶಶಾಂಕಸುತಶುಕ್ರಯೋಃ';
     final hC = houses['ಚಂದ್ರ'];
     // Chandra doesn't aspect lagna
     if (hC != null && !_aspects('ಚಂದ್ರ', hC, 1) && hC != 1) {
@@ -931,16 +950,16 @@ class YogaPhala {
       if (_isChara(lagnaRashi)) d += '\nಚರ ಲಗ್ನ — ತಂದೆ ವಿದೇಶದಲ್ಲಿ';
       final hS = houses['ರವಿ'];
       if (hS != null && hS >= 8) d += '\nಸೂರ್ಯ ${hS}ನೇ ಮನೆ — ತಂದೆ ಊರಲ್ಲೇ ಬೇರೆಡೆ';
-      results.add(YogaResult(name: 'ಪಿತೃ ಪರೋಕ್ಷ ಯೋಗ', shloka: '$shloka\n$d'));
+      results.add(YogaResult(name: 'ಪಿತೃ ಪರೋಕ್ಷ ಯೋಗ', verse: verse, shloka: d));
     }
     // Shani in lagna + Kuja in 7th
     if (houses['ಶನಿ'] == 1 && houses['ಕುಜ'] == 7) {
-      results.add(YogaResult(name: 'ಪಿತೃ ಪರೋಕ್ಷ ಯೋಗ', shloka: '$shloka\nಶನಿ ಲಗ್ನ + ಕುಜ ೭ — ತಂದೆ ಪರೋಕ್ಷ'));
+      results.add(YogaResult(name: 'ಪಿತೃ ಪರೋಕ್ಷ ಯೋಗ', verse: verse, shloka: 'ಶನಿ ಲಗ್ನ + ಕುಜ ೭ — ತಂದೆ ಪರೋಕ್ಷ'));
     }
     // Chandra between Budha and Shukra
     if (hC != null && houses['ಬುಧ'] != null && houses['ಶುಕ್ರ'] != null) {
       if (_houseBetween(hC, houses['ಬುಧ']!, houses['ಶುಕ್ರ']!)) {
-        results.add(YogaResult(name: 'ಪಿತೃ ಪರೋಕ್ಷ ಯೋಗ', shloka: '$shloka\nಚಂದ್ರ ಬುಧ-ಶುಕ್ರರ ಮಧ್ಯೆ — ತಂದೆ ಪರೋಕ್ಷ'));
+        results.add(YogaResult(name: 'ಪಿತೃ ಪರೋಕ್ಷ ಯೋಗ', verse: verse, shloka: 'ಚಂದ್ರ ಬುಧ-ಶುಕ್ರರ ಮಧ್ಯೆ — ತಂದೆ ಪರೋಕ್ಷ'));
       }
     }
     return results;
@@ -948,7 +967,7 @@ class YogaPhala {
 
   // ── JKL 2: Snake-wrapped birth ──
   static YogaResult? _jkl2(KundaliResult r, Map<String, int> houses, int lagnaRashi) {
-    const shloka = 'ಶಶಾಂಕೇ ಪಾಪ ಲಗ್ನೇ ವಾ ವೃಶ್ಚಿಕೇಶತ್ರಿಭಾಗಗೇ ।\nಶುಭೈಃ ಸ್ವಾಯಸ್ಥಿತೈರ್ಜಾತಃ ಸರ್ಪಸ್ತದ್ವೇಷ್ಟಿತೋsಪಿ ವಾ';
+    const verse = 'ಶಶಾಂಕೇ ಪಾಪ ಲಗ್ನೇ ವಾ ವೃಶ್ಚಿಕೇಶತ್ರಿಭಾಗಗೇ ।\nಶುಭೈಃ ಸ್ವಾಯಸ್ಥಿತೈರ್ಜಾತಃ ಸರ್ಪಸ್ತದ್ವೇಷ್ಟಿತೋsಪಿ ವಾ';
     // Lagna or Chandra in papa rashi + Vrischika drekkana + shubha in 2/11
     final moonInfo = r.planets['ಚಂದ್ರ'];
     bool inPapaRashi = _isPapaRashi(lagnaRashi);
@@ -961,12 +980,12 @@ class YogaPhala {
     if (!vrischikaDrekk) return null;
     // Shubha in 2nd or 11th
     if (!(_anyShubhaInHouse(houses, 2) || _anyShubhaInHouse(houses, 11))) return null;
-    return YogaResult(name: 'ಸರ್ಪ ವೇಷ್ಟಿತ ಯೋಗ', shloka: shloka);
+    return YogaResult(name: 'ಸರ್ಪ ವೇಷ್ಟಿತ ಯೋಗ', verse: verse, shloka: 'ಲಗ್ನ/ಚಂದ್ರ ಪಾಪ ರಾಶಿಯಲ್ಲಿ + ವೃಶ್ಚಿಕ ದ್ರೇಕ್ಕಾಣ + ಶುಭರು 2/11ರಲ್ಲಿದ್ದರೆ');
   }
 
   // ── JKL 3: Twin birth ──
   static YogaResult? _jkl3(KundaliResult r, Map<String, int> houses) {
-    const shloka = 'ಚತುಷ್ಪದಗತೇ ಭಾನೌ ಶೇಷೈರ್ವೀರ್ಯಸಮನ್ವಿತೈಃ ।\nದ್ವಿತನು ಸ್ಥೈ ಶ್ಚ ಯಮಲೌ ಭವತಃ ಕೋಶವೇಷ್ಟಿ ತೌ';
+    const verse = 'ಚತುಷ್ಪದಗತೇ ಭಾನೌ ಶೇಷೈರ್ವೀರ್ಯಸಮನ್ವಿತೈಃ ।\nದ್ವಿತನು ಸ್ಥೈ ಶ್ಚ ಯಮಲೌ ಭವತಃ ಕೋಶವೇಷ್ಟಿ ತೌ';
     final sunInfo = r.planets['ರವಿ'];
     if (sunInfo == null) return null;
     if (!_isChatushpada(_rashiOf(sunInfo.longitude))) return null;
@@ -977,22 +996,22 @@ class YogaPhala {
       if (_isDwiswabhava(_rashiOf(e.value.longitude))) dwiCount++;
     }
     if (dwiCount < 3) return null; // At least 3 others in dwiswabhava
-    return YogaResult(name: 'ಯಮಳ (ಅವಳಿ) ಯೋಗ', shloka: shloka);
+    return YogaResult(name: 'ಯಮಳ (ಅವಳಿ) ಯೋಗ', verse: verse, shloka: 'ರವಿ ಚತುಷ್ಪದ ರಾಶಿಯಲ್ಲಿ + 3 ಗ್ರಹರು ದ್ವಿಸ್ವಭಾವ ರಾಶಿಯಲ್ಲಿದ್ದರೆ');
   }
 
   // ── JKL 4: Umbilical cord wrapped ──
   static YogaResult? _jkl4(Map<String, int> houses, int lagnaRashi) {
-    const shloka = 'ಛಾಗಸಿಂಹವೃಷೇ ಲಗ್ನೆ ತತ್ಸ್ಥೆ ಸೌರೇಽಥವಾ ಕುಜೇ ।\nರಾಶ್ಯಂಶಸದೃಶೇ ಗಾತ್ರೇ ಜಾಯತೇ ನಾಲವೇಷ್ಟಿತಃ';
+    const verse = 'ಛಾಗಸಿಂಹವೃಷೇ ಲಗ್ನೆ ತತ್ಸ್ಥೆ ಸೌರೇಽಥವಾ ಕುಜೇ ।\nರಾಶ್ಯಂಶಸದೃಶೇ ಗಾತ್ರೇ ಜಾಯತೇ ನಾಲವೇಷ್ಟಿತಃ';
     // Mesha(0), Simha(4), Vrishabha(1) lagna + Kuja/Shani in lagna
     if (![0, 4, 1].contains(lagnaRashi)) return null;
     if (houses['ಕುಜ'] != 1 && houses['ಶನಿ'] != 1) return null;
-    return YogaResult(name: 'ನಾಲ ವೇಷ್ಟಿತ ಯೋಗ', shloka: shloka);
+    return YogaResult(name: 'ನಾಲ ವೇಷ್ಟಿತ ಯೋಗ', verse: verse, shloka: 'ಮೇಷ/ಸಿಂಹ/ವೃಷಭ ಲಗ್ನ + ಕುಜ/ಶನಿ ಲಗ್ನದಲ್ಲಿದ್ದರೆ');
   }
 
   // ── JKL 6: Father imprisoned ──
   static List<YogaResult> _jkl6(KundaliResult r, Map<String, int> houses) {
     final results = <YogaResult>[];
-    const shloka = 'ಕ್ರೂರರ್ಕ್ಷಗತಾವಶೋಭನೌ ಸೂರ್ಯಾತ್ ದ್ಯೋನನವಾತ್ಮಜಸ್ಥಿತೌ ।\nಬದ್ಧಸ್ತು ಪಿತಾ ವಿದೇಶಗಃ ಸ್ಟೇ ವಾ ರಾಶಿವಶಾತ್ತಥಾ ಪಥಿ';
+    const verse = 'ಕ್ರೂರರ್ಕ್ಷಗತಾವಶೋಭನೌ ಸೂರ್ಯಾತ್ ದ್ಯೋನನವಾತ್ಮಜಸ್ಥಿತೌ ।\nಬದ್ಧಸ್ತು ಪಿತಾ ವಿದೇಶಗಃ ಸ್ಟೇ ವಾ ರಾಶಿವಶಾತ್ತಥಾ ಪಥಿ';
     final hSurya = houses['ರವಿ'];
     if (hSurya == null) return results;
     // Papa in 5th, 7th, 9th from Surya
@@ -1007,56 +1026,56 @@ class YogaPhala {
     if (_isChara(sunRashi)) detail = 'ಚರ ರಾಶಿ — ದಾರಿಯಲ್ಲಿ ಬಂಧನ';
     else if (_isSthira(sunRashi)) detail = 'ಸ್ಥಿರ ರಾಶಿ — ಊರಲ್ಲಿ ಬಂಧನ';
     else detail = 'ದ್ವಿಸ್ವಭಾವ ರಾಶಿ — ವಿದೇಶದಲ್ಲಿ ಬಂಧನ';
-    results.add(YogaResult(name: 'ಪಿತೃ ಬಂಧನ ಯೋಗ', shloka: '$shloka\n$detail'));
+    results.add(YogaResult(name: 'ಪಿತೃ ಬಂಧನ ಯೋಗ', verse: verse, shloka: detail));
     return results;
   }
 
   // ── JKL 7: Birth on ship ──
   static YogaResult? _jkl7(KundaliResult r, Map<String, int> houses, int lagnaRashi) {
-    const shloka = 'ಪೂರ್ಣೇ ಶಶಿನಿ ಸ್ವರಾಶಿಗೇ ಸೌಮ್ಯೇ ಲಗ್ನಗತೇ ಶುಭೇ ಸುಖೇ ।\nಲಗ್ನೆ ಜಲಜೆsಸ್ತಗೇ ಪಿ ವಾ ಚಂದ್ರೇ ಪೋತಗತಾ ಪ್ರಸೂಯತೇ';
+    const verse = 'ಪೂರ್ಣೇ ಶಶಿನಿ ಸ್ವರಾಶಿಗೇ ಸೌಮ್ಯೇ ಲಗ್ನಗತೇ ಶುಭೇ ಸುಖೇ ।\nಲಗ್ನೆ ಜಲಜೆsಸ್ತಗೇ ಪಿ ವಾ ಚಂದ್ರೇ ಪೋತಗತಾ ಪ್ರಸೂಯತೇ';
     final mI = r.planets['ಚಂದ್ರ'];
     final sI = r.planets['ರವಿ'];
     if (mI == null || sI == null) return null;
     // Full moon in Kataka + Budha in lagna + shubha in 4th
     if (_isFullMoon(mI.longitude, sI.longitude) && _rashiOf(mI.longitude) == 3 &&
         houses['ಬುಧ'] == 1 && _anyShubhaInHouse(houses, 4)) {
-      return YogaResult(name: 'ಪೋತ (ಹಡಗು) ಜನನ ಯೋಗ', shloka: shloka);
+      return YogaResult(name: 'ಪೋತ (ಹಡಗು) ಜನನ ಯೋಗ', verse: verse, shloka: 'ಕಟಕದಲ್ಲಿ ಪೂರ್ಣ ಚಂದ್ರ + ಲಗ್ನದಲ್ಲಿ ಬುಧ + 4ರಲ್ಲಿ ಶುಭ ಇದ್ದರೆ');
     }
     // Jala lagna + Chandra in 7th
     if (_isJala(lagnaRashi) && houses['ಚಂದ್ರ'] == 7) {
-      return YogaResult(name: 'ಪೋತ (ಹಡಗು) ಜನನ ಯೋಗ', shloka: shloka);
+      return YogaResult(name: 'ಪೋತ (ಹಡಗು) ಜನನ ಯೋಗ', verse: verse, shloka: 'ಜಲ ಲಗ್ನ + ಚಂದ್ರ 7ರಲ್ಲಿದ್ದರೆ');
     }
     return null;
   }
 
   // ── JKL 8: Birth near water ──
   static YogaResult? _jkl8(KundaliResult r, Map<String, int> houses, int lagnaRashi) {
-    const shloka = 'ಆಪ್ಯೊದಯಮಾಪ್ಯಗಃ ಶಶೀ ಸಂಪೂರ್ಣ: ಸಮವೇಕ್ಷತೇಥವಾ ।\nಮೇಶೂರಣಬಂಧುಲಗ್ನಗಃ ಸ್ಯಾತ್ಸೂತಿಃ ಸಲಿಲೇ ನ ಸಂಶಯಃ';
+    const verse = 'ಆಪ್ಯೊದಯಮಾಪ್ಯಗಃ ಶಶೀ ಸಂಪೂರ್ಣ: ಸಮವೇಕ್ಷತೇಥವಾ ।\nಮೇಶೂರಣಬಂಧುಲಗ್ನಗಃ ಸ್ಯಾತ್ಸೂತಿಃ ಸಲಿಲೇ ನ ಸಂಶಯಃ';
     final mI = r.planets['ಚಂದ್ರ'];
     final sI = r.planets['ರವಿ'];
     if (mI == null) return null;
     // Jala lagna + Chandra in it
     if (_isJala(lagnaRashi) && houses['ಚಂದ್ರ'] == 1) {
-      return YogaResult(name: 'ಜಲ ಸಮೀಪ ಜನನ ಯೋಗ', shloka: shloka);
+      return YogaResult(name: 'ಜಲ ಸಮೀಪ ಜನನ ಯೋಗ', verse: verse, shloka: 'ಜಲ ಲಗ್ನ + ಚಂದ್ರ ಲಗ್ನದಲ್ಲಿದ್ದರೆ');
     }
     // Full Chandra aspects jala lagna
     if (sI != null && _isJala(lagnaRashi) && _isFullMoon(mI.longitude, sI.longitude)) {
       final hC = houses['ಚಂದ್ರ'];
       if (hC != null && (_aspects('ಚಂದ್ರ', hC, 1) || hC == 1)) {
-        return YogaResult(name: 'ಜಲ ಸಮೀಪ ಜನನ ಯೋಗ', shloka: shloka);
+        return YogaResult(name: 'ಜಲ ಸಮೀಪ ಜನನ ಯೋಗ', verse: verse, shloka: 'ಜಲ ಲಗ್ನ + ಪೂರ್ಣ ಚಂದ್ರನ ದೃಷ್ಟಿ ಇದ್ದರೆ');
       }
     }
     // Chandra in 10th, 4th, or 1st
     final hC = houses['ಚಂದ್ರ'];
     if (hC != null && [1, 4, 10].contains(hC)) {
-      return YogaResult(name: 'ಜಲ ಸಮೀಪ ಜನನ ಯೋಗ', shloka: shloka);
+      return YogaResult(name: 'ಜಲ ಸಮೀಪ ಜನನ ಯೋಗ', verse: verse, shloka: 'ಚಂದ್ರ 10, 4 ಅಥವಾ 1ನೇ ಮನೆಯಲ್ಲಿದ್ದರೆ');
     }
     return null;
   }
 
   // ── JKL 9: Birth in secret/pit ──
   static YogaResult? _jkl9(KundaliResult r, Map<String, int> houses, int lagnaRashi) {
-    const shloka = 'ಉದಯೋಡುಪಯೋರ್ವ್ಯಯಸ್ಥಿತೇ ಗುಪ್ತ್ಯಾಂ ಪಾಪನಿರೀಕ್ಷಿತೇ ಯಮೇ ।\nಅಲಿಕರ್ಕಿಯುತೇ ವಿಲಗ್ನಗೇ ಸೌರೇ ಶೀತಕರೇಕ್ಷಿತೇ ವಟೇ';
+    const verse = 'ಉದಯೋಡುಪಯೋರ್ವ್ಯಯಸ್ಥಿತೇ ಗುಪ್ತ್ಯಾಂ ಪಾಪನಿರೀಕ್ಷಿತೇ ಯಮೇ ।\nಅಲಿಕರ್ಕಿಯುತೇ ವಿಲಗ್ನಗೇ ಸೌರೇ ಶೀತಕರೇಕ್ಷಿತೇ ವಟೇ';
     // Shani in 12th from lagna AND Chandra + papa drishti
     final hShani = houses['ಶನಿ'];
     final hC = houses['ಚಂದ್ರ'];
@@ -1065,14 +1084,14 @@ class YogaPhala {
       final from_moon_12 = ((hC - 1 + 11) % 12) + 1;
       if (hShani == 12 || hShani == from_moon_12) {
         if (_anyPapaAspects(houses, hShani!)) {
-          return YogaResult(name: 'ಗುಪ್ತ ಸ್ಥಳ ಜನನ ಯೋಗ', shloka: '$shloka\nಶನಿ ೧೨ರಲ್ಲಿ + ಪಾಪ ದೃಷ್ಟಿ — ಗುಪ್ತ ಪ್ರದೇಶದಲ್ಲಿ ಜನನ');
+          return YogaResult(name: 'ಗುಪ್ತ ಸ್ಥಳ ಜನನ ಯೋಗ', verse: verse, shloka: 'ಶನಿ ೧೨ರಲ್ಲಿ + ಪಾಪ ದೃಷ್ಟಿ — ಗುಪ್ತ ಪ್ರದೇಶದಲ್ಲಿ ಜನನ');
         }
       }
     }
     // Vrischika/Kataka lagna + Shani in lagna + Chandra drishti
     if ([7, 3].contains(lagnaRashi) && houses['ಶನಿ'] == 1) {
       if (hC != null && (_aspects('ಚಂದ್ರ', hC, 1) || hC == 1)) {
-        return YogaResult(name: 'ಗುಂಡಿ ಜನನ ಯೋಗ', shloka: '$shloka\nವೃಶ್ಚಿಕ/ಕಟಕ ಲಗ್ನ + ಶನಿ + ಚಂದ್ರ ದೃಷ್ಟಿ — ಗುಂಡಿಯಲ್ಲಿ ಜನನ');
+        return YogaResult(name: 'ಗುಂಡಿ ಜನನ ಯೋಗ', verse: verse, shloka: 'ವೃಶ್ಚಿಕ/ಕಟಕ ಲಗ್ನ + ಶನಿ + ಚಂದ್ರ ದೃಷ್ಟಿ — ಗುಂಡಿಯಲ್ಲಿ ಜನನ');
       }
     }
     return null;
@@ -1081,16 +1100,16 @@ class YogaPhala {
   // ── JKL 10: Birth place by Shani in jala lagna ──
   static List<YogaResult> _jkl10(KundaliResult r, Map<String, int> houses, int lagnaRashi) {
     final results = <YogaResult>[];
-    const shloka = 'ಮಂದೇsಬ್ಜಗತೇ ವಿಲಗ್ನಗೇ ಬುಧಸೂರ್ಯೇಂದುನಿರೀಕ್ಷಿತೇ ಕ್ರಮಾತ್ ।\nಕ್ರೀಡಾಭವನೇ ಸುರಾಲಯೇ ಪ್ರಸವಂ ಸೋಷರಭೂಮಿ ಷದ್ದಿಶೇತ್';
+    const verse = 'ಮಂದೇsಬ್ಜಗತೇ ವಿಲಗ್ನಗೇ ಬುಧಸೂರ್ಯೇಂದುನಿರೀಕ್ಷಿತೇ ಕ್ರಮಾತ್ ।\nಕ್ರೀಡಾಭವನೇ ಸುರಾಲಯೇ ಪ್ರಸವಂ ಸೋಷರಭೂಮಿ ಷದ್ದಿಶೇತ್';
     if (!_isJala(lagnaRashi) || houses['ಶನಿ'] != 1) return results;
     if (_planetAspectsHouse('ಬುಧ', houses, 1) || houses['ಬುಧ'] == 1) {
-      results.add(YogaResult(name: 'ಜನ್ಮಸ್ಥಳ — ಕ್ರೀಡಾಂಗಣ', shloka: '$shloka\nಬುಧ ದೃಷ್ಟಿ — ಆಟದ ಮೈದಾನದಲ್ಲಿ ಜನನ'));
+      results.add(YogaResult(name: 'ಜನ್ಮಸ್ಥಳ — ಕ್ರೀಡಾಂಗಣ', verse: verse, shloka: 'ಬುಧ ದೃಷ್ಟಿ — ಆಟದ ಮೈದಾನದಲ್ಲಿ ಜನನ'));
     }
     if (_planetAspectsHouse('ರವಿ', houses, 1) || houses['ರವಿ'] == 1) {
-      results.add(YogaResult(name: 'ಜನ್ಮಸ್ಥಳ — ದೇವಾಲಯ', shloka: '$shloka\nಸೂರ್ಯ ದೃಷ್ಟಿ — ದೇವಸ್ಥಾನದಲ್ಲಿ ಜನನ'));
+      results.add(YogaResult(name: 'ಜನ್ಮಸ್ಥಳ — ದೇವಾಲಯ', verse: verse, shloka: 'ಸೂರ್ಯ ದೃಷ್ಟಿ — ದೇವಸ್ಥಾನದಲ್ಲಿ ಜನನ'));
     }
     if (_planetAspectsHouse('ಚಂದ್ರ', houses, 1) || houses['ಚಂದ್ರ'] == 1) {
-      results.add(YogaResult(name: 'ಜನ್ಮಸ್ಥಳ — ಬಂಜರು ಭೂಮಿ', shloka: '$shloka\nಚಂದ್ರ ದೃಷ್ಟಿ — ಬಂಜರು ಭೂಮಿಯಲ್ಲಿ ಜನನ'));
+      results.add(YogaResult(name: 'ಜನ್ಮಸ್ಥಳ — ಬಂಜರು ಭೂಮಿ', verse: verse, shloka: 'ಚಂದ್ರ ದೃಷ್ಟಿ — ಬಂಜರು ಭೂಮಿಯಲ್ಲಿ ಜನನ'));
     }
     return results;
   }
@@ -1098,22 +1117,22 @@ class YogaPhala {
   // ── JKL 11: Birth place by planet aspecting lagna ──
   static List<YogaResult> _jkl11(Map<String, int> houses) {
     final results = <YogaResult>[];
-    const shloka = 'ನೃಲಗ್ನಗಂ ಪ್ರೇಕ್ಷ್ಯ ಕುಜಃ ಸ್ಮಶಾನೇ ರಮ್ಯ ಸಿತೇಂದೂ ಗುರುರಗ್ನಿಹೋತ್ರೇ ।\nರವಿರ್ನರೇಂದ್ರಾಮರಗೋಕುಲೇಷು ಶಿಲ್ಪಾಲಯೇ ಜ್ಞಃ ಪ್ರಸವಂ ಕರೋತಿ';
+    const verse = 'ನೃಲಗ್ನಗಂ ಪ್ರೇಕ್ಷ್ಯ ಕುಜಃ ಸ್ಮಶಾನೇ ರಮ್ಯ ಸಿತೇಂದೂ ಗುರುರಗ್ನಿಹೋತ್ರೇ ।\nರವಿರ್ನರೇಂದ್ರಾಮರಗೋಕುಲೇಷು ಶಿಲ್ಪಾಲಯೇ ಜ್ಞಃ ಪ್ರಸವಂ ಕರೋತಿ';
     if (_planetAspectsHouse('ಕುಜ', houses, 1) || houses['ಕುಜ'] == 1) {
-      results.add(YogaResult(name: 'ಜನ್ಮಸ್ಥಳ — ಸ್ಮಶಾನ', shloka: '$shloka\nಕುಜ ದೃಷ್ಟಿ — ಸ್ಮಶಾನದಲ್ಲಿ ಜನನ'));
+      results.add(YogaResult(name: 'ಜನ್ಮಸ್ಥಳ — ಸ್ಮಶಾನ', verse: verse, shloka: 'ಕುಜ ದೃಷ್ಟಿ — ಸ್ಮಶಾನದಲ್ಲಿ ಜನನ'));
     }
     if (_planetAspectsHouse('ಶುಕ್ರ', houses, 1) || houses['ಶುಕ್ರ'] == 1 ||
         _planetAspectsHouse('ಚಂದ್ರ', houses, 1) || houses['ಚಂದ್ರ'] == 1) {
-      results.add(YogaResult(name: 'ಜನ್ಮಸ್ಥಳ — ರಮ್ಯ ಸ್ಥಳ', shloka: '$shloka\nಶುಕ್ರ/ಚಂದ್ರ ದೃಷ್ಟಿ — ರಮ್ಯ ಸ್ಥಳದಲ್ಲಿ ಜನನ'));
+      results.add(YogaResult(name: 'ಜನ್ಮಸ್ಥಳ — ರಮ್ಯ ಸ್ಥಳ', verse: verse, shloka: 'ಶುಕ್ರ/ಚಂದ್ರ ದೃಷ್ಟಿ — ರಮ್ಯ ಸ್ಥಳದಲ್ಲಿ ಜನನ'));
     }
     if (_planetAspectsHouse('ಗುರು', houses, 1) || houses['ಗುರು'] == 1) {
-      results.add(YogaResult(name: 'ಜನ್ಮಸ್ಥಳ — ಯಾಗಶಾಲೆ', shloka: '$shloka\nಗುರು ದೃಷ್ಟಿ — ಯಾಗಶಾಲೆಯಲ್ಲಿ ಜನನ'));
+      results.add(YogaResult(name: 'ಜನ್ಮಸ್ಥಳ — ಯಾಗಶಾಲೆ', verse: verse, shloka: 'ಗುರು ದೃಷ್ಟಿ — ಯಾಗಶಾಲೆಯಲ್ಲಿ ಜನನ'));
     }
     if (_planetAspectsHouse('ರವಿ', houses, 1) || houses['ರವಿ'] == 1) {
-      results.add(YogaResult(name: 'ಜನ್ಮಸ್ಥಳ — ರಾಜಮಂದಿರ/ಗೋಶಾಲೆ', shloka: '$shloka\nಸೂರ್ಯ ದೃಷ್ಟಿ — ರಾಜಮಂದಿರ/ಗೋಶಾಲೆಯಲ್ಲಿ ಜನನ'));
+      results.add(YogaResult(name: 'ಜನ್ಮಸ್ಥಳ — ರಾಜಮಂದಿರ/ಗೋಶಾಲೆ', verse: verse, shloka: 'ಸೂರ್ಯ ದೃಷ್ಟಿ — ರಾಜಮಂದಿರ/ಗೋಶಾಲೆಯಲ್ಲಿ ಜನನ'));
     }
     if (_planetAspectsHouse('ಬುಧ', houses, 1) || houses['ಬುಧ'] == 1) {
-      results.add(YogaResult(name: 'ಜನ್ಮಸ್ಥಳ — ಶಿಲ್ಪಾಲಯ', shloka: '$shloka\nಬುಧ ದೃಷ್ಟಿ — ಶಿಲ್ಪಾಲಯದಲ್ಲಿ ಜನನ'));
+      results.add(YogaResult(name: 'ಜನ್ಮಸ್ಥಳ — ಶಿಲ್ಪಾಲಯ', verse: verse, shloka: 'ಬುಧ ದೃಷ್ಟಿ — ಶಿಲ್ಪಾಲಯದಲ್ಲಿ ಜನನ'));
     }
     return results;
   }
@@ -1121,16 +1140,16 @@ class YogaPhala {
   // ── JKL 12: Birth place by lagna navamsha ──
   static List<YogaResult> _jkl12(double lagnaLon) {
     final results = <YogaResult>[];
-    const shloka = 'ರಾಶ್ಯಂಶಸಮಾನಗೋಚರೇ ಮಾರ್ಗೇ ಜನ್ಮ ಚರೇ ಸ್ಥಿರೇ ಗೃಹೇ ।\nಸ್ವರ್ಕ್ಷಾಂಶಗತೇ ಸ್ವಮಂದಿರೇ ಬಲಯೋಗಾತ್ಛಲಮಂಶಕರ್ಕ್ಷಯೋ:';
+    const verse = 'ರಾಶ್ಯಂಶಸಮಾನಗೋಚರೇ ಮಾರ್ಗೇ ಜನ್ಮ ಚರೇ ಸ್ಥಿರೇ ಗೃಹೇ ।\nಸ್ವರ್ಕ್ಷಾಂಶಗತೇ ಸ್ವಮಂದಿರೇ ಬಲಯೋಗಾತ್ಛಲಮಂಶಕರ್ಕ್ಷಯೋ:';
     final navR = _navamshaRashi(lagnaLon);
     final lagR = _rashiOf(lagnaLon);
     if (_isChara(navR)) {
-      results.add(YogaResult(name: 'ಜನ್ಮಸ್ಥಳ — ಮಾರ್ಗ', shloka: '$shloka\nಚರ ನವಾಂಶ — ದಾರಿಯಲ್ಲಿ ಜನನ'));
+      results.add(YogaResult(name: 'ಜನ್ಮಸ್ಥಳ — ಮಾರ್ಗ', verse: verse, shloka: 'ಚರ ನವಾಂಶ — ದಾರಿಯಲ್ಲಿ ಜನನ'));
     } else if (_isSthira(navR)) {
-      results.add(YogaResult(name: 'ಜನ್ಮಸ್ಥಳ — ಮನೆ', shloka: '$shloka\nಸ್ಥಿರ ನವಾಂಶ — ಮನೆಯಲ್ಲಿ ಜನನ'));
+      results.add(YogaResult(name: 'ಜನ್ಮಸ್ಥಳ — ಮನೆ', verse: verse, shloka: 'ಸ್ಥಿರ ನವಾಂಶ — ಮನೆಯಲ್ಲಿ ಜನನ'));
     }
     if (navR == lagR) {
-      results.add(YogaResult(name: 'ಜನ್ಮಸ್ಥಳ — ಸ್ವಮನೆ', shloka: '$shloka\nಸ್ವರ್ಕ್ಷ ನವಾಂಶ — ಸ್ವಂತ ಮನೆಯಲ್ಲಿ ಜನನ'));
+      results.add(YogaResult(name: 'ಜನ್ಮಸ್ಥಳ — ಸ್ವಮನೆ', verse: verse, shloka: 'ಸ್ವರ್ಕ್ಷ ನವಾಂಶ — ಸ್ವಂತ ಮನೆಯಲ್ಲಿ ಜನನ'));
     }
     return results;
   }
@@ -1138,17 +1157,17 @@ class YogaPhala {
   // ── JKL 13: Child abandoned + Guru saves ──
   static List<YogaResult> _jkl13(Map<String, int> houses) {
     final results = <YogaResult>[];
-    const shloka = 'ಆರಾರ್ಕಜಯೋಸ್ತ್ರಿಕೋಣಗೇ ಚಂದ್ರೇsರ್ಕೇ ಚ ವಿಸೃಜ್ಯತೇsಂಬಯಾ ।\nದೃಷ್ಟೇಽಮರರಾಜಮಂತ್ರಿಣಾ ದೀರ್ಘಾಯುಃ ಸುಖಭಾಕ್ಚಸ ಸ್ಮೃತಃ';
+    const verse = 'ಆರಾರ್ಕಜಯೋಸ್ತ್ರಿಕೋಣಗೇ ಚಂದ್ರೇsರ್ಕೇ ಚ ವಿಸೃಜ್ಯತೇsಂಬಯಾ ।\nದೃಷ್ಟೇಽಮರರಾಜಮಂತ್ರಿಣಾ ದೀರ್ಘಾಯುಃ ಸುಖಭಾಕ್ಚಸ ಸ್ಮೃತಃ';
     final hSurya = houses['ರವಿ'];
     final hKuja = houses['ಕುಜ'];
     if (hSurya == null || hKuja == null) return results;
     final suryaInTri = [1, 5, 9].contains(hSurya);
     final kujaInTri = [1, 5, 9].contains(hKuja);
     if (suryaInTri && kujaInTri) {
-      results.add(YogaResult(name: 'ಮಾತೃ ತ್ಯಾಗ ಯೋಗ', shloka: '$shloka\nಸೂರ್ಯ+ಕುಜ ತ್ರಿಕೋಣದಲ್ಲಿ — ತಾಯಿ ಶಿಶುವನ್ನು ತ್ಯಜಿಸುತ್ತಾಳೆ'));
+      results.add(YogaResult(name: 'ಮಾತೃ ತ್ಯಾಗ ಯೋಗ', verse: verse, shloka: 'ಸೂರ್ಯ+ಕುಜ ತ್ರಿಕೋಣದಲ್ಲಿ — ತಾಯಿ ಶಿಶುವನ್ನು ತ್ಯಜಿಸುತ್ತಾಳೆ'));
       // If Guru aspects lagna
       if (_planetAspectsHouse('ಗುರು', houses, 1) || houses['ಗುರು'] == 1) {
-        results.add(YogaResult(name: 'ಗುರು ರಕ್ಷಣೆ ಯೋಗ', shloka: '$shloka\nಗುರು ದೃಷ್ಟಿ — ದೀರ್ಘಾಯುಷ್ಯ ಮತ್ತು ಸುಖ'));
+        results.add(YogaResult(name: 'ಗುರು ರಕ್ಷಣೆ ಯೋಗ', verse: verse, shloka: 'ಗುರು ದೃಷ್ಟಿ — ದೀರ್ಘಾಯುಷ್ಯ ಮತ್ತು ಸುಖ'));
       }
     }
     return results;
@@ -1157,7 +1176,7 @@ class YogaPhala {
   // ── JKL 14: Abandoned child's fate ──
   static List<YogaResult> _jkl14(Map<String, int> houses) {
     final results = <YogaResult>[];
-    const shloka = 'ಪಾಪೇಕ್ಷಿತೇ ತುಹಿನಗಾವುದಯೇ ಕುಜೇsಸ್ತೇ ತ್ಯಕ್ತೊ ವಿನಶ್ಯತಿ\nಕುಜಾರ್ಕಜಯೋಸ್ತಥಾಯೇ ।\nಸೌಮ್ಮೇsಭಿಪಶ್ಯತಿ ತಥಾವಿಧಹಸ್ತಮೇತಿ\nಸೌಮ್ಯೇ ತರೇಯುಃ ಪರಹಸ್ತಗತೋsಪ್ಯನಾಯುಃ';
+    const verse = 'ಪಾಪೇಕ್ಷಿತೇ ತುಹಿನಗಾವುದಯೇ ಕುಜೇsಸ್ತೇ ತ್ಯಕ್ತೊ ವಿನಶ್ಯತಿ\nಕುಜಾರ್ಕಜಯೋಸ್ತಥಾಯೇ ।\nಸೌಮ್ಮೇsಭಿಪಶ್ಯತಿ ತಥಾವಿಧಹಸ್ತಮೇತಿ\nಸೌಮ್ಯೇ ತರೇಯುಃ ಪರಹಸ್ತಗತೋsಪ್ಯನಾಯುಃ';
     // Papa drishti on Chandra/lagna + Kuja in 7th
     final papaOnLagna = _anyPapaAspects(houses, 1);
     final hC = houses['ಚಂದ್ರ'];
@@ -1168,9 +1187,9 @@ class YogaPhala {
     if ((papaOnLagna || papaOnMoon) && (kujaIn7 || kujaShaniLagna)) {
       final shubhaSees = _anyShubhaAspects(houses, 1);
       if (shubhaSees) {
-        results.add(YogaResult(name: 'ತ್ಯಕ್ತ ಶಿಶು — ಜೀವಿಸುವ', shloka: '$shloka\nಶುಭ ದೃಷ್ಟಿ — ಬೇರೆಯವರ ಕೈಗೆ ಸೇರಿ ಬದುಕುತ್ತದೆ'));
+        results.add(YogaResult(name: 'ತ್ಯಕ್ತ ಶಿಶು — ಜೀವಿಸುವ', verse: verse, shloka: 'ಶುಭ ದೃಷ್ಟಿ — ಬೇರೆಯವರ ಕೈಗೆ ಸೇರಿ ಬದುಕುತ್ತದೆ'));
       } else {
-        results.add(YogaResult(name: 'ತ್ಯಕ್ತ ಶಿಶು — ನಾಶ', shloka: '$shloka\nಶುಭ ದೃಷ್ಟಿ ಇಲ್ಲ — ತ್ಯಜಿಸಲ್ಪಟ್ಟು ನಾಶ'));
+        results.add(YogaResult(name: 'ತ್ಯಕ್ತ ಶಿಶು — ನಾಶ', verse: verse, shloka: 'ಶುಭ ದೃಷ್ಟಿ ಇಲ್ಲ — ತ್ಯಜಿಸಲ್ಪಟ್ಟು ನಾಶ'));
       }
     }
     return results;
@@ -1178,7 +1197,7 @@ class YogaPhala {
 
   // ── JKL 15: Lonely birth ──
   static YogaResult? _jkl15(Map<String, int> houses) {
-    const shloka = 'ಯದಿ ನೈಕಗತೈಸ್ತು ವೀಕ್ಷಿತೌ ಲಗ್ನೇಂದೂ ವಿಜನೇ ಪ್ರಸೂಯತೇ';
+    const verse = 'ಯದಿ ನೈಕಗತೈಸ್ತು ವೀಕ್ಷಿತೌ ಲಗ್ನೇಂದೂ ವಿಜನೇ ಪ್ರಸೂಯತೇ';
     // No planet in lagna AND no planet aspects lagna
     bool anyInLagna = houses.values.any((h) => h == 1);
     if (anyInLagna) return null;
@@ -1187,30 +1206,30 @@ class YogaPhala {
       if (_aspects(e.key, e.value, 1)) { anyAspectsLagna = true; break; }
     }
     if (anyAspectsLagna) return null;
-    return YogaResult(name: 'ವಿಜನ ಸ್ಥಳ ಜನನ ಯೋಗ', shloka: '$shloka\nಯಾರೂ ಇಲ್ಲದ ಜಾಗದಲ್ಲಿ ಜನನ');
+    return YogaResult(name: 'ವಿಜನ ಸ್ಥಳ ಜನನ ಯೋಗ', verse: verse, shloka: 'ಯಾರೂ ಇಲ್ಲದ ಜಾಗದಲ್ಲಿ ಜನನ');
   }
 
   // ── JKL 16: Birth in darkness on ground ──
   static YogaResult? _jkl16(KundaliResult r, Map<String, int> houses, int lagnaRashi) {
-    const shloka = 'ಮಂದರ್ಕ್ಷಾಂಶೇ ಶಶಿನಿ ಹಿಬುಕೇ ಮಂದದೃಷ್ಟೇsಬ್ಜಗೇ ವಾ\nತದ್ಯುಕ್ತೇ ವಾ ತಮಸಿ ಶಯನಂ ನೀಚಸಂಸ್ಥೈಶ್ಚ ಭೂಮೌ ।\nಯದ್ವದ್ರಾಶಿಃ ವ್ರಜತಿ ಹರಿಜಂ ಗರ್ಭಮೋಕ್ಷಸ್ತು ತದ್ವತ್';
+    const verse = 'ಮಂದರ್ಕ್ಷಾಂಶೇ ಶಶಿನಿ ಹಿಬುಕೇ ಮಂದದೃಷ್ಟೇsಬ್ಜಗೇ ವಾ\nತದ್ಯುಕ್ತೇ ವಾ ತಮಸಿ ಶಯನಂ ನೀಚಸಂಸ್ಥೈಶ್ಚ ಭೂಮೌ ।\nಯದ್ವದ್ರಾಶಿಃ ವ್ರಜತಿ ಹರಿಜಂ ಗರ್ಭಮೋಕ್ಷಸ್ತು ತದ್ವತ್';
     final mI = r.planets['ಚಂದ್ರ'];
     if (mI == null) return null;
     // Chandra in Shani's navamsha + 4th house + Shani drishti
     final moonNav = _navamshaRashi(mI.longitude);
     if ([9, 10].contains(moonNav) && houses['ಚಂದ್ರ'] == 4 &&
         (_planetAspectsHouse('ಶನಿ', houses, 4) || houses['ಶನಿ'] == 4)) {
-      return YogaResult(name: 'ತಮಸ್ಸು ಜನನ ಯೋಗ', shloka: '$shloka\nಕತ್ತಲೆಯಲ್ಲಿ ನೆಲದ ಮೇಲೆ ಜನನ');
+      return YogaResult(name: 'ತಮಸ್ಸು ಜನನ ಯೋಗ', verse: verse, shloka: 'ಕತ್ತಲೆಯಲ್ಲಿ ನೆಲದ ಮೇಲೆ ಜನನ');
     }
     // Jala lagna + Shani conjunction
     if (_isJala(lagnaRashi) && houses['ಶನಿ'] == 1) {
-      return YogaResult(name: 'ತಮಸ್ಸು ಜನನ ಯೋಗ', shloka: '$shloka\nಜಲ ಲಗ್ನ + ಶನಿ — ಕತ್ತಲೆಯಲ್ಲಿ ಜನನ');
+      return YogaResult(name: 'ತಮಸ್ಸು ಜನನ ಯೋಗ', verse: verse, shloka: 'ಜಲ ಲಗ್ನ + ಶನಿ — ಕತ್ತಲೆಯಲ್ಲಿ ಜನನ');
     }
     return null;
   }
 
   // ── JKL 17: Mother's suffering ──
   static YogaResult? _jkl17(Map<String, int> houses) {
-    const shloka = 'ಪಾಪೈಶ್ಚಂದ್ರಸ್ಮರಸುಖಗತೈಃ ಕ್ಲೇಶಮಾಹುರ್ಜನನ್ಯಾ:';
+    const verse = 'ಪಾಪೈಶ್ಚಂದ್ರಸ್ಮರಸುಖಗತೈಃ ಕ್ಲೇಶಮಾಹುರ್ಜನನ್ಯಾ:';
     final hC = houses['ಚಂದ್ರ'];
     // Papa in 7th and 4th from lagna
     bool fromLagna = _anyPapaInHouse(houses, 7) && _anyPapaInHouse(houses, 4);
@@ -1222,13 +1241,13 @@ class YogaPhala {
       fromMoon = _anyPapaInHouse(houses, m7) && _anyPapaInHouse(houses, m4);
     }
     if (!(fromLagna || fromMoon)) return null;
-    return YogaResult(name: 'ಮಾತೃ ಕ್ಲೇಶ ಯೋಗ', shloka: '$shloka\nಪಾಪಗ್ರಹರು ೪ ಮತ್ತು ೭ರಲ್ಲಿ — ತಾಯಿಗೆ ಕಷ್ಟ');
+    return YogaResult(name: 'ಮಾತೃ ಕ್ಲೇಶ ಯೋಗ', verse: verse, shloka: 'ಪಾಪಗ್ರಹರು ೪ ಮತ್ತು ೭ರಲ್ಲಿ — ತಾಯಿಗೆ ಕಷ್ಟ');
   }
 
   // ── JKL 27: Body marks ──
   static List<YogaResult> _jkl27(KundaliResult r, Map<String, int> houses) {
     final results = <YogaResult>[];
-    const shloka = 'ಸಮನುಪತಿತಾ ಯಸ್ಮಿನ್ ಗಾವೋ ತ್ರಯಃ ಸಬುಧಾ ಗ್ರಹಾ\nಭವತಿ ನಿಯಮಾತ್ತಸ್ಯಾವಾಪ್ತಿ: ಶುಭೇಷ್ಟಶುಭೇಷು ವಾ';
+    const verse = 'ಸಮನುಪತಿತಾ ಯಸ್ಮಿನ್ ಗಾವೋ ತ್ರಯಃ ಸಬುಧಾ ಗ್ರಹಾ\nಭವತಿ ನಿಯಮಾತ್ತಸ್ಯಾವಾಪ್ತಿ: ಶುಭೇಷ್ಟಶುಭೇಷು ವಾ';
     // Budha + 3 other planets in same rashi
     final budhaInfo = r.planets['ಬುಧ'];
     if (budhaInfo == null) return results;
@@ -1243,7 +1262,8 @@ class YogaPhala {
       final rName = knRashi[budhaRashi];
       results.add(YogaResult(
         name: 'ದೇಹ ಚಿಹ್ನೆ ಯೋಗ',
-        shloka: '$shloka\nಬುಧ + ೩ ಗ್ರಹರು $rName ರಾಶಿಯಲ್ಲಿ — $part ಭಾಗದಲ್ಲಿ ಗುರುತು',
+        verse: verse,
+        shloka: 'ಬುಧ + ೩ ಗ್ರಹರು $rName ರಾಶಿಯಲ್ಲಿ — $part ಭಾಗದಲ್ಲಿ ಗುರುತು',
       ));
     }
     return results;
@@ -1252,7 +1272,7 @@ class YogaPhala {
   // ── JKL 28: Wound or mole ──
   static List<YogaResult> _jkl28(Map<String, int> houses) {
     final results = <YogaResult>[];
-    const shloka = 'ವ್ರಣಕೃದುಶುಭಃ ಷಷ್ಟೇ ಲಗ್ನಾತ್ ತನೌ ಭಸಮಾಶ್ರಿತೇ\nತಿಲಕಮಷಕೃದ್ ದೃಷ್ಟಃ ಸೌಮೈರ್ಯುತಶ್ಚ ಸ ಲಕ್ಷ್ಮವಾನ್';
+    const verse = 'ವ್ರಣಕೃದುಶುಭಃ ಷಷ್ಟೇ ಲಗ್ನಾತ್ ತನೌ ಭಸಮಾಶ್ರಿತೇ\nತಿಲಕಮಷಕೃದ್ ದೃಷ್ಟಃ ಸೌಮೈರ್ಯುತಶ್ಚ ಸ ಲಕ್ಷ್ಮವಾನ್';
     // Papa in 6th or lagna
     for (final targetH in [1, 6]) {
       for (final e in houses.entries) {
@@ -1264,12 +1284,14 @@ class YogaPhala {
         if (shubhaSees) {
           results.add(YogaResult(
             name: 'ಮಚ್ಚೆ ಯೋಗ',
-            shloka: '$shloka\n${e.key} ${targetH}ನೇ ಮನೆಯಲ್ಲಿ + ಶುಭ ದೃಷ್ಟಿ — ಮಚ್ಚೆ ಇರುತ್ತದೆ',
+            verse: verse,
+            shloka: '${e.key} ${targetH}ನೇ ಮನೆಯಲ್ಲಿ + ಶುಭ ದೃಷ್ಟಿ — ಮಚ್ಚೆ ಇರುತ್ತದೆ',
           ));
         } else {
           results.add(YogaResult(
             name: 'ವ್ರಣ (ಗಾಯ) ಯೋಗ',
-            shloka: '$shloka\n${e.key} ${targetH}ನೇ ಮನೆಯಲ್ಲಿ — ಗಾಯವಾಗುತ್ತದೆ',
+            verse: verse,
+            shloka: '${e.key} ${targetH}ನೇ ಮನೆಯಲ್ಲಿ — ಗಾಯವಾಗುತ್ತದೆ',
           ));
         }
         break; // One result per house
