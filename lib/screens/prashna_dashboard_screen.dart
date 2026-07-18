@@ -1595,21 +1595,30 @@ class _PrashnaDashboardScreenState extends State<PrashnaDashboardScreen>
   }
 
   Widget _phalaRow(String label, String rashi, String phala, Color accent) {
+    if (phala.isEmpty) return const SizedBox.shrink();
     return Padding(
-      padding: const EdgeInsets.only(bottom: 4),
-      child: Row(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          SizedBox(
-            width: 90,
-            child: Text(label, style: TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: accent)),
-          ),
-          SizedBox(
-            width: 50,
-            child: Text(rashi, style: TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: kMuted)),
-          ),
-          Expanded(
-            child: Text(phala, style: TextStyle(fontSize: 10, color: kText)),
+          // Label + Rashi name header
+          Row(children: [
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+              decoration: BoxDecoration(
+                color: accent.withOpacity(0.12),
+                borderRadius: BorderRadius.circular(4),
+              ),
+              child: Text(label, style: TextStyle(fontSize: 10, fontWeight: FontWeight.w800, color: accent)),
+            ),
+            const SizedBox(width: 6),
+            Text(rashi, style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: kText)),
+          ]),
+          const SizedBox(height: 3),
+          // Shloka text
+          Padding(
+            padding: const EdgeInsets.only(left: 4),
+            child: Text(phala, style: TextStyle(fontSize: 11, color: kText, height: 1.5)),
           ),
         ],
       ),
