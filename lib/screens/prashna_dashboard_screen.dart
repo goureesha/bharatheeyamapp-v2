@@ -1555,26 +1555,11 @@ class _PrashnaDashboardScreenState extends State<PrashnaDashboardScreen>
                       Text(gp.rashi, style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: kText)),
                     ]),
                     const SizedBox(height: 8),
-                    // Phala rows
-                    _phalaRow('ರಾಶಿ ಫಲ', gp.rashi, rashiPhalaText, pColor),
-                    if (rashiShlokaRef.isNotEmpty)
-                      Padding(
-                        padding: const EdgeInsets.only(left: 4, bottom: 6),
-                        child: Text(rashiShlokaRef, style: TextStyle(fontSize: 9, color: kMuted, fontStyle: FontStyle.italic)),
-                      ),
-                    _phalaRow('ನವಾಂಶ ಫಲ', gp.navamshaRashi, navPhalaText, pColor),
-                    if (navShlokaRef.isNotEmpty)
-                      Padding(
-                        padding: const EdgeInsets.only(left: 4, bottom: 6),
-                        child: Text(navShlokaRef, style: TextStyle(fontSize: 9, color: kMuted, fontStyle: FontStyle.italic)),
-                      ),
-                    _phalaRow('ದ್ವಾದಶಾಂಶ ಫಲ', gp.dvadamshaRashi, dvadPhalaText, pColor),
-                    if (dvadShlokaRef.isNotEmpty)
-                      Padding(
-                        padding: const EdgeInsets.only(left: 4, bottom: 6),
-                        child: Text(dvadShlokaRef, style: TextStyle(fontSize: 9, color: kMuted, fontStyle: FontStyle.italic)),
-                      ),
-                    _phalaRow('ದ್ರೇಕ್ಕಾಣ ಫಲ', gp.drekkanaRashi, gp.drekkanaPhala, pColor),
+                    // Phala rows — show shloka as main content
+                    _phalaRow('ರಾಶಿ', gp.rashi, _selectedBook == 0 ? gp.rashiShloka : gp.saravaliRashiPhala, pColor),
+                    _phalaRow('ನವಾಂಶ', gp.navamshaRashi, _selectedBook == 0 ? gp.navamshaShloka : gp.saravaliNavamshaPhala, pColor),
+                    _phalaRow('ದ್ವಾದಶಾಂಶ', gp.dvadamshaRashi, _selectedBook == 0 ? gp.dvadamshaShloka : gp.saravaliDvadashamshaPhala, pColor),
+                    _phalaRow('ದ್ರೇಕ್ಕಾಣ', gp.drekkanaRashi, gp.drekkanaPhala, pColor),
                     _phalaRow('D9 ದ್ರೇಕ್ಕಾಣ', gp.d9DrekkanaRashi, gp.d9DrekkanaPhala, pColor),
                     _phalaRow('D12 ದ್ರೇಕ್ಕಾಣ', gp.d12DrekkanaRashi, gp.d12DrekkanaPhala, pColor),
                   ],
