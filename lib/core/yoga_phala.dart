@@ -343,8 +343,7 @@ class YogaPhala {
     final y3 = _yoga3(r, houses);
     if (y3 != null) results.add(y3);
 
-    final y4 = _yoga4(houses);
-    if (y4 != null) results.add(y4);
+    results.addAll(_yoga4(houses));
 
     final y5 = _yoga5(houses);
     if (y5 != null) results.add(y5);
@@ -448,8 +447,7 @@ class YogaPhala {
     if (y1 != null) results.add(y1);
     final y2 = _yoga2(houses);
     if (y2 != null) results.add(y2);
-    final y4 = _yoga4(houses);
-    if (y4 != null) results.add(y4);
+    results.addAll(_yoga4(houses));
     final y5 = _yoga5(houses);
     if (y5 != null) results.add(y5);
     final y6 = _yoga6(houses);
@@ -545,31 +543,51 @@ class YogaPhala {
   // YOGA 4: Ravi/Chandra in 7th with Kuja/Shani drishti
   //         OR in 12th/2nd with Kuja/Shani drishti
   // ═══════════════════════════════════════════
-  static YogaResult? _yoga4(Map<String, int> houses) {
-    bool satisfied = false;
+  static List<YogaResult> _yoga4(Map<String, int> houses) {
+    final results = <YogaResult>[];
+    const verse = 'ದಿವಾಕರೇಂದ್ವಃ ಸ್ಮರಗೌ ಕುಜಾರ್ಕಚೌ ಗದಪ್ರದೌ ಪುಂಗಲಯೋಷಿತೋಸ್ತದಾ ।\nವ್ಯಯಸ್ವಗೌ ಮೃತ್ಯುಕರೌ ತಥಾ ಯುತೌ ತದೇಕದೃಷ್ಟಾ ಮರಣಾಯ ಕಲ್ಪಿತೌ';
 
-    for (final p in ['ರವಿ', 'ಚಂದ್ರ']) {
-      final h = houses[p];
-      if (h == null) continue;
+    final hRavi = houses['ರವಿ'];
+    final hChandra = houses['ಚಂದ್ರ'];
+    final hKuja = houses['ಕುಜ'];
+    final hShani = houses['ಶನಿ'];
 
-      if (h == 7) {
-        if (_planetAspectsHouse('ಕುಜ', houses, 7) || _planetAspectsHouse('ಶನಿ', houses, 7)) {
-          satisfied = true;
-        }
+    // Rule 1: Kuja in 7th house from Ravi
+    if (hRavi != null && hKuja != null) {
+      final ravi7th = ((hRavi - 1 + 6) % 12) + 1;
+      if (hKuja == ravi7th) {
+        results.add(YogaResult(name: 'ಗದ ಯೋಗ (ಪುರುಷ)', verse: verse,
+          shloka: 'ರವಿಯಿಂದ 7ನೇ ಮನೆಯಲ್ಲಿ ಕುಜನಿದ್ದಾನೆ — ಪುರುಷನಿಗೆ ರೋಗ'));
       }
-      if (h == 12 || h == 2) {
-        if (_planetAspectsHouse('ಕುಜ', houses, h) || _planetAspectsHouse('ಶನಿ', houses, h)) {
-          satisfied = true;
+    }
+
+    // Rule 2: Shani in 7th house from Chandra
+    if (hChandra != null && hShani != null) {
+      final chandra7th = ((hChandra - 1 + 6) % 12) + 1;
+      if (hShani == chandra7th) {
+        results.add(YogaResult(name: 'ಗದ ಯೋಗ (ಸ್ತ್ರೀ)', verse: verse,
+          shloka: 'ಚಂದ್ರನಿಂದ 7ನೇ ಮನೆಯಲ್ಲಿ ಶನಿಯಿದ್ದಾನೆ — ಸ್ತ್ರೀಗೆ ರೋಗ'));
+      }
+    }
+
+    // Rule 3: Shani AND Kuja in 12th and 2nd from Ravi/Chandra/Lagna
+    if (hKuja != null && hShani != null) {
+      for (final ref in [hRavi, hChandra, 1]) { // 1 = lagna house
+        if (ref == null) continue;
+        final h12 = ((ref - 1 + 11) % 12) + 1;
+        final h2 = ((ref - 1 + 1) % 12) + 1;
+        final pair = {hKuja, hShani};
+        final targets = {h12, h2};
+        if (pair.containsAll(targets) || targets.containsAll(pair)) {
+          final refName = ref == hRavi ? 'ರವಿ' : (ref == hChandra ? 'ಚಂದ್ರ' : 'ಲಗ್ನ');
+          results.add(YogaResult(name: 'ಮೃತ್ಯು ಯೋಗ', verse: verse,
+            shloka: '${refName}ದಿಂದ 12 ಮತ್ತು 2ನೇ ಮನೆಯಲ್ಲಿ ಶನಿ ಮತ್ತು ಕುಜರಿದ್ದಾರೆ — ಮರಣ'));
+          break; // one match is enough
         }
       }
     }
 
-    if (!satisfied) return null;
-    return YogaResult(
-      name: 'ಗದ/ಮೃತ್ಯು ಯೋಗ',
-      verse: 'ದಿವಾಕರೇಂದ್ವಃ ಸ್ಮರಗೌ ಕುಜಾರ್ಕಚೌ ಗದಪ್ರದೌ ಪುಂಗಲಯೋಷಿತೋಸ್ತದಾ ।\nವ್ಯಯಸ್ವಗೌ ಮೃತ್ಯುಕರೌ ತಥಾ ಯುತೌ ತದೇಕದೃಷ್ಟಾ ಮರಣಾಯ ಕಲ್ಪಿತೌ',
-      shloka: 'ರವಿ/ಚಂದ್ರರು 7ನೇ ಅಥವಾ 12/2ನೇ ಮನೆಯಲ್ಲಿದ್ದು ಕುಜ/ಶನಿ ದೃಷ್ಟಿ ಇದ್ದರೆ',
-    );
+    return results;
   }
 
   // ═══════════════════════════════════════════
