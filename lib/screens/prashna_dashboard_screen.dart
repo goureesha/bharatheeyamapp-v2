@@ -56,6 +56,7 @@ class _PrashnaDashboardScreenState extends State<PrashnaDashboardScreen>
   int _yogaDivMode = 0; // 0=ರಾಶಿ, 1=ರಾಶಿ∪ನವಾಂಶ, 2=ರಾಶಿ∪ದ್ವಾದಶಾಂಶ, 3=ರಾಶಿ∪ನವಾಂಶ∪ದ್ವಾದಶಾಂಶ, 4=ನವಾಂಶ∪ದ್ವಾದಶಾಂಶ
   bool _yogaUseLagna = true; // true = use actual lagna
   Set<int> _yogaSelectedRashis = {}; // 0-11 selected rashis for multi-select
+  String? _yogaGrahaFilter; // null = all grahas, else specific graha name
 
 
 
@@ -1053,6 +1054,31 @@ class _PrashnaDashboardScreenState extends State<PrashnaDashboardScreen>
   // ═══════════════════════════════════════════
   List<Widget> _buildYogaSection(KundaliResult r) {
     const rashiNames = ['ಮೇಷ', 'ವೃಷಭ', 'ಮಿಥುನ', 'ಕರ್ಕ', 'ಸಿಂಹ', 'ಕನ್ಯಾ', 'ತುಲಾ', 'ವೃಶ್ಚಿಕ', 'ಧನು', 'ಮಕರ', 'ಕುಂಭ', 'ಮೀನ'];
+    const grahaNames = ['ರವಿ','ಚಂದ್ರ','ಕುಜ','ಬುಧ','ಗುರು','ಶುಕ್ರ','ಶನಿ','ರಾಹು','ಕೇತು'];
+    // Also match alternate forms used in shloka text
+    const grahaAliases = {
+      'ಸೂರ್ಯ': 'ರವಿ', 'ರವಿಯಿಂದ': 'ರವಿ', 'ಸೂರ್ಯನ': 'ರವಿ',
+      'ಚಂದ್ರನ': 'ಚಂದ್ರ', 'ಚಂದ್ರನಿಂದ': 'ಚಂದ್ರ', 'ಚಂದ್ರನು': 'ಚಂದ್ರ', 'ಚಂದ್ರನಿಗೆ': 'ಚಂದ್ರ', 'ಚಂದ್ರ-': 'ಚಂದ್ರ',
+      'ಕುಜನ': 'ಕುಜ', 'ಕುಜನು': 'ಕುಜ', 'ಕುಜನಿಂದ': 'ಕುಜ', 'ಕುಜರು': 'ಕುಜ', 'ಕುಜ-': 'ಕುಜ',
+      'ಬುಧನ': 'ಬುಧ',
+      'ಗುರುವಿನ': 'ಗುರು', 'ಗುರುವು': 'ಗುರು',
+      'ಶುಕ್ರನ': 'ಶುಕ್ರ', 'ಶುಕ್ರನು': 'ಶುಕ್ರ', 'ಶುಕ್ರನಿಂದ': 'ಶುಕ್ರ',
+      'ಶನಿಯ': 'ಶನಿ', 'ಶನಿಯು': 'ಶನಿ', 'ಶನಿಯಿಂದ': 'ಶನಿ', 'ಶನಿಯಿದ್ದಾನೆ': 'ಶನಿ',
+      'ರಾಹುಗ್ರಸ್ತ': 'ರಾಹು',
+    };
+
+    // Helper to extract graha names from text
+    Set<String> extractGrahas(YogaResult y) {
+      final text = '${y.name} ${y.shloka}';
+      final found = <String>{};
+      for (final g in grahaNames) {
+        if (text.contains(g)) found.add(g);
+      }
+      for (final entry in grahaAliases.entries) {
+        if (text.contains(entry.key)) found.add(entry.value);
+      }
+      return found;
+    }
 
     final isUnion = _yogaDivMode >= 1; // all modes except 0 are union modes
 
@@ -1069,6 +1095,14 @@ class _PrashnaDashboardScreenState extends State<PrashnaDashboardScreen>
         final yList = _evaluateWithMode(r, i, isUnion);
         if (yList.isNotEmpty) yogaGroups.add(MapEntry(rashiNames[i], yList));
       }
+    }
+
+    // Apply graha filter
+    if (_yogaGrahaFilter != null) {
+      yogaGroups = yogaGroups.map((group) {
+        final filtered = group.value.where((y) => extractGrahas(y).contains(_yogaGrahaFilter)).toList();
+        return MapEntry(group.key, filtered);
+      }).where((g) => g.value.isNotEmpty).toList();
     }
 
     final totalCount = yogaGroups.fold<int>(0, (sum, g) => sum + g.value.length);
@@ -1109,6 +1143,18 @@ class _PrashnaDashboardScreenState extends State<PrashnaDashboardScreen>
                   _yogaDivChip('ರಾಶಿ∪ದ್ವಾದಶಾಂಶ', 2),
                   _yogaDivChip('ರಾಶಿ∪ನವಾಂಶ∪ದ್ವಾದಶಾಂಶ', 3),
                   _yogaDivChip('ನವಾಂಶ∪ದ್ವಾದಶಾಂಶ', 4),
+                ],
+              ),
+            ),
+            const SizedBox(height: 6),
+            // ── Graha filter ──
+            SizedBox(
+              height: 32,
+              child: ListView(
+                scrollDirection: Axis.horizontal,
+                children: [
+                  _yogaGrahaChip('ಎಲ್ಲಾ ಗ್ರಹ', null),
+                  for (final g in grahaNames) _yogaGrahaChip(g, g),
                 ],
               ),
             ),
@@ -1173,7 +1219,26 @@ class _PrashnaDashboardScreenState extends State<PrashnaDashboardScreen>
                               ),
                           ],
                         ),
-                        const SizedBox(height: 6),
+                        // Graha badges — show which planets are involved
+                        Builder(builder: (_) {
+                          final yogaGrahas = extractGrahas(y);
+                          if (yogaGrahas.isEmpty) return const SizedBox.shrink();
+                          return Padding(
+                            padding: const EdgeInsets.only(top: 4),
+                            child: Wrap(
+                              spacing: 4,
+                              runSpacing: 2,
+                              children: yogaGrahas.map((g) => Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+                                decoration: BoxDecoration(
+                                  color: kPurple2.withOpacity(0.1),
+                                  borderRadius: BorderRadius.circular(3),
+                                ),
+                                child: Text(g, style: TextStyle(fontSize: 9, fontWeight: FontWeight.w700, color: kPurple2)),
+                              )).toList(),
+                            ),
+                          );
+                        }),
                         // Sanskrit shloka (verse)
                         if (y.verse.isNotEmpty)
                           Padding(
@@ -1292,6 +1357,25 @@ class _PrashnaDashboardScreenState extends State<PrashnaDashboardScreen>
             border: Border.all(color: selected ? kOrange : kMuted.withOpacity(0.3)),
           ),
           child: Text(label, style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: selected ? kOrange : kMuted)),
+        ),
+      ),
+    );
+  }
+
+  Widget _yogaGrahaChip(String label, String? value) {
+    final selected = _yogaGrahaFilter == value;
+    return Padding(
+      padding: const EdgeInsets.only(right: 6),
+      child: GestureDetector(
+        onTap: () => setState(() => _yogaGrahaFilter = value),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+          decoration: BoxDecoration(
+            color: selected ? kPurple2.withOpacity(0.15) : Colors.transparent,
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: selected ? kPurple2 : kMuted.withOpacity(0.3)),
+          ),
+          child: Text(label, style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: selected ? kPurple2 : kMuted)),
         ),
       ),
     );
