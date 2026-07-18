@@ -1163,6 +1163,14 @@ class _PrashnaDashboardScreenState extends State<PrashnaDashboardScreen>
                           ],
                         ),
                         const SizedBox(height: 6),
+                        // Sanskrit shloka (verse)
+                        if (y.verse.isNotEmpty)
+                          Padding(
+                            padding: const EdgeInsets.only(bottom: 4),
+                            child: Text(y.verse,
+                                style: TextStyle(fontSize: 12, fontStyle: FontStyle.italic, color: kText.withOpacity(0.7), height: 1.5)),
+                          ),
+                        // Satisfied condition (Kannada explanation)
                         Text(y.shloka,
                             style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: kText, height: 1.6)),
                         // All planet positions — grouped by house
