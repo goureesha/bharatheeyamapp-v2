@@ -1530,7 +1530,9 @@ class _PrashnaDashboardScreenState extends State<PrashnaDashboardScreen>
               final navPhalaText = _selectedBook == 0 ? gp.navamshaPhala : gp.saravaliNavamshaPhala;
               final dvadPhalaText = _selectedBook == 0 ? gp.dvadashamshaPhala : gp.saravaliDvadashamshaPhala;
               // Shloka reference (only for BJ)
-              final rashiShlokaRef = _selectedBook == 0 ? gp.rashiShloka : '';
+               final rashiShlokaRef = _selectedBook == 0 ? gp.rashiShloka : '';
+              final navShlokaRef = _selectedBook == 0 ? gp.navamshaShloka : '';
+              final dvadShlokaRef = _selectedBook == 0 ? gp.dvadamshaShloka : '';
               return Container(
                 margin: const EdgeInsets.only(top: 8),
                 padding: const EdgeInsets.all(10),
@@ -1557,11 +1559,21 @@ class _PrashnaDashboardScreenState extends State<PrashnaDashboardScreen>
                     _phalaRow('ರಾಶಿ ಫಲ', gp.rashi, rashiPhalaText, pColor),
                     if (rashiShlokaRef.isNotEmpty)
                       Padding(
-                        padding: const EdgeInsets.only(left: 90, bottom: 4),
+                        padding: const EdgeInsets.only(left: 4, bottom: 6),
                         child: Text(rashiShlokaRef, style: TextStyle(fontSize: 9, color: kMuted, fontStyle: FontStyle.italic)),
                       ),
                     _phalaRow('ನವಾಂಶ ಫಲ', gp.navamshaRashi, navPhalaText, pColor),
+                    if (navShlokaRef.isNotEmpty)
+                      Padding(
+                        padding: const EdgeInsets.only(left: 4, bottom: 6),
+                        child: Text(navShlokaRef, style: TextStyle(fontSize: 9, color: kMuted, fontStyle: FontStyle.italic)),
+                      ),
                     _phalaRow('ದ್ವಾದಶಾಂಶ ಫಲ', gp.dvadamshaRashi, dvadPhalaText, pColor),
+                    if (dvadShlokaRef.isNotEmpty)
+                      Padding(
+                        padding: const EdgeInsets.only(left: 4, bottom: 6),
+                        child: Text(dvadShlokaRef, style: TextStyle(fontSize: 9, color: kMuted, fontStyle: FontStyle.italic)),
+                      ),
                     _phalaRow('ದ್ರೇಕ್ಕಾಣ ಫಲ', gp.drekkanaRashi, gp.drekkanaPhala, pColor),
                     _phalaRow('D9 ದ್ರೇಕ್ಕಾಣ', gp.d9DrekkanaRashi, gp.d9DrekkanaPhala, pColor),
                     _phalaRow('D12 ದ್ರೇಕ್ಕಾಣ', gp.d12DrekkanaRashi, gp.d12DrekkanaPhala, pColor),
