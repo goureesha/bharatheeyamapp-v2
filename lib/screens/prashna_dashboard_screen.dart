@@ -1151,6 +1151,17 @@ class _PrashnaDashboardScreenState extends State<PrashnaDashboardScreen>
                             Expanded(
                               child: Text(y.name, style: TextStyle(fontSize: 13, fontWeight: FontWeight.w900, color: isDiv ? Colors.deepPurple : kOrange)),
                             ),
+                            // Rashi badge — show which rashi triggered this yoga
+                            if (group.key.isNotEmpty)
+                              Container(
+                                margin: const EdgeInsets.only(right: 4),
+                                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                decoration: BoxDecoration(
+                                  color: kTeal.withOpacity(0.15),
+                                  borderRadius: BorderRadius.circular(4),
+                                ),
+                                child: Text(group.key, style: TextStyle(fontSize: 9, fontWeight: FontWeight.w700, color: kTeal)),
+                              ),
                             if (isDiv)
                               Container(
                                 padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
@@ -1173,19 +1184,24 @@ class _PrashnaDashboardScreenState extends State<PrashnaDashboardScreen>
                         // Satisfied condition (Kannada explanation)
                         Text(y.shloka,
                             style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: kText, height: 1.6)),
-                        // All planet positions — grouped by house
+                        // All planet positions — grouped by house (relative to selected rashi)
                         const SizedBox(height: 6),
                         Builder(builder: (_) {
-                          final lagnaLon = r.planets['ಲಗ್ನ']?.longitude ?? 0;
-                          final lagnaRashi = (lagnaLon ~/ 30) % 12;
+                          // Use selected rashi as reference, or lagna if in lagna mode
+                          final int refRashi;
+                          if (group.key.isNotEmpty) {
+                            final idx = rashiNames.indexOf(group.key);
+                            refRashi = idx >= 0 ? idx : ((r.planets['ಲಗ್ನ']?.longitude ?? 0) ~/ 30) % 12;
+                          } else {
+                            refRashi = ((r.planets['ಲಗ್ನ']?.longitude ?? 0) ~/ 30) % 12;
+                          }
                           const allPlanets = ['ರವಿ','ಚಂದ್ರ','ಕುಜ','ಬುಧ','ಗುರು','ಶುಕ್ರ','ಶನಿ','ರಾಹು','ಕೇತು'];
-                          // Compute house for each planet
                           final byHouse = <int, List<String>>{};
                           for (final pn in allPlanets) {
                             final pInfo = r.planets[pn];
                             if (pInfo == null) continue;
                             final pRashi = (pInfo.longitude ~/ 30) % 12;
-                            final house = ((pRashi - lagnaRashi + 12) % 12) + 1;
+                            final house = ((pRashi - refRashi + 12) % 12) + 1;
                             byHouse.putIfAbsent(house, () => []).add(pn);
                           }
                           final sorted = byHouse.keys.toList()..sort();
