@@ -29,7 +29,7 @@ class PlanetDetailSheet extends StatelessWidget {
             // Title
             Padding(
               padding: const EdgeInsets.symmetric(vertical: 12),
-              child: Text('${tr('ಗ್ರಹದ ಸಂಪೂರ್ಣ ವಿವರ')} — ${tr(pName)}',
+              child: Text('${AppLocale.l('grahaSampurnaVivara')} — ${tr(pName)}',
                 style: TextStyle(
                   fontSize: 16, fontWeight: FontWeight.w800, color: kPurple2)),
             ),
@@ -38,26 +38,26 @@ class PlanetDetailSheet extends StatelessWidget {
                 controller: ctrl,
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 children: [
-                  _section('📌 ${tr('ಮೂಲ ವಿವರ')}', [
-                    [tr('ಸ್ಫುಟ'),  detail['degFmt']],
-                    [tr('ಗತಿ'),   detail['gati']],
-                    [tr('ಅಸ್ತ'),  detail['isAsta'] == true ? tr('ಹೌದು') : (detail['isAsta'] == false ? tr('ಇಲ್ಲ') : tr('ಅನ್ವಯಿಸುವುದಿಲ್ಲ'))],
+                  _section('📌 ${AppLocale.l('mulaVivara')}', [
+                    [AppLocale.l('sphuta'),  detail['degFmt']],
+                    [AppLocale.l('gati'),   trAll(detail['gati'])],
+                    [AppLocale.l('asta'),  detail['isAsta'] == true ? AppLocale.l('houdu') : (detail['isAsta'] == false ? AppLocale.l('illa') : trAll('ಅನ್ವಯಿಸುವುದಿಲ್ಲ'))],
                   ]),
                   const SizedBox(height: 8),
-                  _section('📊 ${tr('ವರ್ಗಗಳು')}', [
-                    [tr('ರಾಶಿ'),      tr(detail['d1'])],
-                    [tr('ಹೋರಾ'),     tr(detail['d2'])],
-                    [tr('ದ್ರೇಕ್ಕಾಣ'), tr(detail['d3'])],
-                    [tr('ನವಾಂಶ'),    tr(detail['d9'])],
-                    [tr('ದ್ವಾದಶಾಂಶ'),tr(detail['d12'])],
-                    [tr('ತ್ರಿಂಶಾಂಶ'),tr(detail['d30'])],
+                  _section('📊 ${AppLocale.l('vargagalu')}', [
+                    [AppLocale.l('rashi'),      trAll(detail['d1'])],
+                    [AppLocale.l('hora'),     trAll(detail['d2'])],
+                    [AppLocale.l('drekkana'), trAll(detail['d3'])],
+                    [AppLocale.l('navamsha'),    trAll(detail['d9'])],
+                    [AppLocale.l('dvadashamsha'),trAll(detail['d12'])],
+                    [AppLocale.l('trimshamsha'),trAll(detail['d30'])],
                   ]),
                   const SizedBox(height: 8),
-                  _section('🧩 ${tr('ಉಪ-ವಿಭಾಗಗಳು')}', [
-                    [tr('ರಾಶಿ ದ್ರೇಕ್ಕಾಣ'), tr(detail['subDrekD1'])],
-                    [tr('ನವಾಂಶ ದ್ರೇಕ್ಕಾಣ'), tr(detail['subDrekD9'])],
-                    [tr('ದ್ವಾದಶಾಂಶ ದ್ರೇಕ್ಕಾಣ'), tr(detail['subDrekD12'])],
-                    [tr('ನವ-ನವಾಂಶ'), tr(detail['d9OfD9'])],
+                  _section('🧩 ${AppLocale.l('upaVibhagagalu')}', [
+                    [AppLocale.l('rashiDrekkana'), trAll(detail['subDrekD1'])],
+                    [AppLocale.l('navamshaDrekkana'), trAll(detail['subDrekD9'])],
+                    [AppLocale.l('dvadashamshaDrekkana'), trAll(detail['subDrekD12'])],
+                    [AppLocale.l('navaNavamsha'), trAll(detail['d9OfD9'])],
                   ]),
                   const SizedBox(height: 24),
                 ],

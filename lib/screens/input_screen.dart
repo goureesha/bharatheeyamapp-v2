@@ -8,7 +8,9 @@ import '../services/client_service.dart';
 import '../services/history_service.dart';
 import '../core/calculator.dart';
 import '../constants/places.dart';
+import '../services/timezone_service.dart';
 import '../core/ephemeris.dart';
+import '../widgets/date_time_input.dart';
 
 import '../services/google_auth_service.dart';
 import '../services/calendar_service.dart';
@@ -55,7 +57,7 @@ class _InputScreenState extends State<InputScreen> {
   bool _showGhatiInput = false;
   final _ghatiCtrl = TextEditingController();
   final _vighatiCtrl = TextEditingController();
-  String? _computedSunrise; // display sunrise for feedback
+
 
 
 
@@ -158,6 +160,7 @@ class _InputScreenState extends State<InputScreen> {
             birthTime: '${profile.hour.toString().padLeft(2,'0')}:${profile.minute.toString().padLeft(2,'0')} ${profile.ampm}',
             birthPlace: profile.place,
             lat: profile.lat, lon: profile.lon,
+            tzOffset: profile.tzOffset,
             notes: profile.notes,
           ));
         }
@@ -181,7 +184,7 @@ class _InputScreenState extends State<InputScreen> {
             place: m.birthPlace,
             notes: m.notes,
             clientId: client.clientId,
-            tzOffset: LocationService.tzOffset,
+            tzOffset: m.tzOffset,
           );
           await StorageService.save(newProfile);
           p[m.memberName] = newProfile;
@@ -241,7 +244,7 @@ class _InputScreenState extends State<InputScreen> {
           final lat = double.parse(data[0]['lat']);
           final lon = double.parse(data[0]['lon']);
           final displayName = data[0]['display_name'] as String;
-          final autoTz = await getTimezoneForPlace(displayName, lat, lon);
+          final autoTz = await getTimezoneForPlace(displayName, lat, lon, birthDate: _dob);
           setState(() {
             _placeCtrl.text = placeName.trim();
             _latCtrl.text = lat.toStringAsFixed(4);
@@ -297,7 +300,7 @@ class _InputScreenState extends State<InputScreen> {
                       Navigator.pop(ctx);
                       final lat = double.parse(place['lat']);
                       final lon = double.parse(place['lon']);
-                      final autoTz = await getTimezoneForPlace(displayName, lat, lon);
+                      final autoTz = await getTimezoneForPlace(displayName, lat, lon, birthDate: _dob);
                       setState(() {
                         _latCtrl.text = lat.toStringAsFixed(4);
                         _lonCtrl.text = lon.toStringAsFixed(4);
@@ -387,6 +390,7 @@ class _InputScreenState extends State<InputScreen> {
             ampm: _ampm,
             lat: lat,
             lon: lon,
+            tz: tzOffset,
             extraInfo: {'clientId': activeClientId ?? '', 'ayanamsa': _ayanamsa, 'nodeMode': _nodeMode},
             initialNotes: uiNotes,
             initialAroodhas: _loadedAroodhas,
@@ -444,6 +448,7 @@ class _InputScreenState extends State<InputScreen> {
         birthPlace: p.place,
         lat: p.lat,
         lon: p.lon,
+        tzOffset: p.tzOffset,
         notes: p.notes,
       );
       final members = ClientService.getMembersForClient(cId);
@@ -506,7 +511,7 @@ class _InputScreenState extends State<InputScreen> {
                 // Not in StorageService at all
                 unifiedProfiles[m.memberName] = Profile(
                   name: m.memberName, date: m.dob, hour: m.hour12, minute: m.minute, ampm: m.ampm,
-                  lat: m.lat, lon: m.lon, place: m.birthPlace, notes: m.notes, tzOffset: LocationService.tzOffset,
+                  lat: m.lat, lon: m.lon, place: m.birthPlace, notes: m.notes, tzOffset: m.tzOffset,
                   clientId: m.clientId,
                 );
               } else {
@@ -534,13 +539,20 @@ class _InputScreenState extends State<InputScreen> {
                  e.value.date.contains(searchQuery);
         }).toList();
 
-        // Sort descending by Client ID so newest entries appear first
+        // Sort by savedAt timestamp (newest first) so new records always appear on top
+        // Records without savedAt (old/restored data) fall below, sorted by clientId
         filteredEntries.sort((a, b) {
+          final aTime = a.value.savedAt;
+          final bTime = b.value.savedAt;
+          // Both have savedAt → newest first
+          if (aTime != null && bTime != null) return bTime.compareTo(aTime);
+          // Only one has savedAt → it goes first
+          if (aTime != null && bTime == null) return -1;
+          if (aTime == null && bTime != null) return 1;
+          // Neither has savedAt → fall back to clientId descending
           final aId = a.value.clientId ?? '';
           final bId = b.value.clientId ?? '';
-          if (aId.isEmpty && bId.isNotEmpty) return 1;
-          if (aId.isNotEmpty && bId.isEmpty) return -1;
-          return bId.compareTo(aId); // Descending — newest first
+          return bId.compareTo(aId);
         });
 
         return SafeArea(
@@ -653,6 +665,10 @@ class _InputScreenState extends State<InputScreen> {
                                 );
                                 if (confirm == true) {
                                   await StorageService.delete(name);
+                                  // Also remove the member from ClientService (properly persist)
+                                  if (profile.clientId != null && profile.clientId!.isNotEmpty) {
+                                    await ClientService.removeFamilyMember(profile.clientId!, name);
+                                  }
                                   await _loadProfiles();
                                   setSheetState(() {}); // refresh the sheet
                                 }
@@ -911,47 +927,21 @@ class _InputScreenState extends State<InputScreen> {
           ),
           const SizedBox(height: 14),
 
-          // Date picker
-          GestureDetector(
-            onTap: _pickDate,
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-              decoration: BoxDecoration(
-                color: kCard,
-                border: Border.all(color: kBorder),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Row(children: [
-                Icon(Icons.calendar_today, color: kMuted),
-                const SizedBox(width: 10),
-                Text(
-                  '${AppLocale.l('date')}: ${_dob.day.toString().padLeft(2,'0')}-${_dob.month.toString().padLeft(2,'0')}-${_dob.year}',
-                  style: TextStyle(fontSize: 14, color: kText),
-                ),
-              ]),
-            ),
+          // Date input
+          DateInputRow(
+            date: _dob,
+            color: kPurple2,
+            onChanged: (d) => setState(() => _dob = d),
           ),
           const SizedBox(height: 14),
 
-          // Time picker
-          GestureDetector(
-            onTap: _pickTime,
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-              decoration: BoxDecoration(
-                color: kCard,
-                border: Border.all(color: kBorder),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Row(children: [
-                Icon(Icons.access_time, color: kMuted),
-                const SizedBox(width: 10),
-                Text(
-                  '${AppLocale.l('timeLabel')}: ${_hour.toString().padLeft(2,'0')}:${_minute.toString().padLeft(2,'0')} $_ampm',
-                  style: TextStyle(fontSize: 14, color: kText),
-                ),
-              ]),
-            ),
+          // Time input
+          TimeInputRow(
+            hour: _hour,
+            minute: _minute,
+            ampm: _ampm,
+            color: kPurple2,
+            onChanged: (h, m, a) => setState(() { _hour = h; _minute = m; _ampm = a; }),
           ),
           const SizedBox(height: 8),
 
@@ -1039,20 +1029,7 @@ class _InputScreenState extends State<InputScreen> {
                     child: Text(AppLocale.l('applyLabel'), style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700)),
                   ),
                 ]),
-                if (_computedSunrise != null) ...[
-                  const SizedBox(height: 8),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                    decoration: BoxDecoration(
-                      color: Colors.green.withOpacity(0.08),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Text(
-                      '☀️ ${AppLocale.l('sunriseLabel')}: $_computedSunrise',
-                      style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Colors.green.shade700),
-                    ),
-                  ),
-                ],
+
               ]),
             ),
           ],
@@ -1066,8 +1043,17 @@ class _InputScreenState extends State<InputScreen> {
                 return offlinePlaces.keys.take(15);
               }
               final query = textEditingValue.text.toLowerCase();
-              return offlinePlaces.keys.where(
-                  (name) => name.toLowerCase().contains(query));
+              final offline = offlinePlaces.keys.where((name) => name.toLowerCase().contains(query)).toList();
+              if (worldCitiesLoaded) {
+                final worldResults = searchWorldCities(textEditingValue.text, limit: 15);
+                for (final w in worldResults) {
+                  final label = worldCityLabel(w);
+                  if (!offline.any((o) => o.toLowerCase() == label.toLowerCase())) {
+                    offline.add(label);
+                  }
+                }
+              }
+              return offline.take(20);
             },
             fieldViewBuilder: (context, textEditingController, focusNode, onFieldSubmitted) {
               // Pre-fill with default location if empty
@@ -1103,14 +1089,35 @@ class _InputScreenState extends State<InputScreen> {
             onSelected: (String selection) async {
               if (offlinePlaces.containsKey(selection)) {
                 final coords = offlinePlaces[selection]!;
-                final autoTz = await getTimezoneForPlace(selection, coords[0], coords[1]);
                 setState(() {
                   _placeCtrl.text = selection;
                   _latCtrl.text = coords[0].toStringAsFixed(4);
                   _lonCtrl.text = coords[1].toStringAsFixed(4);
-                  _tzCtrl.text = '${autoTz >= 0 ? '+' : ''}$autoTz';
-                  _geoStatus = '📍 $selection (TZ: ${autoTz >= 0 ? '+' : ''}$autoTz)';
+                  _tzCtrl.text = '${coords[2] >= 0 ? '+' : ''}${coords[2]}';
+                  _geoStatus = '📍 $selection (TZ: ${coords[2] >= 0 ? '+' : ''}${coords[2]})';
                 });
+              } else {
+                final worldResults = searchWorldCities(selection.split(', ').first, limit: 1);
+                if (worldResults.isNotEmpty) {
+                  final w = worldResults.first;
+                  final lat = (w['la'] as num).toDouble();
+                  final lon = (w['lo'] as num).toDouble();
+                  final cc = w['c'] as String? ?? '';
+                  final tz = cc.isNotEmpty
+                      ? getDstAwareOffset(cc, lat, lon, _dob)
+                      : (w['tz'] as num).toDouble();
+                  setState(() {
+                    _placeCtrl.text = selection;
+                    _latCtrl.text = lat.toStringAsFixed(4);
+                    _lonCtrl.text = lon.toStringAsFixed(4);
+                    _tzCtrl.text = '${tz >= 0 ? '+' : ''}$tz';
+                    _geoStatus = '📍 $selection (TZ: ${tz >= 0 ? '+' : ''}$tz)';
+                  });
+                } else {
+                  // Fallback: online geocode
+                  _placeCtrl.text = selection;
+                  _geocodeMultiple(selection);
+                }
               }
             },
             optionsViewBuilder: (context, onSelected, options) {
@@ -1378,6 +1385,7 @@ class _InputScreenState extends State<InputScreen> {
     final tz = double.tryParse(tzText) ?? 5.5;
 
     // Get sunrise JD for the selected date
+    // Must use refraction-corrected sunrise (with tzOffset) to match Panchanga calculator
     final srSs = Ephemeris.findSunriseSetForDate(
       _dob.year, _dob.month, _dob.day, lat, lon, tzOffset: tz,
     );
@@ -1391,7 +1399,7 @@ class _InputScreenState extends State<InputScreen> {
     // Convert sunrise JD to local time string for display
     final sunriseStr = formatTimeFromJd(sunriseJd, tzOffset: tz);
 
-    // Convert birth JD to local time
+    // Convert birth JD to local civil DateTime
     final localJd = jdBirth + 0.5 + (tz / 24.0);
     double frac = localJd - localJd.floor();
     frac = ((frac % 1.0) + 1.0) % 1.0;
@@ -1401,17 +1409,29 @@ class _InputScreenState extends State<InputScreen> {
     int min = totalMinutes % 60;
     if (h24 >= 24) h24 -= 24;
 
+    // Check if civil date differs from vedic date (time crossed midnight)
+    final birthUtcMs = ((jdBirth - 2440587.5) * 86400000).round();
+    final birthUtc = DateTime.fromMillisecondsSinceEpoch(birthUtcMs, isUtc: true);
+    final birthLocal = birthUtc.add(Duration(minutes: (tz * 60).round()));
+    final civilDate = DateTime(birthLocal.year, birthLocal.month, birthLocal.day);
+    final crossedMidnight = civilDate.day != _dob.day || civilDate.month != _dob.month || civilDate.year != _dob.year;
+
     setState(() {
+      _dob = civilDate;
       _ampm = h24 >= 12 ? 'PM' : 'AM';
       _hour = h24 % 12 == 0 ? 12 : h24 % 12;
       _minute = min;
-      _computedSunrise = sunriseStr;
     });
 
+    final timeStr = '${_hour.toString().padLeft(2, '0')}:${_minute.toString().padLeft(2, '0')} $_ampm';
+    final civilStr = crossedMidnight
+        ? ' (${civilDate.day.toString().padLeft(2, '0')}-${civilDate.month.toString().padLeft(2, '0')}-${civilDate.year})'
+        : '';
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text('${AppLocale.l('timeAdjusted')}: ${_hour.toString().padLeft(2, '0')}:${_minute.toString().padLeft(2, '0')} $_ampm'),
+        content: Text('${AppLocale.l('timeAdjusted')}: $timeStr$civilStr'),
         backgroundColor: Colors.green,
+        duration: const Duration(seconds: 4),
       ),
     );
   }

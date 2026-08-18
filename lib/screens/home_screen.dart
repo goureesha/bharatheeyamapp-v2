@@ -15,8 +15,6 @@ import 'vedic_clock_screen.dart';
 import 'appointment_screen.dart';
 import 'pooja_lists_screen.dart';
 import 'vastu_screen.dart';
-import 'ashtamangala_screen.dart';
-import 'prashna_input_screen.dart';
 import '../services/tester_service.dart';
 
 class HomeScreen extends StatelessWidget {
@@ -31,44 +29,34 @@ class HomeScreen extends StatelessWidget {
       _Section(AppLocale.l('panchanga'), 'Panchanga', Icons.calendar_month, kPurple2, () {
         Navigator.push(context, MaterialPageRoute(builder: (_) => const PanchangaScreen()));
       }),
-      _Section(AppLocale.l('panchangaSearch'), 'Panchanga Search', Icons.search, Color(0xFF2980B9), () {
+      _Section(AppLocale.l('panchangaSearch'), 'Panchanga Search', Icons.search, AppThemes.isTanjore ? const Color(0xFFCDA434) : const Color(0xFF2980B9), () {
         Navigator.push(context, MaterialPageRoute(builder: (_) => const PanchangaSearchScreen()));
       }),
       _Section(AppLocale.l('taranukoola'), 'Taranukoola', Icons.stars_rounded, kGreen, () {
         Navigator.push(context, MaterialPageRoute(builder: (_) => const TaranukoolaScreen()));
       }),
-      _Section(AppLocale.l('matchMaking'), 'Match Making', Icons.favorite, Color(0xFFE53E3E), () {
+      _Section(AppLocale.l('matchMaking'), 'Match Making', Icons.favorite, AppThemes.isTanjore ? const Color(0xFFD4AF37) : const Color(0xFFE53E3E), () {
         Navigator.push(context, MaterialPageRoute(builder: (_) => const MatchMakingScreen()));
       }),
-      _Section(AppLocale.l('planets'), 'Planets', Icons.blur_circular, Color(0xFFc0392b), () {
+      _Section(AppLocale.l('planets'), 'Planets', Icons.blur_circular, AppThemes.isTanjore ? const Color(0xFFB8941F) : const Color(0xFFc0392b), () {
         Navigator.push(context, MaterialPageRoute(builder: (_) => const PlanetsScreen()));
       }),
 
-      _Section(AppLocale.l('vedicClock'), 'Vedic Clock', Icons.watch_later_rounded, Color(0xFF5B2C6F), () {
+      _Section(AppLocale.l('vedicClock'), 'Vedic Clock', Icons.watch_later_rounded, AppThemes.isTanjore ? const Color(0xFFAA9B6F) : const Color(0xFF5B2C6F), () {
         Navigator.push(context, MaterialPageRoute(builder: (_) => const VedicClockScreen()));
       }),
       _Section(AppLocale.l('appointment'), 'Appointments', Icons.event_note, kTeal, () {
         Navigator.push(context, MaterialPageRoute(builder: (_) => const AppointmentScreen()));
       }),
-      _Section(AppLocale.l('poojaLists'), 'Pooja Lists', Icons.list_alt_rounded, Color(0xFF8E44AD), () {
+      _Section(AppLocale.l('poojaLists'), 'Pooja Lists', Icons.list_alt_rounded, AppThemes.isTanjore ? const Color(0xFFCDA434) : const Color(0xFF8E44AD), () {
         Navigator.push(context, MaterialPageRoute(builder: (_) => const PoojaListsScreen()));
       }),
-      _Section(AppLocale.l('vastuLabel'), 'Vastu', Icons.home_work_rounded, Color(0xFFD4A017), () {
+      _Section(AppLocale.l('vastuLabel'), 'Vastu', Icons.home_work_rounded, AppThemes.isTanjore ? const Color(0xFFD4AF37) : const Color(0xFFD4A017), () {
         Navigator.push(context, MaterialPageRoute(builder: (_) => const VastuScreen()));
-      }),
-      _Section('ಪ್ರಶ್ನ', 'Prashna', Icons.help_outline_rounded, const Color(0xFF1565C0), () {
-        Navigator.push(context, MaterialPageRoute(builder: (_) => const PrashnaInputScreen()));
       }),
 
       _Section(AppLocale.l('settings'), 'Settings', Icons.settings, kMuted, () {
         Navigator.push(context, MaterialPageRoute(builder: (_) => const SettingsScreen()));
-      }),
-    ];
-
-    // Tester-only sections (incomplete features)
-    final testerSections = [
-      _Section(AppLocale.isHindi ? 'अष्टमंगल' : 'ಅಷ್ಟಮಂಗಲ', 'Ashtamangala', Icons.auto_fix_high, const Color(0xFFE67E22), () {
-        Navigator.push(context, MaterialPageRoute(builder: (_) => const AshtamangalaScreen()));
       }),
     ];
 
@@ -125,10 +113,6 @@ class HomeScreen extends StatelessWidget {
                       valueListenable: TesterService.isTesterNotifier,
                       builder: (context, isTester, _) {
                         final allSections = List<_Section>.from(sections);
-                        if (isTester) {
-                          // Insert tester sections before Settings (last item)
-                          allSections.insertAll(allSections.length - 1, testerSections);
-                        }
                         return GridView.count(
                           crossAxisCount: tablet ? 3 : 2,
                           mainAxisSpacing: 14,
@@ -245,19 +229,29 @@ class HomeScreen extends StatelessWidget {
   }
 
   Widget _buildCard(_Section s) {
+    final isTanjore = AppThemes.isTanjore;
     return GestureDetector(
       onTap: s.onTap,
       child: Container(
         decoration: BoxDecoration(
           color: kCard,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: kBorder),
+          border: isTanjore
+              ? Border.all(color: const Color(0xFFD4AF37).withOpacity(0.35), width: 1.2)
+              : Border.all(color: kBorder),
           boxShadow: [
-            BoxShadow(
-              color: s.color.withOpacity(0.08),
-              blurRadius: 12,
-              offset: const Offset(0, 4),
-            ),
+            if (isTanjore)
+              BoxShadow(
+                color: const Color(0xFFD4AF37).withOpacity(0.10),
+                blurRadius: 14,
+                offset: const Offset(0, 3),
+              )
+            else
+              BoxShadow(
+                color: s.color.withOpacity(0.08),
+                blurRadius: 12,
+                offset: const Offset(0, 4),
+              ),
           ],
         ),
         child: Column(
@@ -266,7 +260,9 @@ class HomeScreen extends StatelessWidget {
             Container(
               width: 56, height: 56,
               decoration: BoxDecoration(
-                color: s.color.withOpacity(0.12),
+                color: isTanjore
+                    ? const Color(0xFFD4AF37).withOpacity(0.12)
+                    : s.color.withOpacity(0.12),
                 borderRadius: BorderRadius.circular(16),
               ),
               child: Icon(s.icon, color: s.color, size: 30),

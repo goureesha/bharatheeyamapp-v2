@@ -21,6 +21,8 @@ class KundaliChart extends StatelessWidget {
   final String? selectedPlanet; // for bhava highlight
   final String? bhavaFromPlanet; // planet to calculate bhava from (null = lagna)
   final double textScale; // scale text on larger screens
+  final Map<String, Color>? highlightPlanets; // planet name → highlight color (e.g. dasha=orange, bhukti=green)
+  final bool forceShortNames; // force single-letter mode (for PDF)
 
   const KundaliChart({
     super.key,
@@ -35,6 +37,8 @@ class KundaliChart extends StatelessWidget {
     this.selectedPlanet,
     this.bhavaFromPlanet,
     this.textScale = 1.0,
+    this.highlightPlanets,
+    this.forceShortNames = false,
   });
 
   // Grid layout: indices into rashi boxes, null = center
@@ -138,6 +142,8 @@ class KundaliChart extends StatelessWidget {
         selectedPlanet: selectedPlanet,
         bhavaFromPlanet: bhavaFromPlanet,
         textScale: textScale,
+        highlightPlanets: highlightPlanets,
+        forceShortNames: forceShortNames,
       );
     }
 
@@ -354,7 +360,7 @@ class KundaliChart extends StatelessWidget {
   }
 
   Widget _rashiBox(int rashiIdx, List<Widget> planets) {
-    final bool singleLetter = SingleLetterMode.isActive && ((varga == 1) || isBhava);
+    final bool singleLetter = forceShortNames || (SingleLetterMode.isActive && ((varga == 1) || isBhava));
     return Container(
       margin: const EdgeInsets.all(1.0),
       decoration: BoxDecoration(
@@ -536,7 +542,7 @@ class KundaliChart extends StatelessWidget {
 
     // Build display text
     final map = _shortNames;
-    final shortName = map[name] ?? name;
+    final shortName = map[name] ?? translateKn(name);
     String displayText = shortName;
     bool isCombust = false;
     bool isVakri = false;
@@ -550,10 +556,13 @@ class KundaliChart extends StatelessWidget {
       final bool showDeg = (varga == 1) || isBhava;
       final bool showAmshaDeg = (varga != 1) && !isBhava;
 
-      if (showDeg && SamshakaMode.isActive) {
+      if (forceShortNames) {
+        // PDF mode: always use short names, skip all other modes
+        displayText = shortName;
+      } else if (showDeg && SamshakaMode.isActive) {
         // Samshaka mode: show navamsha rashi number with full planet name
         final navNum = SamshakaMode.navamshaSign(info.longitude);
-        final fullName = appPlanetNames[name] ?? name;
+        final fullName = translateKn(name);
         displayText = '$fullName $navNum';
       } else if (showDeg && SingleLetterMode.isActive) {
         // Single letter mode: abbreviation only, no degrees
@@ -601,8 +610,14 @@ class KundaliChart extends StatelessWidget {
         if (onPlanetLongPress != null) onPlanetLongPress!(name);
       },
       behavior: HitTestBehavior.opaque,
-      child: Padding(
+      child: Container(
         padding: const EdgeInsets.symmetric(vertical: 1, horizontal: 2),
+        decoration: (highlightPlanets != null && highlightPlanets!.containsKey(name))
+            ? BoxDecoration(
+                color: highlightPlanets![name]!.withOpacity(0.28),
+                borderRadius: BorderRadius.circular(3),
+              )
+            : null,
         child: Text(
           displayText,
           style: TextStyle(

@@ -468,4 +468,16 @@ void _buildTranslateMapIfNeeded() {
     final locVal = AppLocale.l('sam$i');
     if (knVal != 'sam$i' && locVal != 'sam$i') map[knVal] = locVal;
   }
+  // Base tithi names (bt0..bt15)
+  for (int i = 0; i <= 15; i++) {
+    final knVal = AppLocale.l_kn('bt$i');
+    final locVal = AppLocale.l('bt$i');
+    if (knVal != 'bt$i' && locVal != 'bt$i') map[knVal] = locVal;
+  }
+  // Paksha, Maitri values, Maitri labels
+  for (final key in ['shPaksha', 'krPaksha', 'mitra', 'shatru', 'sama', 'lagnadhipati', 'chRashyadhipati', 'navLagnadhipati', 'navChdhipati']) {
+    final knVal = AppLocale.l_kn(key);
+    final locVal = AppLocale.l(key);
+    if (knVal != key && locVal != key) map[knVal] = locVal;
+  }
 }

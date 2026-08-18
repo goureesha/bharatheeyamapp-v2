@@ -411,6 +411,7 @@ class _ClientDetailScreenState extends State<ClientDetailScreen> {
               ampm: m.ampm,
               lat: m.lat,
               lon: m.lon,
+              tz: m.tzOffset,
               extraInfo: {'clientId': m.clientId},
               initialNotes: m.notes,
               onSave: (notes, aroodhas, janmaIdx, {bool isNew = true}) {
@@ -423,6 +424,7 @@ class _ClientDetailScreenState extends State<ClientDetailScreen> {
                 birthTime: m.birthTime,
                 birthPlace: m.birthPlace,
                 lat: m.lat, lon: m.lon,
+                tzOffset: m.tzOffset,
                 notes: notes,
               );
               ClientService.updateFamilyMember(updated);
@@ -579,7 +581,17 @@ class _ClientDetailScreenState extends State<ClientDetailScreen> {
                   optionsBuilder: (v) {
                     if (v.text.isEmpty) return offlinePlaces.keys.take(10);
                     final q = v.text.toLowerCase();
-                    return offlinePlaces.keys.where((n) => n.toLowerCase().contains(q));
+                    final offline = offlinePlaces.keys.where((n) => n.toLowerCase().contains(q)).toList();
+                    if (worldCitiesLoaded) {
+                      final worldResults = searchWorldCities(v.text, limit: 15);
+                      for (final w in worldResults) {
+                        final label = worldCityLabel(w);
+                        if (!offline.any((o) => o.toLowerCase() == label.toLowerCase())) {
+                          offline.add(label);
+                        }
+                      }
+                    }
+                    return offline.take(20);
                   },
                   fieldViewBuilder: (context, textCtrl, focusNode, onSubmit) {
                     return TextField(
@@ -596,6 +608,16 @@ class _ClientDetailScreenState extends State<ClientDetailScreen> {
                         latCtrl.text = coords[0].toStringAsFixed(4);
                         lonCtrl.text = coords[1].toStringAsFixed(4);
                       });
+                    } else {
+                      final worldResults = searchWorldCities(selection.split(', ').first, limit: 1);
+                      if (worldResults.isNotEmpty) {
+                        final w = worldResults.first;
+                        setS(() {
+                          placeCtrl.text = selection;
+                          latCtrl.text = (w['la'] as num).toDouble().toStringAsFixed(4);
+                          lonCtrl.text = (w['lo'] as num).toDouble().toStringAsFixed(4);
+                        });
+                      }
                     }
                   },
                 ),
@@ -641,6 +663,7 @@ class _ClientDetailScreenState extends State<ClientDetailScreen> {
                         birthPlace: placeCtrl.text,
                         lat: double.tryParse(latCtrl.text) ?? 14.98,
                         lon: double.tryParse(lonCtrl.text) ?? 74.73,
+                        tzOffset: LocationService.tzOffset,
                       );
 
                       final ok = await ClientService.addFamilyMember(member);

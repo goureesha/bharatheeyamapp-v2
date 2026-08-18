@@ -6,6 +6,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'google_auth_service.dart';
 import 'client_service.dart';
 import 'appointment_service.dart';
+import '../core/user_muhurta_rules.dart';
 
 /// Google Drive backup service — stores app data in the user's
 /// hidden appDataFolder (not visible to the user in Drive UI).
@@ -24,6 +25,32 @@ class DriveBackupService {
     'cached_appointments',
     'cached_slots',
     'bharatheeyam_profiles_v1',
+    // Pooja lists
+    'bharatheeyam_pooja_lists_v1',
+    // Default Jyotishi (astrologer) details
+    'default_jyotishi_name',
+    'default_jyotishi_address',
+    'default_jyotishi_phone',
+    // Muhurta user rules (per event type)
+    'user_muhurta_rules_vivaha',
+    'user_muhurta_rules_upanayana',
+    'user_muhurta_rules_grihaPrevesha',
+    'user_muhurta_rules_devaPratishtha',
+    'user_muhurta_rules_aksharabhyasa',
+    'user_muhurta_rules_yatra',
+    'user_muhurta_rules_vyapara',
+    'user_muhurta_rules_annaprashana',
+    'user_muhurta_rules_namakarana',
+    'user_muhurta_rules_seemanta',
+    'user_muhurta_rules_chowla',
+    'user_muhurta_rules_vastuShilanyas',
+    'user_muhurta_rules_aushadha',
+    'user_muhurta_rules_krishi',
+    'user_muhurta_rules_vahanaKraya',
+    'user_muhurta_rules_aasthiKraya',
+    'user_muhurta_rules_swarnaKraya',
+    'user_muhurta_rules_udyoga',
+    'user_muhurta_rules_karnavedha',
   };
 
   /// Upload app data to Google Drive appDataFolder.
@@ -194,6 +221,7 @@ class DriveBackupService {
       // 7. Reload in-memory caches
       await ClientService.loadAll();
       await AppointmentService.loadAll();
+      await UserRulesManager.instance.loadAll();
 
       return null; // Success!
     } catch (e) {
@@ -287,5 +315,72 @@ class DriveBackupService {
       debugPrint('Drive file search error: $e');
     }
     return null;
+  }
+
+  // ── Auto-backup ──────────────────────────────────────────────
+
+  static const String _lastAutoBackupKey = 'bharatheeyam_last_auto_backup';
+  static bool _autoBackupInProgress = false;
+
+  /// Silently trigger Google Drive backup in background.
+  /// Does nothing if not signed in or if already in progress.
+  /// Safe to call from anywhere — never blocks UI, never shows errors.
+  static Future<void> triggerAutoBackup() async {
+    if (_autoBackupInProgress) return;
+    if (!GoogleAuthService.isSignedIn) return;
+
+    _autoBackupInProgress = true;
+    try {
+      debugPrint('AutoBackup: starting silent backup...');
+      final result = await uploadBackup();
+      if (result == 'success') {
+        // Record the timestamp of successful backup
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setString(_lastAutoBackupKey, DateTime.now().toIso8601String());
+        debugPrint('AutoBackup: success');
+      } else {
+        debugPrint('AutoBackup: failed — $result');
+      }
+    } catch (e) {
+      debugPrint('AutoBackup: error — $e');
+    } finally {
+      _autoBackupInProgress = false;
+    }
+  }
+
+  /// Check if daily auto-backup is due. If yes, trigger silently.
+  /// Call this on app startup (e.g., in main.dart).
+  static Future<void> autoBackupIfDue() async {
+    if (!GoogleAuthService.isSignedIn) return;
+
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final lastBackupStr = prefs.getString(_lastAutoBackupKey);
+
+      if (lastBackupStr == null) {
+        // Never auto-backed up — do it now
+        triggerAutoBackup(); // fire-and-forget
+        return;
+      }
+
+      final lastBackup = DateTime.tryParse(lastBackupStr);
+      if (lastBackup == null) {
+        triggerAutoBackup();
+        return;
+      }
+
+      final now = DateTime.now();
+      final hoursSinceLastBackup = now.difference(lastBackup).inHours;
+
+      // Auto-backup if more than 12 hours since last backup
+      if (hoursSinceLastBackup >= 12) {
+        debugPrint('AutoBackup: $hoursSinceLastBackup hours since last backup, triggering...');
+        triggerAutoBackup(); // fire-and-forget
+      } else {
+        debugPrint('AutoBackup: last backup ${hoursSinceLastBackup}h ago, skipping');
+      }
+    } catch (e) {
+      debugPrint('AutoBackup check error: $e');
+    }
   }
 }

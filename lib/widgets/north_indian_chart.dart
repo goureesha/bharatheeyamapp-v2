@@ -21,6 +21,8 @@ class NorthIndianChart extends StatelessWidget {
   final String? selectedPlanet;
   final String? bhavaFromPlanet;
   final double textScale;
+  final Map<String, Color>? highlightPlanets;
+  final bool forceShortNames;
 
   const NorthIndianChart({
     super.key,
@@ -35,6 +37,8 @@ class NorthIndianChart extends StatelessWidget {
     this.selectedPlanet,
     this.bhavaFromPlanet,
     this.textScale = 1.0,
+    this.highlightPlanets,
+    this.forceShortNames = false,
   });
 
   /// Compute which rashi index a planet falls in for the chosen varga
@@ -124,11 +128,15 @@ class NorthIndianChart extends StatelessWidget {
     }
 
     // Determine which rashi goes in house 1
-    // If bhavaFromPlanet is set, that planet's rashi goes to house 1
+    // For divisional charts (D9, D3 etc.): depends on VargaLagnaStyle setting
     final int firstHouseRashiIdx;
     if (bhavaFromPlanet != null && result.planets.containsKey(bhavaFromPlanet)) {
       firstHouseRashiIdx = (refLongitude / 30).floor() % 12;
+    } else if (varga != 1 && !isBhava && VargaLagnaStyle.useVargaLagna) {
+      // Modern style: use the divisional lagna (e.g. Navamsha Lagna for D9)
+      firstHouseRashiIdx = _rashinFor(lagnaLong);
     } else {
+      // Shastra style or D1: use rashi lagna
       firstHouseRashiIdx = lagnaIdx;
     }
 
@@ -303,27 +311,46 @@ class NorthIndianChart extends StatelessWidget {
       final w = isCorner ? boxW * 0.85 : boxW;
       final ht = isCorner ? boxH * 0.85 : boxH;
 
+      final bool singleLetter = forceShortNames || (SingleLetterMode.isActive && ((varga == 1) || isBhava));
+
       widgets.add(Positioned(
         left: center.dx * s - w / 2,
         top: center.dy * s - ht / 2,
         width: w,
         height: ht,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            // Rashi number label
-            Text(rashiNum,
-              style: TextStyle(
-                fontSize: s * 0.028 * textScale,
-                fontWeight: FontWeight.w800,
-                color: const Color(0xFF718096),
-              ),
+        child: singleLetter
+          ? Wrap(
+              spacing: 2,
+              runSpacing: 0,
+              alignment: WrapAlignment.center,
+              runAlignment: WrapAlignment.center,
+              children: [
+                Text(rashiNum,
+                  style: TextStyle(
+                    fontSize: s * 0.028 * textScale,
+                    fontWeight: FontWeight.w800,
+                    color: const Color(0xFF718096),
+                  ),
+                ),
+                ...planets,
+              ],
+            )
+          : Column(
+              mainAxisSize: MainAxisSize.min,
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                // Rashi number label
+                Text(rashiNum,
+                  style: TextStyle(
+                    fontSize: s * 0.028 * textScale,
+                    fontWeight: FontWeight.w800,
+                    color: const Color(0xFF718096),
+                  ),
+                ),
+                // Planet chips
+                ...planets.take(5),
+              ],
             ),
-            // Planet chips
-            ...planets.take(5),
-          ],
-        ),
       ));
     }
 
@@ -358,7 +385,7 @@ class NorthIndianChart extends StatelessWidget {
 
   Widget _planetChip(String name, {PlanetInfo? info, double? displayDeg}) {
     final map = _shortNames;
-    final shortName = map[name] ?? name;
+    final shortName = map[name] ?? translateKn(name);
     String displayText = shortName;
     bool isCombust = false;
     bool isVakri = false;
@@ -369,13 +396,27 @@ class NorthIndianChart extends StatelessWidget {
 
       // D1 (Rashi) and Bhava: show rashi degree; Amshas: show amsha degree
       final bool showRashiDeg = (varga == 1) || isBhava;
-      final double degToShow = showRashiDeg ? (info.longitude % 30) : (displayDeg ?? info.longitude % 30);
-      final totalSec = (degToShow * 3600).round();
-      int dg = totalSec ~/ 3600;
-      int mn = (totalSec % 3600) ~/ 60;
-      int sc = totalSec % 60;
-      if (showRashiDeg && dg == 30) { dg = 29; mn = 59; sc = 59; }
-      displayText = '$shortName $dg°${mn.toString().padLeft(2, '0')}\'';
+
+      if (forceShortNames) {
+        // PDF mode: always use short names, skip all other modes
+        displayText = shortName;
+      } else if (showRashiDeg && SamshakaMode.isActive) {
+        // Samshaka mode: show navamsha rashi number with full planet name
+        final navNum = SamshakaMode.navamshaSign(info.longitude);
+        final fullName = translateKn(name);
+        displayText = '$fullName $navNum';
+      } else if (showRashiDeg && SingleLetterMode.isActive) {
+        // Single letter mode: abbreviation only, no degrees
+        displayText = shortName;
+      } else {
+        final double degToShow = showRashiDeg ? (info.longitude % 30) : (displayDeg ?? info.longitude % 30);
+        final totalSec = (degToShow * 3600).round();
+        int dg = totalSec ~/ 3600;
+        int mn = (totalSec % 3600) ~/ 60;
+        int sc = totalSec % 60;
+        if (showRashiDeg && dg == 30) { dg = 29; mn = 59; sc = 59; }
+        displayText = '$shortName $dg°${mn.toString().padLeft(2, '0')}\'';
+      }
 
       if (isVakri) displayText = '$displayText↩';
       if (isCombust) displayText = '($displayText)';
@@ -404,13 +445,22 @@ class NorthIndianChart extends StatelessWidget {
       onTap: () { if (onPlanetTap != null) onPlanetTap!(name); },
       onLongPress: () { if (onPlanetLongPress != null) onPlanetLongPress!(name); },
       behavior: HitTestBehavior.opaque,
-      child: Text(
-        displayText,
-        style: TextStyle(
-          fontSize: (isSelected ? 12 : 9) * textScale,
-          fontWeight: FontWeight.w900,
-          color: color.withValues(alpha: opacity),
-          decoration: isSelected ? TextDecoration.underline : null,
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 0, horizontal: 1),
+        decoration: (highlightPlanets != null && highlightPlanets!.containsKey(name))
+            ? BoxDecoration(
+                color: highlightPlanets![name]!.withOpacity(0.28),
+                borderRadius: BorderRadius.circular(3),
+              )
+            : null,
+        child: Text(
+          displayText,
+          style: TextStyle(
+            fontSize: (isSelected ? 12 : 9) * textScale,
+            fontWeight: FontWeight.w900,
+            color: color.withValues(alpha: opacity),
+            decoration: isSelected ? TextDecoration.underline : null,
+          ),
         ),
       ),
     );

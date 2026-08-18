@@ -1,10 +1,16 @@
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
+import 'package:screenshot/screenshot.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/gestures.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:pdf/pdf.dart';
+import 'package:pdf/widgets.dart' as pw;
+import 'package:printing/printing.dart';
 import '../services/export_service.dart';
 import '../core/calculator.dart';
+import '../core/yoga_engine.dart';
 import '../constants/strings.dart';
 import '../widgets/common.dart';
 import '../widgets/kundali_chart.dart';
@@ -17,15 +23,23 @@ import 'dart:convert';
 import '../services/storage_service.dart';
 import '../services/client_service.dart'; // FIX: Imported missing ClientService
 import '../services/history_service.dart';
+import '../services/app_access_service.dart';
 import '../services/google_auth_service.dart';
 import '../services/sheets_service.dart';
 import '../services/docs_service.dart';
 import '../services/calendar_service.dart';
 import '../services/location_service.dart';
 import '../services/janma_patrike_service.dart'; // NEW
+import '../services/tippani_pdf_service.dart';
 import '../services/pdf_theme.dart';
 import '../constants/places.dart';
+import '../services/timezone_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:sweph/sweph.dart' hide kIsWeb;
+import '../core/ephemeris.dart';
+import '../core/transit_cache.dart';
+import '../core/transit_calculator.dart';
+import '../widgets/date_time_input.dart';
 
 class DashboardScreen extends StatefulWidget {
   final KundaliResult result;
@@ -37,11 +51,13 @@ class DashboardScreen extends StatefulWidget {
   final String ampm;
   final double lat;
   final double lon;
+  final double tz;
   final String initialNotes;
   final Map<String, int> initialAroodhas;
   final int? initialJanmaNakshatraIdx;
   final Map<String, String> extraInfo;
   final List<String> initialGroupMembers;
+  final List<PersonEntry> initialExtraPersons;
   final void Function(String notes, Map<String, int> aroodhas, int? janmaNakshatraIdx, {bool isNew}) onSave;
 
   const DashboardScreen({
@@ -55,11 +71,13 @@ class DashboardScreen extends StatefulWidget {
     required this.ampm,
     required this.lat,
     required this.lon,
+    required this.tz,
     this.initialNotes = '',
     this.initialAroodhas = const {},
     this.initialJanmaNakshatraIdx,
     this.extraInfo = const {},
     this.initialGroupMembers = const [],
+    this.initialExtraPersons = const [],
     required this.onSave,
   });
 
@@ -67,7 +85,7 @@ class DashboardScreen extends StatefulWidget {
   State<DashboardScreen> createState() => _DashboardScreenState();
 }
 
-class _PersonEntry {
+class PersonEntry {
   final String name;
   final KundaliResult result;
   final DateTime dob;
@@ -76,10 +94,11 @@ class _PersonEntry {
   final String ampm;
   final double lat;
   final double lon;
+  final double tz;
   final String place;
   String notes;
 
-  _PersonEntry({
+  PersonEntry({
     required this.name,
     required this.result,
     required this.dob,
@@ -88,6 +107,7 @@ class _PersonEntry {
     required this.ampm,
     required this.lat,
     required this.lon,
+    required this.tz,
     required this.place,
     this.notes = '',
   });
@@ -105,10 +125,6 @@ class _DashboardScreenState extends State<DashboardScreen>
   String? _bhavaPlanet; // planet selected for bhava recalculation
   KundaliResult? _prastutaResult; // For Aroodha tab's Prastuta button
   DateTime? _prastutaTime; // Time used for prastuta chart
-  String _prastutaPlace = ''; // Place used for prastuta chart
-  double _prastutaLat = 0;
-  double _prastutaLon = 0;
-  double _prastutaTz = 5.5;
   
   // Janma Patrike states
   final _fatherNameCtrl = TextEditingController();
@@ -117,11 +133,18 @@ class _DashboardScreenState extends State<DashboardScreen>
   final _jyotishiNameCtrl = TextEditingController();
   final _jyotishiPhoneCtrl = TextEditingController();
   String _selectedThemeId = 'traditional';
+  String _selectedGender = 'male';
+  List<bool> _pdfPageSelection = [true, true, true, true, true, true]; // 6 pages
+
+  // Tippani PDF fields
+  final _tippaniInvocationCtrl = TextEditingController(text: 'ಶ್ರೀ ಗಣೇಶಾಯ ನಮಃ');
+  final _tippaniAddressCtrl = TextEditingController();
 
 
   // Multi-person support
-  final List<_PersonEntry> _extraPersons = [];
-  int _selectedPersonIdx = -1; // -1 = show all, 0+ = show specific person
+  final List<PersonEntry> _extraPersons = [];
+  Set<int> _selectedPersonIndices = {}; // empty = show all, otherwise show selected indices
+  int _selectedChartIdx = 0;  // which chart type is selected (0 = Rashi, 1 = Navamsha, ...)
 
   // Mutable primary person (editable)
   late String _primaryName;
@@ -132,9 +155,13 @@ class _DashboardScreenState extends State<DashboardScreen>
   late String _primaryAmpm;
   late double _primaryLat;
   late double _primaryLon;
+  late double _primaryTz;
   late String _primaryPlace;
 
   bool _syncing = false;
+  int _gocharYear = DateTime.now().year;
+  bool _dashaHighlightEnabled = true;
+  bool _landscapeBarsVisible = true; // Landscape: show/hide tab bar + person selector
 
   /// Translate dasha balance suffixes (ವ=years, ತಿ=months, ದಿ=days)
   String _trDashaBalance(String bal) {
@@ -158,11 +185,11 @@ class _DashboardScreenState extends State<DashboardScreen>
 
   static List<String> get _tabs {
     switch (AppLocale.current) {
-      case 'hi': return ['पंचांग', 'कुंडली', 'स्फुट', 'आरूढ', 'दशा', 'भाव', 'ग्रह षड्वर्ग', 'भाव षड्वर्ग', 'षड्बल', 'अष्टक', 'टिप्पणी', 'पत्रिका'];
-      case 'ta': return ['பஞ்சாங்கம்', 'ஜாதகம்', 'ஸ்புடம்', 'ஆரூடம்', 'தசை', 'பாவம்', 'ஷட்வர்கம்', 'பாவ ஷட்வர்கம்', 'ஷட்பலம்', 'அஷ்டகம்', 'குறிப்பு', 'பத்ரிகை'];
-      case 'te': return ['పంచాంగం', 'కుండలి', 'స్ఫుటం', 'ఆరూఢం', 'దశ', 'భావం', 'షడ్వర్గం', 'భావ షడ్వర్గం', 'షడ్బలం', 'అష్టకం', 'గమనికలు', 'పత్రిక'];
-      case 'ml': return ['പഞ്ചാംഗം', 'ജാതകം', 'സ്ഫുടം', 'ആരൂഢം', 'ദശ', 'ഭാവം', 'ഷഡ്വർഗം', 'ഭാവ ഷഡ്വർഗം', 'ഷഡ്ബലം', 'അഷ്ടകം', 'കുറിപ്പുകൾ', 'പത്രിക'];
-      default: return ['ಪಂಚಾಂಗ', 'ಕುಂಡಲಿ', 'ಸ್ಫುಟ', 'ಆರೂಢ', 'ದಶ', 'ಭಾವ', 'ಗ್ರಹ ಷಡ್ವರ್ಗ', 'ಭಾವ ಷಡ್ವರ್ಗ', 'ಷಡ್ಬಲ', 'ಅಷ್ಟಕ', 'ಟಿಪ್ಪಣಿ', 'ಪತ್ರಿಕೆ'];
+      case 'hi': return ['पंचांग', 'कुंडली', 'स्फुट', 'आरूढ', 'दशा', 'भाव', 'ग्रह षड्वर्ग', 'षड्बल', 'अष्टक', 'योग', 'गोचर', 'टिप्पणी', 'पत्रिका'];
+      case 'ta': return ['பஞ்சாங்கம்', 'ஜாதகம்', 'ஸ்புடம்', 'ஆரூடம்', 'தசை', 'பாவம்', 'ஷட்வர்கம்', 'ஷட்பலம்', 'அஷ்டகம்', 'யோகம்', 'கோசாரம்', 'குறிப்பு', 'பத்ரிகை'];
+      case 'te': return ['పంచాంగం', 'కుండలి', 'స్ఫుటం', 'ఆరూఢం', 'దశ', 'భావం', 'షడ్వర్గం', 'షడ్బలం', 'అష్టకం', 'యోగం', 'గోచారం', 'గమనికలు', 'పత్రిక'];
+      case 'ml': return ['പഞ്ചാംഗം', 'ജാതകം', 'സ്ഫുടം', 'ആരൂഢം', 'ദശ', 'ഭാവം', 'ഷഡ്വർഗം', 'ഷഡ്ബലം', 'അഷ്ടകം', 'യോഗം', 'ഗോചരം', 'കുറിപ്പുകൾ', 'പത്രിക'];
+      default: return ['ಪಂಚಾಂಗ', 'ಕುಂಡಲಿ', 'ಸ್ಫುಟ', 'ಆರೂಢ', 'ದಶ', 'ಭಾವ', 'ಗ್ರಹ ಷಡ್ವರ್ಗ', 'ಷಡ್ಬಲ', 'ಅಷ್ಟಕ', 'ಯೋಗ', 'ಗೋಚಾರ', 'ಟಿಪ್ಪಣಿ', 'ಪತ್ರಿಕೆ'];
     }
   }
 
@@ -184,6 +211,7 @@ class _DashboardScreenState extends State<DashboardScreen>
     _primaryAmpm = widget.ampm;
     _primaryLat = widget.lat;
     _primaryLon = widget.lon;
+    _primaryTz = widget.tz;
     _primaryPlace = widget.place;
 
 
@@ -198,10 +226,26 @@ class _DashboardScreenState extends State<DashboardScreen>
       _loadGroupMembers();
     }
 
-    _loadJyotishiDetails();
+    // Load pre-computed extra persons (e.g., muhurta start/end time view)
+    if (widget.initialExtraPersons.isNotEmpty) {
+      _extraPersons.addAll(widget.initialExtraPersons);
+    }
 
-    // Rebuild charts when single letter mode changes
-    SingleLetterMode.notifier.addListener(_onSingleLetterModeChanged);
+    _loadJyotishiDetails();
+    _loadDashaHighlightPref();
+
+    // Rebuild charts when chart mode toggles change
+    SingleLetterMode.notifier.addListener(_onChartModeChanged);
+    SamshakaMode.notifier.addListener(_onChartModeChanged);
+  }
+
+  Future<void> _loadDashaHighlightPref() async {
+    final prefs = await SharedPreferences.getInstance();
+    if (mounted) {
+      setState(() {
+        _dashaHighlightEnabled = prefs.getBool('highlight_dasha_lords') ?? true;
+      });
+    }
   }
 
   @override
@@ -214,21 +258,23 @@ class _DashboardScreenState extends State<DashboardScreen>
     _gotraCtrl.dispose();
     _jyotishiNameCtrl.dispose();
     _jyotishiPhoneCtrl.dispose();
-    SingleLetterMode.notifier.removeListener(_onSingleLetterModeChanged);
+    _tippaniInvocationCtrl.dispose();
+    _tippaniAddressCtrl.dispose();
+    SingleLetterMode.notifier.removeListener(_onChartModeChanged);
+    SamshakaMode.notifier.removeListener(_onChartModeChanged);
     super.dispose();
   }
 
-  void _onSingleLetterModeChanged() {
+  void _onChartModeChanged() {
     if (mounted) setState(() {});
   }
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
+    // Lightweight repaint on resume — fixes blank charts without destroying widget tree
     if (state == AppLifecycleState.resumed && mounted) {
-      // Force full widget rebuild to fix scrambled Kannada/Devanagari text
-      // Flutter's glyph cache for complex scripts can corrupt on resume
-      Future.delayed(const Duration(milliseconds: 150), () {
-        if (mounted) setState(() => _resumeKey++);
+      Future.delayed(const Duration(milliseconds: 100), () {
+        if (mounted) setState(() {});
       });
     }
   }
@@ -236,8 +282,10 @@ class _DashboardScreenState extends State<DashboardScreen>
     final prefs = await SharedPreferences.getInstance();
     if (mounted) {
       setState(() {
-        _jyotishiNameCtrl.text = prefs.getString('jyotishi_name') ?? '';
-        _jyotishiPhoneCtrl.text = prefs.getString('jyotishi_phone') ?? '';
+        _jyotishiNameCtrl.text = prefs.getString('jyotishi_name') ?? prefs.getString('default_jyotishi_name') ?? '';
+        _jyotishiPhoneCtrl.text = prefs.getString('jyotishi_phone') ?? prefs.getString('default_jyotishi_phone') ?? '';
+        _tippaniInvocationCtrl.text = prefs.getString('tippani_invocation') ?? 'ಶ್ರೀ ಗಣೇಶಾಯ ನಮಃ';
+        _tippaniAddressCtrl.text = prefs.getString('tippani_address') ?? prefs.getString('default_jyotishi_address') ?? '';
       });
     }
   }
@@ -246,6 +294,8 @@ class _DashboardScreenState extends State<DashboardScreen>
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString('jyotishi_name', _jyotishiNameCtrl.text.trim());
     await prefs.setString('jyotishi_phone', _jyotishiPhoneCtrl.text.trim());
+    await prefs.setString('tippani_invocation', _tippaniInvocationCtrl.text.trim());
+    await prefs.setString('tippani_address', _tippaniAddressCtrl.text.trim());
   }
 
   /// Show simple 2-option dialog to add a person
@@ -315,7 +365,7 @@ class _DashboardScreenState extends State<DashboardScreen>
               lon: m.lon,
               place: m.birthPlace,
               notes: m.notes,
-              tzOffset: LocationService.tzOffset,
+              tzOffset: m.tzOffset,
               clientId: m.clientId,
             ));
           } else {
@@ -408,7 +458,7 @@ class _DashboardScreenState extends State<DashboardScreen>
       }
       if (mounted) {
         setState(() {
-          _extraPersons.add(_PersonEntry(name: p.name, result: result, dob: dob, hour: p.hour, minute: p.minute, ampm: p.ampm, lat: p.lat, lon: p.lon, place: p.place, notes: p.notes));
+          _extraPersons.add(PersonEntry(name: p.name, result: result, dob: dob, hour: p.hour, minute: p.minute, ampm: p.ampm, lat: p.lat, lon: p.lon, tz: p.tzOffset, place: p.place, notes: p.notes));
         });
       }
     } catch (e) {
@@ -447,7 +497,7 @@ class _DashboardScreenState extends State<DashboardScreen>
             final lat = double.parse(data[0]['lat']);
             final lon = double.parse(data[0]['lon']);
             final displayName = data[0]['display_name'] as String;
-            final autoTz = await getTimezoneForPlace(displayName, lat, lon);
+            final autoTz = await getTimezoneForPlace(displayName, lat, lon, birthDate: dob);
             setS(() {
               placeCtrl.text = placeName.trim();
               latCtrl.text = lat.toStringAsFixed(4);
@@ -477,59 +527,21 @@ class _DashboardScreenState extends State<DashboardScreen>
                 TextField(controller: nameCtrl, decoration: InputDecoration(labelText: AppLocale.l('nameLabel'), prefixIcon: Icon(Icons.person_outline))),
                 const SizedBox(height: 14),
 
-                // Date picker
-                GestureDetector(
-                  onTap: () async {
-                    final d = await showDatePicker(
-                      context: ctx2,
-                      initialDate: dob,
-                      firstDate: DateTime(1800),
-                      lastDate: DateTime(2100),
-                      builder: (c, child) => Theme(data: Theme.of(c).copyWith(colorScheme: ColorScheme.light(primary: kPurple2)), child: child!),
-                    );
-                    if (d != null) setS(() => dob = d);
-                  },
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                    decoration: BoxDecoration(color: kCard, border: Border.all(color: kBorder), borderRadius: BorderRadius.circular(12)),
-                    child: Row(children: [
-                      Icon(Icons.calendar_today, color: kMuted),
-                      const SizedBox(width: 10),
-                      Text('${AppLocale.l('dateLabel')}: ${dob.day.toString().padLeft(2,'0')}-${dob.month.toString().padLeft(2,'0')}-${dob.year}', style: TextStyle(fontSize: 14, color: kText)),
-                    ]),
-                  ),
+                // Date input
+                DateInputRow(
+                  date: dob,
+                  color: kPurple2,
+                  onChanged: (d) => setS(() => dob = d),
                 ),
                 const SizedBox(height: 14),
 
-                // Time picker
-                GestureDetector(
-                  onTap: () async {
-                    final picked = await showTimePicker(
-                      context: ctx2,
-                      initialTime: TimeOfDay(
-                        hour: ampm == 'PM' && hour != 12 ? hour + 12 : (ampm == 'AM' && hour == 12 ? 0 : hour),
-                        minute: minute,
-                      ),
-                      builder: (c, child) => Theme(data: Theme.of(c).copyWith(colorScheme: ColorScheme.light(primary: kPurple2)), child: child!),
-                    );
-                    if (picked != null) {
-                      setS(() {
-                        final h24 = picked.hour;
-                        ampm = h24 >= 12 ? 'PM' : 'AM';
-                        hour = h24 % 12 == 0 ? 12 : h24 % 12;
-                        minute = picked.minute;
-                      });
-                    }
-                  },
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                    decoration: BoxDecoration(color: kCard, border: Border.all(color: kBorder), borderRadius: BorderRadius.circular(12)),
-                    child: Row(children: [
-                      Icon(Icons.access_time, color: kMuted),
-                      const SizedBox(width: 10),
-                      Text('${AppLocale.l('timeLabel')}: ${hour.toString().padLeft(2,'0')}:${minute.toString().padLeft(2,'0')} $ampm', style: TextStyle(fontSize: 14, color: kText)),
-                    ]),
-                  ),
+                // Time input
+                TimeInputRow(
+                  hour: hour,
+                  minute: minute,
+                  ampm: ampm,
+                  color: kPurple2,
+                  onChanged: (h, m, a) => setS(() { hour = h; minute = m; ampm = a; }),
                 ),
                 const SizedBox(height: 14),
 
@@ -540,7 +552,17 @@ class _DashboardScreenState extends State<DashboardScreen>
                       return offlinePlaces.keys.take(15);
                     }
                     final query = textEditingValue.text.toLowerCase();
-                    return offlinePlaces.keys.where((name) => name.toLowerCase().contains(query));
+                    final offline = offlinePlaces.keys.where((name) => name.toLowerCase().contains(query)).toList();
+                    if (worldCitiesLoaded) {
+                      final worldResults = searchWorldCities(textEditingValue.text, limit: 15);
+                      for (final w in worldResults) {
+                        final label = worldCityLabel(w);
+                        if (!offline.any((o) => o.toLowerCase() == label.toLowerCase())) {
+                          offline.add(label);
+                        }
+                      }
+                    }
+                    return offline.take(20);
                   },
                   fieldViewBuilder: (context, textEditingController, focusNode, onFieldSubmitted) {
                     // Start with the Place populated, unlike input_screen which manages it via state
@@ -575,14 +597,30 @@ class _DashboardScreenState extends State<DashboardScreen>
                   onSelected: (String selection) async {
                     if (offlinePlaces.containsKey(selection)) {
                       final coords = offlinePlaces[selection]!;
-                      final autoTz = await getTimezoneForPlace(selection, coords[0], coords[1]);
                       setS(() {
                         placeCtrl.text = selection;
                         latCtrl.text = coords[0].toStringAsFixed(4);
                         lonCtrl.text = coords[1].toStringAsFixed(4);
-                        tzCtrl.text = '${autoTz >= 0 ? '+' : ''}$autoTz';
-                        geoStatus = '📍 $selection (TZ: ${autoTz >= 0 ? '+' : ''}$autoTz)';
+                        tzCtrl.text = '${coords[2] >= 0 ? '+' : ''}${coords[2]}';
+                        geoStatus = '📍 $selection (TZ: ${coords[2] >= 0 ? '+' : ''}${coords[2]})';
                       });
+                    } else {
+                      final worldResults = searchWorldCities(selection.split(', ').first, limit: 1);
+                      if (worldResults.isNotEmpty) {
+                        final w = worldResults.first;
+                        final lat = (w['la'] as num).toDouble();
+                        final lon = (w['lo'] as num).toDouble();
+                        final tz = (w['c'] != null)
+                            ? getDstAwareOffset(w['c'] as String, lat, lon, dob)
+                            : (w['tz'] as num).toDouble();
+                        setS(() {
+                          placeCtrl.text = selection;
+                          latCtrl.text = lat.toStringAsFixed(4);
+                          lonCtrl.text = lon.toStringAsFixed(4);
+                          tzCtrl.text = '${tz >= 0 ? '+' : ''}$tz';
+                          geoStatus = '📍 $selection (TZ: ${tz >= 0 ? '+' : ''}$tz)';
+                        });
+                      }
                     }
                   },
                   optionsViewBuilder: (context, onSelected, options) {
@@ -662,7 +700,7 @@ class _DashboardScreenState extends State<DashboardScreen>
                   
                   if (mounted) {
                     setState(() {
-                      _extraPersons.add(_PersonEntry(name: name, result: result, dob: dob, hour: hour, minute: minute, ampm: ampm, lat: lat, lon: lon, place: placeCtrl.text));
+                      _extraPersons.add(PersonEntry(name: name, result: result, dob: dob, hour: hour, minute: minute, ampm: ampm, lat: lat, lon: lon, tz: tz, place: placeCtrl.text));
                     });
                     HistoryService.add(HistoryEntry(
                       name: name,
@@ -696,7 +734,7 @@ class _DashboardScreenState extends State<DashboardScreen>
     final placeCtrl = TextEditingController(text: existing.place);
     final latCtrl = TextEditingController(text: existing.lat.toStringAsFixed(4));
     final lonCtrl = TextEditingController(text: existing.lon.toStringAsFixed(4));
-    final tzCtrl = TextEditingController(text: '+5.5');
+    final tzCtrl = TextEditingController(text: '${existing.tz >= 0 ? '+' : ''}${existing.tz}');
 
     DateTime dob = existing.dob;
     int hour = existing.hour;
@@ -721,7 +759,7 @@ class _DashboardScreenState extends State<DashboardScreen>
             final lat = double.parse(data[0]['lat']);
             final lon = double.parse(data[0]['lon']);
             final displayName = data[0]['display_name'] as String;
-            final autoTz = await getTimezoneForPlace(displayName, lat, lon);
+            final autoTz = await getTimezoneForPlace(displayName, lat, lon, birthDate: dob);
             setS(() {
               placeCtrl.text = placeName.trim();
               latCtrl.text = lat.toStringAsFixed(4);
@@ -750,59 +788,35 @@ class _DashboardScreenState extends State<DashboardScreen>
               children: [
                 TextField(controller: nameCtrl, decoration: InputDecoration(labelText: AppLocale.l('nameLabel'), prefixIcon: Icon(Icons.person_outline))),
                 const SizedBox(height: 14),
-                GestureDetector(
-                  onTap: () async {
-                    final d = await showDatePicker(
-                      context: ctx2, initialDate: dob,
-                      firstDate: DateTime(1800), lastDate: DateTime(2100),
-                      builder: (c, child) => Theme(data: Theme.of(c).copyWith(colorScheme: ColorScheme.light(primary: kPurple2)), child: child!),
-                    );
-                    if (d != null) setS(() => dob = d);
-                  },
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                    decoration: BoxDecoration(color: kCard, border: Border.all(color: kBorder), borderRadius: BorderRadius.circular(12)),
-                    child: Row(children: [
-                      Icon(Icons.calendar_today, color: kMuted), const SizedBox(width: 10),
-                      Text('${AppLocale.l('dateLabel')}: ${dob.day.toString().padLeft(2,'0')}-${dob.month.toString().padLeft(2,'0')}-${dob.year}', style: TextStyle(fontSize: 14, color: kText)),
-                    ]),
-                  ),
+                DateInputRow(
+                  date: dob,
+                  color: kPurple2,
+                  onChanged: (d) => setS(() => dob = d),
                 ),
                 const SizedBox(height: 14),
-                GestureDetector(
-                  onTap: () async {
-                    final picked = await showTimePicker(
-                      context: ctx2,
-                      initialTime: TimeOfDay(
-                        hour: ampm == 'PM' && hour != 12 ? hour + 12 : (ampm == 'AM' && hour == 12 ? 0 : hour),
-                        minute: minute,
-                      ),
-                      builder: (c, child) => Theme(data: Theme.of(c).copyWith(colorScheme: ColorScheme.light(primary: kPurple2)), child: child!),
-                    );
-                    if (picked != null) {
-                      setS(() {
-                        final h24 = picked.hour;
-                        ampm = h24 >= 12 ? 'PM' : 'AM';
-                        hour = h24 % 12 == 0 ? 12 : h24 % 12;
-                        minute = picked.minute;
-                      });
-                    }
-                  },
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                    decoration: BoxDecoration(color: kCard, border: Border.all(color: kBorder), borderRadius: BorderRadius.circular(12)),
-                    child: Row(children: [
-                      Icon(Icons.access_time, color: kMuted), const SizedBox(width: 10),
-                      Text('${AppLocale.l('timeLabel')}: ${hour.toString().padLeft(2,'0')}:${minute.toString().padLeft(2,'0')} $ampm', style: TextStyle(fontSize: 14, color: kText)),
-                    ]),
-                  ),
+                TimeInputRow(
+                  hour: hour,
+                  minute: minute,
+                  ampm: ampm,
+                  color: kPurple2,
+                  onChanged: (h, m, a) => setS(() { hour = h; minute = m; ampm = a; }),
                 ),
                 const SizedBox(height: 14),
                 Autocomplete<String>(
                   optionsBuilder: (TextEditingValue textEditingValue) {
                     if (textEditingValue.text.isEmpty) return offlinePlaces.keys.take(15);
                     final query = textEditingValue.text.toLowerCase();
-                    return offlinePlaces.keys.where((name) => name.toLowerCase().contains(query));
+                    final offline = offlinePlaces.keys.where((name) => name.toLowerCase().contains(query)).toList();
+                    if (worldCitiesLoaded) {
+                      final worldResults = searchWorldCities(textEditingValue.text, limit: 15);
+                      for (final w in worldResults) {
+                        final label = worldCityLabel(w);
+                        if (!offline.any((o) => o.toLowerCase() == label.toLowerCase())) {
+                          offline.add(label);
+                        }
+                      }
+                    }
+                    return offline.take(20);
                   },
                   fieldViewBuilder: (context, textEditingController, focusNode, onFieldSubmitted) {
                     if (placeCtrl.text.isNotEmpty && textEditingController.text.isEmpty) {
@@ -823,14 +837,30 @@ class _DashboardScreenState extends State<DashboardScreen>
                   onSelected: (String selection) async {
                     if (offlinePlaces.containsKey(selection)) {
                       final coords = offlinePlaces[selection]!;
-                      final autoTz = await getTimezoneForPlace(selection, coords[0], coords[1]);
                       setS(() {
                         placeCtrl.text = selection;
                         latCtrl.text = coords[0].toStringAsFixed(4);
                         lonCtrl.text = coords[1].toStringAsFixed(4);
-                        tzCtrl.text = '${autoTz >= 0 ? '+' : ''}$autoTz';
-                        geoStatus = '📍 $selection (TZ: ${autoTz >= 0 ? '+' : ''}$autoTz)';
+                        tzCtrl.text = '${coords[2] >= 0 ? '+' : ''}${coords[2]}';
+                        geoStatus = '📍 $selection (TZ: ${coords[2] >= 0 ? '+' : ''}${coords[2]})';
                       });
+                    } else {
+                      final worldResults = searchWorldCities(selection.split(', ').first, limit: 1);
+                      if (worldResults.isNotEmpty) {
+                        final w = worldResults.first;
+                        final lat = (w['la'] as num).toDouble();
+                        final lon = (w['lo'] as num).toDouble();
+                        final tz = (w['c'] != null)
+                            ? getDstAwareOffset(w['c'] as String, lat, lon, dob)
+                            : (w['tz'] as num).toDouble();
+                        setS(() {
+                          placeCtrl.text = selection;
+                          latCtrl.text = lat.toStringAsFixed(4);
+                          lonCtrl.text = lon.toStringAsFixed(4);
+                          tzCtrl.text = '${tz >= 0 ? '+' : ''}$tz';
+                          geoStatus = '📍 $selection (TZ: ${tz >= 0 ? '+' : ''}$tz)';
+                        });
+                      }
                     }
                   },
                   optionsViewBuilder: (context, onSelected, options) {
@@ -888,7 +918,8 @@ class _DashboardScreenState extends State<DashboardScreen>
                   final result = await AstroCalculator.calculate(
                     year: dob.year, month: dob.month, day: dob.day,
                     hourUtcOffset: tz, hour24: localHour,
-                    lat: lat, lon: lon, ayanamsaMode: 'lahiri', trueNode: false,
+                    lat: lat, lon: lon, ayanamsaMode: 'lahiri',
+                    trueNode: widget.extraInfo['nodeMode'] == 'true',
                   );
 
                   if (result == null) {
@@ -898,7 +929,7 @@ class _DashboardScreenState extends State<DashboardScreen>
 
                   if (mounted) {
                     setState(() {
-                      _extraPersons[idx] = _PersonEntry(name: name, result: result, dob: dob, hour: hour, minute: minute, ampm: ampm, lat: lat, lon: lon, place: placeCtrl.text, notes: existing.notes);
+                      _extraPersons[idx] = PersonEntry(name: name, result: result, dob: dob, hour: hour, minute: minute, ampm: ampm, lat: lat, lon: lon, tz: tz, place: placeCtrl.text, notes: existing.notes);
                     });
                     ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('✅ $name ${AppLocale.l('calcSuccess')}'), backgroundColor: Colors.green));
                   }
@@ -920,7 +951,7 @@ class _DashboardScreenState extends State<DashboardScreen>
     final placeCtrl = TextEditingController(text: _primaryPlace);
     final latCtrl = TextEditingController(text: _primaryLat.toStringAsFixed(4));
     final lonCtrl = TextEditingController(text: _primaryLon.toStringAsFixed(4));
-    final tzCtrl = TextEditingController(text: '+5.5');
+    final tzCtrl = TextEditingController(text: '${_primaryTz >= 0 ? '+' : ''}$_primaryTz');
 
     DateTime dob = _primaryDob;
     int hour = _primaryHour;
@@ -945,7 +976,7 @@ class _DashboardScreenState extends State<DashboardScreen>
             final lat = double.parse(data[0]['lat']);
             final lon = double.parse(data[0]['lon']);
             final displayName = data[0]['display_name'] as String;
-            final autoTz = await getTimezoneForPlace(displayName, lat, lon);
+            final autoTz = await getTimezoneForPlace(displayName, lat, lon, birthDate: dob);
             setS(() {
               placeCtrl.text = placeName.trim();
               latCtrl.text = lat.toStringAsFixed(4);
@@ -974,59 +1005,35 @@ class _DashboardScreenState extends State<DashboardScreen>
               children: [
                 TextField(controller: nameCtrl, decoration: InputDecoration(labelText: AppLocale.l('nameLabel'), prefixIcon: Icon(Icons.person_outline))),
                 const SizedBox(height: 14),
-                GestureDetector(
-                  onTap: () async {
-                    final d = await showDatePicker(
-                      context: ctx2, initialDate: dob,
-                      firstDate: DateTime(1800), lastDate: DateTime(2100),
-                      builder: (c, child) => Theme(data: Theme.of(c).copyWith(colorScheme: ColorScheme.light(primary: kPurple2)), child: child!),
-                    );
-                    if (d != null) setS(() => dob = d);
-                  },
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                    decoration: BoxDecoration(color: kCard, border: Border.all(color: kBorder), borderRadius: BorderRadius.circular(12)),
-                    child: Row(children: [
-                      Icon(Icons.calendar_today, color: kMuted), const SizedBox(width: 10),
-                      Text('${AppLocale.l('dateLabel')}: ${dob.day.toString().padLeft(2,'0')}-${dob.month.toString().padLeft(2,'0')}-${dob.year}', style: TextStyle(fontSize: 14, color: kText)),
-                    ]),
-                  ),
+                DateInputRow(
+                  date: dob,
+                  color: kPurple2,
+                  onChanged: (d) => setS(() => dob = d),
                 ),
                 const SizedBox(height: 14),
-                GestureDetector(
-                  onTap: () async {
-                    final picked = await showTimePicker(
-                      context: ctx2,
-                      initialTime: TimeOfDay(
-                        hour: ampm == 'PM' && hour != 12 ? hour + 12 : (ampm == 'AM' && hour == 12 ? 0 : hour),
-                        minute: minute,
-                      ),
-                      builder: (c, child) => Theme(data: Theme.of(c).copyWith(colorScheme: ColorScheme.light(primary: kPurple2)), child: child!),
-                    );
-                    if (picked != null) {
-                      setS(() {
-                        final h24 = picked.hour;
-                        ampm = h24 >= 12 ? 'PM' : 'AM';
-                        hour = h24 % 12 == 0 ? 12 : h24 % 12;
-                        minute = picked.minute;
-                      });
-                    }
-                  },
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                    decoration: BoxDecoration(color: kCard, border: Border.all(color: kBorder), borderRadius: BorderRadius.circular(12)),
-                    child: Row(children: [
-                      Icon(Icons.access_time, color: kMuted), const SizedBox(width: 10),
-                      Text('${AppLocale.l('timeLabel')}: ${hour.toString().padLeft(2,'0')}:${minute.toString().padLeft(2,'0')} $ampm', style: TextStyle(fontSize: 14, color: kText)),
-                    ]),
-                  ),
+                TimeInputRow(
+                  hour: hour,
+                  minute: minute,
+                  ampm: ampm,
+                  color: kPurple2,
+                  onChanged: (h, m, a) => setS(() { hour = h; minute = m; ampm = a; }),
                 ),
                 const SizedBox(height: 14),
                 Autocomplete<String>(
                   optionsBuilder: (TextEditingValue textEditingValue) {
                     if (textEditingValue.text.isEmpty) return offlinePlaces.keys.take(15);
                     final query = textEditingValue.text.toLowerCase();
-                    return offlinePlaces.keys.where((name) => name.toLowerCase().contains(query));
+                    final offline = offlinePlaces.keys.where((name) => name.toLowerCase().contains(query)).toList();
+                    if (worldCitiesLoaded) {
+                      final worldResults = searchWorldCities(textEditingValue.text, limit: 15);
+                      for (final w in worldResults) {
+                        final label = worldCityLabel(w);
+                        if (!offline.any((o) => o.toLowerCase() == label.toLowerCase())) {
+                          offline.add(label);
+                        }
+                      }
+                    }
+                    return offline.take(20);
                   },
                   fieldViewBuilder: (context, textEditingController, focusNode, onFieldSubmitted) {
                     if (placeCtrl.text.isNotEmpty && textEditingController.text.isEmpty) {
@@ -1047,14 +1054,30 @@ class _DashboardScreenState extends State<DashboardScreen>
                   onSelected: (String selection) async {
                     if (offlinePlaces.containsKey(selection)) {
                       final coords = offlinePlaces[selection]!;
-                      final autoTz = await getTimezoneForPlace(selection, coords[0], coords[1]);
                       setS(() {
                         placeCtrl.text = selection;
                         latCtrl.text = coords[0].toStringAsFixed(4);
                         lonCtrl.text = coords[1].toStringAsFixed(4);
-                        tzCtrl.text = '${autoTz >= 0 ? '+' : ''}$autoTz';
-                        geoStatus = '📍 $selection (TZ: ${autoTz >= 0 ? '+' : ''}$autoTz)';
+                        tzCtrl.text = '${coords[2] >= 0 ? '+' : ''}${coords[2]}';
+                        geoStatus = '📍 $selection (TZ: ${coords[2] >= 0 ? '+' : ''}${coords[2]})';
                       });
+                    } else {
+                      final worldResults = searchWorldCities(selection.split(', ').first, limit: 1);
+                      if (worldResults.isNotEmpty) {
+                        final w = worldResults.first;
+                        final lat = (w['la'] as num).toDouble();
+                        final lon = (w['lo'] as num).toDouble();
+                        final tz = (w['c'] != null)
+                            ? getDstAwareOffset(w['c'] as String, lat, lon, dob)
+                            : (w['tz'] as num).toDouble();
+                        setS(() {
+                          placeCtrl.text = selection;
+                          latCtrl.text = lat.toStringAsFixed(4);
+                          lonCtrl.text = lon.toStringAsFixed(4);
+                          tzCtrl.text = '${tz >= 0 ? '+' : ''}$tz';
+                          geoStatus = '📍 $selection (TZ: ${tz >= 0 ? '+' : ''}$tz)';
+                        });
+                      }
                     }
                   },
                   optionsViewBuilder: (context, onSelected, options) {
@@ -1112,7 +1135,8 @@ class _DashboardScreenState extends State<DashboardScreen>
                   final result = await AstroCalculator.calculate(
                     year: dob.year, month: dob.month, day: dob.day,
                     hourUtcOffset: tz, hour24: localHour,
-                    lat: lat, lon: lon, ayanamsaMode: 'lahiri', trueNode: false,
+                    lat: lat, lon: lon, ayanamsaMode: 'lahiri',
+                    trueNode: widget.extraInfo['nodeMode'] == 'true',
                   );
 
                   if (result == null) {
@@ -1130,6 +1154,7 @@ class _DashboardScreenState extends State<DashboardScreen>
                       _primaryAmpm = ampm;
                       _primaryLat = lat;
                       _primaryLon = lon;
+                      _primaryTz = tz;
                       _primaryPlace = placeCtrl.text;
                     });
                     ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('✅ $name ${AppLocale.l('calcSuccess')}'), backgroundColor: Colors.green));
@@ -1159,7 +1184,7 @@ class _DashboardScreenState extends State<DashboardScreen>
   /// Load all group members from saved profiles and calculate their kundalis
   Future<void> _loadGroupMembers() async {
     final profiles = await StorageService.loadAll();
-    final newEntries = <_PersonEntry>[];
+    final newEntries = <PersonEntry>[];
 
     for (final memberName in widget.initialGroupMembers) {
       // Skip if already loaded or if it's the primary person
@@ -1182,10 +1207,10 @@ class _DashboardScreenState extends State<DashboardScreen>
           lat: p.lat, lon: p.lon, ayanamsaMode: 'lahiri', trueNode: true,
         );
         if (result != null) {
-          newEntries.add(_PersonEntry(
+          newEntries.add(PersonEntry(
             name: p.name, result: result, dob: dob,
             hour: p.hour, minute: p.minute, ampm: p.ampm,
-            lat: p.lat, lon: p.lon, place: p.place, notes: p.notes,
+            lat: p.lat, lon: p.lon, tz: p.tzOffset, place: p.place, notes: p.notes,
           ));
         }
       } catch (e) {
@@ -1294,8 +1319,6 @@ class _DashboardScreenState extends State<DashboardScreen>
 
   @override
   Widget build(BuildContext context) {
-    final isLandscape = MediaQuery.of(context).orientation == Orientation.landscape;
-
     return Scaffold(
       backgroundColor: kBg,
       body: KeyedSubtree(
@@ -1346,7 +1369,7 @@ class _DashboardScreenState extends State<DashboardScreen>
                               date: dateStr,
                               hour: widget.hour, minute: widget.minute, ampm: widget.ampm,
                               lat: widget.lat, lon: widget.lon, place: widget.place,
-                              tzOffset: LocationService.tzOffset,
+                              tzOffset: _primaryTz,
                               notes: _notes,
                               aroodhas: _aroodhas,
                               janmaNakshatraIdx: _janmaNakshatraIdx,
@@ -1364,6 +1387,7 @@ class _DashboardScreenState extends State<DashboardScreen>
                                 birthTime: '${widget.hour.toString().padLeft(2,'0')}:${widget.minute.toString().padLeft(2,'0')} ${widget.ampm}',
                                 birthPlace: widget.place,
                                 lat: widget.lat, lon: widget.lon,
+                                tzOffset: _primaryTz,
                                 notes: _notes,
                               ));
                             }
@@ -1376,7 +1400,7 @@ class _DashboardScreenState extends State<DashboardScreen>
                                 date: epDateStr,
                                 hour: ep.hour, minute: ep.minute, ampm: ep.ampm,
                                 lat: ep.lat, lon: ep.lon, place: ep.place,
-                                tzOffset: LocationService.tzOffset,
+                                tzOffset: ep.tz,
                                 notes: ep.notes,
                                 clientId: resolvedCId,
                               ));
@@ -1390,6 +1414,7 @@ class _DashboardScreenState extends State<DashboardScreen>
                                   birthTime: '${ep.hour.toString().padLeft(2,'0')}:${ep.minute.toString().padLeft(2,'0')} ${ep.ampm}',
                                   birthPlace: ep.place,
                                   lat: ep.lat, lon: ep.lon,
+                                  tzOffset: ep.tz,
                                   notes: ep.notes,
                                 ));
                               }
@@ -1418,8 +1443,9 @@ class _DashboardScreenState extends State<DashboardScreen>
                 ],
               ),
             ),
-            // Person selector (multi-person only)
-            if (_extraPersons.isNotEmpty)
+            // Person selector (multi-person only) — portrait only
+            // In landscape, the bottom person selector is used instead.
+            if (_extraPersons.isNotEmpty && MediaQuery.of(context).orientation != Orientation.landscape)
               Container(
                 color: kCard,
                 padding: const EdgeInsets.symmetric(vertical: 4),
@@ -1432,13 +1458,13 @@ class _DashboardScreenState extends State<DashboardScreen>
                       // "All" chip
                       Padding(
                         padding: const EdgeInsets.only(right: 6),
-                        child: ChoiceChip(
-                          label: Text('ಎಲ್ಲ / All', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: _selectedPersonIdx == -1 ? Colors.white : kText)),
-                          selected: _selectedPersonIdx == -1,
+                        child: FilterChip(
+                          label: Text('ಎಲ್ಲ / All', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: _selectedPersonIndices.isEmpty ? Colors.white : kText)),
+                          selected: _selectedPersonIndices.isEmpty,
                           selectedColor: kPurple2,
                           backgroundColor: kCard,
-                          side: BorderSide(color: _selectedPersonIdx == -1 ? kPurple2 : kBorder),
-                          onSelected: (_) => setState(() => _selectedPersonIdx = -1),
+                          side: BorderSide(color: _selectedPersonIndices.isEmpty ? kPurple2 : kBorder),
+                          onSelected: (_) => setState(() => _selectedPersonIndices = {}),
                           materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
                           visualDensity: VisualDensity.compact,
                         ),
@@ -1446,13 +1472,17 @@ class _DashboardScreenState extends State<DashboardScreen>
                       // Primary person chip
                       Padding(
                         padding: const EdgeInsets.only(right: 6),
-                        child: ChoiceChip(
-                          label: Text(_primaryName, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: _selectedPersonIdx == 0 ? Colors.white : kText)),
-                          selected: _selectedPersonIdx == 0,
+                        child: FilterChip(
+                          label: Text(_primaryName, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: _selectedPersonIndices.contains(0) ? Colors.white : kText)),
+                          selected: _selectedPersonIndices.contains(0),
                           selectedColor: kPurple2,
                           backgroundColor: kCard,
-                          side: BorderSide(color: _selectedPersonIdx == 0 ? kPurple2 : kBorder),
-                          onSelected: (_) => setState(() => _selectedPersonIdx = 0),
+                          side: BorderSide(color: _selectedPersonIndices.contains(0) ? kPurple2 : kBorder),
+                          onSelected: (selected) => setState(() {
+                            final s = Set<int>.from(_selectedPersonIndices);
+                            if (selected) { s.add(0); } else { s.remove(0); }
+                            _selectedPersonIndices = s;
+                          }),
                           materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
                           visualDensity: VisualDensity.compact,
                         ),
@@ -1462,13 +1492,17 @@ class _DashboardScreenState extends State<DashboardScreen>
                         final idx = i + 1;
                         return Padding(
                           padding: const EdgeInsets.only(right: 6),
-                          child: ChoiceChip(
-                            label: Text(_extraPersons[i].name, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: _selectedPersonIdx == idx ? Colors.white : kText)),
-                            selected: _selectedPersonIdx == idx,
+                          child: FilterChip(
+                            label: Text(_extraPersons[i].name, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: _selectedPersonIndices.contains(idx) ? Colors.white : kText)),
+                            selected: _selectedPersonIndices.contains(idx),
                             selectedColor: kTeal,
                             backgroundColor: kCard,
-                            side: BorderSide(color: _selectedPersonIdx == idx ? kTeal : kBorder),
-                            onSelected: (_) => setState(() => _selectedPersonIdx = idx),
+                            side: BorderSide(color: _selectedPersonIndices.contains(idx) ? kTeal : kBorder),
+                            onSelected: (selected) => setState(() {
+                              final s = Set<int>.from(_selectedPersonIndices);
+                              if (selected) { s.add(idx); } else { s.remove(idx); }
+                              _selectedPersonIndices = s;
+                            }),
                             materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
                             visualDensity: VisualDensity.compact,
                           ),
@@ -1479,90 +1513,198 @@ class _DashboardScreenState extends State<DashboardScreen>
                 ),
               ),
 
-            // ── LANDSCAPE: Panchang left + Tabs right ──
-            if (isLandscape)
-              Expanded(
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // LEFT: Panchang (fixed)
-                    SizedBox(
-                      width: MediaQuery.of(context).size.width * 0.35,
-                      child: _buildPanchangTab(),
-                    ),
-                    // Divider
-                    Container(width: 1, color: kBorder),
-                    // RIGHT: Tab bar + content
-                    Expanded(
-                      child: Column(
-                        children: [
-                          Container(
-                            color: kCard,
-                            child: TabBar(
-                              controller: _tabCtrl,
-                              isScrollable: true,
-                              tabs: _tabs.map((t) => Tab(text: t)).toList(),
-                            ),
+            // ── Orientation-aware body ──
+            Expanded(
+              child: OrientationBuilder(
+                builder: (context, orientation) {
+                  final isLandscape = orientation == Orientation.landscape;
+
+                  if (!isLandscape) {
+                    // ── PORTRAIT: existing layout ──
+                    return Column(
+                      children: [
+                        Container(
+                          color: kCard,
+                          child: TabBar(
+                            controller: _tabCtrl,
+                            isScrollable: true,
+                            tabs: _tabs.map((t) => Tab(text: t)).toList(),
                           ),
-                          Expanded(
-                            child: TabBarView(
-                              controller: _tabCtrl,
+                        ),
+                        Expanded(
+                          child: TabBarView(
+                            controller: _tabCtrl,
+                            children: [
+                              _buildPanchangTab(),
+                              _buildKundaliTab(),
+                              _buildSphutas(),
+                              _buildAroodhaTab(),
+                              _buildDashaTab(),
+                              _buildBhavaTab(),
+                              _buildGrahaShadvargaTab(),
+                              _buildShadbalaTab(),
+                              _buildAshtakaTab(),
+                              _buildYogaTab(),
+                              _buildGocharTab(),
+                              _buildNotesTab(),
+                              _buildJanmaPatrikeTab(),
+                            ],
+                          ),
+                        ),
+                      ],
+                    );
+                  } else {
+                    // ── LANDSCAPE: Bars at BOTTOM, collapsible for tablet users ──
+                    return Column(
+                      children: [
+                        // Main content (top — takes all available space)
+                        Expanded(
+                          child: Stack(
+                            children: [
+                              TabBarView(
+                                controller: _tabCtrl,
+                                children: [
+                                  _buildPanchangTab(),
+                                  _buildKundaliTab(),
+                                  _buildSphutas(),
+                                  _buildAroodhaTab(),
+                                  _buildDashaTab(),
+                                  _buildBhavaTab(),
+                                  _buildGrahaShadvargaTab(),
+                                  _buildShadbalaTab(),
+                                  _buildAshtakaTab(),
+                                  _buildYogaTab(),
+                                  _buildGocharTab(),
+                                  _buildNotesTab(),
+                                  _buildJanmaPatrikeTab(),
+                                ],
+                              ),
+                              // Floating expand button when bars are hidden
+                              if (!_landscapeBarsVisible)
+                                Positioned(
+                                  bottom: 4,
+                                  right: 4,
+                                  child: Material(
+                                    color: kCard.withOpacity(0.9),
+                                    borderRadius: BorderRadius.circular(20),
+                                    elevation: 3,
+                                    child: InkWell(
+                                      borderRadius: BorderRadius.circular(20),
+                                      onTap: () => setState(() => _landscapeBarsVisible = true),
+                                      child: Padding(
+                                        padding: const EdgeInsets.all(6),
+                                        child: Icon(Icons.keyboard_arrow_up, size: 22, color: kPurple2),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                            ],
+                          ),
+                        ),
+                        // Collapsible Person selector (bottom)
+                        if (_extraPersons.isNotEmpty)
+                          AnimatedCrossFade(
+                            firstChild: Container(
+                              color: kCard,
+                              padding: const EdgeInsets.symmetric(vertical: 4),
+                              child: SizedBox(
+                                height: 36,
+                                child: ListView(
+                                  scrollDirection: Axis.horizontal,
+                                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                                  children: [
+                                    Padding(
+                                      padding: const EdgeInsets.only(right: 6),
+                                      child: FilterChip(
+                                        label: Text('ಎಲ್ಲ / All', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: _selectedPersonIndices.isEmpty ? Colors.white : kText)),
+                                        selected: _selectedPersonIndices.isEmpty,
+                                        selectedColor: kPurple2,
+                                        backgroundColor: kCard,
+                                        side: BorderSide(color: _selectedPersonIndices.isEmpty ? kPurple2 : kBorder),
+                                        onSelected: (_) => setState(() => _selectedPersonIndices = {}),
+                                        materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                                        visualDensity: VisualDensity.compact,
+                                      ),
+                                    ),
+                                    Padding(
+                                      padding: const EdgeInsets.only(right: 6),
+                                      child: FilterChip(
+                                        label: Text(_primaryName, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: _selectedPersonIndices.contains(0) ? Colors.white : kText)),
+                                        selected: _selectedPersonIndices.contains(0),
+                                        selectedColor: kPurple2,
+                                        backgroundColor: kCard,
+                                        side: BorderSide(color: _selectedPersonIndices.contains(0) ? kPurple2 : kBorder),
+                                        onSelected: (selected) => setState(() {
+                                          final s = Set<int>.from(_selectedPersonIndices);
+                                          if (selected) { s.add(0); } else { s.remove(0); }
+                                          _selectedPersonIndices = s;
+                                        }),
+                                        materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                                        visualDensity: VisualDensity.compact,
+                                      ),
+                                    ),
+                                    ...List.generate(_extraPersons.length, (i) {
+                                      final idx = i + 1;
+                                      return Padding(
+                                        padding: const EdgeInsets.only(right: 6),
+                                        child: FilterChip(
+                                          label: Text(_extraPersons[i].name, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: _selectedPersonIndices.contains(idx) ? Colors.white : kText)),
+                                          selected: _selectedPersonIndices.contains(idx),
+                                          selectedColor: kTeal,
+                                          backgroundColor: kCard,
+                                          side: BorderSide(color: _selectedPersonIndices.contains(idx) ? kTeal : kBorder),
+                                          onSelected: (selected) => setState(() {
+                                            final s = Set<int>.from(_selectedPersonIndices);
+                                            if (selected) { s.add(idx); } else { s.remove(idx); }
+                                            _selectedPersonIndices = s;
+                                          }),
+                                          materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                                          visualDensity: VisualDensity.compact,
+                                        ),
+                                      );
+                                    }),
+                                  ],
+                                ),
+                              ),
+                            ),
+                            secondChild: const SizedBox.shrink(),
+                            crossFadeState: _landscapeBarsVisible ? CrossFadeState.showFirst : CrossFadeState.showSecond,
+                            duration: const Duration(milliseconds: 200),
+                          ),
+                        // Collapsible TabBar at bottom
+                        AnimatedCrossFade(
+                          firstChild: Container(
+                            color: kCard,
+                            child: Row(
                               children: [
-                                _buildPanchangTab(),
-                                _buildKundaliTab(),
-                                _buildSphutas(),
-                                _buildAroodhaTab(),
-                                _buildDashaTab(),
-                                _buildBhavaTab(),
-                                _buildGrahaShadvargaTab(),
-                                _buildBhavaShadvargaTab(),
-                                _buildShadbalaTab(),
-                                _buildAshtakaTab(),
-                                _buildNotesTab(),
-                                _buildJanmaPatrikeTab(),
+                                Expanded(
+                                  child: TabBar(
+                                    controller: _tabCtrl,
+                                    isScrollable: true,
+                                    tabs: _tabs.map((t) => Tab(text: t)).toList(),
+                                  ),
+                                ),
+                                // Collapse button
+                                InkWell(
+                                  onTap: () => setState(() => _landscapeBarsVisible = false),
+                                  child: Padding(
+                                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+                                    child: Icon(Icons.keyboard_arrow_down, size: 20, color: kMuted),
+                                  ),
+                                ),
                               ],
                             ),
                           ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
+                          secondChild: const SizedBox.shrink(),
+                          crossFadeState: _landscapeBarsVisible ? CrossFadeState.showFirst : CrossFadeState.showSecond,
+                          duration: const Duration(milliseconds: 200),
+                        ),
+                      ],
+                    );
+                  }
+                },
               ),
-
-            // ── PORTRAIT: Normal tab layout ──
-            if (!isLandscape) ...[
-              // Tab bar
-              Container(
-                color: kCard,
-                child: TabBar(
-                  controller: _tabCtrl,
-                  isScrollable: true,
-                  tabs: _tabs.map((t) => Tab(text: t)).toList(),
-                ),
-              ),
-
-              // Tab content
-              Expanded(
-                child: TabBarView(
-                  controller: _tabCtrl,
-                  children: [
-                    _buildPanchangTab(),
-                    _buildKundaliTab(),
-                    _buildSphutas(),
-                    _buildAroodhaTab(),
-                    _buildDashaTab(),
-                    _buildBhavaTab(),
-                    _buildGrahaShadvargaTab(),
-                    _buildBhavaShadvargaTab(),
-                    _buildShadbalaTab(),
-                    _buildAshtakaTab(),
-                    _buildNotesTab(),
-                    _buildJanmaPatrikeTab(),
-                  ],
-                ),
-              ),
-            ],
+            ),
 
           ],
         ),
@@ -1575,8 +1717,11 @@ class _DashboardScreenState extends State<DashboardScreen>
   // Filter allPersons by selected person index
   // ─────────────────────────────────────────────
   List<Map<String, dynamic>> _filterPersons(List<Map<String, dynamic>> allPersons) {
-    if (_selectedPersonIdx < 0 || _selectedPersonIdx >= allPersons.length) return allPersons;
-    return [allPersons[_selectedPersonIdx]];
+    if (_selectedPersonIndices.isEmpty) return allPersons;
+    return allPersons.asMap().entries
+        .where((e) => _selectedPersonIndices.contains(e.key))
+        .map((e) => e.value)
+        .toList();
   }
 
   // ─────────────────────────────────────────────
@@ -1600,21 +1745,10 @@ class _DashboardScreenState extends State<DashboardScreen>
     ];
     allPersons = _filterPersons(allPersons);
 
-    final screenWidth = MediaQuery.of(context).size.width;
-    final isLandscape = MediaQuery.of(context).orientation == Orientation.landscape;
-    final isLargeScreen = screenWidth > 600 || isLandscape;
-
-    // Use 45% of screen width for 2 charts side-by-side on large screens, or 85% for single chart on mobile
-    final chartSize = isLargeScreen ? (screenWidth * 0.45).clamp(350.0, 550.0) : screenWidth * 0.85;
-    
-    // Scale text up slightly on bigger charts for readability
-    final textScale = isLargeScreen ? (chartSize / 350.0).clamp(1.1, 1.4) : 1.0;
-
     return SingleChildScrollView(
       child: Column(
         children: [
           const SizedBox(height: 8),
-          // Each person's charts in a horizontal scrollable row
           ...allPersons.map((person) {
             final personResult = person['result'] as KundaliResult;
             final personName = person['name'] as String;
@@ -1630,7 +1764,7 @@ class _DashboardScreenState extends State<DashboardScreen>
                       Icon(Icons.person, size: 18, color: isPrimary ? kPurple2 : kTeal),
                       const SizedBox(width: 6),
                       Expanded(
-                        child: Text(personName, style: TextStyle(fontSize: 15 * textScale, fontWeight: FontWeight.w900, color: isPrimary ? kPurple2 : kTeal)),
+                        child: Text(personName, style: TextStyle(fontSize: 15, fontWeight: FontWeight.w900, color: isPrimary ? kPurple2 : kTeal)),
                       ),
                       IconButton(
                         icon: Icon(Icons.edit, size: 18, color: kPurple2),
@@ -1645,55 +1779,16 @@ class _DashboardScreenState extends State<DashboardScreen>
                     ],
                   ),
                 ),
-                // Horizontal scrollable charts
-                SizedBox(
-                  height: chartSize + (40 * textScale),
-                  child: ScrollConfiguration(
-                    behavior: ScrollConfiguration.of(context).copyWith(
-                      dragDevices: {
-                        PointerDeviceKind.touch,
-                        PointerDeviceKind.mouse,
-                      },
-                    ),
-                    child: ListView.builder(
-                    scrollDirection: Axis.horizontal,
-                    padding: const EdgeInsets.symmetric(horizontal: 8),
-                    itemCount: charts.length,
-                    itemBuilder: (context, i) {
-                      final chart = charts[i];
-                      final isBhavaChart = chart['isBhava'] as bool;
-                      final label = chart['label'] as String;
-                      return SizedBox(
-                        width: chartSize,
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 4),
-                          child: Column(
-                            children: [
-                              Expanded(
-                                child: KundaliChart(
-                                  result: personResult,
-                                  varga: chart['varga'] as int,
-                                  isBhava: isBhavaChart,
-                                  textScale: textScale,
-                                  showSphutas: false,
-                                  centerLabel: label,
-                                  onPlanetTap: _showPlanetDetail,
-                                  selectedPlanet: isBhavaChart ? _bhavaPlanet : null,
-                                  onPlanetLongPress: isBhavaChart ? (pName) {
-                                    setState(() => _bhavaPlanet = _bhavaPlanet == pName ? null : pName);
-                                  } : null,
-                                  bhavaFromPlanet: isBhavaChart ? _bhavaPlanet : null,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      );
-                    },
-                  ),
+                // Swipeable chart with dots
+                _KundaliPageView(
+                  charts: charts,
+                  personResult: personResult,
+                  bhavaPlanet: _bhavaPlanet,
+                  onBhavaPlanetToggle: (pName) => setState(() => _bhavaPlanet = _bhavaPlanet == pName ? null : pName),
+                  onPlanetTap: _showPlanetDetail,
+                  highlightDashaLords: _dashaHighlightEnabled,
                 ),
-                ),
-                Divider(thickness: 1, color: kBorder),
+                if (allPersons.length > 1) Divider(thickness: 1, color: kBorder),
               ],
             );
           }),
@@ -1717,10 +1812,11 @@ class _DashboardScreenState extends State<DashboardScreen>
     );
   }
 
+
   void _showPlanetDetail(String pName) {
-    final info = widget.result.planets[pName];
+    final info = _primaryResult.planets[pName];
     if (info == null) return;
-    final sun = widget.result.planets['ರವಿ'];
+    final sun = _primaryResult.planets['ರವಿ'];
     final detail = AstroCalculator.getPlanetDetail(
       pName, info.longitude, info.speed, sun?.longitude ?? 0);
     showModalBottomSheet(
@@ -1729,6 +1825,28 @@ class _DashboardScreenState extends State<DashboardScreen>
       backgroundColor: Colors.transparent,
       builder: (_) => PlanetDetailSheet(pName: pName, detail: detail),
     );
+  }
+
+  /// Get current Mahadasha + Bhukti lord names with distinct colors
+  Map<String, Color> _currentDashaLords(KundaliResult r) {
+    final now = DateTime.now();
+    final lords = <String, Color>{};
+    for (final md in r.dashas) {
+      if (now.isAfter(md.start) && now.isBefore(md.end)) {
+        lords[md.lord] = const Color(0xFFFF8C00); // Orange for Dasha
+        for (final ad in md.antardashas) {
+          if (now.isAfter(ad.start) && now.isBefore(ad.end)) {
+            // If same planet is both dasha & bhukti, keep dasha color
+            if (!lords.containsKey(ad.lord)) {
+              lords[ad.lord] = const Color(0xFF00C853); // Green for Bhukti
+            }
+            break;
+          }
+        }
+        break;
+      }
+    }
+    return lords;
   }
 
   // ─────────────────────────────────────────────
@@ -1810,18 +1928,13 @@ class _DashboardScreenState extends State<DashboardScreen>
   // ─────────────────────────────────────────────
   Future<void> _openPrastutaChart() async {
     final now = DateTime.now();
-    // Use custom prastuta location if set, else default
-    final useLat = _prastutaLat != 0 ? _prastutaLat : LocationService.lat;
-    final useLon = _prastutaLon != 0 ? _prastutaLon : LocationService.lon;
-    final useTz = _prastutaLat != 0 ? _prastutaTz : LocationService.tzOffset;
-    final usePlace = _prastutaPlace.isNotEmpty ? _prastutaPlace : LocationService.place;
+    // Always use default location for aroodha/prastuta
+    final useLat = LocationService.lat;
+    final useLon = LocationService.lon;
+    final useTz = LocationService.tzOffset;
     showDialog(context: context, barrierDismissible: false, builder: (_) => const Center(child: CircularProgressIndicator()));
     try {
-      // Same method as InputScreen: pass local time directly (hour + minute, NO seconds — matches birth chart precision).
-      // The calculator internally does (hour24 - hourUtcOffset) to get UTC.
       final localHour = now.hour + now.minute / 60.0;
-
-      // Use same ayanamsa & node settings as the birth chart
       final ayanamsa = widget.extraInfo['ayanamsa'] ?? 'lahiri';
       final trueNode = (widget.extraInfo['nodeMode'] ?? 'mean') == 'true';
       final result = await AstroCalculator.calculate(
@@ -1832,14 +1945,13 @@ class _DashboardScreenState extends State<DashboardScreen>
         ayanamsaMode: ayanamsa,
         trueNode: trueNode,
       );
-      if (mounted) Navigator.pop(context); // close dialog
+      if (mounted) Navigator.pop(context);
       if (result != null && mounted) {
         setState(() {
           _prastutaResult = result;
           _prastutaTime = now;
-          _prastutaPlace = usePlace;
         });
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(AppLocale.l('loadingPrastuta')))); // Current-time chart loaded
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(AppLocale.l('loadingPrastuta'))));
       }
     } catch (e) {
       if (mounted) Navigator.pop(context);
@@ -1847,69 +1959,13 @@ class _DashboardScreenState extends State<DashboardScreen>
     }
   }
 
-  Future<void> _searchPrastutaPlace(String query) async {
-    if (query.trim().isEmpty) return;
-    try {
-      final q = Uri.encodeComponent(query.trim());
-      final url = Uri.parse('https://nominatim.openstreetmap.org/search?q=$q&format=json&limit=5');
-      final resp = await http.get(url, headers: {'User-Agent': 'BharatheeyamApp/1.0'}).timeout(const Duration(seconds: 10));
-      if (resp.statusCode == 200 && mounted) {
-        final data = jsonDecode(resp.body) as List;
-        if (data.isEmpty) {
-          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(AppLocale.l('placeNotFoundDash'))));
-        } else {
-          final selected = data.length == 1 ? data[0] : await showDialog<Map<String, dynamic>>(
-            context: context,
-            builder: (ctx) => AlertDialog(
-              backgroundColor: kCard,
-              title: Text('${AppLocale.l('selectLocation')}', style: TextStyle(color: kText, fontWeight: FontWeight.w900, fontSize: 16)),
-              content: SizedBox(
-                width: double.maxFinite,
-                child: ListView.separated(
-                  shrinkWrap: true,
-                  itemCount: data.length,
-                  separatorBuilder: (_, __) => Divider(height: 1, color: kBorder),
-                  itemBuilder: (ctx, i) {
-                    final item = data[i];
-                    return ListTile(
-                      dense: true,
-                      leading: Icon(Icons.location_on, color: kPurple2, size: 20),
-                      title: Text(item['display_name'] ?? '', style: TextStyle(fontSize: 13, color: kText), maxLines: 2, overflow: TextOverflow.ellipsis),
-                      subtitle: Text('${double.tryParse(item['lat']?.toString() ?? '')?.toStringAsFixed(2)}°, ${double.tryParse(item['lon']?.toString() ?? '')?.toStringAsFixed(2)}°', style: TextStyle(fontSize: 11, color: kMuted)),
-                      onTap: () => Navigator.pop(ctx, item),
-                    );
-                  },
-                ),
-              ),
-              actions: [TextButton(onPressed: () => Navigator.pop(ctx), child: Text(AppLocale.l('cancel'), style: TextStyle(color: kMuted)))],
-            ),
-          );
-          if (selected != null && mounted) {
-            final lat = double.parse(selected['lat'].toString());
-            final lon = double.parse(selected['lon'].toString());
-            final displayName = selected['display_name'] as String;
-            final autoTz = await getTimezoneForPlace(displayName, lat, lon);
-            setState(() {
-              _prastutaPlace = query.trim();
-              _prastutaLat = lat;
-              _prastutaLon = lon;
-              _prastutaTz = autoTz;
-              _prastutaResult = null; // Clear old result since location changed
-            });
-            ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('📍 $displayName'), backgroundColor: Colors.green));
-          }
-        }
-      }
-    } catch (_) {
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(AppLocale.l('placeError'))));
-    }
-  }
+
 
   Widget _buildAroodhaTab() {
     String _selAro = AppLocale.l('aroodha');
     int _selRashiIdx = 0;
     return StatefulBuilder(builder: (ctx, setS) {
-      final activeResult = _prastutaResult ?? widget.result;
+      final activeResult = _prastutaResult ?? _primaryResult;
 
       // Varga charts for horizontal scrolling
       final charts = [
@@ -1967,25 +2023,8 @@ class _DashboardScreenState extends State<DashboardScreen>
                       ),
                     ],
                   ),
-                  // ── Location search ──
+                  // ── Default place info ──
                   const SizedBox(height: 8),
-                  Row(children: [
-                    Expanded(
-                      child: TextField(
-                        decoration: InputDecoration(
-                          hintText: '${AppLocale.l('searchLocation')} / Search',
-                          prefixIcon: Icon(Icons.location_on, size: 18, color: kPurple2),
-                          isDense: true,
-                          contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-                        ),
-                        style: TextStyle(fontSize: 13, color: kText),
-                        onSubmitted: (v) => _searchPrastutaPlace(v),
-                      ),
-                    ),
-                  ]),
-                  // ── Current place info ──
-                  const SizedBox(height: 6),
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                     decoration: BoxDecoration(
@@ -1996,7 +2035,7 @@ class _DashboardScreenState extends State<DashboardScreen>
                       Icon(Icons.place, size: 14, color: kPurple2),
                       const SizedBox(width: 4),
                       Expanded(child: Text(
-                        _prastutaPlace.isNotEmpty ? _prastutaPlace : LocationService.place,
+                        LocationService.place,
                         style: TextStyle(fontSize: 11, color: kText, fontWeight: FontWeight.w600),
                         overflow: TextOverflow.ellipsis,
                       )),
@@ -2097,6 +2136,9 @@ class _DashboardScreenState extends State<DashboardScreen>
                                 aroodhas: _aroodhas,
                                 centerLabel: _prastutaResult != null ? '${AppLocale.l('prastuta')}\n$label' : label,
                                 onPlanetTap: _showPlanetDetail,
+                                highlightPlanets: _dashaHighlightEnabled && ((chart['varga'] as int) == 1 || (chart['varga'] as int) == 9 || isBhavaChart)
+                                    ? _currentDashaLords(activeResult)
+                                    : null,
                               ),
                             ),
                           ],
@@ -2292,6 +2334,62 @@ class _DashboardScreenState extends State<DashboardScreen>
           final r = person['result'] as KundaliResult;
           final pName = person['name'] as String;
           final pan = r.panchang;
+
+          // ── Sandhi definitions: {dashaLord → {planet1, planet2 per lang}} ──
+          const _sandhiDef = <String, Map<String, List<String>>>{
+            // key=dasha lord (Kannada), value={lang: [planet1, planet2]}
+            'ಕುಜ': {
+              'kn': ['ಕುಜ', 'ರಾಹು'], 'hi': ['कुज', 'राहु'], 'ta': ['குஜ', 'ராகு'],
+              'te': ['కుజ', 'రాహు'], 'ml': ['കുജ', 'രാഹു'],
+            },
+            'ಶುಕ್ರ': {
+              'kn': ['ಶುಕ್ರ', 'ಆದಿತ್ಯ'], 'hi': ['शुक्र', 'आदित्य'], 'ta': ['சுக்ர', 'ஆதித்ய'],
+              'te': ['శుక్ర', 'ఆదిత్య'], 'ml': ['ശുക്ര', 'ആദിത്യ'],
+            },
+            'ರಾಹು': {
+              'kn': ['ರಾಹು', 'ಬೃಹಸ್ಪತಿ'], 'hi': ['राहु', 'बृहस्पति'], 'ta': ['ராகு', 'பிருஹஸ்பதி'],
+              'te': ['రాహు', 'బృహస్పతి'], 'ml': ['രാഹു', 'ബൃഹസ്പതി'],
+            },
+          };
+
+          // Localized templates
+          final _loc = AppLocale.current;
+          // {0}=p1, {1}=p2
+          String _sandhiTitle(String p1, String p2) => {
+            'kn': '$p1 $p2 ಸಂಧಿ ಕಾಲ', 'hi': '$p1 $p2 संधि काल', 'ta': '$p1 $p2 சந்தி காலம்',
+            'te': '$p1 $p2 సంధి కాలం', 'ml': '$p1 $p2 സന്ധി കാലം',
+          }[_loc] ?? '$p1 $p2 ಸಂಧಿ ಕಾಲ';
+          String _dashaEnd(String p1, String dt) => {
+            'kn': '$p1 ದಶಾ ಅಂತ್ಯ $dt', 'hi': '$p1 दशा अंत $dt', 'ta': '$p1 தசா முடிவு $dt',
+            'te': '$p1 దశా అంతం $dt', 'ml': '$p1 ദശാ അവസാനം $dt',
+          }[_loc] ?? '$p1 ದಶಾ ಅಂತ್ಯ $dt';
+          String _sandhiDesc(String p1, String p2) => {
+            'kn': 'ಈ ಸಮಯವು $p1 $p2 ದಶ ಸಂಧಿ ಆಗಿರುವುದರಿಂದ ಮೇಲೆ ತಿಳಿಸಿದ ಸಮಯಕ್ಕಿಂತ 6 ತಿಂಗಳ ಪೂರ್ವದಲ್ಲಿ\n$p1 $p2 ಶಾಂತಿ ಅಥವಾ ತತ್ಸಮಾನ ಕರ್ಮಗಳನ್ನು ಆಚರಿಸುವುದು ಉತ್ತಮ.',
+            'hi': 'यह समय $p1 $p2 दशा संधि होने के कारण ऊपर बताए गए समय से 6 महीने पहले\n$p1 $p2 शांति अथवा तत्समान कर्म करना उचित है।',
+            'ta': 'இது $p1 $p2 தசா சந்தி காலமாக இருப்பதால் மேற்கூறிய நேரத்திற்கு 6 மாதங்களுக்கு முன்\n$p1 $p2 சாந்தி அல்லது அதற்கு இணையான கர்மங்களை செய்வது நல்லது.',
+            'te': 'ఈ సమయం $p1 $p2 దశా సంధి అయినందున పై సమయానికి 6 నెలల ముందు\n$p1 $p2 శాంతి లేదా తత్సమాన కర్మలు చేయడం మంచిది.',
+            'ml': 'ഈ സമയം $p1 $p2 ദശാ സന്ധി ആയതിനാൽ മേൽ പറഞ്ഞ സമയത്തിന് 6 മാസം മുമ്പ്\n$p1 $p2 ശാന്തി അല്ലെങ്കിൽ തത്തുല്യ കർമ്മങ്ങൾ ആചരിക്കുന്നത് ഉത്തമം.',
+          }[_loc] ?? 'ಈ ಸಮಯವು $p1 $p2 ದಶ ಸಂಧಿ ಆಗಿರುವುದರಿಂದ ಮೇಲೆ ತಿಳಿಸಿದ ಸಮಯಕ್ಕಿಂತ 6 ತಿಂಗಳ ಪೂರ್ವದಲ್ಲಿ\n$p1 $p2 ಶಾಂತಿ ಅಥವಾ ತತ್ಸಮಾನ ಕರ್ಮಗಳನ್ನು ಆಚರಿಸುವುದು ಉತ್ತಮ.';
+
+          // ── Collect sandhi notices ──
+          final sandhiNotices = <Map<String, dynamic>>[];
+          for (final md in r.dashas) {
+            final def = _sandhiDef[md.lord];
+            if (def == null) continue;
+            final names = def[_loc] ?? def['kn']!;
+            sandhiNotices.add({
+              'p1': names[0], 'p2': names[1],
+              'dashaEnd': md.end,
+            });
+          }
+          // Sort by nearest date first
+          sandhiNotices.sort((a, b) {
+            final now = DateTime.now();
+            final diffA = (a['dashaEnd'] as DateTime).difference(now).inDays.abs();
+            final diffB = (b['dashaEnd'] as DateTime).difference(now).inDays.abs();
+            return diffA.compareTo(diffB);
+          });
+
           return Column(
             children: [
               if (allPersons.length > 1)
@@ -2306,6 +2404,47 @@ class _DashboardScreenState extends State<DashboardScreen>
                 ),
               ),
               DashaWidget(dashas: r.dashas),
+
+              // ── Sandhi Soochane ──
+              if (sandhiNotices.isNotEmpty) ...[
+                const SizedBox(height: 12),
+                ...sandhiNotices.map((s) {
+                  final dashaEnd = s['dashaEnd'] as DateTime;
+                  final endStr = '${dashaEnd.day.toString().padLeft(2,"0")}/${dashaEnd.month.toString().padLeft(2,"0")}/${dashaEnd.year}';
+                  final p1 = s['p1'] as String;
+                  final p2 = s['p2'] as String;
+
+                  return Container(
+                    margin: const EdgeInsets.only(bottom: 10, left: 4, right: 4),
+                    padding: const EdgeInsets.all(14),
+                    decoration: BoxDecoration(
+                      color: kCard,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: Colors.orange.withOpacity(0.4), width: 1.5),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Title: ರಾಹು ಬೃಹಸ್ಪತಿ ಸಂಧಿ ಕಾಲ
+                        Text(_sandhiTitle(p1, p2), style: TextStyle(
+                          fontSize: 15, fontWeight: FontWeight.w900, color: Colors.deepOrange,
+                        )),
+                        const SizedBox(height: 8),
+                        // Date: ರಾಹು ದಶಾ ಅಂತ್ಯ DD/MM/YYYY
+                        Text(_dashaEnd(p1, endStr), style: TextStyle(
+                          fontSize: 13, fontWeight: FontWeight.w700, color: kText,
+                        )),
+                        const SizedBox(height: 10),
+                        // Description paragraph
+                        Text(_sandhiDesc(p1, p2), style: TextStyle(
+                          fontSize: 12.5, color: kText, height: 1.5,
+                        )),
+                      ],
+                    ),
+                  );
+                }),
+              ],
+
               if (allPersons.length > 1) Divider(thickness: 1, color: kBorder),
             ],
           );
@@ -2395,25 +2534,47 @@ class _DashboardScreenState extends State<DashboardScreen>
                 ],
               ])),
               const SizedBox(height: 8),
+              // ── 📋 Panchanga (5 Angas) ──
+              _sectionLabel('📋 ${AppLocale.l('pHeading')}', kPurple2),
               AppCard(
                 padding: EdgeInsets.zero,
                 child: Column(children: [
-                  _tableRow([AppLocale.l('samvatsara'), trAll(pan.samvatsara)]),
                   _tableRow([AppLocale.l('varaLabel'), trAll(pan.vara)]),
                   _tableRow([AppLocale.l('tithiLabel'), '${trAll(pan.tithi)}${pan.tithiGata.isNotEmpty || pan.tithiParama.isNotEmpty ? ' (${AppLocale.l('gataGhati')}: ${pan.tithiGata}, ${AppLocale.l('paramaGhati')}: ${pan.tithiParama})' : ''}']),
-                  _tableRow([AppLocale.l('chandraNakshatra'), () { final moonPada = r.planets['ಚಂದ್ರ']?.pada; final fallback = (pan.nakPercent * 4).floor() + 1; final p = moonPada ?? (fallback < 1 ? 1 : fallback > 4 ? 4 : fallback); return '${trAll(pan.nakshatra)} - ${AppLocale.l('padaLabel')} $p (${AppLocale.l('gataGhati')}: ${pan.gataGhati}, ${AppLocale.l('paramaGhati')}: ${pan.paramaGhati})'; }()]),
+                  _tableRow([AppLocale.l('chandraNakshatra'), () { final moonPada = r.planets['ಚಂದ್ರ']?.pada; final fallback = (pan.nakPercent * 4).floor() + 1; final p = moonPada ?? (fallback < 1 ? 1 : fallback > 4 ? 4 : fallback); return '${trAll(pan.nakshatra)} - ${AppLocale.l('padaLabel')} $p'; }()]),
                   _tableRow([AppLocale.l('yogaLabel'), '${trAll(pan.yoga)}${pan.yogaGata.isNotEmpty ? ' (${AppLocale.l('gataGhati')}: ${pan.yogaGata})' : ''}']),
                   _tableRow([AppLocale.l('karanaLabel'), '${trAll(pan.karana)}${pan.karanaGata.isNotEmpty ? ' (${AppLocale.l('gataGhati')}: ${pan.karanaGata})' : ''}']),
-                  _tableRow([AppLocale.l('chandraRashiLabel'), trAll(pan.chandraRashi)]),
-                  _tableRow([AppLocale.l('chandraMasa'), trAll(pan.chandraMasa)]),
-                  _tableRow([AppLocale.l('suryaNakshatraLabel'), '${trAll(pan.suryaNakshatra)} - ${AppLocale.l('padaLabel')} ${pan.suryaPada}']),
-                  _tableRow([AppLocale.l('souraMasa'), trAll(pan.souraMasa)]),
-                  _tableRow([AppLocale.l('souraMasaGataDina'), pan.souraMasaGataDina]),
+                ]),
+              ),
+              const SizedBox(height: 8),
+
+              // ── ☀️ Ravi (Sun) Details ──
+              _sectionLabel('☀️ ${AppLocale.l('raviVivar')}', Colors.orange),
+              AppCard(
+                padding: EdgeInsets.zero,
+                child: Column(children: [
                   _tableRow([AppLocale.l('sunrise'), pan.sunrise]),
                   _tableRow([AppLocale.l('sunset'), pan.sunset]),
                   _tableRow([AppLocale.l('divamana'), pan.divamana]),
                   _tableRow([AppLocale.l('ratrimana'), pan.ratrimana]),
                   _tableRow([AppLocale.l('udayadiGhati'), pan.udayadiGhati]),
+                  _tableRow([AppLocale.l('suryaNakshatraLabel'), '${trAll(pan.suryaNakshatra)} - ${AppLocale.l('padaLabel')} ${pan.suryaPada}']),
+                  _tableRow([AppLocale.l('souraMasa'), trAll(pan.souraMasa)]),
+                  _tableRow([AppLocale.l('souraMasaGataDina'), pan.souraMasaGataDina]),
+                ]),
+              ),
+              const SizedBox(height: 8),
+
+              // ── 🌙 Chandra (Moon) Details ──
+              _sectionLabel('🌙 ${AppLocale.l('chandraVivar')}', Colors.blue),
+              AppCard(
+                padding: EdgeInsets.zero,
+                child: Column(children: [
+                  _tableRow([AppLocale.l('chandraNakshatra'), () { final moonPada = r.planets['ಚಂದ್ರ']?.pada; final fallback = (pan.nakPercent * 4).floor() + 1; final p = moonPada ?? (fallback < 1 ? 1 : fallback > 4 ? 4 : fallback); return '${trAll(pan.nakshatra)} - ${AppLocale.l('padaLabel')} $p (${AppLocale.l('gataGhati')}: ${pan.gataGhati}, ${AppLocale.l('paramaGhati')}: ${pan.paramaGhati})'; }()]),
+                  _tableRow([AppLocale.l('chandraRashiLabel'), trAll(pan.chandraRashi)]),
+                  _tableRow([AppLocale.l('chandraMasa'), trAll(pan.chandraMasa)]),
+                  _tableRow([AppLocale.l('samvatsara'), trAll(pan.samvatsara)]),
+                  _tableRow([AppLocale.l('tithiLabel'), '${trAll(pan.tithi)}${pan.tithiGata.isNotEmpty || pan.tithiParama.isNotEmpty ? ' (${AppLocale.l('gataGhati')}: ${pan.tithiGata}, ${AppLocale.l('paramaGhati')}: ${pan.tithiParama})' : ''}']),
                   _tableRow([AppLocale.l('gataGhati'), pan.gataGhati]),
                   _tableRow([AppLocale.l('paramaGhati'), pan.paramaGhati]),
                   _tableRow([AppLocale.l('sheshaGhati'), pan.shesha]),
@@ -2897,175 +3058,6 @@ class _DashboardScreenState extends State<DashboardScreen>
   }
 
   // ─────────────────────────────────────────────
-  // TAB: BHAVA SHADVARGA
-  // ─────────────────────────────────────────────
-  Widget _buildBhavaShadvargaTab() {
-    var allPersons = <Map<String, dynamic>>[
-      {'name': _primaryName, 'result': _primaryResult},
-      ..._extraPersons.map((p) => {'name': p.name, 'result': p.result}),
-    ];
-    allPersons = _filterPersons(allPersons);
-
-    String getRashiLord(String rashiNameKn) {
-      int idx = knRashi.indexOf(rashiNameKn);
-      if (idx < 0) return rashiNameKn;
-      final lordAbbr = const <String, List<String>>{
-        'kn': ['ಕು','ಶು','ಬು','ಚ','ರ','ಬು','ಶು','ಕು','ಗು','ಶ','ಶ','ಗು'],
-        'hi': ['मं','शु','बु','चं','सू','बु','शु','मं','गु','श','श','गु'],
-        'ta': ['செ','சு','பு','சந்','சூ','பு','சு','செ','கு','ச','ச','கு'],
-        'te': ['కు','శు','బు','చం','ర','బు','శు','కు','గు','శ','శ','గు'],
-        'ml': ['കു','ശു','ബു','ചം','ര','ബു','ശു','കു','ഗു','ശ','ശ','ഗു'],
-      };
-      return (lordAbbr[AppLocale.current] ?? lordAbbr['kn']!)[idx];
-    }
-
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        children: allPersons.map((person) {
-          final r = person['result'] as KundaliResult;
-          final pName = person['name'] as String;
-
-          return Column(
-            children: [
-              if (allPersons.length > 1)
-                Padding(
-                  padding: const EdgeInsets.only(bottom: 8),
-                  child: Text(pName, style: TextStyle(fontSize: 15, fontWeight: FontWeight.w900, color: kTeal)),
-                ),
-              // Title
-              Container(
-                padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 16),
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(colors: [kPurple1.withOpacity(0.12), kPurple2.withOpacity(0.06)]),
-                  borderRadius: const BorderRadius.only(
-                    topLeft: Radius.circular(14), topRight: Radius.circular(14),
-                  ),
-                  border: Border(bottom: BorderSide(color: kPurple2.withOpacity(0.3), width: 2)),
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(Icons.home_work_rounded, size: 18, color: kPurple2),
-                    const SizedBox(width: 8),
-                    Text(AppLocale.current == 'hi' ? 'भाव षड्वर्ग' :
-                         AppLocale.current == 'ta' ? 'பாவ ஷட்வர்கம்' :
-                         AppLocale.current == 'te' ? 'భావ షడ్వర్గం' :
-                         AppLocale.current == 'ml' ? 'ഭാവ ഷഡ്വർഗം' :
-                         'ಭಾವ ಷಡ್ವರ್ಗ',
-                      style: TextStyle(fontWeight: FontWeight.w900, fontSize: 16, color: kPurple2)),
-                  ],
-                ),
-              ),
-              // Shadvarga Table
-              Container(
-                decoration: BoxDecoration(
-                  color: kCard,
-                  borderRadius: const BorderRadius.only(
-                    bottomLeft: Radius.circular(14), bottomRight: Radius.circular(14),
-                  ),
-                  border: Border.all(color: kBorder),
-                  boxShadow: [
-                    BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 10, offset: const Offset(0, 4)),
-                  ],
-                ),
-                child: ClipRRect(
-                  borderRadius: const BorderRadius.only(
-                    bottomLeft: Radius.circular(14), bottomRight: Radius.circular(14),
-                  ),
-                  child: SingleChildScrollView(
-                    scrollDirection: Axis.horizontal,
-                    child: Table(
-                      border: TableBorder.symmetric(
-                        inside: BorderSide(color: kBorder.withOpacity(0.6), width: 0.5),
-                      ),
-                      defaultColumnWidth: const FixedColumnWidth(52),
-                      columnWidths: const {0: FixedColumnWidth(48)},
-                      children: [
-                        // Header row
-                        TableRow(
-                          decoration: BoxDecoration(
-                            gradient: LinearGradient(colors: [kPurple1.withOpacity(0.15), kPurple2.withOpacity(0.08)]),
-                          ),
-                          children: [
-                            AppLocale.current == 'hi' ? 'भाव' :
-                            AppLocale.current == 'ta' ? 'பா' :
-                            AppLocale.current == 'te' ? 'భా' :
-                            AppLocale.current == 'ml' ? 'ഭാ' : 'ಭಾವ',
-                            'D1', 'D3', 'D2', 'D9', 'D12', 'D30',
-                            AppLocale.current == 'hi' ? 'ना.द्रे' :
-                            AppLocale.current == 'ta' ? 'ந.த்ரே' :
-                            AppLocale.current == 'te' ? 'న.ద్రే' :
-                            AppLocale.current == 'ml' ? 'ന.ദ്രേ' : 'ನ.ದ್ರೇ',
-                            AppLocale.current == 'hi' ? 'द्वा.द्रे' :
-                            AppLocale.current == 'ta' ? 'த்வா.த்ரே' :
-                            AppLocale.current == 'te' ? 'ద్వా.ద్రే' :
-                            AppLocale.current == 'ml' ? 'ദ്വാ.ദ്രേ' : 'ದ್ವಾ.ದ್ರೇ',
-                            'D81',
-                          ].map((h) =>
-                            Padding(
-                              padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 4),
-                              child: Text(h, textAlign: TextAlign.center, style: TextStyle(
-                                fontWeight: FontWeight.w900, fontSize: 11, color: kPurple2,
-                              )),
-                            ),
-                          ).toList(),
-                        ),
-                        // Data rows — one per bhava
-                        ...List.generate(12, (i) {
-                          final deg = r.bhavas[i];
-                          final details = AstroCalculator.getPlanetDetail('ಲಗ್ನ', deg, 0, 0);
-                          final isEvenRow = i % 2 == 0;
-
-                          return TableRow(
-                            decoration: BoxDecoration(
-                              color: isEvenRow ? kBg.withOpacity(0.5) : kCard,
-                            ),
-                            children: [
-                              // Bhava number
-                              Padding(padding: const EdgeInsets.symmetric(vertical: 10), child: Text(
-                                '${i + 1}', textAlign: TextAlign.center,
-                                style: TextStyle(fontWeight: FontWeight.w900, fontSize: 13, color: kTeal),
-                              )),
-                              // D1, D3, D2, D9, D12, D30
-                              ...[details['d1'], details['d3'], details['d2'], details['d9'], details['d12'], details['d30']].map((v) =>
-                                Padding(padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 2), child: Text(
-                                  getRashiLord(v as String), textAlign: TextAlign.center,
-                                  style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: kText),
-                                )),
-                              ),
-                              // Navamsha Drekkana (D3 of D9)
-                              Padding(padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 2), child: Text(
-                                details['subDrekD9'] as String, textAlign: TextAlign.center,
-                                style: TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: kText),
-                              )),
-                              // Dvadashamsha Drekkana (D3 of D12)
-                              Padding(padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 2), child: Text(
-                                details['subDrekD12'] as String, textAlign: TextAlign.center,
-                                style: TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: kText),
-                              )),
-                              // Nava Navamsha (D81)
-                              Padding(padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 2), child: Text(
-                                getRashiLord(details['d9OfD9'] as String), textAlign: TextAlign.center,
-                                style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: kOrange),
-                              )),
-                            ],
-                          );
-                        }),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-              if (allPersons.length > 1) const SizedBox(height: 24),
-            ]
-          );
-        }).toList(),
-      ),
-    );
-  }
-
-  // ─────────────────────────────────────────────
   // TAB 8: SHADBALA
   // ─────────────────────────────────────────────
   // ─────────────────────────────────────────────
@@ -3079,7 +3071,7 @@ class _DashboardScreenState extends State<DashboardScreen>
     allPersons = _filterPersons(allPersons);
 
     if (allPersons.length == 1) {
-      return AshtakaVargaWidget(result: widget.result);
+      return AshtakaVargaWidget(result: _primaryResult);
     }
 
     return SingleChildScrollView(
@@ -3110,7 +3102,7 @@ class _DashboardScreenState extends State<DashboardScreen>
     allPersons = _filterPersons(allPersons);
 
     if (allPersons.length == 1) {
-      return ShadbalaWidget(key: UniqueKey(), shadbala: widget.result.shadbala);
+      return ShadbalaWidget(key: UniqueKey(), shadbala: _primaryResult.shadbala);
     }
 
     return SingleChildScrollView(
@@ -3147,14 +3139,14 @@ class _DashboardScreenState extends State<DashboardScreen>
     return _noteControllers[name]!;
   }
   
-  void _saveIndividualNote(String name, bool isPrimary, _PersonEntry? entry, String newNotes) {
+  void _saveIndividualNote(String name, bool isPrimary, PersonEntry? entry, String newNotes) {
     final cId = widget.extraInfo['clientId'] ?? '';
     
     if (isPrimary) {
       StorageService.save(Profile(
         name: widget.name, date: '${widget.dob.year}-${widget.dob.month.toString().padLeft(2, '0')}-${widget.dob.day.toString().padLeft(2, '0')}',
         hour: widget.hour, minute: widget.minute, ampm: widget.ampm, lat: widget.lat, lon: widget.lon, place: widget.place,
-        tzOffset: LocationService.tzOffset, notes: newNotes, aroodhas: _aroodhas, janmaNakshatraIdx: _janmaNakshatraIdx, clientId: (cId is String && cId.isNotEmpty) ? cId : null,
+        tzOffset: _primaryTz, notes: newNotes, aroodhas: _aroodhas, janmaNakshatraIdx: _janmaNakshatraIdx, clientId: (cId is String && cId.isNotEmpty) ? cId : null,
       ));
       if (cId is String && cId.isNotEmpty) {
         ClientService.updateFamilyMember(FamilyMember(clientId: cId, memberName: widget.name, relation: 'Self', dob: '${widget.dob.year}-${widget.dob.month.toString().padLeft(2, '0')}-${widget.dob.day.toString().padLeft(2, '0')}', birthTime: '${widget.hour.toString().padLeft(2,'0')}:${widget.minute.toString().padLeft(2,'0')} ${widget.ampm}', birthPlace: widget.place, lat: widget.lat, lon: widget.lon, notes: newNotes));
@@ -3163,7 +3155,7 @@ class _DashboardScreenState extends State<DashboardScreen>
        final dateStr = '${entry.dob.year}-${entry.dob.month.toString().padLeft(2, '0')}-${entry.dob.day.toString().padLeft(2, '0')}';
        StorageService.save(Profile(
          name: entry.name, date: dateStr, hour: entry.hour, minute: entry.minute, ampm: entry.ampm, lat: entry.lat, lon: entry.lon, place: entry.place,
-         tzOffset: LocationService.tzOffset, notes: newNotes, clientId: (cId is String && cId.isNotEmpty) ? cId : null,
+         tzOffset: entry.tz, notes: newNotes, clientId: (cId is String && cId.isNotEmpty) ? cId : null,
        ));
        if (cId is String && cId.isNotEmpty) {
          ClientService.updateFamilyMember(FamilyMember(clientId: cId, memberName: entry.name, relation: 'Group Member', dob: dateStr, birthTime: '${entry.hour.toString().padLeft(2,'0')}:${entry.minute.toString().padLeft(2,'0')} ${entry.ampm}', birthPlace: entry.place, lat: entry.lat, lon: entry.lon, notes: newNotes));
@@ -3171,7 +3163,251 @@ class _DashboardScreenState extends State<DashboardScreen>
     }
   }
 
-  Widget _buildIndividualNoteSection({required String name, required bool isPrimary, required _PersonEntry? entry}) {
+  /// Show dialog to configure and generate Tippani PDF
+  void _showTippaniPdfDialog(String name, bool isPrimary, PersonEntry? entry, List<Map<String, String>> noteEntries) {
+    final dobDate = isPrimary ? widget.dob : entry!.dob;
+    final dobStr = '${dobDate.day.toString().padLeft(2, '0')}-${dobDate.month.toString().padLeft(2, '0')}-${dobDate.year}';
+    final birthHour = isPrimary ? widget.hour : entry!.hour;
+    final birthMin = isPrimary ? widget.minute : entry!.minute;
+    final birthAmpm = isPrimary ? widget.ampm : entry!.ampm;
+    final birthPlace = isPrimary ? widget.place : entry!.place;
+    final timeStr = '${birthHour.toString().padLeft(2, '0')}:${birthMin.toString().padLeft(2, '0')} $birthAmpm';
+    final clientId = widget.extraInfo['clientId'] ?? '';
+    final activeResult = isPrimary ? _primaryResult : entry!.result;
+
+    // All notes selected by default
+    final selectedNotes = List<bool>.filled(noteEntries.length, true);
+
+    showDialog(
+      context: context,
+      builder: (ctx) {
+        return StatefulBuilder(
+          builder: (ctx, setDialogState) {
+            final selectedCount = selectedNotes.where((s) => s).length;
+            return AlertDialog(
+              backgroundColor: kCard,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+              title: Row(
+                children: [
+                  Icon(Icons.picture_as_pdf, color: Colors.deepOrange, size: 24),
+                  const SizedBox(width: 8),
+                  Expanded(child: Text(AppLocale.l('tippaniPdf'), style: TextStyle(fontWeight: FontWeight.w900, color: kText, fontSize: 18))),
+                ],
+              ),
+              content: SizedBox(
+                width: double.maxFinite,
+                child: SingleChildScrollView(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Text(AppLocale.l('mangalaShloka'), style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: kMuted)),
+                      const SizedBox(height: 4),
+                      TextField(
+                        controller: _tippaniInvocationCtrl,
+                        decoration: InputDecoration(
+                          hintText: 'ಶ್ರೀ ಗಣೇಶಾಯ ನಮಃ',
+                          prefixIcon: Icon(Icons.auto_awesome, size: 18),
+                          isDense: true,
+                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                        ),
+                        onChanged: (_) => _saveJyotishiDetails(),
+                      ),
+                      const SizedBox(height: 14),
+                      Text(AppLocale.l('jyotishiDetails'), style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: kMuted)),
+                      const SizedBox(height: 4),
+                      TextField(
+                        controller: _jyotishiNameCtrl,
+                        decoration: InputDecoration(
+                          labelText: AppLocale.l('nameLabel'),
+                          prefixIcon: Icon(Icons.storefront, size: 18),
+                          isDense: true,
+                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                        ),
+                        onChanged: (_) => _saveJyotishiDetails(),
+                      ),
+                      const SizedBox(height: 10),
+                      TextField(
+                        controller: _tippaniAddressCtrl,
+                        decoration: InputDecoration(
+                          labelText: AppLocale.l('addressLabel'),
+                          prefixIcon: Icon(Icons.location_on_outlined, size: 18),
+                          isDense: true,
+                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                        ),
+                        maxLines: 2,
+                        onChanged: (_) => _saveJyotishiDetails(),
+                      ),
+                      const SizedBox(height: 10),
+                      TextField(
+                        controller: _jyotishiPhoneCtrl,
+                        decoration: InputDecoration(
+                          labelText: AppLocale.l('phoneLabel'),
+                          prefixIcon: Icon(Icons.phone, size: 18),
+                          isDense: true,
+                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                        ),
+                        keyboardType: TextInputType.phone,
+                        onChanged: (_) => _saveJyotishiDetails(),
+                      ),
+                      const SizedBox(height: 14),
+
+                      // ── Note Selection ──
+                      if (noteEntries.isNotEmpty) ...[
+                        Row(
+                          children: [
+                            Text(AppLocale.l('noteSelection'), style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: kMuted)),
+                            const Spacer(),
+                            Text('$selectedCount/${noteEntries.length}', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: kTeal)),
+                            const SizedBox(width: 8),
+                            GestureDetector(
+                              onTap: () {
+                                final allSelected = selectedNotes.every((s) => s);
+                                setDialogState(() {
+                                  for (int i = 0; i < selectedNotes.length; i++) {
+                                    selectedNotes[i] = !allSelected;
+                                  }
+                                });
+                              },
+                              child: Text(
+                                selectedNotes.every((s) => s) ? AppLocale.l('deselectAll') : AppLocale.l('selectAll'),
+                                style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: Colors.deepOrange),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 6),
+                        Container(
+                          constraints: const BoxConstraints(maxHeight: 200),
+                          decoration: BoxDecoration(
+                            color: kBg,
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(color: kBorder),
+                          ),
+                          child: ListView.builder(
+                            shrinkWrap: true,
+                            padding: EdgeInsets.zero,
+                            itemCount: noteEntries.length,
+                            itemBuilder: (_, i) {
+                              final note = noteEntries[i];
+                              return CheckboxListTile(
+                                dense: true,
+                                visualDensity: VisualDensity.compact,
+                                contentPadding: const EdgeInsets.symmetric(horizontal: 8),
+                                controlAffinity: ListTileControlAffinity.leading,
+                                value: selectedNotes[i],
+                                onChanged: (v) => setDialogState(() => selectedNotes[i] = v ?? false),
+                                activeColor: Colors.deepOrange,
+                                title: Text(
+                                  note['text'] ?? '',
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: TextStyle(fontSize: 12, color: kText),
+                                ),
+                                subtitle: Text(
+                                  note['date'] ?? '',
+                                  style: TextStyle(fontSize: 10, color: kMuted),
+                                ),
+                              );
+                            },
+                          ),
+                        ),
+                      ] else ...[
+                        Container(
+                          padding: const EdgeInsets.all(10),
+                          decoration: BoxDecoration(
+                            color: kBg,
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(color: kBorder),
+                          ),
+                          child: Text('ಟಿಪ್ಪಣಿಗಳಿಲ್ಲ', style: TextStyle(fontSize: 12, color: kMuted, fontStyle: FontStyle.italic), textAlign: TextAlign.center),
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(ctx),
+                  child: Text(AppLocale.l('cancel'), style: TextStyle(color: kMuted)),
+                ),
+                ElevatedButton.icon(
+                  onPressed: selectedCount == 0 && noteEntries.isNotEmpty ? null : () async {
+                    Navigator.pop(ctx);
+                    final rashi = activeResult.panchang.chandraRashi;
+                    final nakshatra = activeResult.panchang.nakshatra;
+                    // Filter only selected notes
+                    final filteredNotes = <Map<String, String>>[];
+                    for (int i = 0; i < noteEntries.length; i++) {
+                      if (selectedNotes[i]) filteredNotes.add(noteEntries[i]);
+                    }
+                    final data = TippaniData(
+                      name: name,
+                      dateStr: dobStr,
+                      timeStr: timeStr,
+                      place: birthPlace,
+                      clientId: clientId is String ? clientId : '',
+                      rashi: rashi,
+                      nakshatra: nakshatra,
+                      invocationText: _tippaniInvocationCtrl.text.trim(),
+                      astrologerName: _jyotishiNameCtrl.text.trim(),
+                      astrologerAddress: _tippaniAddressCtrl.text.trim(),
+                      astrologerPhone: _jyotishiPhoneCtrl.text.trim(),
+                      notes: filteredNotes,
+                    );
+                    final selectedTheme = PdfThemes.all.firstWhere((t) => t.id == _selectedThemeId, orElse: () => PdfThemes.traditional);
+                    await TippaniPdfService.generateAndPrint(data, theme: selectedTheme);
+                  },
+                  icon: const Icon(Icons.picture_as_pdf, size: 18),
+                  label: Text('${AppLocale.l('createPdf')} ($selectedCount)'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.deepOrange, foregroundColor: Colors.white,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                OutlinedButton.icon(
+                  onPressed: selectedCount == 0 && noteEntries.isNotEmpty ? null : () async {
+                    Navigator.pop(ctx);
+                    final rashi = activeResult.panchang.chandraRashi;
+                    final nakshatra = activeResult.panchang.nakshatra;
+                    final filteredNotes = <Map<String, String>>[];
+                    for (int i = 0; i < noteEntries.length; i++) {
+                      if (selectedNotes[i]) filteredNotes.add(noteEntries[i]);
+                    }
+                    final data = TippaniData(
+                      name: name,
+                      dateStr: dobStr,
+                      timeStr: timeStr,
+                      place: birthPlace,
+                      clientId: clientId is String ? clientId : '',
+                      rashi: rashi,
+                      nakshatra: nakshatra,
+                      invocationText: _tippaniInvocationCtrl.text.trim(),
+                      astrologerName: _jyotishiNameCtrl.text.trim(),
+                      astrologerAddress: _tippaniAddressCtrl.text.trim(),
+                      astrologerPhone: _jyotishiPhoneCtrl.text.trim(),
+                      notes: filteredNotes,
+                    );
+                    final selectedTheme = PdfThemes.all.firstWhere((t) => t.id == _selectedThemeId, orElse: () => PdfThemes.traditional);
+                    await TippaniPdfService.generateAndShare(data, theme: selectedTheme);
+                  },
+                  icon: const Icon(Icons.share, size: 18),
+                  label: Text('${AppLocale.l('pdfShareDirect')} ($selectedCount)'),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: Colors.deepOrange,
+                    side: const BorderSide(color: Colors.deepOrange, width: 1.5),
+                  ),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
+
+  Widget _buildIndividualNoteSection({required String name, required bool isPrimary, required PersonEntry? entry}) {
     final currentNotes = isPrimary ? _notes : (entry?.notes ?? '');
     final entries = _parseNoteEntries(currentNotes);
     final ctrl = _getNoteController(name);
@@ -3281,6 +3517,19 @@ class _DashboardScreenState extends State<DashboardScreen>
               ),
             ],
           ),
+          const SizedBox(height: 8),
+          // ── Tippani PDF Export Button ──
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton.icon(
+              onPressed: () => _showTippaniPdfDialog(name, isPrimary, entry, entries),
+              icon: const Icon(Icons.picture_as_pdf, size: 18),
+              label: Text('ಟಿಪ್ಪಣಿ PDF', style: TextStyle(fontSize: 13)),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.deepOrange, foregroundColor: Colors.white, padding: const EdgeInsets.symmetric(vertical: 8),
+              ),
+            ),
+          ),
           const SizedBox(height: 12),
           Row(
             crossAxisAlignment: CrossAxisAlignment.end,
@@ -3334,18 +3583,23 @@ class _DashboardScreenState extends State<DashboardScreen>
             ...entries.asMap().entries.map((en) {
               final i = en.key;
               final e = en.value;
+              final noteText = e['text'] ?? '';
+              final isLong = noteText.length > 120;
               return Container(
                 margin: const EdgeInsets.only(bottom: 8),
-                padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(color: kBg, borderRadius: BorderRadius.circular(12), border: Border.all(color: kBorder)),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
+                clipBehavior: Clip.antiAlias,
+                child: Theme(
+                  data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
+                  child: ExpansionTile(
+                    tilePadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 0),
+                    childrenPadding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
+                    initiallyExpanded: !isLong,
+                    dense: true,
+                    leading: Icon(Icons.access_time, size: 14, color: kTeal),
+                    title: Row(
                       children: [
-                        Icon(Icons.access_time, size: 14, color: kTeal), const SizedBox(width: 6),
-                        Text(e['date'] ?? '', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: kTeal)),
-                        const Spacer(),
+                        Expanded(child: Text(e['date'] ?? '', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: kTeal))),
                         GestureDetector(
                           onTap: () {
                             ctrl.text = e['text'] ?? '';
@@ -3375,9 +3629,16 @@ class _DashboardScreenState extends State<DashboardScreen>
                         ),
                       ],
                     ),
-                    const SizedBox(height: 6),
-                    Text(e['text'] ?? '', style: TextStyle(fontSize: 14, height: 1.4, color: kText)),
-                  ],
+                    subtitle: isLong
+                        ? Text(noteText.substring(0, 100) + '...', style: TextStyle(fontSize: 12, color: kMuted), maxLines: 1, overflow: TextOverflow.ellipsis)
+                        : null,
+                    children: [
+                      Align(
+                        alignment: Alignment.centerLeft,
+                        child: Text(noteText, style: TextStyle(fontSize: 14, height: 1.4, color: kText)),
+                      ),
+                    ],
+                  ),
                 ),
               );
             }),
@@ -3385,6 +3646,212 @@ class _DashboardScreenState extends State<DashboardScreen>
       ),
     );
   }
+
+  // ─────────────────────────────────────────────
+  // GOCHAR (Transit) TAB
+  // ─────────────────────────────────────────────
+  TransitData? _gocharData;
+  int _gocharLoadedYear = 0;
+  bool _gocharLoading = false;
+
+  void _loadGocharData() async {
+    if (_gocharLoading || _gocharLoadedYear == _gocharYear) return;
+    setState(() => _gocharLoading = true);
+    final data = await TransitCache.getYear(_gocharYear);
+    if (mounted) {
+      setState(() {
+        _gocharData = data;
+        _gocharLoadedYear = _gocharYear;
+        _gocharLoading = false;
+      });
+    }
+  }
+
+  Widget _buildGocharTab() {
+    // Trigger load if year changed
+    if (_gocharLoadedYear != _gocharYear && !_gocharLoading) {
+      WidgetsBinding.instance.addPostFrameCallback((_) => _loadGocharData());
+    }
+
+    final moonRashi = _primaryResult.planets['ಚಂದ್ರ']?.rashiIndex ?? 0;
+    final rashiNames = List.generate(12, (i) => trAll(knRashi[i]));
+
+    // Helper: house from moon
+    int houseFromMoon(int planetRashi) => ((planetRashi - moonRashi) % 12) + 1;
+    const guruGoodHouses = {1, 2, 4, 5, 7, 9, 10, 11};
+
+    // Build guru & shani segments from transit events
+    List<_GocharSegment> guruSegments = [];
+    List<_GocharSegment> shaniSegments = [];
+
+    if (_gocharData != null) {
+      final guruTransits = _gocharData!.transits.where((t) => t.planetName == 'jupiter').toList();
+      final shaniTransits = _gocharData!.transits.where((t) => t.planetName == 'saturn').toList();
+
+      // Build segments for guru
+      guruSegments = _buildSegments(guruTransits, _gocharYear, 'jupiter', moonRashi);
+      shaniSegments = _buildSegments(shaniTransits, _gocharYear, 'saturn', moonRashi);
+    }
+
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(16),
+      child: ResponsiveCenter(child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          // Year Switcher
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              IconButton(icon: Icon(Icons.chevron_left, color: kPurple1), onPressed: () => setState(() { _gocharYear--; })),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                decoration: BoxDecoration(color: kCard, borderRadius: BorderRadius.circular(8), border: Border.all(color: kBorder)),
+                child: Text('$_gocharYear', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: kPurple1)),
+              ),
+              IconButton(icon: Icon(Icons.chevron_right, color: kPurple1), onPressed: () => setState(() { _gocharYear++; })),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Text('${trAll('ಜನ್ಮ ರಾಶಿ')}: ${rashiNames[moonRashi]}', style: TextStyle(fontSize: 13, color: kMuted), textAlign: TextAlign.center),
+          const SizedBox(height: 16),
+
+          if (_gocharLoading)
+            Padding(padding: const EdgeInsets.all(32), child: Center(child: CircularProgressIndicator(color: kPurple1)))
+          else if (_gocharData != null) ...[
+            // ── GURU GOCHAR ──
+            Text(AppLocale.l('guruBalaHead'), style: TextStyle(fontSize: 14, fontWeight: FontWeight.w800, color: kTeal)),
+            const SizedBox(height: 6),
+            AppCard(child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+              Text('${AppLocale.l('guruGochara')} — $_gocharYear', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w900, color: kPurple1)),
+              const SizedBox(height: 12),
+              ...guruSegments.map((seg) {
+                final house = houseFromMoon(seg.rashiIdx);
+                final isGood = guruGoodHouses.contains(house);
+                return Padding(padding: const EdgeInsets.only(bottom: 8), child: Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: isGood ? Colors.green.withOpacity(0.08) : Colors.red.withOpacity(0.08),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: isGood ? Colors.green.withOpacity(0.3) : Colors.red.withOpacity(0.3)),
+                  ),
+                  child: Row(children: [
+                    Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                      Text('${rashiNames[seg.rashiIdx]} (${trAll('ಭಾವ')} $house)', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w800, color: kText)),
+                      Text('${seg.fromDate} → ${seg.toDate}', style: TextStyle(fontSize: 11, color: kMuted)),
+                    ])),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                      decoration: BoxDecoration(color: isGood ? Colors.green.withOpacity(0.15) : Colors.red.withOpacity(0.15), borderRadius: BorderRadius.circular(6)),
+                      child: Text(isGood ? trAll('ಅನುಕೂಲ') : trAll('ಪ್ರತಿಕೂಲ'), style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: isGood ? Colors.green.shade700 : Colors.red.shade700)),
+                    ),
+                  ]),
+                ));
+              }),
+            ])),
+            const SizedBox(height: 12),
+
+            // ── SHANI GOCHAR ──
+            Text(AppLocale.l('shaniSadesatiHead'), style: TextStyle(fontSize: 14, fontWeight: FontWeight.w800, color: kTeal)),
+            const SizedBox(height: 6),
+            AppCard(child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+              Text('${AppLocale.l('shaniGochara')} — $_gocharYear', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w900, color: kPurple1)),
+              const SizedBox(height: 12),
+              ...shaniSegments.map((seg) {
+                final house = houseFromMoon(seg.rashiIdx);
+                final isSadeSati = house == 12 || house == 1 || house == 2;
+                final isAshtama = house == 8;
+                final isPanchama = house == 5;
+                final isBad = isSadeSati || isAshtama || isPanchama;
+                String label = '✅ ${trAll('ಇಲ್ಲ')}';
+                if (isSadeSati) label = '⚠️ ${AppLocale.l('sadeSati')}';
+                else if (isAshtama) label = '💀 ${AppLocale.l('ashtamaShani')}';
+                else if (isPanchama) label = '⚡ ${AppLocale.l('panchamaShani')}';
+                return Padding(padding: const EdgeInsets.only(bottom: 8), child: Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: isBad ? Colors.red.withOpacity(0.08) : Colors.green.withOpacity(0.08),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: isBad ? Colors.red.withOpacity(0.3) : Colors.green.withOpacity(0.3)),
+                  ),
+                  child: Row(children: [
+                    Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                      Text('${rashiNames[seg.rashiIdx]} (${trAll('ಭಾವ')} $house)', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w800, color: kText)),
+                      Text('${seg.fromDate} → ${seg.toDate}', style: TextStyle(fontSize: 11, color: kMuted)),
+                    ])),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                      decoration: BoxDecoration(color: isBad ? Colors.red.withOpacity(0.15) : Colors.green.withOpacity(0.15), borderRadius: BorderRadius.circular(6)),
+                      child: Text(label, style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: isBad ? Colors.red.shade700 : Colors.green.shade700)),
+                    ),
+                  ]),
+                ));
+              }),
+            ])),
+          ],
+          const SizedBox(height: 32),
+        ],
+      )),
+    );
+  }
+
+  /// Build position segments from transit events for a planet
+  List<_GocharSegment> _buildSegments(List<TransitEvent> transits, int year, String planetName, int moonRashi) {
+    final segments = <_GocharSegment>[];
+    final fmt = (DateTime d) => '${d.day.toString().padLeft(2, '0')}/${d.month.toString().padLeft(2, '0')}/${d.year}';
+    final yearStart = DateTime(year, 1, 1);
+    final yearEnd = DateTime(year, 12, 31);
+
+    if (transits.isEmpty) {
+      // Planet stays in same rashi all year — find it from Ephemeris
+      try {
+        final jd = Sweph.swe_julday(year, 7, 1, 12.0, CalendarType.SE_GREG_CAL);
+        Sweph.swe_set_sid_mode(SiderealMode.SE_SIDM_LAHIRI);
+        final body = planetName == 'jupiter' ? HeavenlyBody.SE_JUPITER : HeavenlyBody.SE_SATURN;
+        final pos = Sweph.swe_calc_ut(jd, body, SwephFlag.SEFLG_SWIEPH);
+        final ayn = Sweph.swe_get_ayanamsa(jd);
+        final sid = (pos.longitude - ayn + 360) % 360;
+        final rashi = (sid / 30).floor() % 12;
+        segments.add(_GocharSegment(rashiIdx: rashi, fromDate: fmt(yearStart), toDate: fmt(yearEnd)));
+      } catch (_) {}
+      return segments;
+    }
+
+    // First segment: from year start to first transit
+    final firstToRashi = knRashi.indexOf(transits.first.fromRashi);
+    if (firstToRashi >= 0) {
+      segments.add(_GocharSegment(rashiIdx: firstToRashi, fromDate: fmt(yearStart), toDate: fmt(transits.first.date)));
+    }
+
+    // Middle segments: between consecutive transits
+    for (int i = 0; i < transits.length; i++) {
+      final toRashi = knRashi.indexOf(transits[i].toRashi);
+      if (toRashi < 0) continue;
+      final from = transits[i].date;
+      final to = (i + 1 < transits.length) ? transits[i + 1].date : yearEnd;
+      segments.add(_GocharSegment(rashiIdx: toRashi, fromDate: fmt(from), toDate: fmt(to)));
+    }
+
+    return segments;
+  }
+
+  Widget _gocharStatusRow(String title, String position, bool isGood, String status) {
+    return Row(children: [
+      Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Text(title, style: TextStyle(fontSize: 13, fontWeight: FontWeight.w800, color: kText)),
+        const SizedBox(height: 2),
+        Text(position, style: TextStyle(fontSize: 12, color: kMuted)),
+      ])),
+      Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+        decoration: BoxDecoration(
+          color: isGood ? Colors.green.withOpacity(0.1) : Colors.red.withOpacity(0.1),
+          borderRadius: BorderRadius.circular(6),
+        ),
+        child: Text(status, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: isGood ? Colors.green.shade700 : Colors.red.shade700)),
+      ),
+    ]);
+  }
+
 
   Widget _buildNotesTab() {
     var allPersons = <Map<String, dynamic>>[
@@ -3401,7 +3868,7 @@ class _DashboardScreenState extends State<DashboardScreen>
         return _buildIndividualNoteSection(
            name: pData['name'] as String,
            isPrimary: pData['isPrimary'] as bool,
-           entry: pData['entry'] as _PersonEntry?,
+           entry: pData['entry'] as PersonEntry?,
         );
       },
     );
@@ -3449,10 +3916,101 @@ class _DashboardScreenState extends State<DashboardScreen>
             },
             icon: const Icon(Icons.copy, size: 18),
             label: Text(AppLocale.l('copyAndPrint')),
+            style: ElevatedButton.styleFrom(backgroundColor: kMuted, foregroundColor: Colors.white),
+          ),
+          const SizedBox(width: 4),
+          ElevatedButton.icon(
+            onPressed: () {
+              Navigator.pop(ctx);
+              _printNotesPdf(text);
+            },
+            icon: const Icon(Icons.print, size: 18),
+            label: Text(AppLocale.l('printLabel')),
             style: ElevatedButton.styleFrom(backgroundColor: kTeal, foregroundColor: Colors.white),
           ),
         ],
       ),
+    );
+  }
+
+  /// Generate and print a PDF from the notes text using screenshot-to-image
+  Future<void> _printNotesPdf(String text) async {
+    final controller = ScreenshotController();
+    const double pageWidth = 793.0;
+    const double pageHeight = 1122.0;
+
+    // Build a styled Flutter widget for the notes page
+    final notesWidget = Directionality(
+      textDirection: TextDirection.ltr,
+      child: MediaQuery(
+        data: const MediaQueryData(),
+        child: Material(
+          color: Colors.white,
+          child: Container(
+            width: pageWidth,
+            height: pageHeight,
+            padding: const EdgeInsets.all(48),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Header
+                Center(
+                  child: Text(
+                    '📝 ${AppLocale.l('notesLabel')}',
+                    style: TextStyle(
+                      fontSize: 22,
+                      fontWeight: FontWeight.bold,
+                      color: kPurple2,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Divider(color: kPurple2, thickness: 2),
+                const SizedBox(height: 16),
+                // Notes content
+                Expanded(
+                  child: SingleChildScrollView(
+                    child: Text(
+                      text,
+                      style: const TextStyle(
+                        fontSize: 14,
+                        height: 1.6,
+                        color: Colors.black87,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+
+    final Uint8List imageBytes = await controller.captureFromWidget(
+      notesWidget,
+      targetSize: const Size(pageWidth, pageHeight),
+      pixelRatio: 3.0,
+      delay: const Duration(milliseconds: 100),
+    );
+
+    final doc = pw.Document();
+    doc.addPage(
+      pw.Page(
+        pageFormat: PdfPageFormat.a4,
+        margin: pw.EdgeInsets.zero,
+        build: (pw.Context context) {
+          return pw.FullPage(
+            ignoreMargins: true,
+            child: pw.Image(pw.MemoryImage(imageBytes), fit: pw.BoxFit.contain),
+          );
+        },
+      ),
+    );
+
+    await Printing.layoutPdf(
+      onLayout: (PdfPageFormat format) async => doc.save(),
+      name: 'notes',
     );
   }
 
@@ -3477,6 +4035,216 @@ class _DashboardScreenState extends State<DashboardScreen>
 
 
 
+
+
+  // ─────────────────────────────────────────────
+  // TAB: YOGA (Planetary Yogas)
+  // ─────────────────────────────────────────────
+  Widget _buildYogaTab() {
+    var allPersons = <Map<String, dynamic>>[
+      {'name': _primaryName, 'result': _primaryResult, 'dob': _primaryDob, 'hour': _primaryHour, 'minute': _primaryMinute, 'ampm': _primaryAmpm, 'place': _primaryPlace},
+      ..._extraPersons.map((p) => {'name': p.name, 'result': p.result, 'dob': p.dob, 'hour': p.hour, 'minute': p.minute, 'ampm': p.ampm, 'place': p.place}),
+    ];
+    allPersons = _filterPersons(allPersons);
+
+    return SingleChildScrollView(
+      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
+      child: Column(
+        children: allPersons.map((person) {
+          final r = person['result'] as KundaliResult;
+          final pName = person['name'] as String;
+          final yogas = YogaEngine.evaluate(r);
+
+          // Separate positive and negative yogas
+          final shubha = yogas.where((y) => y.isPositive).toList();
+          final ashubha = yogas.where((y) => !y.isPositive).toList();
+
+          // Category icons and colors
+          IconData _catIcon(String cat) {
+            switch (cat) {
+              case 'raja': return Icons.military_tech;
+              case 'dhana': return Icons.account_balance;
+              case 'pancha': return Icons.stars;
+              case 'chandra': return Icons.nightlight_round;
+              case 'graha': return Icons.wb_sunny;
+              default: return Icons.auto_awesome;
+            }
+          }
+          Color _catColor(String cat) {
+            switch (cat) {
+              case 'raja': return Colors.deepPurple;
+              case 'dhana': return Colors.amber.shade700;
+              case 'pancha': return Colors.indigo;
+              case 'chandra': return Colors.blue;
+              case 'graha': return Colors.orange;
+              default: return Colors.teal;
+            }
+          }
+          String _catLabel(String cat) {
+            final isKn = AppLocale.current == 'kn';
+            switch (cat) {
+              case 'raja': return isKn ? 'ರಾಜಯೋಗ' : 'Raja Yoga';
+              case 'dhana': return isKn ? 'ಧನಯೋಗ' : 'Dhana Yoga';
+              case 'pancha': return isKn ? 'ಪಂಚ ಮಹಾಪುರುಷ' : 'Pancha Mahapurusha';
+              case 'chandra': return isKn ? 'ಚಂದ್ರ ಯೋಗ' : 'Chandra Yoga';
+              case 'graha': return isKn ? 'ಗ್ರಹ ಯೋಗ' : 'Graha Yoga';
+              default: return isKn ? 'ಇತರ ಯೋಗ' : 'Other Yoga';
+            }
+          }
+
+          Widget yogaCard(YogaResult y) {
+            final isPos = y.isPositive;
+            // Extract short phala: text after first ". " (condition. phala)
+            final desc = AppLocale.current == 'kn' ? y.descKn : y.descEn;
+            final dotIdx = desc.indexOf('. ');
+            final phala = dotIdx >= 0 ? desc.substring(dotIdx + 2) : desc;
+            return Container(
+              margin: const EdgeInsets.only(bottom: 8),
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: kCard,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: isPos ? _catColor(y.category).withOpacity(0.3) : Colors.red.withOpacity(0.3),
+                  width: 1.5,
+                ),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Icon(_catIcon(y.category), size: 18, color: isPos ? _catColor(y.category) : Colors.red),
+                      const SizedBox(width: 6),
+                      Expanded(
+                        child: Text(AppLocale.current == 'kn' ? y.nameKn : y.nameEn, style: TextStyle(
+                          fontSize: 15, fontWeight: FontWeight.w900,
+                          color: isPos ? _catColor(y.category) : Colors.red,
+                        )),
+                      ),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                        decoration: BoxDecoration(
+                          color: (isPos ? Colors.green : Colors.red).withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: Text(
+                          isPos ? AppLocale.l('shubhakara') : AppLocale.l('ashubhakara'),
+                          style: TextStyle(fontSize: 10, fontWeight: FontWeight.w800,
+                            color: isPos ? Colors.green.shade700 : Colors.red.shade700),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 4),
+                  Text(phala, style: TextStyle(fontSize: 12, color: kText, height: 1.4)),
+                ],
+              ),
+            );
+          }
+
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              if (allPersons.length > 1)
+                Padding(
+                  padding: const EdgeInsets.only(top: 8, bottom: 4),
+                  child: Text(pName, style: TextStyle(fontSize: 15, fontWeight: FontWeight.w900, color: kTeal)),
+                ),
+
+              // Yoga warning notice
+              Container(
+                margin: const EdgeInsets.only(bottom: 10),
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: Colors.amber.withOpacity(0.12),
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(color: Colors.amber.shade700.withOpacity(0.4)),
+                ),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Icon(Icons.info_outline, size: 18, color: Colors.amber.shade800),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        AppLocale.l('yogaWarning'),
+                        style: TextStyle(fontSize: 11, color: Colors.amber.shade900, height: 1.4, fontWeight: FontWeight.w600),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+              // Summary card
+              Container(
+                margin: const EdgeInsets.only(bottom: 12),
+                padding: const EdgeInsets.all(14),
+                decoration: BoxDecoration(
+                  color: kCard,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: kPurple2.withOpacity(0.3)),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceAround,
+                  children: [
+                    Column(children: [
+                      Text('${yogas.length}', style: TextStyle(fontSize: 24, fontWeight: FontWeight.w900, color: kPurple2)),
+                      Text(AppLocale.l('totalYoga'), style: TextStyle(fontSize: 11, color: kMuted, fontWeight: FontWeight.w600)),
+                    ]),
+                    Column(children: [
+                      Text('${shubha.length}', style: TextStyle(fontSize: 24, fontWeight: FontWeight.w900, color: Colors.green)),
+                      Text(AppLocale.l('shubha'), style: TextStyle(fontSize: 11, color: kMuted, fontWeight: FontWeight.w600)),
+                    ]),
+                    Column(children: [
+                      Text('${ashubha.length}', style: TextStyle(fontSize: 24, fontWeight: FontWeight.w900, color: Colors.red)),
+                      Text(AppLocale.l('ashubha'), style: TextStyle(fontSize: 11, color: kMuted, fontWeight: FontWeight.w600)),
+                    ]),
+                  ],
+                ),
+              ),
+
+              // Shubha yogas
+              if (shubha.isNotEmpty) ...[
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 8),
+                  child: Row(children: [
+                    Icon(Icons.check_circle, size: 16, color: Colors.green),
+                    const SizedBox(width: 6),
+                    Text('${AppLocale.l('shubhaYogagalu')} (${shubha.length})', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w900, color: Colors.green.shade700)),
+                  ]),
+                ),
+                ...shubha.map(yogaCard),
+              ],
+
+              // Ashubha yogas
+              if (ashubha.isNotEmpty) ...[
+                const SizedBox(height: 8),
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 8),
+                  child: Row(children: [
+                    Icon(Icons.warning_amber, size: 16, color: Colors.red),
+                    const SizedBox(width: 6),
+                    Text('${AppLocale.l('ashubhaYogagalu')} (${ashubha.length})', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w900, color: Colors.red.shade700)),
+                  ]),
+                ),
+                ...ashubha.map(yogaCard),
+              ],
+
+              if (yogas.isEmpty)
+                Padding(
+                  padding: const EdgeInsets.only(top: 40),
+                  child: Center(child: Text(AppLocale.l('noYogaFound'), style: TextStyle(color: kMuted, fontSize: 14))),
+                ),
+
+              if (allPersons.length > 1) Divider(thickness: 2, color: kBorder),
+              const SizedBox(height: 12),
+            ],
+          );
+        }).toList(),
+      ),
+    );
+  }
 
 
   // ─────────────────────────────────────────────
@@ -3610,6 +4378,53 @@ class _DashboardScreenState extends State<DashboardScreen>
           ),
           const SizedBox(height: 16),
 
+          // ── Page Selection ──
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: kCard,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: kBorder),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Icon(Icons.checklist, color: kPurple2),
+                    const SizedBox(width: 8),
+                    Text(AppLocale.l('pdfPageSelect'), style: TextStyle(fontSize: 16, fontWeight: FontWeight.w900, color: kText)),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                ...List.generate(6, (i) {
+                  final pageNames = [
+                    'ಜನನ ಪತ್ರಿಕಾ (Birth Details)',
+                    'ವಿಂಶೋತ್ತರೀ ದಶಾ (Dasha)',
+                    'ಅಂತರ್ದಶಾ (Antardasha)',
+                    'ವರ್ಗ ಕುಂಡಲಿ (Varga Charts)',
+                    'ಅಷ್ಟಕವರ್ಗ (Ashtakavarga)',
+                    'ಷಡ್ಬಲ (Shadbala)',
+                  ];
+                  return CheckboxListTile(
+                    value: _pdfPageSelection[i],
+                    dense: true,
+                    visualDensity: VisualDensity.compact,
+                    contentPadding: EdgeInsets.zero,
+                    activeColor: kPurple2,
+                    title: Text('${i + 1}. ${pageNames[i]}', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: kText)),
+                    onChanged: (v) {
+                      // Don't allow deselecting all pages
+                      if (!v! && _pdfPageSelection.where((p) => p).length <= 1) return;
+                      setState(() => _pdfPageSelection[i] = v);
+                    },
+                  );
+                }),
+              ],
+            ),
+          ),
+          const SizedBox(height: 16),
+
           // ── Form Fields ──
           Container(
             padding: const EdgeInsets.all(16),
@@ -3652,22 +4467,27 @@ class _DashboardScreenState extends State<DashboardScreen>
                   controller: _gotraCtrl,
                   decoration: InputDecoration(labelText: AppLocale.l('gotraLabel'), prefixIcon: Icon(Icons.hub_outlined, size: 18), isDense: true),
                 ),
-                const SizedBox(height: 20),
-
-                // Jyotishi Details
-                Text(AppLocale.l('jyotishiSection'), style: TextStyle(fontWeight: FontWeight.w800, color: kTeal)),
-                const SizedBox(height: 8),
-                TextField(
-                  controller: _jyotishiNameCtrl,
-                  decoration: InputDecoration(labelText: AppLocale.l('jyotishiName'), prefixIcon: Icon(Icons.storefront, size: 18), isDense: true),
-                  onChanged: (_) => _saveJyotishiDetails(),
-                ),
                 const SizedBox(height: 10),
-                TextField(
-                  controller: _jyotishiPhoneCtrl,
-                  decoration: InputDecoration(labelText: AppLocale.l('jyotishiPhone'), prefixIcon: Icon(Icons.phone, size: 18), isDense: true),
-                  keyboardType: TextInputType.phone,
-                  onChanged: (_) => _saveJyotishiDetails(),
+                Row(
+                  children: [
+                    Icon(Icons.wc, size: 18, color: kMuted),
+                    const SizedBox(width: 8),
+                    Text(AppLocale.l('jpGender'), style: TextStyle(fontSize: 13, color: kMuted)),
+                    const SizedBox(width: 12),
+                    ChoiceChip(
+                      label: Text(AppLocale.l('jpMale')),
+                      selected: _selectedGender == 'male',
+                      selectedColor: kPurple2.withOpacity(0.2),
+                      onSelected: (_) => setState(() => _selectedGender = 'male'),
+                    ),
+                    const SizedBox(width: 8),
+                    ChoiceChip(
+                      label: Text(AppLocale.l('jpFemale')),
+                      selected: _selectedGender == 'female',
+                      selectedColor: kPurple2.withOpacity(0.2),
+                      onSelected: (_) => setState(() => _selectedGender = 'female'),
+                    ),
+                  ],
                 ),
                 const SizedBox(height: 24),
 
@@ -3692,21 +4512,105 @@ class _DashboardScreenState extends State<DashboardScreen>
                         dateStr: dateStr,
                         timeStr: timeStr,
                         place: widget.place,
+                        lat: widget.lat,
+                        lon: widget.lon,
+                        tz: widget.tz,
                         fatherName: _fatherNameCtrl.text.trim(),
                         motherName: _motherNameCtrl.text.trim(),
                         gotra: _gotraCtrl.text.trim(),
                         jyotishiName: _jyotishiNameCtrl.text.trim(),
                         jyotishiPhone: _jyotishiPhoneCtrl.text.trim(),
+                        jyotishiAddress: _tippaniAddressCtrl.text.trim(),
+                        gender: _selectedGender,
                       );
 
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text('⏳ ${AppLocale.current == 'kn' ? selectedTheme.nameKn : selectedTheme.nameEn} ${AppLocale.l('pdfCreating')}'))
+                      showDialog(
+                        context: context,
+                        barrierDismissible: false,
+                        builder: (_) => Center(
+                          child: Container(
+                            padding: const EdgeInsets.all(24),
+                            decoration: BoxDecoration(color: kCard, borderRadius: BorderRadius.circular(16)),
+                            child: Column(mainAxisSize: MainAxisSize.min, children: [
+                              CircularProgressIndicator(color: kPurple1),
+                              const SizedBox(height: 16),
+                              Text('${AppLocale.l('pdfCreating')}', style: TextStyle(color: kText, fontWeight: FontWeight.w700, fontSize: 14, decoration: TextDecoration.none)),
+                            ]),
+                          ),
+                        ),
                       );
 
                       try {
-                        await JanmaPatrikeService.generateAndPrint(ud, widget.result, theme: selectedTheme);
+                        await Future.delayed(const Duration(milliseconds: 50));
+                        await JanmaPatrikeService.generateAndPrint(ud, widget.result, theme: selectedTheme, selectedPages: _pdfPageSelection);
+                        if (mounted) Navigator.of(context, rootNavigator: true).pop();
                       } catch (e) {
-                         ScaffoldMessenger.of(context).showSnackBar(
+                        if (mounted) Navigator.of(context, rootNavigator: true).pop();
+                        if (mounted) ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text('❌ ${AppLocale.l('errorLabel')}: $e'), backgroundColor: Colors.red)
+                        );
+                      }
+                    },
+                  ),
+                ),
+                const SizedBox(height: 10),
+                // Share Button
+                SizedBox(
+                  width: double.infinity,
+                  child: OutlinedButton.icon(
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: selectedTheme.primaryLight,
+                      side: BorderSide(color: selectedTheme.primaryLight, width: 1.5),
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                    ),
+                    icon: const Icon(Icons.share),
+                    label: Text('${AppLocale.l('pdfShareDirect')} — ${AppLocale.current == 'kn' ? selectedTheme.nameKn : selectedTheme.nameEn}', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16)),
+                    onPressed: () async {
+                      final dateStr = '${widget.dob.day.toString().padLeft(2,'0')}-${widget.dob.month.toString().padLeft(2,'0')}-${widget.dob.year}';
+                      final timeStr = '${widget.hour.toString().padLeft(2,'0')}:${widget.minute.toString().padLeft(2,'0')} ${widget.ampm}';
+
+                      final ud = UserDetails(
+                        name: widget.name,
+                        dateStr: dateStr,
+                        timeStr: timeStr,
+                        place: widget.place,
+                        lat: widget.lat,
+                        lon: widget.lon,
+                        tz: widget.tz,
+                        fatherName: _fatherNameCtrl.text.trim(),
+                        motherName: _motherNameCtrl.text.trim(),
+                        gotra: _gotraCtrl.text.trim(),
+                        jyotishiName: _jyotishiNameCtrl.text.trim(),
+                        jyotishiPhone: _jyotishiPhoneCtrl.text.trim(),
+                        jyotishiAddress: _tippaniAddressCtrl.text.trim(),
+                        gender: _selectedGender,
+                      );
+
+                      // Show loading dialog
+                      showDialog(
+                        context: context,
+                        barrierDismissible: false,
+                        builder: (_) => Center(
+                          child: Container(
+                            padding: const EdgeInsets.all(24),
+                            decoration: BoxDecoration(color: kCard, borderRadius: BorderRadius.circular(16)),
+                            child: Column(mainAxisSize: MainAxisSize.min, children: [
+                              CircularProgressIndicator(color: kPurple1),
+                              const SizedBox(height: 16),
+                              Text('${AppLocale.l('pdfCreating')}', style: TextStyle(color: kText, fontWeight: FontWeight.w700, fontSize: 14, decoration: TextDecoration.none)),
+                            ]),
+                          ),
+                        ),
+                      );
+
+                      try {
+                        await Future.delayed(const Duration(milliseconds: 50)); // Let dialog render
+                        await JanmaPatrikeService.generateAndShare(ud, widget.result, theme: selectedTheme, selectedPages: _pdfPageSelection);
+                        if (mounted) Navigator.of(context, rootNavigator: true).pop();
+                      } catch (e) {
+                        if (mounted) Navigator.of(context, rootNavigator: true).pop();
+                        if (mounted) ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(content: Text('❌ ${AppLocale.l('errorLabel')}: $e'), backgroundColor: Colors.red)
                         );
                       }
@@ -3735,6 +4639,17 @@ class _DashboardScreenState extends State<DashboardScreen>
           ),
         )).toList(),
       ),
+    );
+  }
+
+  Widget _sectionLabel(String text, Color color) {
+    return Padding(
+      padding: const EdgeInsets.only(top: 6, bottom: 4, left: 4),
+      child: Row(children: [
+        Container(width: 4, height: 16, decoration: BoxDecoration(color: color, borderRadius: BorderRadius.circular(2))),
+        const SizedBox(width: 8),
+        Text(text, style: TextStyle(fontSize: 14, fontWeight: FontWeight.w900, color: color)),
+      ]),
     );
   }
 
@@ -3769,4 +4684,153 @@ class _DashboardScreenState extends State<DashboardScreen>
       ]),
     );
   }
+}
+
+/// Swipeable kundali chart viewer with dot indicators
+class _KundaliPageView extends StatefulWidget {
+  final List<Map<String, dynamic>> charts;
+  final KundaliResult personResult;
+  final String? bhavaPlanet;
+  final void Function(String) onBhavaPlanetToggle;
+  final void Function(String) onPlanetTap;
+  final bool highlightDashaLords;
+
+  const _KundaliPageView({
+    required this.charts,
+    required this.personResult,
+    required this.bhavaPlanet,
+    required this.onBhavaPlanetToggle,
+    required this.onPlanetTap,
+    this.highlightDashaLords = true,
+  });
+
+  @override
+  State<_KundaliPageView> createState() => _KundaliPageViewState();
+}
+
+class _KundaliPageViewState extends State<_KundaliPageView> {
+  int _page = 0;
+
+  Widget _buildChart(int chartIdx) {
+    final chart = widget.charts[chartIdx];
+    final isBhava = chart['isBhava'] as bool;
+    final label = chart['label'] as String;
+    // Only highlight in Rashi (D1), Navamsha (D9), and Bhava charts
+    final varga = chart['varga'] as int;
+    final shouldHighlight = widget.highlightDashaLords && ((varga == 1 || varga == 9) || isBhava);
+    return KundaliChart(
+      result: widget.personResult,
+      varga: varga,
+      isBhava: isBhava,
+      showSphutas: false,
+      centerLabel: label,
+      onPlanetTap: widget.onPlanetTap,
+      selectedPlanet: isBhava ? widget.bhavaPlanet : null,
+      onPlanetLongPress: isBhava ? widget.onBhavaPlanetToggle : null,
+      bhavaFromPlanet: isBhava ? widget.bhavaPlanet : null,
+      highlightPlanets: shouldHighlight ? _dashaLords : null,
+    );
+  }
+
+  /// Current Mahadasha + Bhukti lord names with distinct colors
+  Map<String, Color> get _dashaLords {
+    final now = DateTime.now();
+    final lords = <String, Color>{};
+    for (final md in widget.personResult.dashas) {
+      if (now.isAfter(md.start) && now.isBefore(md.end)) {
+        lords[md.lord] = const Color(0xFFFF8C00); // Orange for Dasha
+        for (final ad in md.antardashas) {
+          if (now.isAfter(ad.start) && now.isBefore(ad.end)) {
+            if (!lords.containsKey(ad.lord)) {
+              lords[ad.lord] = const Color(0xFF00C853); // Green for Bhukti
+            }
+            break;
+          }
+        }
+        break;
+      }
+    }
+    return lords;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final isLandscape = MediaQuery.of(context).orientation == Orientation.landscape;
+
+    if (!isLandscape) {
+      // ── PORTRAIT: single chart per page ──
+      final screenWidth = MediaQuery.of(context).size.width;
+      final chartSize = screenWidth - 32;
+      return SizedBox(
+        height: chartSize + 40,
+        child: Column(
+          children: [
+            Expanded(
+              child: PageView.builder(
+                onPageChanged: (i) => setState(() => _page = i),
+                itemCount: widget.charts.length,
+                itemBuilder: (context, i) => Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: _buildChart(i),
+                ),
+              ),
+            ),
+            const SizedBox(height: 4),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: List.generate(widget.charts.length, (i) => Container(
+                margin: const EdgeInsets.symmetric(horizontal: 3),
+                width: _page == i ? 18 : 8, height: 8,
+                decoration: BoxDecoration(
+                  color: _page == i ? kPurple2 : kBorder,
+                  borderRadius: BorderRadius.circular(4),
+                ),
+              )),
+            ),
+            const SizedBox(height: 6),
+          ],
+        ),
+      );
+    } else {
+      // ── LANDSCAPE: exactly 2 charts visible, no title labels ──
+      final screenHeight = MediaQuery.of(context).size.height;
+      final screenWidth = MediaQuery.of(context).size.width;
+      final topPad = MediaQuery.of(context).padding.top;
+      // Fit exactly 2 charts: each takes half the screen width minus padding
+      final chartSize = (screenHeight - topPad - 160).clamp(180.0, screenHeight * 0.65);
+      final chartWidth = (screenWidth / 2.0) - 16; // exactly 2 per screen
+      return SizedBox(
+        height: chartSize + 16,
+        child: ScrollConfiguration(
+          behavior: ScrollConfiguration.of(context).copyWith(
+            dragDevices: {
+              PointerDeviceKind.touch,
+              PointerDeviceKind.mouse,
+            },
+          ),
+          child: ListView.builder(
+            scrollDirection: Axis.horizontal,
+            padding: const EdgeInsets.symmetric(horizontal: 8),
+            itemCount: widget.charts.length,
+            itemBuilder: (context, i) {
+              return SizedBox(
+                width: chartWidth,
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 4),
+                  child: _buildChart(i),
+                ),
+              );
+            },
+          ),
+        ),
+      );
+    }
+  }
+}
+
+class _GocharSegment {
+  final int rashiIdx;
+  final String fromDate;
+  final String toDate;
+  _GocharSegment({required this.rashiIdx, required this.fromDate, required this.toDate});
 }

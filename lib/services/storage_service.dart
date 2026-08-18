@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'drive_backup_service.dart';
 
 class StorageService {
   static const String _key = 'bharatheeyam_profiles_v1';
@@ -45,7 +46,25 @@ class StorageService {
 
   static Future<void> save(Profile profile) async {
     final profiles = await loadAll();
-    profiles[profile.name] = profile;
+    // Stamp savedAt on the profile being saved (newest first in sort)
+    final stamped = Profile(
+      name: profile.name,
+      date: profile.date,
+      hour: profile.hour,
+      minute: profile.minute,
+      ampm: profile.ampm,
+      lat: profile.lat,
+      lon: profile.lon,
+      place: profile.place,
+      tzOffset: profile.tzOffset,
+      notes: profile.notes,
+      aroodhas: profile.aroodhas,
+      janmaNakshatraIdx: profile.janmaNakshatraIdx,
+      clientId: profile.clientId,
+      groupMembers: profile.groupMembers,
+      savedAt: DateTime.now().toIso8601String(),
+    );
+    profiles[stamped.name] = stamped;
     
     final prefs = await SharedPreferences.getInstance();
     final Map<String, dynamic> exportMap = {};
@@ -53,6 +72,9 @@ class StorageService {
       exportMap[entry.key] = entry.value.toJson();
     }
     await prefs.setString(_key, jsonEncode(exportMap));
+
+    // Silent auto-backup to Google Drive (fire-and-forget)
+    DriveBackupService.triggerAutoBackup();
   }
 
   static Future<void> delete(String name) async {
@@ -83,6 +105,7 @@ class Profile {
   final int? janmaNakshatraIdx;
   final String? clientId;
   final List<String> groupMembers;
+  final String? savedAt; // ISO8601 timestamp for sort order
 
   Profile({
     required this.name,
@@ -99,6 +122,7 @@ class Profile {
     this.janmaNakshatraIdx,
     this.clientId,
     this.groupMembers = const [],
+    this.savedAt,
   });
 
   Map<String, dynamic> toJson() => {
@@ -115,6 +139,7 @@ class Profile {
     'janmaNakshatraIdx': janmaNakshatraIdx,
     'clientId': clientId,
     'groupMembers': groupMembers,
+    'savedAt': savedAt,
   };
 
   factory Profile.fromJson(String name, Map<String, dynamic> j) => Profile(
@@ -136,5 +161,6 @@ class Profile {
     groupMembers: j['groupMembers'] != null
         ? List<String>.from(j['groupMembers'] as List)
         : [],
+    savedAt: j['savedAt'] as String?,
   );
 }

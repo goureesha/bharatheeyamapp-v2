@@ -1,7 +1,51 @@
 /// Comprehensive offline place database
-/// Karnataka Taluks + Major Indian cities + World capitals
+/// Karnataka Taluks + Major Indian cities + 34,000+ World cities
 import 'dart:convert';
+import 'package:flutter/services.dart' show rootBundle;
 import 'package:http/http.dart' as http;
+import '../services/timezone_service.dart';
+
+/// Map 2-letter country codes to full country names
+const Map<String, String> _countryCodes = {
+  'IN': 'India', 'US': 'USA', 'GB': 'United Kingdom', 'CA': 'Canada', 'AU': 'Australia',
+  'DE': 'Germany', 'FR': 'France', 'IT': 'Italy', 'ES': 'Spain', 'PT': 'Portugal',
+  'NL': 'Netherlands', 'BE': 'Belgium', 'AT': 'Austria', 'CH': 'Switzerland', 'SE': 'Sweden',
+  'NO': 'Norway', 'DK': 'Denmark', 'FI': 'Finland', 'PL': 'Poland', 'CZ': 'Czech Republic',
+  'RO': 'Romania', 'HU': 'Hungary', 'GR': 'Greece', 'BG': 'Bulgaria', 'HR': 'Croatia',
+  'RS': 'Serbia', 'UA': 'Ukraine', 'RU': 'Russia', 'TR': 'Turkey', 'IE': 'Ireland',
+  'JP': 'Japan', 'CN': 'China', 'KR': 'South Korea', 'TW': 'Taiwan', 'SG': 'Singapore',
+  'MY': 'Malaysia', 'ID': 'Indonesia', 'TH': 'Thailand', 'VN': 'Vietnam', 'PH': 'Philippines',
+  'BD': 'Bangladesh', 'PK': 'Pakistan', 'LK': 'Sri Lanka', 'NP': 'Nepal', 'MM': 'Myanmar',
+  'AE': 'UAE', 'SA': 'Saudi Arabia', 'QA': 'Qatar', 'KW': 'Kuwait', 'OM': 'Oman',
+  'BH': 'Bahrain', 'IL': 'Israel', 'EG': 'Egypt', 'ZA': 'South Africa', 'NG': 'Nigeria',
+  'KE': 'Kenya', 'ET': 'Ethiopia', 'GH': 'Ghana', 'TZ': 'Tanzania',
+  'BR': 'Brazil', 'MX': 'Mexico', 'AR': 'Argentina', 'CO': 'Colombia', 'CL': 'Chile',
+  'PE': 'Peru', 'VE': 'Venezuela', 'EC': 'Ecuador', 'UY': 'Uruguay',
+  'NZ': 'New Zealand', 'FJ': 'Fiji', 'AF': 'Afghanistan', 'IQ': 'Iraq', 'IR': 'Iran',
+  'JO': 'Jordan', 'LB': 'Lebanon', 'KG': 'Kyrgyzstan', 'UZ': 'Uzbekistan', 'TM': 'Turkmenistan',
+  'KZ': 'Kazakhstan', 'GE': 'Georgia', 'AM': 'Armenia', 'AZ': 'Azerbaijan',
+  'LT': 'Lithuania', 'LV': 'Latvia', 'EE': 'Estonia', 'SK': 'Slovakia', 'SI': 'Slovenia',
+  'BA': 'Bosnia', 'MK': 'North Macedonia', 'AL': 'Albania', 'ME': 'Montenegro', 'XK': 'Kosovo',
+  'CY': 'Cyprus', 'MT': 'Malta', 'LU': 'Luxembourg', 'IS': 'Iceland', 'LI': 'Liechtenstein',
+  'MC': 'Monaco', 'AD': 'Andorra', 'SM': 'San Marino', 'VA': 'Vatican City',
+  'JM': 'Jamaica', 'TT': 'Trinidad', 'CU': 'Cuba', 'DO': 'Dominican Republic', 'HT': 'Haiti',
+  'CR': 'Costa Rica', 'PA': 'Panama', 'GT': 'Guatemala', 'SV': 'El Salvador', 'HN': 'Honduras',
+  'NI': 'Nicaragua', 'BZ': 'Belize', 'PR': 'Puerto Rico', 'BM': 'Bermuda',
+  'DZ': 'Algeria', 'MA': 'Morocco', 'TN': 'Tunisia', 'LY': 'Libya', 'SD': 'Sudan',
+  'SN': 'Senegal', 'CM': 'Cameroon', 'CI': 'Ivory Coast', 'MG': 'Madagascar',
+  'MZ': 'Mozambique', 'AO': 'Angola', 'ZW': 'Zimbabwe', 'ZM': 'Zambia', 'BW': 'Botswana',
+  'UG': 'Uganda', 'RW': 'Rwanda', 'CD': 'DR Congo', 'CG': 'Congo',
+  'BF': 'Burkina Faso', 'ML': 'Mali', 'NE': 'Niger', 'TD': 'Chad', 'GM': 'Gambia',
+  'MN': 'Mongolia', 'KH': 'Cambodia', 'LA': 'Laos', 'BN': 'Brunei',
+  'PW': 'Palau', 'FM': 'Micronesia', 'NR': 'Nauru', 'TV': 'Tuvalu',
+  'GL': 'Greenland', 'FO': 'Faroe Islands', 'GU': 'Guam',
+};
+
+/// Get full country name from 2-letter code
+String countryName(String code) => _countryCodes[code] ?? code;
+
+/// Format world city label as "City, Country"
+String worldCityLabel(Map<String, dynamic> w) => '${w['n']}, ${countryName(w['c'] as String)}';
 
 const Map<String, List<double>> karnatakaPlaces = {
   // ─── Bagalkot District ───
@@ -250,72 +294,154 @@ const Map<String, List<double>> karnatakaPlaces = {
 
 const Map<String, List<double>> otherPlaces = {
   // ─── Other Indian Major Cities ───
-  'Hyderabad': [17.39, 78.49],
-  'Chennai': [13.08, 80.27],
-  'Mumbai': [19.08, 72.88],
-  'Delhi': [28.70, 77.10],
-  'Kolkata': [22.57, 88.36],
-  'Pune': [18.52, 73.86],
-  'Ahmedabad': [23.02, 72.57],
-  'Jaipur': [26.91, 75.79],
-  'Lucknow': [26.85, 80.95],
-  'Bhopal': [23.26, 77.41],
-  'Coimbatore': [11.01, 76.96],
-  'Madurai': [9.92, 78.12],
-  'Kochi': [9.93, 76.27],
-  'Thiruvananthapuram': [8.52, 76.94],
-  'Visakhapatnam': [17.69, 83.22],
-  'Vijayawada': [16.51, 80.65],
-  'Tirupati': [13.63, 79.42],
-  'Nagpur': [21.15, 79.09],
-  'Surat': [21.17, 72.83],
-  'Varanasi': [25.32, 82.97],
-  'Patna': [25.61, 85.14],
-  'Chandigarh': [30.73, 76.77],
-  'Goa (Panaji)': [15.50, 73.83],
+  'Hyderabad, Telangana, India': [17.39, 78.49],
+  'Chennai, Tamil Nadu, India': [13.08, 80.27],
+  'Mumbai, Maharashtra, India': [19.08, 72.88],
+  'Delhi, Delhi, India': [28.70, 77.10],
+  'Kolkata, West Bengal, India': [22.57, 88.36],
+  'Pune, Maharashtra, India': [18.52, 73.86],
+  'Ahmedabad, Gujarat, India': [23.02, 72.57],
+  'Jaipur, Rajasthan, India': [26.91, 75.79],
+  'Lucknow, Uttar Pradesh, India': [26.85, 80.95],
+  'Bhopal, Madhya Pradesh, India': [23.26, 77.41],
+  'Coimbatore, Tamil Nadu, India': [11.01, 76.96],
+  'Madurai, Tamil Nadu, India': [9.92, 78.12],
+  'Kochi, Kerala, India': [9.93, 76.27],
+  'Thiruvananthapuram, Kerala, India': [8.52, 76.94],
+  'Visakhapatnam, Andhra Pradesh, India': [17.69, 83.22],
+  'Vijayawada, Andhra Pradesh, India': [16.51, 80.65],
+  'Tirupati, Andhra Pradesh, India': [13.63, 79.42],
+  'Nagpur, Maharashtra, India': [21.15, 79.09],
+  'Surat, Gujarat, India': [21.17, 72.83],
+  'Varanasi, Uttar Pradesh, India': [25.32, 82.97],
+  'Patna, Bihar, India': [25.61, 85.14],
+  'Chandigarh, Chandigarh, India': [30.73, 76.77],
+  'Goa (Panaji), Goa, India': [15.50, 73.83],
 
-  // ─── World Capitals ───
-  'London (UK)': [51.51, -0.13],
-  'New York (USA)': [40.71, -74.01],
-  'Dubai (UAE)': [25.20, 55.27],
-  'Singapore': [1.35, 103.82],
-  'Sydney (Australia)': [-33.87, 151.21],
-  'Toronto (Canada)': [43.65, -79.38],
-  'Tokyo (Japan)': [35.68, 139.69],
-  'Colombo (Sri Lanka)': [6.93, 79.84],
-  'Kathmandu (Nepal)': [27.72, 85.32],
+  // ─── World Capitals (with correct timezone offsets) ───
+  'London, United Kingdom': [51.51, -0.13, 0.0],
+  'New York, USA': [40.71, -74.01, -5.0],
+  'Dubai, UAE': [25.20, 55.27, 4.0],
+  'Singapore, Singapore': [1.35, 103.82, 8.0],
+  'Sydney, Australia': [-33.87, 151.21, 10.0],
+  'Toronto, Canada': [43.65, -79.38, -5.0],
+  'Tokyo, Japan': [35.68, 139.69, 9.0],
+  'Colombo, Sri Lanka': [6.93, 79.84, 5.5],
+  'Kathmandu, Nepal': [27.72, 85.32, 5.75],
 };
 
-/// Combined offline places map
+/// Combined offline places map (Karnataka + Indian cities + world capitals)
+/// Format: name -> [lat, lon, tz]
 final Map<String, List<double>> offlinePlaces = {
-  ...karnatakaPlaces,
-  ...otherPlaces,
+  for (final e in karnatakaPlaces.entries) e.key: [...e.value, 5.5],
+  for (final e in otherPlaces.entries)
+    e.key: e.value.length >= 3 ? e.value : [...e.value, 5.5],
 };
 
-/// Known timezone offsets for international cities (non-IST).
-/// All Karnataka + other Indian cities default to 5.5 (IST).
-const Map<String, double> _knownTimezones = {
-  'London (UK)': 0.0,
-  'New York (USA)': -5.0,
-  'Dubai (UAE)': 4.0,
-  'Singapore': 8.0,
-  'Sydney (Australia)': 10.0,
-  'Toronto (Canada)': -5.0,
-  'Tokyo (Japan)': 9.0,
-  'Colombo (Sri Lanka)': 5.5,
-  'Kathmandu (Nepal)': 5.75,
-};
+// ─── World Cities Database (loaded from asset) ───
 
-/// Returns the timezone offset for a known place, or calculates it dynamically from latency constraints using TimeAPI.io
-Future<double> getTimezoneForPlace(String placeName, double lat, double lon) async {
-  // Check known international timezones first
-  if (_knownTimezones.containsKey(placeName)) {
-    return _knownTimezones[placeName]!;
+/// Loaded world cities: name -> {c: country, la: lat, lo: lon, tz: offset}
+List<Map<String, dynamic>>? _worldCities;
+bool _worldCitiesLoading = false;
+
+/// Load world cities from bundled JSON asset
+Future<void> loadWorldCities() async {
+  if (_worldCities != null || _worldCitiesLoading) return;
+  _worldCitiesLoading = true;
+  try {
+    final jsonStr = await rootBundle.loadString('assets/world_cities.json');
+    final List<dynamic> data = jsonDecode(jsonStr);
+    _worldCities = data.cast<Map<String, dynamic>>();
+  } catch (e) {
+    _worldCities = [];
+  }
+  _worldCitiesLoading = false;
+}
+
+/// Whether world cities have been loaded
+bool get worldCitiesLoaded => _worldCities != null && _worldCities!.isNotEmpty;
+
+/// Search world cities by query string (case-insensitive prefix/contains match)
+/// Returns up to [limit] results as: {'n': name, 'c': country, 'la': lat, 'lo': lon, 'tz': offset}
+List<Map<String, dynamic>> searchWorldCities(String query, {int limit = 20}) {
+  if (_worldCities == null || query.trim().isEmpty) return [];
+  final q = query.trim().toLowerCase();
+  final results = <Map<String, dynamic>>[];
+  
+  // First pass: prefix matches (higher priority)
+  for (final city in _worldCities!) {
+    if (results.length >= limit) break;
+    final name = (city['n'] as String).toLowerCase();
+    if (name.startsWith(q)) {
+      results.add(city);
+    }
   }
   
-  // All known internal offline places (Karnataka + Indian cities) are IST
-  if (offlinePlaces.containsKey(placeName) && !_knownTimezones.containsKey(placeName)) {
-    return 5.5;
+  // Second pass: contains matches (if we need more results)
+  if (results.length < limit) {
+    for (final city in _worldCities!) {
+      if (results.length >= limit) break;
+      if (results.contains(city)) continue;
+      final name = (city['n'] as String).toLowerCase();
+      if (name.contains(q)) {
+        results.add(city);
+      }
+    }
+  }
+  
+  return results;
+}
+
+/// Get world city timezone by exact name match
+double? getWorldCityTz(String cityName) {
+  if (_worldCities == null) return null;
+  final q = cityName.trim().toLowerCase();
+  for (final city in _worldCities!) {
+    if ((city['n'] as String).toLowerCase() == q) {
+      return (city['tz'] as num).toDouble();
+    }
+  }
+  return null;
+}
+
+/// Get world city country code by exact name match
+String? getWorldCityCountry(String cityName) {
+  if (_worldCities == null) return null;
+  final q = cityName.trim().toLowerCase();
+  for (final city in _worldCities!) {
+    if ((city['n'] as String).toLowerCase() == q) {
+      return city['c'] as String?;
+    }
+  }
+  return null;
+}
+
+/// Returns the timezone offset for a known place.
+/// When [birthDate] is provided and the place is international,
+/// uses IANA timezone database for DST-aware offset.
+Future<double> getTimezoneForPlace(String placeName, double lat, double lon, {DateTime? birthDate}) async {
+  // Check Karnataka / Indian offline places (all IST — no DST)
+  if (offlinePlaces.containsKey(placeName)) {
+    return offlinePlaces[placeName]![2]; // tz is 3rd element
+  }
+
+  // Check world cities database — DST-aware when birthDate is provided
+  final worldTz = getWorldCityTz(placeName);
+  if (worldTz != null) {
+    if (birthDate != null) {
+      final countryCode = getWorldCityCountry(placeName);
+      if (countryCode != null) {
+        // Use IANA timezone for DST-aware offset
+        // Import lazily to avoid circular deps
+        try {
+          final offset = getDstAwareOffset(countryCode, lat, lon, birthDate);
+          return offset;
+        } catch (_) {
+          return worldTz; // fallback to static offset
+        }
+      }
+    }
+    return worldTz;
   }
   
   // For online Nominatim searches, check if the place is in India
@@ -324,7 +450,7 @@ Future<double> getTimezoneForPlace(String placeName, double lat, double lon) asy
     return 5.5;
   }
   
-  // Dynmaic fetch strategy for accurate international offsets (e.g. Istanbul = +3)
+  // Dynamic fetch for accurate international offsets
   try {
     final url = Uri.parse('https://timeapi.io/api/TimeZone/coordinate?latitude=$lat&longitude=$lon');
     final resp = await http.get(url).timeout(const Duration(seconds: 4));
@@ -339,6 +465,6 @@ Future<double> getTimezoneForPlace(String placeName, double lat, double lon) asy
     // API failed, gracefully fallback to physical longitude
   }
   
-  // Unknown place and API failed: estimate from longitude, rounded to nearest 0.5
+  // Unknown place and API failed: estimate from longitude
   return (lon / 15.0 * 2).round() / 2.0;
 }

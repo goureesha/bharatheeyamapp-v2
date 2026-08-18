@@ -80,6 +80,7 @@ class PanchangData {
   final String divamana;
   final String ratrimana;
   final String rutu;
+  final String vaidikaRutu;
   final String agniVasa;
   final String ayana;
   // Ghati-Vighati for Tithi, Karana, Yoga
@@ -131,6 +132,7 @@ class PanchangData {
     this.divamana = '',
     this.ratrimana = '',
     this.rutu = '',
+    this.vaidikaRutu = '',
     this.agniVasa = '',
     this.ayana = '',
     this.tithiGata = '',
@@ -185,9 +187,8 @@ String formatGhati(double decVal) {
   final g = decVal.floor();
   final rem = decVal - g;
   final v = (rem * 60).round();
-  final vActual = v == 60 ? 0 : v;
-  final gActual = v == 60 ? g + 1 : g;
-  return '$gActual.${vActual.toString().padLeft(2, '0')}';
+  if (v >= 60) return '${g + 1}.00';
+  return '$g.${v.toString().padLeft(2, '0')}';
 }
 
 String formatDeg(double deg) {
@@ -754,7 +755,15 @@ class AstroCalculator {
       }
 
       // Vedic day (Sunrise to Sunrise) calculation for Panchang & Udayadi Ghati
-      final udayadiGhati = formatGhati((jdBirth - panchSr) * 60);
+      // Use panchSunrise (refraction-corrected, -0.5667°) to match displayed panchanga sunrise
+      // If birth is before today's sunrise, use previous day's sunrise (Vedic day starts at sunrise)
+      double udayadiSr = panchSunrise;
+      if (jdBirth < panchSunrise) {
+        final prevD = dob.subtract(const Duration(days: 1));
+        final prevSrSs = Ephemeris.findSunriseSetForDate(prevD.year, prevD.month, prevD.day, lat, lon, tzOffset: hourUtcOffset);
+        udayadiSr = prevSrSs[0];
+      }
+      final udayadiGhati = formatGhati((jdBirth - udayadiSr) * 60);
 
       // Nakshatra ghatis
       final js = findNakLimit(jdBirth, nIdx * _nakSize, ayanamsaMode);
@@ -862,7 +871,7 @@ class AstroCalculator {
         if (!hasSankranti) {
           chandraMasa = '${AppLocale.l('adhikaPrefix')} $masaName';
         } else {
-          chandraMasa = '${AppLocale.l('nijaPrefix')} $masaName';
+          chandraMasa = masaName; // No 'ನಿಜ' prefix for regular months
         }
       } catch (_) {
         chandraMasa = knChandraMasa[sunRashiIdx];
@@ -945,6 +954,26 @@ class AstroCalculator {
       ];
       final rutuStr = rutuMap[sunRashiIdx];
 
+      // Vaidika Rutu — based on Chandra Masa (lunar month pairs)
+      // Chaitra+Vaishakha=Vasanta, Jyeshtha+Ashadha=Grishma,
+      // Shravana+Bhadrapada=Varsha, Ashvina+Kartika=Sharad,
+      // Margashira+Pushya=Hemanta, Magha+Phalguna=Shishira
+      final vaidikaRutuMap = {
+        '\u0c9a\u0cc8\u0ca4\u0ccd\u0cb0': AppLocale.l('rutuVasanta'),
+        '\u0cb5\u0cc8\u0cb6\u0cbe\u0c96': AppLocale.l('rutuVasanta'),
+        '\u0c9c\u0ccd\u0caf\u0cc7\u0cb7\u0ccd\u0ca0': AppLocale.l('rutuGrishma'),
+        '\u0c86\u0cb7\u0cbe\u0ca2': AppLocale.l('rutuGrishma'),
+        '\u0cb6\u0ccd\u0cb0\u0cbe\u0cb5\u0ca3': AppLocale.l('rutuVarsha'),
+        '\u0cad\u0cbe\u0ca6\u0ccd\u0cb0\u0caa\u0ca6': AppLocale.l('rutuVarsha'),
+        '\u0c86\u0cb6\u0ccd\u0cb5\u0cbf\u0ca8': AppLocale.l('rutuSharad'),
+        '\u0c95\u0cbe\u0cb0\u0ccd\u0ca4\u0cbf\u0c95': AppLocale.l('rutuSharad'),
+        '\u0cae\u0cbe\u0cb0\u0ccd\u0c97\u0cb6\u0cbf\u0cb0': AppLocale.l('rutuHemanta'),
+        '\u0caa\u0cc1\u0cb7\u0ccd\u0caf': AppLocale.l('rutuHemanta'),
+        '\u0cae\u0cbe\u0c98': AppLocale.l('rutuShishira'),
+        '\u0cab\u0cbe\u0cb2\u0ccd\u0c97\u0cc1\u0ca3': AppLocale.l('rutuShishira'),
+      };
+      final vaidikaRutuStr = vaidikaRutuMap[chandraMasaRaw] ?? rutuStr;
+
       // Divamana & Ratrimana
       final nextD = dob.add(const Duration(days: 1));
       final nextSrSs = Ephemeris.findSunriseSetForDate(nextD.year, nextD.month, nextD.day, lat, lon, tzOffset: hourUtcOffset);
@@ -1016,8 +1045,8 @@ class AstroCalculator {
         dashaLord: dashaLord,
         nakshatraIndex: nIdx,
         nakPercent: perc,
-        sunrise: formatTimeFromJd(srCivil, tzOffset: hourUtcOffset),
-        sunset: formatTimeFromJd(ssCivil, tzOffset: hourUtcOffset),
+        sunrise: formatTimeFromJd(panchSunrise, tzOffset: hourUtcOffset),
+        sunset: formatTimeFromJd(panchSrSs[1], tzOffset: hourUtcOffset),
         tithiIndex: tIdx,
         chandraMasaRaw: chandraMasaRaw, // raw name assigned above
         suryaNakshatra: knNak[sunNakIdx],
@@ -1039,6 +1068,7 @@ class AstroCalculator {
         divamana: divamanaStr,
         ratrimana: ratrimanaStr,
         rutu: rutuStr,
+        vaidikaRutu: vaidikaRutuStr,
         agniVasa: agniVasaStr,
         ayana: (sDeg >= 270 || sDeg < 90) ? AppLocale.l('uttarayana') : AppLocale.l('dakshinayana'),
         tithiGata: tithiGataGhati,
@@ -1076,7 +1106,7 @@ class AstroCalculator {
           'Saturn': speeds['ಶನಿ'] ?? 0.0,
         },
         ascendant: positions['ಲಗ್ನ'] ?? 0.0,
-        sunRiseJd: srCivil,
+        sunRiseJd: panchSunrise,
         birthJd: jdBirth,
       );
 

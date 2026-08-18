@@ -86,8 +86,8 @@ class Ephemeris {
       riseTime = localMidnightUt + 0.25;
       setTime = localMidnightUt + 0.75;
       steps = 30;
-      // Refraction-corrected mid-limb sunrise for Panchanga
-      horizonAlt = -0.5667; 
+      // True Geocentric Horizon Sunrise (0.0°) — no atmospheric refraction
+      horizonAlt = 0.0; 
     } else {
       // Original proven scan window matching APK 20d9df4 (from Python port)
       scanStart = jdStart - 0.3;
