@@ -1,3 +1,4 @@
+import '../widgets/common.dart';
 // Muhurta Rules Engine — based on Muhurta Chintamani
 
 // ============================================================
@@ -119,11 +120,11 @@ const Map<MuhurtaEvent, MuhurtaEventRules> muhurtaRules = {
   MuhurtaEvent.vivaha: MuhurtaEventRules(
     allowedTithis: [1, 2, 4, 6, 9, 10, 11, 12],
     allowedNakshatras: [3, 4, 9, 11, 12, 14, 16, 18, 20, 25, 26],
-    allowedVaras: [1, 3, 4, 5],
+    allowedVaras: [0, 1, 3, 4, 5],
     avoidVishti: true,
     requireShukla: true,
     allowedLagnas: null,
-    requiredShuddhis: {ShuddhiType.lagna, ShuddhiType.saptama, ShuddhiType.ashtama, ShuddhiType.chandraSaptama},
+    requiredShuddhis: {ShuddhiType.lagna, ShuddhiType.saptama, ShuddhiType.ashtama},
     tithiShloka: 'ದ್ವಿತೀಯಾ ತೃತೀಯಾ ಚೈವ ಪಂಚಮೀ ಸಪ್ತಮೀ ತಥಾ ।\nದಶಮ್ಯೇಕಾದಶೀ ಚೈವ ದ್ವಾದಶೀ ತ್ರಯೋದಶೀ ಶುಭಾ ।\nವಿವಾಹೇ ಶುಕ್ಲಪಕ್ಷೇ ತು ಏತಾಃ ತಿಥಯಃ ಪ್ರಶಸ್ಯಂತೇ ॥',
     varaShloka: 'ಸೋಮೋ ಬುಧೋ ಗುರುಶ್ಚೈವ ಭೃಗುಃ ಶುಭಕರಃ ಸದಾ ।\nವಿವಾಹೇ ವಾರಚತುಷ್ಟಯಂ ಪ್ರೋಕ್ತಂ ಸರ್ವಸಿದ್ಧಿಕರಮ್ ॥',
     nakshatraShloka: 'ರೋಹಿಣೀಮೃಗಶೀರ್ಷಂ ಚ ಉತ್ತರಾತ್ರಯಮೇವ ಚ ।\nರೇವತೀ ಹಸ್ತಮೂಲಂ ಚ ಸ್ವಾತೀ ಮಾಘಮನುರಾಧಕಾಃ ॥\nಏತೇ ವಿವಾಹೇ ಶುಭದಾಃ ತಾರಾಃ ಪ್ರೋಕ್ತಾ ಮನೀಷಿಭಿಃ ।',
@@ -148,7 +149,7 @@ const Map<MuhurtaEvent, MuhurtaEventRules> muhurtaRules = {
   MuhurtaEvent.upanayana: MuhurtaEventRules(
     allowedTithis: [1, 2, 4, 9, 10, 11, 16, 17, 19],
     allowedNakshatras: [0, 3, 4, 6, 7, 11, 12, 13, 14, 16, 20, 21, 22, 23, 25, 26],
-    allowedVaras: [1, 3, 4, 5],
+    allowedVaras: [0, 1, 3, 4, 5],
     avoidVishti: true,
     requireUttarayana: true,
     allowedLagnas: null,
@@ -177,12 +178,12 @@ const Map<MuhurtaEvent, MuhurtaEventRules> muhurtaRules = {
   MuhurtaEvent.grihaPrevesha: MuhurtaEventRules(
     allowedTithis: [1, 2, 4, 6, 9, 10, 11, 12],
     allowedNakshatras: [3, 4, 11, 13, 16, 20, 25, 26],
-    allowedVaras: [1, 3, 4, 5],
+    allowedVaras: [0, 1, 3, 4, 5],
     avoidVishti: true,
     requireUttarayana: true,
     requireShukla: true,
-    allowedLagnas: [1, 4, 7, 10], // Sthira rashis
-    requiredShuddhis: {ShuddhiType.lagna, ShuddhiType.ashtama, ShuddhiType.chandraSaptama},
+    allowedLagnas: [1, 2, 3, 5, 6, 8, 11], // Vrishabha, Mithuna, Karkataka, Kanya, Tula, Dhanu, Meena
+    requiredShuddhis: {ShuddhiType.lagna, ShuddhiType.ashtama},
     tithiShloka: 'ದ್ವಿತೀಯಾ ತೃತೀಯಾ ಪಂಚಮೀ ಸಪ್ತಮೀ ದಶಮೀ ತಥಾ ।\nಏಕಾದಶೀ ದ್ವಾದಶೀ ಚ ತ್ರಯೋದಶೀ ಶುಕ್ಲಪಕ್ಷೇ ಶುಭಪ್ರದಾಃ ॥',
     varaShloka: 'ಸೋಮ-ಬುಧ-ಗುರು-ಶುಕ್ರೇಷು ಗೃಹಪ್ರವೇಶಃ ಸಿದ್ಧಿದಃ ।\nಕುಜ-ಶನಿ-ಅರ್ಕವಾರೇಷು ಗೃಹಂ ಪ್ರವಿಶೇನ್ನ ಕದಾಚನ ॥',
     nakshatraShloka: 'ರೋಹಿಣೀ ಮೃಗಶೀರ್ಷಂ ಚ ಉತ್ತರಾತ್ರಯಮೇವ ಚ ।\nಪುಷ್ಯೋ ಧನಿಷ್ಠಾ ಶತತಾರಾ ನಕ್ಷತ್ರಾಣಿ ಶುಭಾನಿ ಚ ॥',
@@ -206,7 +207,7 @@ const Map<MuhurtaEvent, MuhurtaEventRules> muhurtaRules = {
   MuhurtaEvent.devaPratishtha: MuhurtaEventRules(
     allowedTithis: [1, 2, 4, 6, 7, 9, 10, 11, 12, 13],
     allowedNakshatras: [3, 4, 11, 12, 13, 14, 16, 20, 21, 25, 26],
-    allowedVaras: [1, 3, 4, 5],
+    allowedVaras: [0, 1, 3, 4, 5],
     avoidVishti: true,
     requireUttarayana: true,
     requireShukla: true,
@@ -239,7 +240,6 @@ const Map<MuhurtaEvent, MuhurtaEventRules> muhurtaRules = {
     allowedNakshatras: [0, 3, 4, 6, 7, 11, 12, 13, 14, 20, 21, 22, 25, 26],
     allowedVaras: [3, 4],
     avoidVishti: true,
-    requireUttarayana: true,
     requireShukla: true,
     allowedLagnas: null,
     requiredShuddhis: {ShuddhiType.lagna},
@@ -256,10 +256,10 @@ const Map<MuhurtaEvent, MuhurtaEventRules> muhurtaRules = {
   MuhurtaEvent.yatra: MuhurtaEventRules(
     allowedTithis: [1, 2, 4, 6, 9, 10, 11, 12],
     allowedNakshatras: [0, 4, 7, 12, 16, 21, 26],
-    allowedVaras: [1, 3, 4, 5],
+    allowedVaras: [0, 1, 3, 4, 5],
     avoidVishti: true,
     allowedLagnas: null,
-    requiredShuddhis: {ShuddhiType.lagna, ShuddhiType.ashtama, ShuddhiType.chandraSaptama},
+    requiredShuddhis: {ShuddhiType.lagna, ShuddhiType.ashtama},
     tithiShloka: 'ದ್ವಿತೀಯಾ ಪಂಚಮೀ ಸಪ್ತಮೀ ದಶಮೀ ತಥಾ ।\nಯಾತ್ರಾಯಾಂ ಶುಭದಾಃ ಪ್ರೋಕ್ತಾ ರಿಕ್ತಾಮಾವಾಸ್ಯಾಂ ವಿವರ್ಜಯೇತ್ ॥',
     varaShloka: 'ಸೋಮ-ಬುಧ-ಗುರು-ಶುಕ್ರೇಷು ಯಾತ್ರಾಯಾಂ ಶುಭದಾಯಕಾಃ ।\nಕುಜ-ಶನಿ-ಅರ್ಕವಾರೇ ಯಾತ್ರಾಂ ನ ಸಮಾಚರೇತ್ ॥',
     nakshatraShloka: 'ಅಶ್ವಿನಿ ಪುಷ್ಯ ಹಸ್ತೇಷು ಚಿತ್ರಾ ಸ್ವಾತೀ ಪುನರ್ವಸು ।\nಮೃಗಶಿರೋ ರೇವತೀ ಚ ಯಾತ್ರಾಯಾಂ ಶುಭದಾಯಕಾಃ ॥',
@@ -273,7 +273,7 @@ const Map<MuhurtaEvent, MuhurtaEventRules> muhurtaRules = {
   MuhurtaEvent.vyapara: MuhurtaEventRules(
     allowedTithis: [1, 2, 4, 6, 9, 10, 12],
     allowedNakshatras: [0, 3, 6, 7, 11, 12, 13, 14, 16, 21, 22, 26],
-    allowedVaras: [1, 3, 4, 5],
+    allowedVaras: [0, 1, 3, 4, 5],
     avoidVishti: true,
     requireShukla: true,
     allowedLagnas: null,
@@ -292,7 +292,7 @@ const Map<MuhurtaEvent, MuhurtaEventRules> muhurtaRules = {
   MuhurtaEvent.annaprashana: MuhurtaEventRules(
     allowedTithis: [1, 2, 4, 6, 9, 10, 11, 12],
     allowedNakshatras: [0, 3, 4, 6, 7, 11, 12, 13, 14, 16, 20, 21, 25, 26],
-    allowedVaras: [1, 3, 4, 5],
+    allowedVaras: [0, 1, 3, 4, 5],
     avoidVishti: true,
     requireShukla: true,
     allowedLagnas: null,
@@ -316,10 +316,10 @@ const Map<MuhurtaEvent, MuhurtaEventRules> muhurtaRules = {
   MuhurtaEvent.namakarana: MuhurtaEventRules(
     allowedTithis: [1, 2, 4, 6, 9, 10, 11, 12],
     allowedNakshatras: [0, 3, 4, 6, 7, 11, 12, 13, 14, 16, 20, 21, 25, 26],
-    allowedVaras: [1, 3, 4, 5],
+    allowedVaras: [0, 1, 3, 4, 5],
     avoidVishti: true,
     requireShukla: true,
-    allowedLagnas: null,
+    allowedLagnas: [1, 2, 3, 5, 6, 8, 11], // Vrishabha, Mithuna, Karkataka, Kanya, Tula, Dhanu, Meena
     requiredShuddhis: {ShuddhiType.lagna, ShuddhiType.ashtama},
     tithiShloka: 'ದ್ವಿತೀಯಾ ಪಂಚಮೀ ಸಪ್ತಮೀ ದಶಮೀ ತಥಾ ।\nರಿಕ್ತಾ-ಅಮಾವಾಸ್ಯಾ-ಪರ್ವ ನಾಮಕರ್ಮ ವಿವರ್ಜಯೇತ್ ॥',
     varaShloka: 'ಸೋಮ-ಬುಧ-ಗುರು-ಶುಕ್ರೇಷು ನಾಮಕರಣಂ ಶುಭಮ್ ।\nಶಿಶೂನಾಂ ನಾಮಕರ್ಮ ಶುಭವಾರೇ ಪ್ರಶಸ್ಯತೇ ॥',
@@ -344,7 +344,7 @@ const Map<MuhurtaEvent, MuhurtaEventRules> muhurtaRules = {
   MuhurtaEvent.seemanta: MuhurtaEventRules(
     allowedTithis: [1, 2, 4, 6, 9, 10, 11, 12],
     allowedNakshatras: [3, 4, 11, 13, 16, 20, 25, 26],
-    allowedVaras: [1, 3, 4, 5],
+    allowedVaras: [0, 1, 3, 4, 5],
     avoidVishti: true,
     requireShukla: true,
     allowedLagnas: null,
@@ -372,12 +372,11 @@ const Map<MuhurtaEvent, MuhurtaEventRules> muhurtaRules = {
   MuhurtaEvent.chowla: MuhurtaEventRules(
     allowedTithis: [1, 2, 4, 6, 9, 10, 11, 12],
     allowedNakshatras: [0, 4, 6, 7, 12, 13, 14, 21, 26],
-    allowedVaras: [1, 3, 4, 5],
+    allowedVaras: [0, 1, 3, 4, 5],
     avoidVishti: true,
-    requireUttarayana: true,
     requireShukla: true,
     allowedLagnas: null,
-    requiredShuddhis: {ShuddhiType.lagna, ShuddhiType.ashtama, ShuddhiType.chandraSaptama},
+    requiredShuddhis: {ShuddhiType.lagna, ShuddhiType.ashtama},
     tithiShloka: 'ದ್ವಿತೀಯಾ ಪಂಚಮೀ ಸಪ್ತಮೀ ದಶಮೀ ತಥಾ ।\nಶುಕ್ಲಪಕ್ಷೇ ಚೌಲಕರ್ಮ ಶುಭದಾಃ ಸ್ಮೃತಾಃ ॥',
     varaShloka: 'ಸೋಮ-ಬುಧ-ಗುರು-ಶುಕ್ರೇ ಚ ಚೌಲಕರ್ಮ ಪ್ರಶಸ್ಯತೇ ।\nಉತ್ತರಾಯಣೇ ಶುಭದಂ ಪ್ರೋಕ್ತಂ ಬಾಲಾಯುಷ್ಕರಮ್ ॥',
     nakshatraShloka: 'ಪುನರ್ವಸು-ಪುಷ್ಯ-ಶ್ರವಣೇ ಅಶ್ವಿನೀ ಹಸ್ತ ರೇವತೀ ।\nರಿಕ್ತಾ-ಚತುರ್ದಶೀ-ಅಮಾವಾಸ್ಯಾಂ ಚೈವ ವಿವರ್ಜಯೇತ್ ॥',
@@ -401,9 +400,8 @@ const Map<MuhurtaEvent, MuhurtaEventRules> muhurtaRules = {
   MuhurtaEvent.vastuShilanyas: MuhurtaEventRules(
     allowedTithis: [1, 2, 4, 6, 9, 10, 11, 12],
     allowedNakshatras: [0, 3, 4, 6, 7, 11, 12, 13, 14, 16, 20, 21, 25, 26],
-    allowedVaras: [1, 3, 4, 5],
+    allowedVaras: [0, 1, 3, 4, 5],
     avoidVishti: true,
-    requireUttarayana: true,
     requireShukla: true,
     allowedLagnas: [1, 4, 7, 10], // Sthira
     requiredShuddhis: {ShuddhiType.lagna, ShuddhiType.ashtama},
@@ -430,7 +428,7 @@ const Map<MuhurtaEvent, MuhurtaEventRules> muhurtaRules = {
   MuhurtaEvent.aushadha: MuhurtaEventRules(
     allowedTithis: [0, 1, 2, 4, 5, 6, 9, 10, 11, 12, 14, 15, 16, 17, 19, 20, 21, 24, 25, 26, 29],
     allowedNakshatras: [0, 3, 4, 7, 12, 16, 21, 26],
-    allowedVaras: [1, 3, 4, 5],
+    allowedVaras: [0, 1, 3, 4, 5],
     avoidVishti: true,
     allowedLagnas: null,
     requiredShuddhis: {ShuddhiType.lagna, ShuddhiType.ashtama},
@@ -457,7 +455,7 @@ const Map<MuhurtaEvent, MuhurtaEventRules> muhurtaRules = {
   MuhurtaEvent.krishi: MuhurtaEventRules(
     allowedTithis: [0, 1, 2, 4, 6, 9, 10, 11, 12],
     allowedNakshatras: [3, 4, 11, 12, 13, 14, 16, 20, 21, 25, 26],
-    allowedVaras: [1, 3, 4, 5],
+    allowedVaras: [0, 1, 3, 4, 5],
     avoidVishti: true,
     allowedLagnas: null,
     requiredShuddhis: {ShuddhiType.lagna},
@@ -484,7 +482,7 @@ const Map<MuhurtaEvent, MuhurtaEventRules> muhurtaRules = {
   MuhurtaEvent.vahanaKraya: MuhurtaEventRules(
     allowedTithis: [1, 2, 4, 6, 9, 10, 11, 12],
     allowedNakshatras: [0, 4, 6, 12, 13, 14, 21, 22, 26], // Chara & Mridu
-    allowedVaras: [1, 3, 4, 5],
+    allowedVaras: [0, 1, 3, 4, 5],
     avoidVishti: true,
     requireShukla: true,
     allowedLagnas: null,
@@ -512,7 +510,7 @@ const Map<MuhurtaEvent, MuhurtaEventRules> muhurtaRules = {
   MuhurtaEvent.aasthiKraya: MuhurtaEventRules(
     allowedTithis: [1, 4, 9, 10, 11],
     allowedNakshatras: [3, 4, 11, 13, 16, 20, 25, 26], // Sthira & Mridu
-    allowedVaras: [1, 3, 4, 5],
+    allowedVaras: [0, 1, 3, 4, 5],
     avoidVishti: true,
     requireShukla: true,
     allowedLagnas: null,
@@ -540,7 +538,7 @@ const Map<MuhurtaEvent, MuhurtaEventRules> muhurtaRules = {
   MuhurtaEvent.swarnaKraya: MuhurtaEventRules(
     allowedTithis: [1, 2, 4, 6, 9, 10, 11, 12],
     allowedNakshatras: [0, 3, 4, 6, 7, 11, 12, 13, 16, 21, 22, 26],
-    allowedVaras: [1, 3, 4, 5],
+    allowedVaras: [0, 1, 3, 4, 5],
     avoidVishti: true,
     requireShukla: true,
     allowedLagnas: null,
@@ -568,7 +566,7 @@ const Map<MuhurtaEvent, MuhurtaEventRules> muhurtaRules = {
   MuhurtaEvent.udyoga: MuhurtaEventRules(
     allowedTithis: [1, 2, 4, 9, 10, 11],
     allowedNakshatras: [3, 4, 7, 11, 13, 16, 20, 21, 25, 26],
-    allowedVaras: [1, 3, 4, 5],
+    allowedVaras: [0, 1, 3, 4, 5],
     avoidVishti: true,
     requireShukla: true,
     allowedLagnas: null,
@@ -596,7 +594,7 @@ const Map<MuhurtaEvent, MuhurtaEventRules> muhurtaRules = {
   MuhurtaEvent.karnavedha: MuhurtaEventRules(
     allowedTithis: [1, 2, 4, 6, 9, 10, 11, 12],
     allowedNakshatras: [0, 4, 6, 7, 12, 13, 21, 26],
-    allowedVaras: [1, 3, 4, 5],
+    allowedVaras: [0, 1, 3, 4, 5],
     avoidVishti: true,
     requireShukla: true,
     allowedLagnas: null,
@@ -715,11 +713,11 @@ class BalaScore {
 /// Shubha: 2, 5, 7, 9, 11. Poojya: 1, 3, 6, 10. Ashubha: 4, 8, 12.
 BalaScore calculateGuruBala(int janmaRashiIdx, int jupiterRashiIdx) {
   final count = ((jupiterRashiIdx - janmaRashiIdx + 12) % 12) + 1; // 1-indexed
-  if (const [2, 5, 7, 9, 11].contains(count)) {
+  // Anukoola: Kendra(1,4,7,10) + Trikona(5,9) + Dhana/Labha(2,11)
+  if (const [1, 2, 4, 5, 7, 9, 10, 11].contains(count)) {
     return BalaScore(2, 'ಶುಭ');
-  } else if (const [1, 3, 6, 10].contains(count)) {
-    return BalaScore(1, 'ಪೂಜ್ಯ (ಶಾಂತಿ ಅಗತ್ಯ)');
   } else {
+    // Pratikoola: 3,6,8,12
     return BalaScore(0, 'ಅಶುಭ');
   }
 }
@@ -759,6 +757,17 @@ class LagnaWindow {
   // Event-specific required shuddhis
   final Set<ShuddhiType> requiredShuddhis;
 
+  // Bhava-based shuddhi (fallback when Rashi fails)
+  final bool usedBhavaFallback;       // true if bhava calc was used for any shuddhi
+  final bool lagnaBhavaShuddhi;       // true if 1st bhava is clear
+  final bool saptamaBhavaShuddhi;     // true if 7th bhava is clear
+  final bool ashtamaBhavaShuddhi;     // true if 8th bhava is clear
+  final bool dashamaBhavaShuddhi;     // true if 10th bhava is clear
+  final List<String> lagnaBhavaGrahas;
+  final List<String> saptamaBhavaGrahas;
+  final List<String> ashtamaBhavaGrahas;
+  final List<String> dashamaBhavaGrahas;
+
   LagnaWindow({
     required this.rashiIndex,
     required this.rashiName,
@@ -778,15 +787,31 @@ class LagnaWindow {
     this.chandraSaptamaGrahas = const [],
     this.guruFromLagna = 0,
     this.requiredShuddhis = const {ShuddhiType.lagna},
+    this.usedBhavaFallback = false,
+    this.lagnaBhavaShuddhi = true,
+    this.saptamaBhavaShuddhi = true,
+    this.ashtamaBhavaShuddhi = true,
+    this.dashamaBhavaShuddhi = true,
+    this.lagnaBhavaGrahas = const [],
+    this.saptamaBhavaGrahas = const [],
+    this.ashtamaBhavaGrahas = const [],
+    this.dashamaBhavaGrahas = const [],
   });
 
-  /// Event-aware shuddhi — only checks the shuddhis required for this event
+  /// Helper: check a shuddhi with bhava fallback
+  bool _checkShuddhi(bool rashiResult, bool bhavaResult) {
+    if (rashiResult) return true; // Rashi passed, no need for bhava
+    if (usedBhavaFallback) return bhavaResult; // Rashi failed, try bhava
+    return false; // Rashi failed, no bhava fallback
+  }
+
+  /// Event-aware shuddhi — checks required shuddhis with Bhava fallback
   bool get isShubha {
     if (!isAllowed) return false;
-    if (requiredShuddhis.contains(ShuddhiType.lagna) && !lagnaShuddhi) return false;
-    if (requiredShuddhis.contains(ShuddhiType.saptama) && !saptamaShuddhi) return false;
-    if (requiredShuddhis.contains(ShuddhiType.ashtama) && !ashtamaShuddhi) return false;
-    if (requiredShuddhis.contains(ShuddhiType.dashama) && !dashamaShuddhi) return false;
+    if (requiredShuddhis.contains(ShuddhiType.lagna) && !_checkShuddhi(lagnaShuddhi, lagnaBhavaShuddhi)) return false;
+    if (requiredShuddhis.contains(ShuddhiType.saptama) && !_checkShuddhi(saptamaShuddhi, saptamaBhavaShuddhi)) return false;
+    if (requiredShuddhis.contains(ShuddhiType.ashtama) && !_checkShuddhi(ashtamaShuddhi, ashtamaBhavaShuddhi)) return false;
+    if (requiredShuddhis.contains(ShuddhiType.dashama) && !_checkShuddhi(dashamaShuddhi, dashamaBhavaShuddhi)) return false;
     if (requiredShuddhis.contains(ShuddhiType.chandraSaptama) && !chandraSaptamaShuddhi) return false;
     return true;
   }
@@ -827,6 +852,58 @@ List<String> findMaleficsInRashi(int rashiIdx, Map<String, int> planetRashis) {
   return found;
 }
 
+/// ──────────────────────────────────────────────────────────────
+/// Bhava House Determination using Sripathi Cusps
+/// ──────────────────────────────────────────────────────────────
+
+/// Normalize degree to [0, 360)
+double normDegMuhurta(double d) => ((d % 360.0) + 360.0) % 360.0;
+
+/// Calculate Sripathi Bhava cusps from tropical Ascendant and MC
+/// Returns 12 bhava madhya degrees [h1..h12]
+List<double> calcSripathiBhavaCusps(double tropicalAsc, double tropicalMC, double ayanamsa) {
+  final h1 = normDegMuhurta(tropicalAsc - ayanamsa);
+  final h10 = normDegMuhurta(tropicalMC - ayanamsa);
+  final h4 = normDegMuhurta(h10 + 180.0);
+  final h7 = normDegMuhurta(h1 + 180.0);
+
+  final dist14 = normDegMuhurta(h4 - h1);
+  final step14 = dist14 / 3.0;
+  final h2 = normDegMuhurta(h1 + step14);
+  final h3 = normDegMuhurta(h1 + 2.0 * step14);
+
+  final dist47 = normDegMuhurta(h7 - h4);
+  final step47 = dist47 / 3.0;
+  final h5 = normDegMuhurta(h4 + step47);
+  final h6 = normDegMuhurta(h4 + 2.0 * step47);
+
+  final h8 = normDegMuhurta(h2 + 180.0);
+  final h9 = normDegMuhurta(h3 + 180.0);
+  final h11 = normDegMuhurta(h5 + 180.0);
+  final h12 = normDegMuhurta(h6 + 180.0);
+
+  return [h1, h2, h3, h4, h5, h6, h7, h8, h9, h10, h11, h12];
+}
+
+/// Determine which Bhava house (1-12) a planet falls in using Sripathi cusps.
+/// bhavaMadhyas: 12 cusp degrees [h1..h12] (Sripathi bhava madhyas)
+/// planetLong: sidereal longitude of the planet (0-360)
+int getBhavaHouse(double planetLong, List<double> bhavaMadhyas) {
+  final p = normDegMuhurta(planetLong);
+  // Calculate sandhis (boundaries) between consecutive houses
+  // Sandhi between house N and N+1 = midpoint of madhya[N] and madhya[N+1]
+  for (int i = 0; i < 12; i++) {
+    final nextI = (i + 1) % 12;
+    final m1 = bhavaMadhyas[i];
+    final m2 = bhavaMadhyas[nextI];
+    final sandhi = normDegMuhurta(m1 + normDegMuhurta(m2 - m1) / 2.0);
+    final nextSandhi = normDegMuhurta(m2 + normDegMuhurta(bhavaMadhyas[(nextI + 1) % 12] - m2) / 2.0);
+    final arc = normDegMuhurta(nextSandhi - sandhi);
+    final diff = normDegMuhurta(p - sandhi);
+    if (diff < arc) return nextI + 1; // 1-indexed house
+  }
+  return 1; // fallback
+}
 
 // ============================================================
 // DEITY-SPECIFIC TITHIS FOR DEVA PRATISHTHA
@@ -930,8 +1007,10 @@ MuhurtaDayResult evaluateMuhurta({
   // Phase 3: Abhijit & Godhuli overrides
   String? abhijitTimeWindow,  // e.g. "11:48 AM - 12:20 PM"
   String? godhuliTimeWindow,  // e.g. "05:55 PM - 06:43 PM"
+  // User-customized rules override
+  MuhurtaEventRules? overrideRules,
 }) {
-  final rules = muhurtaRules[event]!;
+  final rules = overrideRules ?? muhurtaRules[event]!;
   final List<MuhurtaCheckItem> checks = [];
   final List<String> doshas = [];
   final List<String> doshaBhangas = [];
@@ -958,15 +1037,15 @@ MuhurtaDayResult evaluateMuhurta({
     if (siddhaList != null && siddhaList.contains(pakshaRelTithi)) {
       hasSiddhaYoga = true;
       tithiPassed = true;
-      doshaBhangas.add('ಸಿದ್ಧ ಯೋಗ — ತಿಥಿ ದೋಷ ಭಂಗ');
+      doshaBhangas.add(AppLocale.l('mSiddhaYoga'));
     }
   }
   if (tithiPassed) totalPoints += 15;
   checks.add(MuhurtaCheckItem(
-    label: 'ತಿಥಿ',
-    value: tithiName,
+    label: AppLocale.l('mTithi'),
+    value: '${tithiIndex <= 14 ? AppLocale.l('shukla') : AppLocale.l('krishna')} ${trAll(tithiName)}',
     passed: tithiPassed,
-    note: hasSiddhaYoga ? 'ಸಿದ್ಧ ಯೋಗ — ದೋಷ ಭಂಗ' : null,
+    note: hasSiddhaYoga ? AppLocale.l('mSiddhaYogaBhanga') : null,
   ));
 
   // ── 2. NAKSHATRA CHECK (15 points) ──
@@ -983,33 +1062,18 @@ MuhurtaDayResult evaluateMuhurta({
     hasAmritaSiddhi = true;
     if (!nakPassed) {
       nakPassed = true;
-      doshaBhangas.add('ಅಮೃತ ಸಿದ್ಧಿ ಯೋಗ ($varaName + $cleanNakName) — ನಕ್ಷತ್ರ ದೋಷ ಭಂಗ');
+      doshaBhangas.add('${AppLocale.l('mAmritaSiddhiBonus')}(${trAll(varaName)} + ${trAll(cleanNakName)})');
     }
   }
   if (nakPassed) totalPoints += 15;
   checks.add(MuhurtaCheckItem(
-    label: 'ನಕ್ಷತ್ರ',
-    value: nakshatraName,
+    label: AppLocale.l('mNakshatra'),
+    value: trAll(nakshatraName),
     passed: nakPassed,
-    note: hasAmritaSiddhi ? 'ಅಮೃತ ಸಿದ್ಧಿ: $varaName + $cleanNakName ನಕ್ಷತ್ರ' : null,
+    note: hasAmritaSiddhi ? '${AppLocale.l('mAmritaSiddhi')}${trAll(varaName)} + ${trAll(cleanNakName)}' : null,
   ));
 
-  // ── 2B. AYANA CHECK (10 points) ──
-  if (rules.requireUttarayana) {
-    maxPoints += 10;
-    // sidereal sun in Makara, Kumbha, Meena, Mesha, Vrishabha, Mithuna (indices 9,10,11,0,1,2)
-    bool isUttarayana = (sunRashiIndex >= 9 || sunRashiIndex <= 2);
-    if (!isUttarayana) {
-      doshas.add('ಅಯನ ದೋಷ (ದಕ್ಷಿಣಾಯನ)');
-      hasAyanaDosha = true;
-    }
-    if (isUttarayana) totalPoints += 10;
-    checks.add(MuhurtaCheckItem(
-      label: 'ಅಯನ (ಉತ್ತರಾಯಣ ಮಾತ್ರ)',
-      value: isUttarayana ? 'ಉತ್ತರಾಯಣ' : 'ದಕ್ಷಿಣಾಯನ',
-      passed: isUttarayana,
-    ));
-  }
+
 
   // ── 3. VARA CHECK (10 points) ──
   maxPoints += 10;
@@ -1019,8 +1083,8 @@ MuhurtaDayResult evaluateMuhurta({
   }
   if (varaPassed) totalPoints += 10;
   checks.add(MuhurtaCheckItem(
-    label: 'ವಾರ',
-    value: varaName,
+    label: AppLocale.l('mVara'),
+    value: trAll(varaName),
     passed: varaPassed,
   ));
 
@@ -1029,10 +1093,10 @@ MuhurtaDayResult evaluateMuhurta({
   bool yogaPassed = !blockedYogaIndices.contains(yogaIndex);
   if (yogaPassed) totalPoints += 5;
   checks.add(MuhurtaCheckItem(
-    label: 'ಯೋಗ',
-    value: yogaName,
+    label: AppLocale.l('yogaLabel'),
+    value: trAll(yogaName),
     passed: yogaPassed,
-    note: yogaPassed ? null : 'ಅಶುಭ ಯೋಗ',
+    note: yogaPassed ? null : AppLocale.l('ashubhaYoga'),
   ));
 
   // ── 5. KARANA CHECK (5 points) ──
@@ -1040,12 +1104,12 @@ MuhurtaDayResult evaluateMuhurta({
   bool karanaPassed = true;
   if (rules.avoidVishti && karanaName.contains('ವಿಷ್ಟಿ') || karanaName.contains('ಭದ್ರಾ')) {
     karanaPassed = false;
-    doshas.add('ವಿಷ್ಟಿ (ಭದ್ರಾ) ಕರಣ');
+    doshas.add(AppLocale.l('mVishtiKarana'));
   }
   if (karanaPassed) totalPoints += 5;
   checks.add(MuhurtaCheckItem(
-    label: 'ಕರಣ',
-    value: karanaName,
+    label: AppLocale.l('karanaLabel'),
+    value: trAll(karanaName),
     passed: karanaPassed,
   ));
 
@@ -1055,14 +1119,14 @@ MuhurtaDayResult evaluateMuhurta({
   final dagdhaList = dagdhaYogaTable[varaIndex];
   if (dagdhaList != null && dagdhaList.contains(nakshatraIndex)) {
     hasDagdha = true;
-    doshas.add('ದಗ್ಧ ಯೋಗ — ಸರ್ವಥಾ ನಿಷಿದ್ಧ');
+    doshas.add(AppLocale.l('mDagdhaNishedha'));
   }
   if (!hasDagdha) totalPoints += 5;
   checks.add(MuhurtaCheckItem(
-    label: 'ದಗ್ಧ ಯೋಗ',
-    value: hasDagdha ? 'ಇದೆ ❌' : 'ಇಲ್ಲ ✓',
+    label: AppLocale.l('mDagdhaYoga'),
+    value: hasDagdha ? '${AppLocale.l('yesExists')} ❌' : '${AppLocale.l('noExists')} ✓',
     passed: !hasDagdha,
-    note: hasDagdha ? 'ದೋಷ ಭಂಗ ಇಲ್ಲ — ನಿಷೇಧ' : null,
+    note: hasDagdha ? AppLocale.l('mDoshaBhanga') : null,
   ));
 
   // ── 7. TARA BALA (10 pts per person) ──
@@ -1080,13 +1144,11 @@ MuhurtaDayResult evaluateMuhurta({
   // Tara dosha bhanga: Amrita Siddhi cancels minor tara dosha
   if (!tara1Passed && hasAmritaSiddhi) {
     tara1Passed = true;
-    doshaBhangas.add('ಅಮೃತ ಸಿದ್ಧಿ — ತಾರಾ ದೋಷ ಭಂಗ (ವ್ಯಕ್ತಿ 1)');
+    doshaBhangas.add(AppLocale.l('mAmritaTara1'));
   }
   if (tara1Passed) totalPoints += 10;
 
-  // Chandra Bala (Person 1) — 10 pts
-  maxPoints += 10;
-  if (chandra1) totalPoints += 10;
+  // Chandra Bala — SKIPPED (removed per user)
 
   // Guru Bala (Person 1) — 10 pts
   maxPoints += 10;
@@ -1094,12 +1156,12 @@ MuhurtaDayResult evaluateMuhurta({
     totalPoints += 10;
   } else if (guru1.score == 1) {
     totalPoints += 5; // Poojya gives partial points
-    doshaBhangas.add('ಗುರು ಬಲ: ಪೂಜ್ಯ ಸ್ಥಾನ (ಶಾಂತಿ ಮಾಡಿ)');
+    doshaBhangas.add('${AppLocale.l('mGuruBala')}: ${AppLocale.l('mPoojyaGuru')}');
   }
 
-  checks.add(MuhurtaCheckItem(label: 'ತಾರಾ ಬಲ', value: tara1.taraName, passed: tara1Passed));
-  checks.add(MuhurtaCheckItem(label: 'ಚಂದ್ರ ಬಲ', value: chandra1 ? '✓' : '✗', passed: chandra1));
-  checks.add(MuhurtaCheckItem(label: 'ಗುರು ಬಲ', value: guru1.label, passed: guru1.score > 0));
+  checks.add(MuhurtaCheckItem(label: AppLocale.l('mTaraBala'), value: AppLocale.l('tara${tara1.taraIndex}'), passed: tara1Passed));
+  // Chandra Bala check item removed
+  checks.add(MuhurtaCheckItem(label: AppLocale.l('mGuruBala'), value: guru1.score > 0 ? AppLocale.l('shubha') : AppLocale.l('ashubha'), passed: guru1.score > 0));
 
   // Person 2 (if provided)
   if (janmaNakIdx2 != null && janmaRashiIdx2 != null) {
@@ -1108,21 +1170,21 @@ MuhurtaDayResult evaluateMuhurta({
     final guru2 = calculateGuruBala(janmaRashiIdx2, jupiterRashiIndex);
     personResults.add(PersonBalaResult(taraBala: tara2, chandraBala: chandra2, guruBala: guru2));
 
-    maxPoints += 30; // 10 tara + 10 chandra + 10 guru for person 2
+    maxPoints += 20; // 10 tara + 10 guru for person 2 (chandra removed)
 
     bool tara2Passed = tara2.isGood;
     if (!tara2Passed && hasAmritaSiddhi) {
       tara2Passed = true;
-      doshaBhangas.add('ಅಮೃತ ಸಿದ್ಧಿ — ತಾರಾ ದೋಷ ಭಂಗ (ವ್ಯಕ್ತಿ 2)');
+      doshaBhangas.add(AppLocale.l('mAmritaTara2'));
     }
     if (tara2Passed) totalPoints += 10;
-    if (chandra2) totalPoints += 10;
+    // chandra2 scoring removed
     
     if (guru2.score == 2) {
       totalPoints += 10;
     } else if (guru2.score == 1) {
       totalPoints += 5;
-      doshaBhangas.add('ಗುರು ಬಲ (ವ್ಯಕ್ತಿ 2): ಪೂಜ್ಯ ಸ್ಥಾನ (ಶಾಂತಿ ಮಾಡಿ)');
+      doshaBhangas.add('${AppLocale.l('mGuruBala')} (2): ${AppLocale.l('mPoojyaGuru')}');
     }
 
     // Tara dosha bhanga for Vivaha: same rashi lord cancels
@@ -1130,7 +1192,7 @@ MuhurtaDayResult evaluateMuhurta({
       final rashiLords = [4, 5, 3, 1, 0, 3, 5, 4, 8, 6, 6, 8]; // Mars,Venus,Mercury,Moon,Sun,Mercury,Venus,Mars,Jupiter,Saturn,Saturn,Jupiter
       if (rashiLords[janmaRashiIdx1] == rashiLords[janmaRashiIdx2]) {
         if (!tara1.isGood || !tara2.isGood) {
-          doshaBhangas.add('ಸಮಾನ ರಾಶ್ಯಧಿಪತಿ — ತಾರಾ ದೋಷ ಭಂಗ');
+          doshaBhangas.add(AppLocale.l('mSamanaRashi'));
         }
       }
     }
@@ -1140,8 +1202,8 @@ MuhurtaDayResult evaluateMuhurta({
   if (hasAmritaSiddhi) {
     totalPoints += 5; // Bonus
     maxPoints += 5;
-    final txt = 'ಅಮೃತ ಸಿದ್ಧಿ ಯೋಗ: $varaName + $cleanNakName';
-    if (!doshaBhangas.any((d) => d.contains('ಅಮೃತ ಸಿದ್ಧಿ'))) {
+    final txt = '${AppLocale.l('mAmritaSiddhiBonus')}$varaName + $cleanNakName';
+    if (!doshaBhangas.any((d) => d.contains(AppLocale.l('mAmritaSiddhiBonus').split(':')[0]))) {
       doshaBhangas.add(txt);
     }
   }
@@ -1154,12 +1216,12 @@ MuhurtaDayResult evaluateMuhurta({
     maxPoints += 5;
     totalPoints += 5;
     abhijitApplied = true;
-    doshaBhangas.add('ಅಭಿಜಿತ್ ಮುಹೂರ್ತ ಲಭ್ಯ ($abhijitTimeWindow)');
+    doshaBhangas.add('${AppLocale.l('mAbhijitAvail')} ($abhijitTimeWindow)');
     checks.add(MuhurtaCheckItem(
-      label: 'ಅಭಿಜಿತ್',
+      label: AppLocale.l('abhijitLabel'),
       value: abhijitTimeWindow,
       passed: true,
-      note: 'ಸರ್ವ ಕಾರ್ಯ ಶುಭ — ಮಧ್ಯಾಹ್ನ ಮುಹೂರ್ತ',
+      note: AppLocale.l('mSarvaKarya'),
     ));
   }
 
@@ -1172,12 +1234,12 @@ MuhurtaDayResult evaluateMuhurta({
     maxPoints += 5;
     totalPoints += 5;
     godhuliApplied = true;
-    doshaBhangas.add('ಗೋಧೂಳಿ ಲಗ್ನ ಲಭ್ಯ ($godhuliTimeWindow)');
+    doshaBhangas.add('${AppLocale.l('mGodhuliAvail')} ($godhuliTimeWindow)');
     checks.add(MuhurtaCheckItem(
-      label: 'ಗೋಧೂಳಿ',
+      label: AppLocale.l('godhuliLabel'),
       value: godhuliTimeWindow,
       passed: true,
-      note: 'ವಿವಾಹಕ್ಕೆ ಅತ್ಯಂತ ಶುಭ',
+      note: AppLocale.l('mVivahaShubha'),
     ));
   }
 
@@ -1189,11 +1251,11 @@ MuhurtaDayResult evaluateMuhurta({
 
   String verdict;
   if (finalScore >= 80) {
-    verdict = 'ಶ್ರೇಷ್ಠ';
+    verdict = AppLocale.l('mVerdictExcellent');
   } else if (finalScore >= 60) {
-    verdict = 'ಮಧ್ಯಮ';
+    verdict = AppLocale.l('mVerdictMedium');
   } else {
-    verdict = 'ಅಶುಭ';
+    verdict = AppLocale.l('mVerdictBad');
   }
 
   return MuhurtaDayResult(

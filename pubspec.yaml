@@ -37,6 +37,7 @@ dependencies:
   extension_google_sign_in_as_googleapis_auth: ^2.0.12
   crypto: ^3.0.3
   timezone: ^0.9.4
+  wakelock_plus: ^1.2.8
 
 dev_dependencies:
   flutter_test:
