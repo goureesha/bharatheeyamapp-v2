@@ -29,7 +29,6 @@ class PoojaList {
   String name;
   String purohitName;
   String purohitPhone;
-  String purohitAddress;
   List<PoojaItem> items;
   DateTime createdAt;
 
@@ -38,7 +37,6 @@ class PoojaList {
     required this.name,
     this.purohitName = '',
     this.purohitPhone = '',
-    this.purohitAddress = '',
     List<PoojaItem>? items,
     DateTime? createdAt,
   })  : items = items ?? [],
@@ -49,7 +47,6 @@ class PoojaList {
     'n': name,
     'pn': purohitName,
     'pp': purohitPhone,
-    'pa': purohitAddress,
     'items': items.map((i) => i.toJson()).toList(),
     'ts': createdAt.millisecondsSinceEpoch,
   };
@@ -59,7 +56,6 @@ class PoojaList {
     name: j['n'] ?? '',
     purohitName: j['pn'] ?? '',
     purohitPhone: j['pp'] ?? '',
-    purohitAddress: j['pa'] ?? '',
     items: (j['items'] as List?)?.map((i) => PoojaItem.fromJson(i as Map<String, dynamic>)).toList() ?? [],
     createdAt: j['ts'] != null ? DateTime.fromMillisecondsSinceEpoch(j['ts']) : DateTime.now(),
   );

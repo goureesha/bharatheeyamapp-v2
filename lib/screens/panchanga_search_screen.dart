@@ -4,7 +4,6 @@ import '../widgets/common.dart';
 import '../core/calculator.dart';
 import '../constants/strings.dart';
 import '../services/location_service.dart';
-import '../services/panchanga_cache.dart';
 
 class PanchangaSearchScreen extends StatefulWidget {
   const PanchangaSearchScreen({super.key});
@@ -44,11 +43,8 @@ class _PanchangaSearchScreenState extends State<PanchangaSearchScreen> {
   int? _selectedSouraMasa;   // index into _souraMasaNames, null = any
   int? _selectedPaksha;      // 0 = Shukla, 1 = Krishna, null = any
   int? _selectedTithiInPaksha; // 0-14 within the selected paksha
-  TimeOfDay _fromTime = const TimeOfDay(hour: 12, minute: 0);
-  TimeOfDay _toTime = const TimeOfDay(hour: 15, minute: 0);
-  // Date range
-  late DateTime _fromMonth;
-  late DateTime _toMonth;
+  TimeOfDay _fromTime = const TimeOfDay(hour: 6, minute: 0);
+  TimeOfDay _toTime = const TimeOfDay(hour: 18, minute: 0);
 
   // Results
   List<_SearchResult> _results = [];
@@ -57,32 +53,11 @@ class _PanchangaSearchScreenState extends State<PanchangaSearchScreen> {
   int _scanTotal = 0;
   bool _hasSearched = false;
 
-  @override
-  void initState() {
-    super.initState();
-    final now = DateTime.now();
-    _fromMonth = DateTime(now.year, now.month);
-    final cache = PanchangaCache.instance;
-    if (cache.isLoaded && cache.endDate != null) {
-      _toMonth = DateTime(cache.endDate!.year, cache.endDate!.month);
-    } else {
-      _toMonth = DateTime(now.year + 1, now.month);
-    }
-  }
-
   /// Compute the absolute tithi index (0-29) from paksha + tithi selection
   int? get _absoluteTithiIndex {
     if (_selectedPaksha == null || _selectedTithiInPaksha == null) return null;
     if (_selectedPaksha == 0) return _selectedTithiInPaksha!;       // Shukla 0-14
     return 15 + _selectedTithiInPaksha!;                            // Krishna 15-29
-  }
-
-  /// How many years the cache covers (for UI label)
-  String get _scanRangeLabel {
-    final cache = PanchangaCache.instance;
-    if (!cache.isLoaded) return 'No cached data loaded';
-    final years = (cache.dayCount / 365.0).round();
-    return 'Scanning $years years of cached data (${cache.dayCount} days)';
   }
 
   Future<void> _search() async {
@@ -94,102 +69,6 @@ class _PanchangaSearchScreenState extends State<PanchangaSearchScreen> {
       return;
     }
 
-    final cache = PanchangaCache.instance;
-
-    // ── Fallback: if no cache loaded, use old AstroCalculator method ──
-    if (!cache.isLoaded) {
-      await _searchLegacy();
-      return;
-    }
-
-    setState(() {
-      _isSearching = true;
-      _results = [];
-      _hasSearched = true;
-    });
-
-    // Run filter on cached data
-    final List<_SearchResult> found = [];
-    final allDays = cache.getDaysInRange(
-      _fromMonth,
-      DateTime(_toMonth.year, _toMonth.month + 1, 0), // last day of _toMonth
-    );
-
-    setState(() => _scanTotal = allDays.length);
-
-    for (int i = 0; i < allDays.length; i++) {
-      if (!mounted) break;
-      final day = allDays[i];
-
-      // Yield to UI every 500 days
-      if (i % 500 == 0) {
-        setState(() => _scanProgress = i);
-        await Future.delayed(Duration.zero);
-      }
-
-      // ── Filter: Chandra Masa ──
-      if (_selectedChandraMasa != null) {
-        // Strip 'ಅಧಿಕ ' prefix for matching
-        String rawMasa = day.chandraMasa.replaceAll('ಅಧಿಕ ', '');
-        // Also strip 'ನಿಜ ' prefix
-        rawMasa = rawMasa.replaceAll('ನಿಜ ', '');
-        if (rawMasa != _chandraMasaNames[_selectedChandraMasa!]) continue;
-      }
-
-      // ── Filter: Soura Masa ──
-      if (_selectedSouraMasa != null) {
-        if (day.souraMasa != _souraMasaNames[_selectedSouraMasa!]) continue;
-      }
-
-      // ── Filter: Tithi ──
-      if (_absoluteTithiIndex != null) {
-        if (day.tithiIndex != _absoluteTithiIndex) continue;
-      }
-
-      found.add(_SearchResult(
-        date: day.date,
-        vara: day.varaName,
-        tithi: day.tithiName,
-        tithiEndTime: day.tithiEndTime,
-        tithiEndsNextDay: _isNextDay(day.tithiEndTime, day.sunset),
-        nakshatra: day.nakshatraName,
-        nakEndTime: day.nakEndTime,
-        nakEndsNextDay: _isNextDay(day.nakEndTime, day.sunset),
-        karana: day.karanaName,
-        karanaEndTime: '',
-        karanaEndsNextDay: false,
-        yoga: day.yogaName,
-        yogaEndTime: '',
-        yogaEndsNextDay: false,
-        chandraMasa: day.chandraMasa,
-        souraMasa: day.souraMasa,
-        sunrise: day.sunrise,
-        sunset: day.sunset,
-        tithiNotAvailable: false,
-      ));
-    }
-
-    if (mounted) {
-      setState(() {
-        _results = found;
-        _isSearching = false;
-        _scanProgress = _scanTotal;
-      });
-    }
-  }
-
-  /// Check if an end time is "next day" (i.e. time < sunrise next day but after midnight)
-  bool _isNextDay(String endTime, String sunset) {
-    if (endTime.isEmpty) return false;
-    // Simple heuristic: if end time hour < 6, it's next day
-    final parts = endTime.split(':');
-    if (parts.length < 2) return false;
-    final h = int.tryParse(parts[0]) ?? 12;
-    return h < 6;
-  }
-
-  /// Legacy search using AstroCalculator (when no cache is loaded)
-  Future<void> _searchLegacy() async {
     setState(() {
       _isSearching = true;
       _results = [];
@@ -208,18 +87,21 @@ class _PanchangaSearchScreenState extends State<PanchangaSearchScreen> {
     final fromH24 = _fromTime.hour + _fromTime.minute / 60.0;
     final toH24 = _toTime.hour + _toTime.minute / 60.0;
     final midH24 = (fromH24 + toH24) / 2.0;
-    bool enteredMasa = false;
+    bool enteredMasa = false; // track if we've entered the selected masa
 
     for (int i = 0; i < totalDays; i++) {
       if (!mounted) break;
+
       final date = now.add(Duration(days: i));
 
+      // Yield to UI every 10 days to keep it responsive
       if (i % 10 == 0) {
         setState(() => _scanProgress = i);
         await Future.delayed(Duration.zero);
       }
 
       try {
+        // Step 1: Calculate at NOON to find if tithi/masa matches this day
         final noonResult = await AstroCalculator.calculate(
           year: date.year, month: date.month, day: date.day,
           hourUtcOffset: tz, hour24: 12.0,
@@ -227,25 +109,36 @@ class _PanchangaSearchScreenState extends State<PanchangaSearchScreen> {
           ayanamsaMode: 'lahiri', trueNode: true,
         );
         if (noonResult == null) continue;
+
         final noonP = noonResult.panchang;
 
+        // Hard filter: Chandra Masa
         bool masaMatch = true;
         if (_selectedChandraMasa != null) {
-          if (noonP.chandraMasaRaw != _chandraMasaNames[_selectedChandraMasa!]) masaMatch = false;
+          if (noonP.chandraMasaRaw != _chandraMasaNames[_selectedChandraMasa!]) {
+            masaMatch = false;
+          }
         }
         if (_selectedSouraMasa != null) {
-          if (noonP.souraMasa != _souraMasaNames[_selectedSouraMasa!]) masaMatch = false;
+          if (noonP.souraMasa != _souraMasaNames[_selectedSouraMasa!]) {
+            masaMatch = false;
+          }
         }
+
+        // Smart early exit: if we already found results inside the masa
+        // and now we've left it, stop scanning
         if (!masaMatch) {
           if (enteredMasa && found.isNotEmpty) break;
           continue;
         }
         enteredMasa = true;
 
+        // Hard filter: Tithi must match at noon
         if (_absoluteTithiIndex != null) {
           if (noonP.tithiIndex != _absoluteTithiIndex) continue;
         }
 
+        // Step 2: Only re-calc at user time if it differs from noon
         PanchangData p = noonP;
         bool tithiNotAvailable = false;
         if ((midH24 - 12.0).abs() > 0.5) {
@@ -306,63 +199,6 @@ class _PanchangaSearchScreenState extends State<PanchangaSearchScreen> {
         }
       });
     }
-  }
-
-  Future<void> _pickMonth(bool isFrom) async {
-    final cache = PanchangaCache.instance;
-    final now = DateTime.now();
-    final firstDate = cache.isLoaded && cache.startDate != null
-        ? cache.startDate!
-        : now;
-    final lastDate = cache.isLoaded && cache.endDate != null
-        ? cache.endDate!
-        : now.add(const Duration(days: 365));
-
-    final picked = await showDatePicker(
-      context: context,
-      initialDate: isFrom ? _fromMonth : _toMonth,
-      firstDate: firstDate,
-      lastDate: lastDate,
-      helpText: isFrom ? 'Select start month' : 'Select end month',
-    );
-    if (picked != null && mounted) {
-      setState(() {
-        if (isFrom) {
-          _fromMonth = DateTime(picked.year, picked.month);
-          if (_fromMonth.isAfter(_toMonth)) _toMonth = _fromMonth;
-        } else {
-          _toMonth = DateTime(picked.year, picked.month);
-          if (_toMonth.isBefore(_fromMonth)) _fromMonth = _toMonth;
-        }
-      });
-    }
-  }
-
-  String _formatMonth(DateTime d) {
-    const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-    return '${months[d.month - 1]} ${d.year}';
-  }
-
-  Widget _buildMonthButton(String label, DateTime month, bool isFrom) {
-    return GestureDetector(
-      onTap: () => _pickMonth(isFrom),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-        decoration: BoxDecoration(
-          color: kCard, border: Border.all(color: kBorder),
-          borderRadius: BorderRadius.circular(10),
-        ),
-        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Text(label, style: TextStyle(fontSize: 11, color: kMuted, fontWeight: FontWeight.w600)),
-          const SizedBox(height: 4),
-          Row(children: [
-            Icon(Icons.calendar_month, size: 14, color: kPurple2),
-            const SizedBox(width: 6),
-            Text(_formatMonth(month), style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: kText)),
-          ]),
-        ]),
-      ),
-    );
   }
 
   String _formatTime(TimeOfDay t) {
@@ -447,14 +283,6 @@ class _PanchangaSearchScreenState extends State<PanchangaSearchScreen> {
                     const SizedBox(height: 12),
                   ],
 
-                  // Date Range (Month pickers)
-                  Row(children: [
-                    Expanded(child: _buildMonthButton(AppLocale.l('fromDate'), _fromMonth, true)),
-                    const SizedBox(width: 12),
-                    Expanded(child: _buildMonthButton(AppLocale.l('toDate'), _toMonth, false)),
-                  ]),
-                  const SizedBox(height: 12),
-
                   // Time Range
                   Row(children: [
                     Expanded(child: _buildTimeButton(AppLocale.l('fromDate'), _fromTime, () => _pickTime(true))),
@@ -462,7 +290,7 @@ class _PanchangaSearchScreenState extends State<PanchangaSearchScreen> {
                     Expanded(child: _buildTimeButton(AppLocale.l('toDate'), _toTime, () => _pickTime(false))),
                   ]),
                   const SizedBox(height: 6),
-                  Text(_scanRangeLabel, style: TextStyle(fontSize: 11, color: kMuted)),
+                  Text('Scanning 1 year from today', style: TextStyle(fontSize: 11, color: kMuted)),
                   const SizedBox(height: 16),
 
                   // Search Button

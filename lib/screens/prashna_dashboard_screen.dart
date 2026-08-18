@@ -2,15 +2,10 @@ import 'package:flutter/material.dart';
 import '../core/calculator.dart';
 
 import '../core/graha_phala.dart';
-import '../core/bhava_phala.dart';
-import '../core/yoga_phala.dart';
 import '../constants/strings.dart';
 import '../widgets/common.dart';
 import '../widgets/prashna_chart.dart';
 import '../widgets/planet_detail_sheet.dart';
-import '../widgets/dasha_widget.dart';
-import '../services/storage_service.dart';
-import '../services/backup_service.dart';
 
 class PrashnaDashboardScreen extends StatefulWidget {
   final KundaliResult result;
@@ -50,17 +45,10 @@ class _PrashnaDashboardScreenState extends State<PrashnaDashboardScreen>
   late int _minute;
   late String _ampm;
   bool _recalculating = false;
-  int _selectedBook = 0; // 0 = Brihat Jataka, 1 = Saravali
-  String? _selectedGraha; // null = show all planets
-  String _bhavaLagnaMode = 'ಲಗ್ನ'; // lagna selector for bhava phala
-  int _yogaDivMode = 0; // 0=ರಾಶಿ, 1=ರಾಶಿ∪ನವಾಂಶ, 2=ರಾಶಿ∪ದ್ವಾದಶಾಂಶ, 3=ರಾಶಿ∪ನವಾಂಶ∪ದ್ವಾದಶಾಂಶ, 4=ನವಾಂಶ∪ದ್ವಾದಶಾಂಶ
-  bool _yogaUseLagna = true; // true = use actual lagna
-  Set<int> _yogaSelectedRashis = {}; // 0-11 selected rashis for multi-select
-  String? _yogaGrahaFilter; // null = all grahas, else specific graha name
 
 
 
-  static const _tabs = ['ಕುಂಡಲಿ', 'ಸ್ಫುಟ', 'ಪಂಚಾಂಗ', 'ಷಡ್ವರ್ಗ', 'ದಶಾ'];
+  static const _tabs = ['ಕುಂಡಲಿ', 'ಸ್ಫುಟ', 'ಪಂಚಾಂಗ', 'ಷಡ್ವರ್ಗ'];
 
   @override
   void initState() {
@@ -159,82 +147,6 @@ class _PrashnaDashboardScreenState extends State<PrashnaDashboardScreen>
     }
   }
 
-  Future<void> _savePrashna() async {
-    // Build a name with date/time for easy identification
-    final dateStr = '${_dob.day.toString().padLeft(2, "0")}/${_dob.month.toString().padLeft(2, "0")}/${_dob.year}';
-    final timeStr = '$_hour:${_minute.toString().padLeft(2, "0")} $_ampm';
-    final defaultName = widget.name.isNotEmpty
-        ? widget.name
-        : 'ಪ್ರಶ್ನ $dateStr $timeStr';
-
-    // Ask user for a name
-    final controller = TextEditingController(text: defaultName);
-    final name = await showDialog<String>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: kCard,
-        title: Text('ಪ್ರಶ್ನ ಉಳಿಸಿ', style: TextStyle(color: kText, fontWeight: FontWeight.w900)),
-        content: TextField(
-          controller: controller,
-          autofocus: true,
-          style: TextStyle(color: kText),
-          decoration: InputDecoration(
-            hintText: 'ಹೆಸರು ನಮೂದಿಸಿ',
-            hintStyle: TextStyle(color: kMuted),
-            enabledBorder: UnderlineInputBorder(borderSide: BorderSide(color: kBorder)),
-            focusedBorder: UnderlineInputBorder(borderSide: BorderSide(color: kPurple2)),
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: Text('ರದ್ದು', style: TextStyle(color: kMuted)),
-          ),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: kPurple2),
-            onPressed: () => Navigator.pop(ctx, controller.text.trim()),
-            child: const Text('ಉಳಿಸಿ'),
-          ),
-        ],
-      ),
-    );
-
-    if (name == null || name.isEmpty || !mounted) return;
-
-    final profile = Profile(
-      name: name,
-      date: '${_dob.year}-${_dob.month.toString().padLeft(2, "0")}-${_dob.day.toString().padLeft(2, "0")}',
-      hour: _hour,
-      minute: _minute,
-      ampm: _ampm,
-      lat: widget.lat,
-      lon: widget.lon,
-      place: widget.place,
-    );
-    await StorageService.save(profile);
-
-    if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('✅ "$name" ಉಳಿಸಲಾಗಿದೆ'),
-        backgroundColor: kTeal,
-      ),
-    );
-  }
-
-  Future<void> _backupData() async {
-    final success = await BackupService.exportData();
-    if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(success
-            ? '✅ ಬ್ಯಾಕಪ್ ಯಶಸ್ವಿ'
-            : '❌ ಬ್ಯಾಕಪ್ ವಿಫಲ'),
-        backgroundColor: success ? kTeal : Colors.red,
-      ),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -245,18 +157,6 @@ class _PrashnaDashboardScreenState extends State<PrashnaDashboardScreen>
             style: TextStyle(color: kText, fontSize: 16, fontWeight: FontWeight.w900)),
         iconTheme: IconThemeData(color: kText),
         elevation: 0,
-        actions: [
-          IconButton(
-            icon: Icon(Icons.save_outlined, color: kPurple2),
-            tooltip: 'ಉಳಿಸಿ',
-            onPressed: _savePrashna,
-          ),
-          IconButton(
-            icon: Icon(Icons.backup_outlined, color: kTeal),
-            tooltip: 'ಬ್ಯಾಕಪ್',
-            onPressed: _backupData,
-          ),
-        ],
       ),
       body: Column(
         children: [
@@ -324,7 +224,6 @@ class _PrashnaDashboardScreenState extends State<PrashnaDashboardScreen>
                 _buildSphutas(),
                 _buildPanchangTab(),
                 _buildShadvargaTab(),
-                _buildDashaTab(),
               ],
             ),
           ),
@@ -338,14 +237,8 @@ class _PrashnaDashboardScreenState extends State<PrashnaDashboardScreen>
   // ═══════════════════════════════════════════
   Widget _buildKundaliTab() {
     final screenWidth = MediaQuery.of(context).size.width;
-    final screenHeight = MediaQuery.of(context).size.height;
     final isLandscape = MediaQuery.of(context).orientation == Orientation.landscape;
-
-    if (isLandscape) {
-      return _buildLandscapeKundaliTab(screenWidth, screenHeight);
-    }
-
-    final isLargeScreen = screenWidth > 600;
+    final isLargeScreen = screenWidth > 600 || isLandscape;
     final chartSize = isLargeScreen
         ? (screenWidth * 0.45).clamp(350.0, 550.0)
         : screenWidth * 0.92;
@@ -381,78 +274,12 @@ class _PrashnaDashboardScreenState extends State<PrashnaDashboardScreen>
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 ..._buildGrahaPhalas(_result),
-                ..._buildBhavaPhalas(_result),
-                ..._buildYogaSection(_result),
               ],
             ),
           ),
           const SizedBox(height: 24),
         ],
       ),
-    );
-  }
-
-  /// Landscape layout: charts on left, phalas on right
-  Widget _buildLandscapeKundaliTab(double screenWidth, double screenHeight) {
-    final leftWidth = screenWidth * 0.45;
-    final chartSize = (leftWidth * 0.85).clamp(250.0, 500.0);
-    final textScale = (chartSize / 350.0).clamp(0.9, 1.3);
-
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        // ── LEFT: Kundali Charts ──
-        SizedBox(
-          width: leftWidth,
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.only(left: 8, right: 4, top: 8, bottom: 16),
-            child: Column(
-              children: [
-                _chartSection(
-                  label: 'ರಾಶಿ ಕುಂಡಲಿ',
-                  isBhava: false,
-                  chartSize: chartSize,
-                  textScale: textScale,
-                ),
-                const SizedBox(height: 12),
-                _buildBhavaControls(),
-                const SizedBox(height: 8),
-                _chartSection(
-                  label: _bhavaPlanet != null
-                      ? 'ಭಾವ ಕುಂಡಲಿ ($_bhavaPlanet ಕೇಂದ್ರ)'
-                      : 'ಭಾವ ಕುಂಡಲಿ',
-                  isBhava: true,
-                  chartSize: chartSize,
-                  textScale: textScale,
-                ),
-              ],
-            ),
-          ),
-        ),
-
-        // ── Divider ──
-        Container(
-          width: 1,
-          height: screenHeight,
-          color: kBorder,
-        ),
-
-        // ── RIGHT: Graha Phala + Bhava Phala + Yogas ──
-        Expanded(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.only(left: 8, right: 12, top: 8, bottom: 16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                ..._buildGrahaPhalas(_result),
-                ..._buildBhavaPhalas(_result),
-                ..._buildYogaSection(_result),
-                const SizedBox(height: 24),
-              ],
-            ),
-          ),
-        ),
-      ],
     );
   }
 
@@ -804,662 +631,6 @@ class _PrashnaDashboardScreenState extends State<PrashnaDashboardScreen>
   }
 
   // ═══════════════════════════════════════════
-  // TAB 5: DASHA
-  // ═══════════════════════════════════════════
-  Widget _buildDashaTab() {
-    final r = _result;
-    final pan = r.panchang;
-    final now = DateTime.now();
-
-    // Find current running Mahadasha, Bhukti, Pratyantara
-    String currentMD = '', mdEnd = '';
-    String currentAD = '', adEnd = '';
-    String currentPD = '', pdEnd = '';
-    for (final md in r.dashas) {
-      if (now.isAfter(md.start) && now.isBefore(md.end)) {
-        currentMD = md.lord;
-        mdEnd = '${md.end.day.toString().padLeft(2, "0")}-${md.end.month.toString().padLeft(2, "0")}-${md.end.year}';
-        for (final ad in md.antardashas) {
-          if (now.isAfter(ad.start) && now.isBefore(ad.end)) {
-            currentAD = ad.lord;
-            adEnd = '${ad.end.day.toString().padLeft(2, "0")}-${ad.end.month.toString().padLeft(2, "0")}-${ad.end.year}';
-            for (final pd in ad.antardashas) {
-              if (now.isAfter(pd.start) && now.isBefore(pd.end)) {
-                currentPD = pd.lord;
-                pdEnd = '${pd.end.day.toString().padLeft(2, "0")}-${pd.end.month.toString().padLeft(2, "0")}-${pd.end.year}';
-                break;
-              }
-            }
-            break;
-          }
-        }
-        break;
-      }
-    }
-
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(8),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Dasha balance info
-          AppCard(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(children: [
-                  Icon(Icons.auto_awesome, color: kOrange, size: 18),
-                  const SizedBox(width: 6),
-                  Text('ದಶಾ ಶೇಷ', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w900, color: kOrange)),
-                ]),
-                const SizedBox(height: 8),
-                _dashaInfoRow('ಜನನ ದಶಾ ನಾಥ', pan.dashaLord),
-                _dashaInfoRow('ದಶಾ ಶೇಷ', pan.dashaBalance),
-                if (currentMD.isNotEmpty) ...[
-                  const Divider(height: 16),
-                  Row(children: [
-                    Icon(Icons.timeline, color: kPurple2, size: 18),
-                    const SizedBox(width: 6),
-                    Text('ಪ್ರಸ್ತುತ ದಶಾ', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w900, color: kPurple2)),
-                  ]),
-                  const SizedBox(height: 8),
-                  _dashaInfoRow('ಮಹಾದಶಾ', '$currentMD  →  $mdEnd'),
-                  if (currentAD.isNotEmpty)
-                    _dashaInfoRow('ಅಂತರ್ದಶಾ', '$currentAD  →  $adEnd'),
-                  if (currentPD.isNotEmpty)
-                    _dashaInfoRow('ಪ್ರತ್ಯಂತರ', '$currentPD  →  $pdEnd'),
-                ],
-              ],
-            ),
-          ),
-          const SizedBox(height: 8),
-          // Full Dasha widget (expandable tree)
-          DashaWidget(dashas: r.dashas),
-        ],
-      ),
-    );
-  }
-
-  Widget _dashaInfoRow(String label, String value) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 4),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          SizedBox(
-            width: 120,
-            child: Text(label, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: kMuted)),
-          ),
-          Expanded(
-            child: Text(value, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: kText)),
-          ),
-        ],
-      ),
-    );
-  }
-
-  // ═══════════════════════════════════════════
-  // HELPER: planet bhava from cusp boundaries
-  // ═══════════════════════════════════════════
-  int _planetBhavaNum(double planetLon, List<double> madhyas) {
-    // Calculate boundaries (sandhi) between adjacent bhava madhyas
-    List<double> boundaries = List.filled(12, 0.0);
-    for (int i = 0; i < 12; i++) {
-      final m1 = madhyas[i];
-      final m2 = madhyas[(i + 1) % 12];
-      double diff = (m2 - m1 + 360.0) % 360.0;
-      boundaries[i] = (m1 + (diff / 2.0)) % 360.0;
-    }
-    int bhavaIdx = 0;
-    for (int i = 0; i < 12; i++) {
-      final start = boundaries[(i + 11) % 12];
-      final end = boundaries[i];
-      if (start < end) {
-        if (planetLon >= start && planetLon < end) { bhavaIdx = i; break; }
-      } else {
-        if (planetLon >= start || planetLon < end) { bhavaIdx = i; break; }
-      }
-    }
-    return bhavaIdx + 1; // 1-based bhava number
-  }
-
-  // ═══════════════════════════════════════════
-  // BHAVA PHALA CARDS (below Graha Phala)
-  // ═══════════════════════════════════════════
-  List<Widget> _buildBhavaPhalas(KundaliResult r) {
-    const planetNames = ['ರವಿ', 'ಚಂದ್ರ', 'ಕುಜ', 'ಬುಧ', 'ಗುರು', 'ಶುಕ್ರ', 'ಶನಿ', 'ರಾಹು', 'ಕೇತು'];
-    if (r.bhavas.isEmpty) return [];
-
-    // Lagna options: main lagna + planet lagnas + 12 rashis
-    final lagnaOptions = ['ಲಗ್ನ', ...planetNames, ...knRashi];
-    final lagnaLon = r.planets['ಲಗ್ನ']?.longitude ?? (r.bhavas.isNotEmpty ? r.bhavas[0] : 0.0);
-    final lagnaIdx = (lagnaLon / 30).floor() % 12;
-
-    // Compute bhava madhyas based on lagna selection
-    List<double> madhyas;
-    int displayLagnaIdx;
-    if (_bhavaLagnaMode == 'ಲಗ್ನ') {
-      madhyas = r.bhavas;
-      displayLagnaIdx = lagnaIdx;
-    } else if (planetNames.contains(_bhavaLagnaMode)) {
-      // Planet lagna: shift bhava cusps by offset
-      final refLon = r.planets[_bhavaLagnaMode]?.longitude ?? 0.0;
-      final offset = (refLon - lagnaLon + 360.0) % 360.0;
-      madhyas = List.generate(12, (i) => (r.bhavas[i] + offset) % 360.0);
-      displayLagnaIdx = (refLon / 30).floor() % 12;
-    } else {
-      // Rashi lagna: shift bhava cusps to that rashi
-      final rashiIdx = knRashi.indexOf(_bhavaLagnaMode);
-      final refLon = (rashiIdx < 0 ? 0 : rashiIdx) * 30.0;
-      final offset = (refLon - lagnaLon + 360.0) % 360.0;
-      madhyas = List.generate(12, (i) => (r.bhavas[i] + offset) % 360.0);
-      displayLagnaIdx = rashiIdx < 0 ? 0 : rashiIdx;
-    }
-
-    return [
-      const SizedBox(height: 8),
-      AppCard(
-        padding: EdgeInsets.zero,
-        child: ExpansionTile(
-          tilePadding: const EdgeInsets.symmetric(horizontal: 12),
-          childrenPadding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
-          initiallyExpanded: false,
-          title: Text('ಭಾವ ಫಲ', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w900, color: kText)),
-          subtitle: Text('ಚಮತ್ಕಾರ ಚಿಂತಾಮಣಿ', style: TextStyle(fontSize: 10, color: kMuted)),
-          children: [
-            // Lagna selector
-            Wrap(
-              spacing: 5,
-              runSpacing: 5,
-              children: lagnaOptions.map((opt) {
-                final sel = _bhavaLagnaMode == opt;
-                return GestureDetector(
-                  onTap: () => setState(() => _bhavaLagnaMode = opt),
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: sel ? kTeal : kTeal.withOpacity(0.07),
-                      borderRadius: BorderRadius.circular(7),
-                      border: Border.all(color: sel ? kTeal : kBorder),
-                    ),
-                    child: Text(opt,
-                        style: TextStyle(
-                          fontSize: 11,
-                          fontWeight: sel ? FontWeight.w900 : FontWeight.w600,
-                          color: sel ? Colors.white : kText,
-                        )),
-                  ),
-                );
-              }).toList(),
-            ),
-            Padding(
-              padding: const EdgeInsets.symmetric(vertical: 6),
-              child: Text('ಲಗ್ನ ರಾಶಿ: ${knRashi[displayLagnaIdx]}',
-                  style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: kTeal)),
-            ),
-            // Planet bhava phala cards
-            ...planetNames.map((planet) {
-              final pInfo = r.planets[planet];
-              if (pInfo == null) return const SizedBox.shrink();
-              final bhava = _planetBhavaNum(pInfo.longitude, madhyas);
-              final pRashiIdx = (pInfo.longitude / 30).floor() % 12;
-              final shloka = BhavaPhala.getPhala(planet, bhava);
-              if (shloka.isEmpty) return const SizedBox.shrink();
-              return Container(
-                margin: const EdgeInsets.only(bottom: 6),
-                padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(
-                  color: kTeal.withOpacity(0.04),
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: kTeal.withOpacity(0.15)),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(children: [
-                      Text(planet, style: TextStyle(fontSize: 14, fontWeight: FontWeight.w900, color: kPurple2)),
-                      const Spacer(),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                        decoration: BoxDecoration(
-                          color: kTeal.withOpacity(0.12),
-                          borderRadius: BorderRadius.circular(6),
-                        ),
-                        child: Text('ಭಾವ $bhava • ${knRashi[pRashiIdx]}',
-                            style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: kTeal)),
-                      ),
-                    ]),
-                    const SizedBox(height: 8),
-                    // Chamatkara Chintamani shloka
-                    Text(shloka,
-                        style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: kText, height: 1.6)),
-                    // Common bhava phala shlokas
-                    ...BhavaPhala.getCommonPhala(bhava).map((cs) => Padding(
-                      padding: const EdgeInsets.only(top: 8),
-                      child: Text(cs,
-                          style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500, color: kMuted, height: 1.5)),
-                    )),
-                  ],
-                ),
-              );
-            }),
-          ],
-        ),
-      ),
-    ];
-  }
-
-  // ═══════════════════════════════════════════
-  // YOGA SECTION
-  // ═══════════════════════════════════════════
-  List<Widget> _buildYogaSection(KundaliResult r) {
-    const rashiNames = ['ಮೇಷ', 'ವೃಷಭ', 'ಮಿಥುನ', 'ಕರ್ಕ', 'ಸಿಂಹ', 'ಕನ್ಯಾ', 'ತುಲಾ', 'ವೃಶ್ಚಿಕ', 'ಧನು', 'ಮಕರ', 'ಕುಂಭ', 'ಮೀನ'];
-    const grahaNames = ['ರವಿ','ಚಂದ್ರ','ಕುಜ','ಬುಧ','ಗುರು','ಶುಕ್ರ','ಶನಿ','ರಾಹು','ಕೇತು'];
-    // Also match alternate forms used in shloka text
-    const grahaAliases = {
-      'ಸೂರ್ಯ': 'ರವಿ', 'ರವಿಯಿಂದ': 'ರವಿ', 'ಸೂರ್ಯನ': 'ರವಿ',
-      'ಚಂದ್ರನ': 'ಚಂದ್ರ', 'ಚಂದ್ರನಿಂದ': 'ಚಂದ್ರ', 'ಚಂದ್ರನು': 'ಚಂದ್ರ', 'ಚಂದ್ರನಿಗೆ': 'ಚಂದ್ರ', 'ಚಂದ್ರ-': 'ಚಂದ್ರ',
-      'ಕುಜನ': 'ಕುಜ', 'ಕುಜನು': 'ಕುಜ', 'ಕುಜನಿಂದ': 'ಕುಜ', 'ಕುಜರು': 'ಕುಜ', 'ಕುಜ-': 'ಕುಜ',
-      'ಬುಧನ': 'ಬುಧ',
-      'ಗುರುವಿನ': 'ಗುರು', 'ಗುರುವು': 'ಗುರು',
-      'ಶುಕ್ರನ': 'ಶುಕ್ರ', 'ಶುಕ್ರನು': 'ಶುಕ್ರ', 'ಶುಕ್ರನಿಂದ': 'ಶುಕ್ರ',
-      'ಶನಿಯ': 'ಶನಿ', 'ಶನಿಯು': 'ಶನಿ', 'ಶನಿಯಿಂದ': 'ಶನಿ', 'ಶನಿಯಿದ್ದಾನೆ': 'ಶನಿ',
-      'ರಾಹುಗ್ರಸ್ತ': 'ರಾಹು',
-    };
-
-    // Helper to extract graha names from text
-    Set<String> extractGrahas(YogaResult y) {
-      final text = '${y.name} ${y.shloka}';
-      final found = <String>{};
-      for (final g in grahaNames) {
-        if (text.contains(g)) found.add(g);
-      }
-      for (final entry in grahaAliases.entries) {
-        if (text.contains(entry.key)) found.add(entry.value);
-      }
-      return found;
-    }
-
-    final isUnion = _yogaDivMode >= 1; // all modes except 0 are union modes
-
-    // Build yoga list(s) based on mode
-    List<MapEntry<String, List<YogaResult>>> yogaGroups = [];
-
-    if (_yogaUseLagna) {
-      // Use actual lagna
-      final yList = _evaluateWithMode(r, null, isUnion);
-      if (yList.isNotEmpty) yogaGroups.add(MapEntry('', yList));
-    } else {
-      // Evaluate selected rashis
-      for (final i in _yogaSelectedRashis.toList()..sort()) {
-        final yList = _evaluateWithMode(r, i, isUnion);
-        if (yList.isNotEmpty) yogaGroups.add(MapEntry(rashiNames[i], yList));
-      }
-    }
-
-    // Apply graha filter
-    if (_yogaGrahaFilter != null) {
-      yogaGroups = yogaGroups.map((group) {
-        final filtered = group.value.where((y) => extractGrahas(y).contains(_yogaGrahaFilter)).toList();
-        return MapEntry(group.key, filtered);
-      }).where((g) => g.value.isNotEmpty).toList();
-    }
-
-    final totalCount = yogaGroups.fold<int>(0, (sum, g) => sum + g.value.length);
-    if (totalCount == 0 && !_yogaUseLagna) return [];
-
-    return [
-      const SizedBox(height: 8),
-      AppCard(
-        padding: EdgeInsets.zero,
-        child: ExpansionTile(
-          tilePadding: const EdgeInsets.symmetric(horizontal: 12),
-          childrenPadding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
-          initiallyExpanded: false,
-          title: Text('ಯೋಗ', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w900, color: kText)),
-          subtitle: Text('ಬೃಹಜ್ಜಾತಕ • $totalCount ಯೋಗಗಳು', style: TextStyle(fontSize: 10, color: kMuted)),
-          children: [
-            // ── Rashi selector (multi-select) ──
-            SizedBox(
-              height: 32,
-              child: ListView(
-                scrollDirection: Axis.horizontal,
-                children: [
-                  _yogaRashiChip('ಲಗ್ನ', -2), // special: use actual lagna
-                  _yogaRashiChip('ಎಲ್ಲಾ', -1), // special: select/deselect all
-                  for (int i = 0; i < 12; i++) _yogaRashiChip(rashiNames[i], i),
-                ],
-              ),
-            ),
-            const SizedBox(height: 6),
-            // ── Divisional chart mode ──
-            SizedBox(
-              height: 32,
-              child: ListView(
-                scrollDirection: Axis.horizontal,
-                children: [
-                  _yogaDivChip('ರಾಶಿ', 0),
-                  _yogaDivChip('ರಾಶಿ∪ನವಾಂಶ', 1),
-                  _yogaDivChip('ರಾಶಿ∪ದ್ವಾದಶಾಂಶ', 2),
-                  _yogaDivChip('ರಾಶಿ∪ನವಾಂಶ∪ದ್ವಾದಶಾಂಶ', 3),
-                  _yogaDivChip('ನವಾಂಶ∪ದ್ವಾದಶಾಂಶ', 4),
-                ],
-              ),
-            ),
-            const SizedBox(height: 6),
-            // ── Graha filter ──
-            SizedBox(
-              height: 32,
-              child: ListView(
-                scrollDirection: Axis.horizontal,
-                children: [
-                  _yogaGrahaChip('ಎಲ್ಲಾ ಗ್ರಹ', null),
-                  for (final g in grahaNames) _yogaGrahaChip(g, g),
-                ],
-              ),
-            ),
-            const SizedBox(height: 8),
-            // ── Yoga cards ──
-            if (totalCount == 0)
-              Padding(
-                padding: const EdgeInsets.all(16),
-                child: Text('ಯಾವುದೇ ಯೋಗಗಳು ಕಂಡುಬಂದಿಲ್ಲ', style: TextStyle(fontSize: 12, color: kMuted)),
-              ),
-            ...yogaGroups.expand((group) {
-              final showHeader = group.key.isNotEmpty; // show rashi header in "all" mode
-              return [
-                if (showHeader)
-                  Padding(
-                    padding: const EdgeInsets.only(top: 8, bottom: 4),
-                    child: Row(children: [
-                      Container(width: 4, height: 16, decoration: BoxDecoration(color: kPurple2, borderRadius: BorderRadius.circular(2))),
-                      const SizedBox(width: 6),
-                      Text(group.key, style: TextStyle(fontSize: 13, fontWeight: FontWeight.w800, color: kPurple2)),
-                      const SizedBox(width: 6),
-                      Text('(${group.value.length})', style: TextStyle(fontSize: 11, color: kMuted)),
-                    ]),
-                  ),
-                ...group.value.map((y) {
-                  final isDiv = y.chart != 'ರಾಶಿ';
-                  return Container(
-                    margin: const EdgeInsets.only(bottom: 6),
-                    padding: const EdgeInsets.all(10),
-                    decoration: BoxDecoration(
-                      color: isDiv ? Colors.deepPurple.withOpacity(0.04) : kOrange.withOpacity(0.04),
-                      borderRadius: BorderRadius.circular(8),
-                      border: Border.all(color: isDiv ? Colors.deepPurple.withOpacity(0.2) : kOrange.withOpacity(0.15)),
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          children: [
-                            Expanded(
-                              child: Text(y.name, style: TextStyle(fontSize: 13, fontWeight: FontWeight.w900, color: isDiv ? Colors.deepPurple : kOrange)),
-                            ),
-                            // Rashi badge — show which rashi triggered this yoga
-                            if (group.key.isNotEmpty)
-                              Container(
-                                margin: const EdgeInsets.only(right: 4),
-                                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                                decoration: BoxDecoration(
-                                  color: kTeal.withOpacity(0.15),
-                                  borderRadius: BorderRadius.circular(4),
-                                ),
-                                child: Text(group.key, style: TextStyle(fontSize: 9, fontWeight: FontWeight.w700, color: kTeal)),
-                              ),
-                            if (isDiv)
-                              Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                                decoration: BoxDecoration(
-                                  color: Colors.deepPurple.withOpacity(0.12),
-                                  borderRadius: BorderRadius.circular(4),
-                                ),
-                                child: Text(y.chart, style: TextStyle(fontSize: 9, fontWeight: FontWeight.w700, color: Colors.deepPurple)),
-                              ),
-                          ],
-                        ),
-                        // Graha badges — show which planets are involved
-                        Builder(builder: (_) {
-                          final yogaGrahas = extractGrahas(y);
-                          if (yogaGrahas.isEmpty) return const SizedBox.shrink();
-                          return Padding(
-                            padding: const EdgeInsets.only(top: 4),
-                            child: Wrap(
-                              spacing: 4,
-                              runSpacing: 2,
-                              children: yogaGrahas.map((g) => Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
-                                decoration: BoxDecoration(
-                                  color: kPurple2.withOpacity(0.1),
-                                  borderRadius: BorderRadius.circular(3),
-                                ),
-                                child: Text(g, style: TextStyle(fontSize: 9, fontWeight: FontWeight.w700, color: kPurple2)),
-                              )).toList(),
-                            ),
-                          );
-                        }),
-                        // Sanskrit shloka (verse)
-                        if (y.verse.isNotEmpty)
-                          Padding(
-                            padding: const EdgeInsets.only(bottom: 4),
-                            child: Text(y.verse,
-                                style: TextStyle(fontSize: 12, fontStyle: FontStyle.italic, color: kText.withOpacity(0.7), height: 1.5)),
-                          ),
-                        // Satisfied condition (Kannada explanation)
-                        Text(y.shloka,
-                            style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: kText, height: 1.6)),
-                        // All planet positions — grouped by house (relative to selected rashi)
-                        const SizedBox(height: 6),
-                        Builder(builder: (_) {
-                          // Use selected rashi as reference, or lagna if in lagna mode
-                          final int refRashi;
-                          if (group.key.isNotEmpty) {
-                            final idx = rashiNames.indexOf(group.key);
-                            refRashi = idx >= 0 ? idx : ((r.planets['ಲಗ್ನ']?.longitude ?? 0) ~/ 30) % 12;
-                          } else {
-                            refRashi = ((r.planets['ಲಗ್ನ']?.longitude ?? 0) ~/ 30) % 12;
-                          }
-                          const allPlanets = ['ರವಿ','ಚಂದ್ರ','ಕುಜ','ಬುಧ','ಗುರು','ಶುಕ್ರ','ಶನಿ','ರಾಹು','ಕೇತು'];
-                          final byHouse = <int, List<String>>{};
-                          for (final pn in allPlanets) {
-                            final pInfo = r.planets[pn];
-                            if (pInfo == null) continue;
-                            final pRashi = (pInfo.longitude ~/ 30) % 12;
-                            final house = ((pRashi - refRashi + 12) % 12) + 1;
-                            byHouse.putIfAbsent(house, () => []).add(pn);
-                          }
-                          final sorted = byHouse.keys.toList()..sort();
-                          final posText = sorted.map((h) => '$h:${byHouse[h]!.join(',')}').join('  ');
-                          return Container(
-                            width: double.infinity,
-                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
-                            decoration: BoxDecoration(
-                              color: kMuted.withOpacity(0.06),
-                              borderRadius: BorderRadius.circular(6),
-                              border: Border.all(color: kMuted.withOpacity(0.12)),
-                            ),
-                            child: Text(posText,
-                                style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700,
-                                    color: kMuted, fontFamily: 'monospace', letterSpacing: 0.5)),
-                          );
-                        }),
-                      ],
-                    ),
-                  );
-                }),
-              ];
-            }),
-          ],
-        ),
-      ),
-    ];
-  }
-
-  Widget _yogaRashiChip(String label, int value) {
-    // value: -2 = lagna, -1 = all, 0-11 = specific rashi
-    bool selected;
-    if (value == -2) {
-      selected = _yogaUseLagna;
-    } else if (value == -1) {
-      selected = !_yogaUseLagna && _yogaSelectedRashis.length == 12;
-    } else {
-      selected = !_yogaUseLagna && _yogaSelectedRashis.contains(value);
-    }
-    return Padding(
-      padding: const EdgeInsets.only(right: 6),
-      child: GestureDetector(
-        onTap: () => setState(() {
-          if (value == -2) {
-            _yogaUseLagna = true;
-            _yogaSelectedRashis.clear();
-          } else if (value == -1) {
-            _yogaUseLagna = false;
-            if (_yogaSelectedRashis.length == 12) {
-              _yogaSelectedRashis.clear();
-            } else {
-              _yogaSelectedRashis = {0,1,2,3,4,5,6,7,8,9,10,11};
-            }
-          } else {
-            _yogaUseLagna = false;
-            if (_yogaSelectedRashis.contains(value)) {
-              _yogaSelectedRashis.remove(value);
-              if (_yogaSelectedRashis.isEmpty) _yogaUseLagna = true;
-            } else {
-              _yogaSelectedRashis.add(value);
-            }
-          }
-        }),
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-          decoration: BoxDecoration(
-            color: selected ? kPurple2.withOpacity(0.15) : Colors.transparent,
-            borderRadius: BorderRadius.circular(14),
-            border: Border.all(color: selected ? kPurple2 : kMuted.withOpacity(0.3)),
-          ),
-          child: Text(label, style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: selected ? kPurple2 : kMuted)),
-        ),
-      ),
-    );
-  }
-
-  Widget _yogaDivChip(String label, int value) {
-    final selected = _yogaDivMode == value;
-    return Padding(
-      padding: const EdgeInsets.only(right: 6),
-      child: GestureDetector(
-        onTap: () => setState(() => _yogaDivMode = value),
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-          decoration: BoxDecoration(
-            color: selected ? kOrange.withOpacity(0.15) : Colors.transparent,
-            borderRadius: BorderRadius.circular(14),
-            border: Border.all(color: selected ? kOrange : kMuted.withOpacity(0.3)),
-          ),
-          child: Text(label, style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: selected ? kOrange : kMuted)),
-        ),
-      ),
-    );
-  }
-
-  Widget _yogaGrahaChip(String label, String? value) {
-    final selected = _yogaGrahaFilter == value;
-    return Padding(
-      padding: const EdgeInsets.only(right: 6),
-      child: GestureDetector(
-        onTap: () => setState(() => _yogaGrahaFilter = value),
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-          decoration: BoxDecoration(
-            color: selected ? kPurple2.withOpacity(0.15) : Colors.transparent,
-            borderRadius: BorderRadius.circular(14),
-            border: Border.all(color: selected ? kPurple2 : kMuted.withOpacity(0.3)),
-          ),
-          child: Text(label, style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: selected ? kPurple2 : kMuted)),
-        ),
-      ),
-    );
-  }
-
-  /// Evaluate yogas with divisional mode logic
-  List<YogaResult> _evaluateWithMode(KundaliResult r, int? aroodha, bool isUnion) {
-    if (!isUnion) {
-      // Mode 0: rashi only
-      return YogaPhala.evaluate(r, aroodhaRashi: aroodha);
-    }
-    // Union modes
-    switch (_yogaDivMode) {
-      case 1: // ರಾಶಿ∪ನವಾಂಶ
-        return YogaPhala.evaluateUnion(r, aroodhaRashi: aroodha, useRashi: true, useNavamsha: true, useDvadashamsha: false);
-      case 2: // ರಾಶಿ∪ದ್ವಾದಶಾಂಶ
-        return YogaPhala.evaluateUnion(r, aroodhaRashi: aroodha, useRashi: true, useNavamsha: false, useDvadashamsha: true);
-      case 3: // ರಾಶಿ∪ನವಾಂಶ∪ದ್ವಾದಶಾಂಶ
-        return YogaPhala.evaluateUnion(r, aroodhaRashi: aroodha, useRashi: true, useNavamsha: true, useDvadashamsha: true);
-      case 4: // ನವಾಂಶ∪ದ್ವಾದಶಾಂಶ
-        return YogaPhala.evaluateUnion(r, aroodhaRashi: aroodha, useRashi: false, useNavamsha: true, useDvadashamsha: true);
-      default:
-        return YogaPhala.evaluate(r, aroodhaRashi: aroodha);
-    }
-  }
-
-  // ═══════════════════════════════════════════
-  // CHANDRA RASHI PHALA
-  // ═══════════════════════════════════════════
-  List<Widget> _buildChandraRashiPhala(KundaliResult r) {
-    final moonInfo = r.planets['ಚಂದ್ರ'];
-    if (moonInfo == null) return [];
-    final moonRashiIdx = (moonInfo.longitude / 30).floor() % 12;
-    final moonRashi = knRashi[moonRashiIdx];
-    final shloka = BhavaPhala.getChandraRashiPhala(moonRashi);
-    if (shloka.isEmpty) return [];
-
-    return [
-      const SizedBox(height: 8),
-      AppCard(
-        padding: EdgeInsets.zero,
-        child: ExpansionTile(
-          tilePadding: const EdgeInsets.symmetric(horizontal: 12),
-          childrenPadding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
-          initiallyExpanded: false,
-          title: Text('ಚಂದ್ರ ರಾಶಿ ಫಲ', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w900, color: kText)),
-          subtitle: Text('ಚಂದ್ರ ರಾಶಿ: $moonRashi', style: TextStyle(fontSize: 10, color: kMuted)),
-          children: [
-            Container(
-              padding: const EdgeInsets.all(10),
-              decoration: BoxDecoration(
-                color: const Color(0xFF90CAF9).withOpacity(0.06),
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: const Color(0xFF90CAF9).withOpacity(0.2)),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(children: [
-                    Text('ಚಂದ್ರ', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w900, color: const Color(0xFF90CAF9))),
-                    const Spacer(),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF90CAF9).withOpacity(0.12),
-                        borderRadius: BorderRadius.circular(6),
-                      ),
-                      child: Text(moonRashi,
-                          style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: const Color(0xFF1565C0))),
-                    ),
-                  ]),
-                  const SizedBox(height: 8),
-                  Text(shloka,
-                      style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: kText, height: 1.6)),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
-    ];
-  }
-
-  // ═══════════════════════════════════════════
   // GRAHA PHALA CARDS
   // ═══════════════════════════════════════════
   List<Widget> _buildGrahaPhalas(KundaliResult r) {
@@ -1474,7 +645,6 @@ class _PrashnaDashboardScreenState extends State<PrashnaDashboardScreen>
       'ಶುಕ್ರ': Color(0xFFEC407A),
       'ಶನಿ': Color(0xFF5C6BC0),
     };
-    const bookNames = ['ಬೃಹತ್ ಜಾತಕ', 'ಸಾರಾವಳಿ'];
     return [
       AppCard(
         padding: EdgeInsets.zero,
@@ -1484,138 +654,66 @@ class _PrashnaDashboardScreenState extends State<PrashnaDashboardScreen>
           initiallyExpanded: false,
           title: Text('ಗ್ರಹ ಫಲ', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w900, color: kText)),
           subtitle: Text('ರಾಶಿ · ನವಾಂಶ · ದ್ವಾದಶಾಂಶ · ದ್ರೇಕ್ಕಾಣ', style: TextStyle(fontSize: 10, color: kMuted)),
-          children: [
-            // ── Book Switcher ──
-            Padding(
-              padding: const EdgeInsets.only(bottom: 10),
-              child: Row(
-                children: List.generate(bookNames.length, (i) {
-                  final sel = _selectedBook == i;
-                  return Padding(
-                    padding: const EdgeInsets.only(right: 8),
-                    child: ChoiceChip(
-                      label: Text(bookNames[i], style: TextStyle(
-                        fontSize: 11, fontWeight: FontWeight.w700,
-                        color: sel ? Colors.white : kPurple2,
-                      )),
-                      selected: sel,
-                      selectedColor: kPurple2,
-                      backgroundColor: kPurple2.withOpacity(0.08),
-                      side: BorderSide(color: sel ? kPurple2 : kPurple2.withOpacity(0.3)),
-                      onSelected: (_) => setState(() => _selectedBook = i),
-                      visualDensity: VisualDensity.compact,
-                      materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                    ),
-                  );
-                }),
+          children: phalas.map((gp) {
+            final pColor = planetColors[gp.planet] ?? kTeal;
+            return Container(
+              margin: const EdgeInsets.only(top: 8),
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: pColor.withOpacity(0.05),
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: pColor.withOpacity(0.2)),
               ),
-            ),
-            // ── Planet Selector ──
-            Padding(
-              padding: const EdgeInsets.only(bottom: 10),
-              child: Wrap(
-                spacing: 6,
-                runSpacing: 6,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _grahaChip(null, 'ಎಲ್ಲಾ', kTeal),
-                  ...phalas.map((gp) => _grahaChip(gp.planet, gp.planet, planetColors[gp.planet] ?? kTeal)),
+                  // Planet name header
+                  Row(children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                      decoration: BoxDecoration(color: pColor.withOpacity(0.15), borderRadius: BorderRadius.circular(6)),
+                      child: Text(gp.planet, style: TextStyle(fontSize: 13, fontWeight: FontWeight.w900, color: pColor)),
+                    ),
+                    const SizedBox(width: 8),
+                    Text(gp.rashi, style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: kText)),
+                  ]),
+                  const SizedBox(height: 8),
+                  // Shloka
+                  if (gp.rashiShloka.isNotEmpty)
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 6),
+                      child: Text(gp.rashiShloka, style: TextStyle(fontSize: 10, fontStyle: FontStyle.italic, color: kMuted, height: 1.4)),
+                    ),
+                  // Phala rows
+                  _phalaRow('ರಾಶಿ ಫಲ', gp.rashi, gp.rashiPhala, pColor),
+                  _phalaRow('ನವಾಂಶ ಫಲ', gp.navamshaRashi, gp.navamshaPhala, pColor),
+                  _phalaRow('ದ್ವಾದಶಾಂಶ ಫಲ', gp.dvadamshaRashi, gp.dvadashamshaPhala, pColor),
+                  _phalaRow('ದ್ರೇಕ್ಕಾಣ ಫಲ', gp.drekkanaRashi, gp.drekkanaPhala, pColor),
                 ],
               ),
-            ),
-            // ── Planet Phalas ──
-            ...phalas.where((gp) => _selectedGraha == null || gp.planet == _selectedGraha).map((gp) {
-              final pColor = planetColors[gp.planet] ?? kTeal;
-              // BJ: show Kannada phala text; Saravali: show Saravali phala
-              final rashiPhalaText = _selectedBook == 0 ? gp.rashiPhala : gp.saravaliRashiPhala;
-              final navPhalaText = _selectedBook == 0 ? gp.navamshaPhala : gp.saravaliNavamshaPhala;
-              final dvadPhalaText = _selectedBook == 0 ? gp.dvadashamshaPhala : gp.saravaliDvadashamshaPhala;
-              // Shloka reference (only for BJ)
-               final rashiShlokaRef = _selectedBook == 0 ? gp.rashiShloka : '';
-              final navShlokaRef = _selectedBook == 0 ? gp.navamshaShloka : '';
-              final dvadShlokaRef = _selectedBook == 0 ? gp.dvadamshaShloka : '';
-              return Container(
-                margin: const EdgeInsets.only(top: 8),
-                padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(
-                  color: pColor.withOpacity(0.05),
-                  borderRadius: BorderRadius.circular(10),
-                  border: Border.all(color: pColor.withOpacity(0.2)),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Planet name header
-                    Row(children: [
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                        decoration: BoxDecoration(color: pColor.withOpacity(0.15), borderRadius: BorderRadius.circular(6)),
-                        child: Text(gp.planet, style: TextStyle(fontSize: 13, fontWeight: FontWeight.w900, color: pColor)),
-                      ),
-                      const SizedBox(width: 8),
-                      Text(gp.rashi, style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: kText)),
-                    ]),
-                    const SizedBox(height: 8),
-                    // Phala rows — show shloka as main content
-                    _phalaRow('ರಾಶಿ', gp.rashi, _selectedBook == 0 ? gp.rashiShloka : gp.saravaliRashiPhala, pColor),
-                    _phalaRow('ನವಾಂಶ', gp.navamshaRashi, _selectedBook == 0 ? gp.navamshaShloka : gp.saravaliNavamshaPhala, pColor),
-                    _phalaRow('ದ್ವಾದಶಾಂಶ', gp.dvadamshaRashi, _selectedBook == 0 ? gp.dvadamshaShloka : gp.saravaliDvadashamshaPhala, pColor),
-                    _phalaRow('ದ್ರೇಕ್ಕಾಣ', gp.drekkanaRashi, gp.drekkanaPhala, pColor),
-                    _phalaRow('D9 ದ್ರೇಕ್ಕಾಣ', gp.d9DrekkanaRashi, gp.d9DrekkanaPhala, pColor),
-                    _phalaRow('D12 ದ್ರೇಕ್ಕಾಣ', gp.d12DrekkanaRashi, gp.d12DrekkanaPhala, pColor),
-                  ],
-                ),
-              );
-            }),
-          ],
+            );
+          }).toList(),
         ),
       ),
     ];
   }
 
-  Widget _grahaChip(String? value, String label, Color color) {
-    final sel = _selectedGraha == value;
-    return GestureDetector(
-      onTap: () => setState(() => _selectedGraha = value),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-        decoration: BoxDecoration(
-          color: sel ? color : color.withOpacity(0.08),
-          borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: sel ? color : color.withOpacity(0.3)),
-        ),
-        child: Text(label, style: TextStyle(
-          fontSize: 11, fontWeight: FontWeight.w800,
-          color: sel ? Colors.white : color,
-        )),
-      ),
-    );
-  }
-
   Widget _phalaRow(String label, String rashi, String phala, Color accent) {
-    if (phala.isEmpty) return const SizedBox.shrink();
     return Padding(
-      padding: const EdgeInsets.only(bottom: 8),
-      child: Column(
+      padding: const EdgeInsets.only(bottom: 4),
+      child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Label + Rashi name header
-          Row(children: [
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-              decoration: BoxDecoration(
-                color: accent.withOpacity(0.12),
-                borderRadius: BorderRadius.circular(4),
-              ),
-              child: Text(label, style: TextStyle(fontSize: 10, fontWeight: FontWeight.w800, color: accent)),
-            ),
-            const SizedBox(width: 6),
-            Text(rashi, style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: kText)),
-          ]),
-          const SizedBox(height: 3),
-          // Shloka text
-          Padding(
-            padding: const EdgeInsets.only(left: 4),
-            child: Text(phala, style: TextStyle(fontSize: 11, color: kText, height: 1.5)),
+          SizedBox(
+            width: 90,
+            child: Text(label, style: TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: accent)),
+          ),
+          SizedBox(
+            width: 50,
+            child: Text(rashi, style: TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: kMuted)),
+          ),
+          Expanded(
+            child: Text(phala, style: TextStyle(fontSize: 10, color: kText)),
           ),
         ],
       ),

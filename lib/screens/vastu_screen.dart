@@ -2,8 +2,6 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import '../widgets/common.dart';
 import '../constants/strings.dart';
-import '../services/app_access_service.dart';
-import 'support_screen.dart';
 
 // ─── English names (constant, language-independent) ───
 const List<String> _yoniEnglish = [
@@ -60,7 +58,6 @@ String _fmtSqFt(int sqInches) {
 const Map<String, Map<String, String>> _vastuStrings = {
   'kn': {
     'title': 'ವಾಸ್ತು ಅಳತೆಗಳು', 'sub': '',
-    'tabParidhi': 'ಪರಿಧಿ (ಅಡಿ)', 'paridhiHint': 'ಕಟ್ಟಡದ ಸುತ್ತಳತೆ ಅಡಿಯಲ್ಲಿ ನಮೂದಿಸಿ', 'sqftHintNew': 'ವಿಸ್ತೀರ್ಣ ಚ.ಅಡಿಯಲ್ಲಿ ನಮೂದಿಸಿ',
     'ownerNak': 'ಯಜಮಾನನ ನಕ್ಷತ್ರ', 'selectNak': 'ನಕ್ಷತ್ರ ಆಯ್ಕೆ ಮಾಡಿ',
     'length': 'ಉದ್ದ (ಅಡಿ)', 'breadth': 'ಅಗಲ (ಅಡಿ)', 'area': 'ವಿಸ್ತೀರ್ಣ (ಚ.ಅಡಿ)',
     'tabLB': 'ಉದ್ದ × ಅಗಲ', 'tabSqft': 'ವಿಸ್ತೀರ್ಣ (ಚ.ಅಡಿ)',
@@ -93,7 +90,6 @@ const Map<String, Map<String, String>> _vastuStrings = {
   },
   'hi': {
     'title': 'वास्तु मापन', 'sub': 'Vastu Measurements',
-    'tabParidhi': 'परिधि (फीट)', 'paridhiHint': 'भवन की परिधि फीट में दर्ज करें', 'sqftHintNew': 'क्षेत्रफल वर्ग.फीट में दर्ज करें',
     'ownerNak': 'मकान मालिक का नक्षत्र (Owner\'s Nakshatra)', 'selectNak': 'नक्षत्र चुनें',
     'length': 'लम्बाई / Length (Feet)', 'breadth': 'चौड़ाई / Breadth (Feet)', 'area': 'क्षेत्रफल / Area (Sq Ft)',
     'tabLB': 'लम्बाई × चौड़ाई (L × B)', 'tabSqft': 'क्षेत्रफल (Sq Ft)',
@@ -126,7 +122,6 @@ const Map<String, Map<String, String>> _vastuStrings = {
   },
   'ta': {
     'title': 'வாஸ்து அளவீடுகள்', 'sub': 'Vastu Measurements',
-    'tabParidhi': 'சுற்றளவு (அடி)', 'paridhiHint': 'கட்டிடத்தின் சுற்றளவு அடியில் பதிவு செய்யவும்', 'sqftHintNew': 'பரப்பளவு ச.அடியில் பதிவு செய்யவும்',
     'ownerNak': 'உரிமையாளர் நக்ஷத்திரம் (Owner\'s Nakshatra)', 'selectNak': 'நக்ஷத்திரம் தேர்வு',
     'length': 'நீளம் / Length (Feet)', 'breadth': 'அகலம் / Breadth (Feet)', 'area': 'பரப்பளவு / Area (Sq Ft)',
     'tabLB': 'நீளம் × அகலம் (L × B)', 'tabSqft': 'பரப்பளவு (Sq Ft)',
@@ -159,7 +154,6 @@ const Map<String, Map<String, String>> _vastuStrings = {
   },
   'te': {
     'title': 'వాస్తు కొలతలు', 'sub': 'Vastu Measurements',
-    'tabParidhi': 'చుట్టుకొలత (అడి)', 'paridhiHint': 'భవన చుట్టుకొలత అడులలో నమోదు చేయండి', 'sqftHintNew': 'వైశాల్యం చ.అడులలో నమోదు చేయండి',
     'ownerNak': 'యజమాని నక్షత్రం (Owner\'s Nakshatra)', 'selectNak': 'నక్షత్రం ఎంచుకోండి',
     'length': 'పొడవు / Length (Feet)', 'breadth': 'వెడల్పు / Breadth (Feet)', 'area': 'వైశాల్యం / Area (Sq Ft)',
     'tabLB': 'పొడవు × వెడల్పు (L × B)', 'tabSqft': 'వైశాల్యం (Sq Ft)',
@@ -192,7 +186,6 @@ const Map<String, Map<String, String>> _vastuStrings = {
   },
   'ml': {
     'title': 'വാസ്തു അളവുകൾ', 'sub': 'Vastu Measurements',
-    'tabParidhi': 'ചുറ്റളവ് (അടി)', 'paridhiHint': 'കെട്ടിടത്തിന്റെ ചുറ്റളവ് അടിയിൽ നൽകുക', 'sqftHintNew': 'വിസ്തീർണ്ണം ച.അടിയിൽ നൽകുക',
     'ownerNak': 'ഉടമയുടെ നക്ഷത്രം (Owner\'s Nakshatra)', 'selectNak': 'നക്ഷത്രം തിരഞ്ഞെടുക്കുക',
     'length': 'നീളം / Length (Feet)', 'breadth': 'വീതി / Breadth (Feet)', 'area': 'വിസ്തീർണ്ണം / Area (Sq Ft)',
     'tabLB': 'നീളം × വീതി (L × B)', 'tabSqft': 'വിസ്തീർണ്ണം (Sq Ft)',
@@ -365,8 +358,8 @@ class VastuScreen extends StatefulWidget {
   State<VastuScreen> createState() => _VastuScreenState();
 }
 
-class _VastuScreenState extends State<VastuScreen> {
-  int _inputMode = 0; // 0 = Paridhi, 1 = SqFt
+class _VastuScreenState extends State<VastuScreen> with SingleTickerProviderStateMixin {
+  late TabController _tabCtrl;
   int? _ownerNakIndex;
   int _koluIndex = 0; // default: Kishku (24 angula), -1 = custom
   final _customKoluNameCtrl = TextEditingController(text: '');
@@ -382,8 +375,10 @@ class _VastuScreenState extends State<VastuScreen> {
     return _v(_koluTypes[_koluIndex].id);
   }
 
-  final _minParCtrl = TextEditingController(text: '140');
-  final _maxParCtrl = TextEditingController(text: '180');
+  final _minLenCtrl = TextEditingController(text: '30');
+  final _maxLenCtrl = TextEditingController(text: '40');
+  final _minBreadthCtrl = TextEditingController(text: '40');
+  final _maxBreadthCtrl = TextEditingController(text: '50');
 
   final _minSqftCtrl = TextEditingController(text: '1000');
   final _maxSqftCtrl = TextEditingController(text: '1200');
@@ -396,12 +391,21 @@ class _VastuScreenState extends State<VastuScreen> {
   @override
   void initState() {
     super.initState();
+    _tabCtrl = TabController(length: 2, vsync: this);
+    _tabCtrl.addListener(() {
+      if (!_tabCtrl.indexIsChanging) {
+        setState(() { _searched = false; _results = []; });
+      }
+    });
   }
 
   @override
   void dispose() {
-    _minParCtrl.dispose();
-    _maxParCtrl.dispose();
+    _tabCtrl.dispose();
+    _minLenCtrl.dispose();
+    _maxLenCtrl.dispose();
+    _minBreadthCtrl.dispose();
+    _maxBreadthCtrl.dispose();
     _minSqftCtrl.dispose();
     _maxSqftCtrl.dispose();
     _customKoluNameCtrl.dispose();
@@ -422,40 +426,50 @@ class _VastuScreenState extends State<VastuScreen> {
     return true;
   }
 
-  /// Paridhi-first search: user enters min/max perimeter in feet
-  void _searchParidhi() {
+  /// Hasta-first L×B search: find valid whole-number hastas, then back-calculate L×B
+  void _searchLB() {
     if (!_validateNak()) return;
-    final minP = int.tryParse(_minParCtrl.text) ?? 100;
-    final maxP = int.tryParse(_maxParCtrl.text) ?? 200;
+    final minL = int.tryParse(_minLenCtrl.text) ?? 10;
+    final maxL = int.tryParse(_maxLenCtrl.text) ?? 50;
+    final minB = int.tryParse(_minBreadthCtrl.text) ?? 10;
+    final maxB = int.tryParse(_maxBreadthCtrl.text) ?? 50;
 
-    if (minP > maxP) {
+    if (minL > maxL || minB > maxB) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(_v('errMinMax')), backgroundColor: Colors.red),
       );
       return;
     }
-    if (maxP - minP > 500) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(_v('errRange')), backgroundColor: Colors.red),
-      );
-      return;
-    }
 
     final koluCm = _effectiveKoluCm;
-    final minPerimCm = minP * 30.48;
-    final maxPerimCm = maxP * 30.48;
+    // Convert feet to cm (1 foot = 30.48 cm)
+    final minLenCm = minL * 30.48;
+    final maxLenCm = maxL * 30.48;
+    final minBreCm = minB * 30.48;
+    final maxBreCm = maxB * 30.48;
 
+    // Perimeter range in cm
+    final minPerimCm = 2 * (minLenCm + minBreCm);
+    final maxPerimCm = 2 * (maxLenCm + maxBreCm);
+
+    // Valid whole-number hasta range
     final minHasta = (minPerimCm / koluCm).ceil();
     final maxHasta = (maxPerimCm / koluCm).floor();
 
     final results = <_VastuResult>[];
     for (int h = minHasta; h <= maxHasta; h++) {
-      results.add(_calcFromHasta(h, koluCm, _ownerNakIndex!, 0, 0, 0, 0));
+      final sumCm = (h * koluCm) / 2;
+      // Check if valid L×B exists within user's range
+      final lMin = max(minLenCm, sumCm - maxBreCm);
+      final lMax = min(maxLenCm, sumCm - minBreCm);
+      if (lMin <= lMax) {
+        results.add(_calcFromHasta(h, koluCm, _ownerNakIndex!,
+            minLenCm, maxLenCm, minBreCm, maxBreCm));
+      }
     }
     _sortAndSet(results);
   }
 
-  /// SqFt search: for each sqft value, find possible Hasta values
   void _searchSqft() {
     if (!_validateNak()) return;
     final minSq = int.tryParse(_minSqftCtrl.text) ?? 500;
@@ -474,21 +488,24 @@ class _VastuScreenState extends State<VastuScreen> {
       return;
     }
 
-    final koluCm = _effectiveKoluCm;
-    // For a given area, perimeter range depends on L:B ratio.
-    // Square (1:1): P = 4 × sqrt(A) — minimum perimeter
-    // Rectangle (3:1): P = (8/√3) × sqrt(A) ≈ 4.62 × sqrt(A) — practical max
-    final minPerimFt = 4.0 * sqrt(minSq.toDouble());
-    final maxPerimFt = 4.62 * sqrt(maxSq.toDouble());
-    final minPerimCm = minPerimFt * 30.48;
-    final maxPerimCm = maxPerimFt * 30.48;
-
-    final minHasta = (minPerimCm / koluCm).ceil();
-    final maxHasta = (maxPerimCm / koluCm).floor();
-
     final results = <_VastuResult>[];
-    for (int h = minHasta; h <= maxHasta; h++) {
-      results.add(_calcFromHasta(h, koluCm, _ownerNakIndex!, 0, 0, 0, 0));
+    final koluCm = _effectiveKoluCm;
+    final seen = <int>{};
+    for (int sq = minSq; sq <= maxSq; sq++) {
+      final pairs = _factorPairs(sq);
+      if (pairs.isEmpty) continue;
+      for (final pair in pairs) {
+        // pair is in feet; calculate perimeter and hasta
+        final perimCm = 2 * (pair[0] + pair[1]) * 30.48;
+        final hastaExact = perimCm / koluCm;
+        final hasta = hastaExact.round();
+        if (seen.add(hasta)) {
+          final lenCm = pair[1] * 30.48; // longer side
+          final breCm = pair[0] * 30.48; // shorter side
+          results.add(_calcFromHasta(hasta, koluCm, _ownerNakIndex!,
+              breCm, lenCm, breCm, lenCm));
+        }
+      }
     }
     _sortAndSet(results);
   }
@@ -548,11 +565,6 @@ class _VastuScreenState extends State<VastuScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // Gate: if student mode, show support screen
-    if (AppAccessService.isStudent) {
-      return const SupportScreen(lockType: SupportLockType.student);
-    }
-
     final naks = appNak;
 
     return Scaffold(
@@ -568,55 +580,24 @@ class _VastuScreenState extends State<VastuScreen> {
         ),
         iconTheme: IconThemeData(color: kText),
         elevation: 0,
+        bottom: TabBar(
+          controller: _tabCtrl,
+          tabs: [
+            Tab(text: _v('tabLB')),
+            Tab(text: _v('tabSqft')),
+          ],
+          labelColor: kPurple2,
+          unselectedLabelColor: kMuted,
+          indicatorColor: kPurple2,
+          labelStyle: const TextStyle(fontWeight: FontWeight.w800, fontSize: 13),
+          unselectedLabelStyle: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
+        ),
       ),
-      body: OrientationBuilder(
-        builder: (context, orientation) {
-          final isLandscape = orientation == Orientation.landscape;
-
-          // ── Shared widgets ──
-          final modeToggle = Container(
-              margin: const EdgeInsets.fromLTRB(12, 12, 12, 0),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: GestureDetector(
-                      onTap: () => setState(() { _inputMode = 0; _searched = false; _results = []; }),
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(vertical: 12),
-                        decoration: BoxDecoration(
-                          color: _inputMode == 0 ? kPurple2 : kCard,
-                          borderRadius: const BorderRadius.only(topLeft: Radius.circular(12), bottomLeft: Radius.circular(12)),
-                          border: Border.all(color: _inputMode == 0 ? kPurple2 : kBorder),
-                        ),
-                        child: Center(child: Text(_v('tabParidhi'), style: TextStyle(
-                          fontSize: 14, fontWeight: FontWeight.w800,
-                          color: _inputMode == 0 ? Colors.white : kMuted,
-                        ))),
-                      ),
-                    ),
-                  ),
-                  Expanded(
-                    child: GestureDetector(
-                      onTap: () => setState(() { _inputMode = 1; _searched = false; _results = []; }),
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(vertical: 12),
-                        decoration: BoxDecoration(
-                          color: _inputMode == 1 ? kPurple2 : kCard,
-                          borderRadius: const BorderRadius.only(topRight: Radius.circular(12), bottomRight: Radius.circular(12)),
-                          border: Border.all(color: _inputMode == 1 ? kPurple2 : kBorder),
-                        ),
-                        child: Center(child: Text(_v('tabSqft'), style: TextStyle(
-                          fontSize: 14, fontWeight: FontWeight.w800,
-                          color: _inputMode == 1 ? Colors.white : kMuted,
-                        ))),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            );
-
-          final nakDropdown = Container(
+      body: SafeArea(
+        child: Column(
+          children: [
+            // ── Shared: Nakshatra dropdown ──
+            Container(
               margin: const EdgeInsets.fromLTRB(12, 12, 12, 0),
               padding: const EdgeInsets.all(14),
               decoration: BoxDecoration(
@@ -627,254 +608,264 @@ class _VastuScreenState extends State<VastuScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(_v('ownerNak'), style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: kMuted)),
+                  Text(_v('ownerNak'),
+                    style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: kPurple2)),
                   const SizedBox(height: 6),
                   DropdownButtonFormField<int>(
                     value: _ownerNakIndex,
                     isExpanded: true,
                     decoration: InputDecoration(
-                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                      hintText: _v('selectNak'),
+                      hintStyle: TextStyle(color: kMuted, fontSize: 13),
+                      isDense: true,
                       contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                      filled: true,
-                      fillColor: kBg,
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
                     ),
                     items: List.generate(27, (i) => DropdownMenuItem(
                       value: i,
-                      child: Text(trAll(naks[i]), style: TextStyle(fontSize: 14, color: kText)),
+                      child: Text('${i + 1}. ${naks[i]}', style: TextStyle(fontSize: 14, color: kText)),
                     )),
-                    onChanged: (v) => setState(() { _ownerNakIndex = v!; _searched = false; _results = []; }),
+                    onChanged: (v) => setState(() => _ownerNakIndex = v),
                   ),
-                  if (_inputMode == 0) ...[
-                    const SizedBox(height: 10),
-                    Text(_v('koluType'), style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: kMuted)),
-                    const SizedBox(height: 6),
-                    DropdownButtonFormField<int>(
-                      value: _koluIndex,
-                      isExpanded: true,
-                      decoration: InputDecoration(
-                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-                        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                        filled: true,
-                        fillColor: kBg,
-                      ),
-                      items: [
-                        ...List.generate(_koluTypes.length, (i) {
-                          final k = _koluTypes[i];
-                          return DropdownMenuItem(
-                            value: i,
-                            child: Text(
-                              '${_v(k.id)} (${k.angula} ${_v('angula')} = ${k.cm.toStringAsFixed(0)} cm)',
-                              style: TextStyle(fontSize: 13, color: kText),
-                            ),
-                          );
-                        }),
-                        DropdownMenuItem(
-                          value: -1,
-                          child: Text('${_v('custom')}', style: TextStyle(fontSize: 13, color: kPurple2, fontWeight: FontWeight.w700)),
-                        ),
-                      ],
-                      onChanged: (v) => setState(() { _koluIndex = v!; _searched = false; _results = []; }),
+                  const SizedBox(height: 12),
+                  Text(_v('koluType'),
+                    style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: kPurple2)),
+                  const SizedBox(height: 6),
+                  DropdownButtonFormField<int>(
+                    value: _koluIndex,
+                    isExpanded: true,
+                    decoration: InputDecoration(
+                      isDense: true,
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
                     ),
-                    if (_koluIndex == -1) ...[
-                      const SizedBox(height: 8),
-                      TextField(
-                        controller: _customKoluNameCtrl,
-                        decoration: InputDecoration(
-                          labelText: _v('koluName'),
-                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-                          contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                          filled: true, fillColor: kBg,
-                        ),
-                        style: TextStyle(fontSize: 13, color: kText),
-                      ),
-                      const SizedBox(height: 8),
-                      TextField(
-                        controller: _customKoluCmCtrl,
-                        keyboardType: TextInputType.number,
-                        decoration: InputDecoration(
-                          labelText: '${_v('koluType')} (cm)',
-                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-                          contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                          filled: true, fillColor: kBg,
-                        ),
-                        style: TextStyle(fontSize: 13, color: kText),
-                        onChanged: (_) => setState(() { _searched = false; _results = []; }),
-                      ),
-                    ],
-                  ],
-                ],
-              ),
-            );
-
-          final searchBtn = Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 12),
-            child: SizedBox(
-              width: double.infinity,
-              child: ElevatedButton.icon(
-                onPressed: _inputMode == 0 ? _searchParidhi : _searchSqft,
-                icon: const Icon(Icons.search, size: 20),
-                label: Text(_v('search'), style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w800)),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: kPurple2,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(vertical: 14),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                ),
-              ),
-            ),
-          );
-
-          final resultsWidget = Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              if (_searched) ...[
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 14),
-                  child: Row(
-                    children: [
-                      Icon(_showOnlyGood ? Icons.filter_alt : Icons.filter_alt_off,
-                          size: 16, color: _showOnlyGood ? kGreen : kMuted),
-                      const SizedBox(width: 4),
-                      Expanded(
-                        child: Text(
-                          _showOnlyGood ? _v('goodOnly') : _v('allResults'),
-                          style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: kMuted),
-                        ),
-                      ),
-                      Text('${_filteredResults.length}/${_results.length}',
-                        style: TextStyle(fontSize: 12, color: kPurple2, fontWeight: FontWeight.w800)),
-                      Switch(
-                        value: _showOnlyGood,
-                        activeColor: kGreen,
-                        onChanged: (v) => setState(() => _showOnlyGood = v),
-                      ),
-                    ],
-                  ),
-                ),
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 14),
-                  child: SingleChildScrollView(
-                    scrollDirection: Axis.horizontal,
-                    child: Row(
-                      children: List.generate(8, (i) {
-                        final sel = _selectedYoni == i;
-                        return Padding(
-                          padding: const EdgeInsets.only(right: 6),
-                          child: FilterChip(
-                            label: Text(_v('a${i+1}'), style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700)),
-                            selected: sel,
-                            selectedColor: kPurple2.withOpacity(0.15),
-                            checkmarkColor: kPurple2,
-                            backgroundColor: kCard,
-                            side: BorderSide(color: sel ? kPurple2 : kBorder),
-                            onSelected: (v) => setState(() => _selectedYoni = v ? i : null),
+                    items: [
+                      ...List.generate(_koluTypes.length, (i) {
+                        final k = _koluTypes[i];
+                        return DropdownMenuItem(
+                          value: i,
+                          child: Text(
+                            '${_v(k.id)}  (${k.angula} ${_v('angula')} = ${k.cm.toInt()} cm)',
+                            style: TextStyle(fontSize: 13, color: kText),
                           ),
                         );
                       }),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 8),
-              ],
-              if (!_searched)
-                Padding(
-                  padding: const EdgeInsets.only(top: 40),
-                  child: Column(
-                    children: [
-                      Icon(Icons.home_work_rounded, size: 64, color: kPurple2.withOpacity(0.3)),
-                      const SizedBox(height: 12),
-                      Text(_v('hint'), style: TextStyle(color: kMuted, fontSize: 14)),
-                      Text(_v('hintEn'), style: TextStyle(color: kMuted, fontSize: 12)),
+                      DropdownMenuItem(
+                        value: -1,
+                        child: Text('✏️ ${_v('custom')}', style: TextStyle(fontSize: 13, color: kOrange, fontWeight: FontWeight.w700)),
+                      ),
                     ],
+                    onChanged: (v) => setState(() { _koluIndex = v!; _searched = false; _results = []; }),
                   ),
-                )
-              else if (_filteredResults.isEmpty)
-                Padding(
-                  padding: const EdgeInsets.only(top: 40),
-                  child: Column(
-                    children: [
-                      Icon(Icons.search_off, size: 48, color: Colors.red.withOpacity(0.4)),
-                      const SizedBox(height: 8),
-                      Text(_v('noResults'), style: TextStyle(color: kMuted, fontSize: 14)),
-                    ],
-                  ),
-                )
-              else
-                ..._filteredResults.map((r) => Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 12),
-                  child: _buildResultCard(r),
-                )),
-              const SizedBox(height: 24),
-            ],
-          );
-
-          if (!isLandscape) {
-            // ── PORTRAIT: existing layout ──
-            return SafeArea(
-              child: Column(
-                children: [
-                  modeToggle,
-                  nakDropdown,
-                  Expanded(
-                    child: CustomScrollView(
-                      slivers: [
-                        SliverToBoxAdapter(
-                          child: _inputMode == 0 ? _buildParInput() : _buildSqftInputs(),
+                  if (_koluIndex == -1) ...[
+                    const SizedBox(height: 8),
+                    Row(children: [
+                      Expanded(
+                        child: TextField(
+                          controller: _customKoluNameCtrl,
+                          decoration: InputDecoration(
+                            labelText: _v('koluName'),
+                            isDense: true,
+                            contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                            border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                          ),
+                          style: TextStyle(fontSize: 13, color: kText),
                         ),
-
-                        const SliverToBoxAdapter(child: SizedBox(height: 8)),
-                        SliverToBoxAdapter(child: searchBtn),
-                        const SliverToBoxAdapter(child: SizedBox(height: 8)),
-                        SliverToBoxAdapter(child: resultsWidget),
-                      ],
-                    ),
-                  ),
+                      ),
+                      const SizedBox(width: 8),
+                      SizedBox(
+                        width: 100,
+                        child: TextField(
+                          controller: _customKoluCmCtrl,
+                          keyboardType: TextInputType.number,
+                          decoration: InputDecoration(
+                            labelText: 'cm',
+                            isDense: true,
+                            contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                            border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                          ),
+                          style: TextStyle(fontSize: 13, color: kText),
+                        ),
+                      ),
+                    ]),
+                  ],
                 ],
               ),
-            );
-          } else {
-            // ── LANDSCAPE: inputs left, results right ──
-            return SafeArea(
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Expanded(
-                    flex: 2,
-                    child: SingleChildScrollView(
-                      padding: const EdgeInsets.only(bottom: 24),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          modeToggle,
-                          nakDropdown,
-                          _inputMode == 0 ? _buildParInput() : _buildSqftInputs(),
+            ),
 
-                          const SizedBox(height: 8),
-                          searchBtn,
+            // ── Tab content ──
+            Expanded(
+              child: CustomScrollView(
+                slivers: [
+                  SliverToBoxAdapter(
+                    child: ListenableBuilder(
+                      listenable: _tabCtrl,
+                      builder: (context, _) {
+                        return _tabCtrl.index == 0 ? _buildLBInputs() : _buildSqftInputs();
+                      },
+                    ),
+                  ),
+
+                  // Formula info
+                  SliverToBoxAdapter(
+                    child: Container(
+                      margin: const EdgeInsets.symmetric(horizontal: 12),
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        color: kPurple2.withOpacity(0.05),
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(color: kPurple2.withOpacity(0.15)),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(_v('formula'), style: TextStyle(
+                            fontSize: 11, fontWeight: FontWeight.w800, color: kPurple2)),
+                          const SizedBox(height: 4),
+                          Text('• ${_v('peridhi')} (cm) = 2 × (${_v('length').split(' /')[0].split(' (')[0]} + ${_v('breadth').split(' /')[0].split(' (')[0]}) × 30.48',
+                            style: TextStyle(fontSize: 10, color: kMuted)),
+                          Text('• ${_v('hasta')} = ${_v('peridhi')} (cm) ÷ ${_effectiveKoluCm.toInt()}  (whole number only)',
+                            style: TextStyle(fontSize: 10, color: kMuted)),
+                          Text('• 1 foot = 30.48 cm  |  1 $_effectiveKoluName = ${_effectiveKoluCm.toInt()} cm',
+                            style: TextStyle(fontSize: 10, color: kOrange, fontWeight: FontWeight.w700)),
+                          Text('• ${_v('yoni')} = (${_v('hasta')} × 3) % 8',
+                            style: TextStyle(fontSize: 10, color: kMuted)),
+                          Text('• ${_v('aaya')} = (${_v('hasta')} × 8) % 12  |  ${_v('vyaya')} = (${_v('hasta')} × 3) % 14',
+                            style: TextStyle(fontSize: 10, color: kMuted)),
+                          Text('• ${AppLocale.l('nakshatra')} = (${_v('hasta')} × 8) % 27  |  ${_v('tithi')} = (${_v('hasta')} × 8) % 30',
+                            style: TextStyle(fontSize: 10, color: kMuted)),
+                          Text('• ${_v('vaara')} = (${_v('hasta')} × 8) % 7',
+                            style: TextStyle(fontSize: 10, color: kMuted)),
+                          Text('• ${_v('vayassu')} = ((${_v('hasta')} × 8) ÷ 27) % 5',
+                            style: TextStyle(fontSize: 10, color: kMuted)),
                         ],
                       ),
                     ),
                   ),
-                  const VerticalDivider(width: 1),
-                  Expanded(
-                    flex: 3,
-                    child: SingleChildScrollView(
-                      padding: const EdgeInsets.all(8),
-                      child: resultsWidget,
+                  const SliverToBoxAdapter(child: SizedBox(height: 8)),
+
+                  // Search button
+                  SliverToBoxAdapter(
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 12),
+                      child: SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton.icon(
+                          onPressed: _tabCtrl.index == 0 ? _searchLB : _searchSqft,
+                          icon: const Icon(Icons.search, size: 20),
+                          label: Text(_v('search'), style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w800)),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: kPurple2,
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(vertical: 14),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          ),
+                        ),
+                      ),
                     ),
                   ),
+                  const SliverToBoxAdapter(child: SizedBox(height: 8)),
+
+                  // ── Filter toggle ──
+                  if (_searched)
+                    SliverToBoxAdapter(
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 14),
+                        child: Row(
+                          children: [
+                            Icon(_showOnlyGood ? Icons.filter_alt : Icons.filter_alt_off,
+                                size: 16, color: _showOnlyGood ? kGreen : kMuted),
+                            const SizedBox(width: 4),
+                            Expanded(
+                              child: Text(
+                                _showOnlyGood ? _v('goodOnly') : _v('allResults'),
+                                style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: kMuted),
+                              ),
+                            ),
+                            Text('${_filteredResults.length}/${_results.length}',
+                              style: TextStyle(fontSize: 12, color: kPurple2, fontWeight: FontWeight.w800)),
+                            Switch(
+                              value: _showOnlyGood,
+                              activeColor: kGreen,
+                              onChanged: (v) => setState(() => _showOnlyGood = v),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+
+                  // ── Yoni filter chips ──
+                  if (_searched)
+                    SliverToBoxAdapter(
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 14),
+                        child: SingleChildScrollView(
+                          scrollDirection: Axis.horizontal,
+                          child: Row(
+                            children: [
+                              _yoniChip(null, _v('all')),
+                              const SizedBox(width: 6),
+                              ...List.generate(8, (i) => Padding(
+                                padding: const EdgeInsets.only(right: 6),
+                                child: _yoniChip(i, _yoniNames[i]),
+                              )),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+
+                  // ── Results ──
+                  if (!_searched)
+                    SliverToBoxAdapter(
+                      child: Padding(
+                        padding: const EdgeInsets.only(top: 40),
+                        child: Column(
+                          children: [
+                            Icon(Icons.home_work_rounded, size: 64, color: kPurple2.withOpacity(0.3)),
+                            const SizedBox(height: 12),
+                            Text(_v('hint'), style: TextStyle(color: kMuted, fontSize: 14)),
+                            Text(_v('hintEn'), style: TextStyle(color: kMuted, fontSize: 12)),
+                          ],
+                        ),
+                      ),
+                    )
+                  else if (_filteredResults.isEmpty)
+                    SliverToBoxAdapter(
+                      child: Padding(
+                        padding: const EdgeInsets.only(top: 40),
+                        child: Column(
+                          children: [
+                            Icon(Icons.search_off, size: 48, color: Colors.red.withOpacity(0.4)),
+                            const SizedBox(height: 8),
+                            Text(_v('noResults'), style: TextStyle(color: kMuted, fontSize: 14)),
+                          ],
+                        ),
+                      ),
+                    )
+                  else
+                    SliverList(
+                      delegate: SliverChildBuilderDelegate(
+                        (context, index) => Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 12),
+                          child: _buildResultCard(_filteredResults[index]),
+                        ),
+                        childCount: _filteredResults.length,
+                      ),
+                    ),
+
+                  const SliverToBoxAdapter(child: SizedBox(height: 24)),
                 ],
               ),
-            );
-          }
-        },
+            ),
+          ],
+        ),
       ),
     );
   }
 
-
-  // ─── Paridhi (Perimeter) input ───
-  Widget _buildParInput() {
+  // ─── Tab 1: L × B inputs ───
+  Widget _buildLBInputs() {
     return Container(
       margin: const EdgeInsets.fromLTRB(12, 8, 12, 8),
       padding: const EdgeInsets.all(14),
@@ -886,18 +877,21 @@ class _VastuScreenState extends State<VastuScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(_v('peridhi') + ' (' + _v('adi') + ')', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: kPurple2)),
+          Text(_v('length'), style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: kPurple2)),
           const SizedBox(height: 6),
           Row(children: [
-            Expanded(child: _field(_minParCtrl, _v('minLabel'))),
+            Expanded(child: _field(_minLenCtrl, _v('minLabel'))),
             _sep(),
-            Expanded(child: _field(_maxParCtrl, _v('maxLabel'))),
+            Expanded(child: _field(_maxLenCtrl, _v('maxLabel'))),
           ]),
-          const SizedBox(height: 8),
-          Text(
-            _v('paridhiHint'),
-            style: TextStyle(fontSize: 10, color: kMuted, fontStyle: FontStyle.italic),
-          ),
+          const SizedBox(height: 12),
+          Text(_v('breadth'), style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: kPurple2)),
+          const SizedBox(height: 6),
+          Row(children: [
+            Expanded(child: _field(_minBreadthCtrl, _v('minLabel'))),
+            _sep(),
+            Expanded(child: _field(_maxBreadthCtrl, _v('maxLabel'))),
+          ]),
         ],
       ),
     );
@@ -925,7 +919,7 @@ class _VastuScreenState extends State<VastuScreen> {
           ]),
           const SizedBox(height: 8),
           Text(
-            _v('sqftHintNew'),
+            _v('sqftHint'),
             style: TextStyle(fontSize: 10, color: kMuted, fontStyle: FontStyle.italic),
           ),
         ],
@@ -974,7 +968,7 @@ class _VastuScreenState extends State<VastuScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Header: Hasta number with perimeter
+          // Header: L × B with area and shubha badge
           Row(
             children: [
               Container(
@@ -988,17 +982,15 @@ class _VastuScreenState extends State<VastuScreen> {
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Text(
-                  '${_v('hasta')}: ${r.hasta}',
+                  '${_cmToFtIn(r.minLenCm)} × ${_cmToFtIn(r.maxBreCm)}',
                   style: TextStyle(fontSize: 17, fontWeight: FontWeight.w900,
                     color: isExcellent ? Colors.green.shade700 : kPurple2),
                 ),
               ),
               const SizedBox(width: 8),
-              Expanded(
-                child: Text('${_v('peridhi')}: ${_cmToFtIn(r.perimeterCm)}',
-                  style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: kText),
-                  overflow: TextOverflow.ellipsis),
-              ),
+              Text('${(r.minLenCm * r.maxBreCm / (30.48 * 30.48)).toStringAsFixed(1)} ${_v('sqAdi')}',
+                style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: kText)),
+              const Spacer(),
               if (isExcellent)
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
@@ -1016,8 +1008,8 @@ class _VastuScreenState extends State<VastuScreen> {
           ),
           const SizedBox(height: 6),
 
-          // Kolu info
-          Text('$_effectiveKoluName  |  ${_fmtCm(r.perimeterCm)}',
+          // Perimeter / Hasta
+          Text('${_v('peridhi')}: ${_cmToFtIn(r.perimeterCm)} (${_fmtCm(r.perimeterCm)})  |  ${_v('hasta')}: ${r.hasta}  ($_effectiveKoluName)',
             style: TextStyle(fontSize: 11, color: kMuted, fontWeight: FontWeight.w600)),
           const SizedBox(height: 8),
 

@@ -6,9 +6,9 @@ import 'transit_calculator.dart';
 /// In-memory + disk cache for planet transit data.
 /// Once a year is computed, it loads instantly on next access.
 class TransitCache {
-  // In-memory cache (keeps up to 12 years for preload)
+  // In-memory LRU cache (keeps last 10 years)
   static final Map<int, TransitData> _memCache = {};
-  static const int _maxMemCache = 12;
+  static const int _maxMemCache = 3;
 
   // Currently pre-fetching years (avoid duplicate work)
   static final Set<int> _computing = {};
@@ -72,24 +72,6 @@ class TransitCache {
   /// Clear all caches (e.g. on settings change)
   static void clearAll() {
     _memCache.clear();
-  }
-
-  /// Preload a range of years in the background (fire-and-forget).
-  /// Loads current year first, then adjacent years sequentially.
-  static Future<void> preloadRange({int pastYears = 2, int futureYears = 7}) async {
-    final now = DateTime.now().year;
-    final years = <int>[now];
-    // Add surrounding years: current±1, then expand outward
-    for (int i = 1; i <= futureYears || i <= pastYears; i++) {
-      if (i <= futureYears) years.add(now + i);
-      if (i <= pastYears) years.add(now - i);
-    }
-    for (final y in years) {
-      if (_memCache.containsKey(y)) continue;
-      await _prefetchYear(y);
-      // Small delay between years to keep UI responsive
-      await Future.delayed(const Duration(milliseconds: 50));
-    }
   }
 
   // ─── Disk cache ───

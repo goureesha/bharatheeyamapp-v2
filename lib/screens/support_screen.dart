@@ -3,15 +3,9 @@ import 'package:flutter/services.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../widgets/common.dart';
 import '../services/google_auth_service.dart';
-import '../services/device_binding_service.dart';
-import '../services/app_access_service.dart';
-import '../main.dart';
-
-enum SupportLockType { general, muhurta, student }
 
 class SupportScreen extends StatefulWidget {
-  final SupportLockType lockType;
-  const SupportScreen({super.key, this.lockType = SupportLockType.general});
+  const SupportScreen({super.key});
 
   @override
   State<SupportScreen> createState() => _SupportScreenState();
@@ -27,27 +21,10 @@ class _SupportScreenState extends State<SupportScreen> {
     try {
       final ok = await GoogleAuthService.signIn();
       if (ok && mounted) {
-        // After sign-in, register device binding + check admin access
-        await DeviceBindingService.checkBinding();
-        await AppAccessService.checkAdminAccess();
-        await AppAccessService.syncTrialWithFirestore();
-        deviceBindingNotifier.value = await DeviceBindingService.checkBinding();
-
-        if (AppAccessService.hasAccess && mounted) {
-          // User has access now — refresh the whole app
-          deviceBindingNotifier.value = true;
-          // Force app rebuild by notifying
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('✅ ${GoogleAuthService.userEmail} — signed in!'), backgroundColor: Colors.green),
-          );
-          // Trigger rebuild
-          (context as Element).markNeedsBuild();
-        } else if (mounted) {
-          setState(() {});
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Signed in as ${GoogleAuthService.userEmail}'), backgroundColor: kPurple2),
-          );
-        }
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('✅ ${GoogleAuthService.userEmail} — signed in!'), backgroundColor: Colors.green),
+        );
+        setState(() {});
       }
     } catch (e) {
       if (mounted) {
@@ -87,7 +64,29 @@ class _SupportScreenState extends State<SupportScreen> {
                 const SizedBox(height: 32),
 
                 // Access info
-                _buildLockInfo(widget.lockType),
+                Container(
+                  padding: const EdgeInsets.all(20),
+                  decoration: BoxDecoration(
+                    color: kBorder.withOpacity(0.15),
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: kBorder.withOpacity(0.3)),
+                  ),
+                  child: Column(children: [
+                    Icon(Icons.info_outline, color: kMuted, size: 40),
+                    const SizedBox(height: 12),
+                    Text(AppLocale.l('trialExpired'),
+                      style: TextStyle(
+                        fontSize: 18, fontWeight: FontWeight.w800,
+                        color: kText,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 8),
+                    Text(AppLocale.l('trialExpiredSub'),
+                      style: TextStyle(fontSize: 13, color: kMuted),
+                    ),
+                  ]),
+                ),
                 const SizedBox(height: 24),
 
                 // ── Gmail Sign-In (if not signed in) ──
@@ -145,13 +144,7 @@ class _SupportScreenState extends State<SupportScreen> {
                       const SizedBox(height: 14),
                       _infoRow(Icons.email_outlined, 'Gmail', email, context),
                       const SizedBox(height: 10),
-                      FutureBuilder<String>(
-                        future: DeviceBindingService.getDeviceId(),
-                        builder: (context, snapshot) {
-                          final deviceId = snapshot.data ?? 'Loading...';
-                          return _infoRow(Icons.smartphone, 'Device ID', deviceId, context);
-                        },
-                      ),
+                      _infoRow(Icons.smartphone, 'App', 'Bharatheeyam v2', context),
                     ],
                   ),
                 ),
@@ -176,29 +169,23 @@ class _SupportScreenState extends State<SupportScreen> {
                 // Copy details button
                 SizedBox(
                   width: double.infinity,
-                  child: FutureBuilder<String>(
-                    future: DeviceBindingService.getDeviceId(),
-                    builder: (context, snapshot) {
-                      final deviceId = snapshot.data ?? '';
-                      return ElevatedButton.icon(
-                        onPressed: () {
-                          final text = 'Gmail: $email\nDevice ID: $deviceId';
-                          Clipboard.setData(ClipboardData(text: text));
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('Details copied!'), backgroundColor: Colors.green),
-                          );
-                        },
-                        icon: const Icon(Icons.copy),
-                        label: const Text('Copy My Details',
-                          style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: kPurple2,
-                          foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(vertical: 14),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                        ),
+                  child: ElevatedButton.icon(
+                    onPressed: () {
+                      final text = 'Gmail: $email\nApp: Bharatheeyam v2';
+                      Clipboard.setData(ClipboardData(text: text));
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Details copied!'), backgroundColor: Colors.green),
                       );
                     },
+                    icon: const Icon(Icons.copy),
+                    label: const Text('Copy My Details',
+                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: kPurple2,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    ),
                   ),
                 ),
                 const SizedBox(height: 12),
@@ -206,122 +193,33 @@ class _SupportScreenState extends State<SupportScreen> {
                 // WhatsApp button
                 SizedBox(
                   width: double.infinity,
-                  child: FutureBuilder<String>(
-                    future: DeviceBindingService.getDeviceId(),
-                    builder: (context, snapshot) {
-                      final deviceId = snapshot.data ?? '';
-                      return OutlinedButton.icon(
-                        onPressed: () async {
-                          final msg = Uri.encodeComponent(
-                            'Bharatheeyam Support\nGmail: $email\nDevice ID: $deviceId');
-                          final url = Uri.parse('https://wa.me/${_supportPhone.replaceAll('+', '')}?text=$msg');
-                          if (await canLaunchUrl(url)) {
-                            await launchUrl(url, mode: LaunchMode.externalApplication);
-                          }
-                        },
-                        icon: const Icon(Icons.support_agent),
-                        label: const Text('Contact Support',
-                          style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
-                        style: OutlinedButton.styleFrom(
-                          foregroundColor: kGreen,
-                          side: BorderSide(color: kGreen),
-                          padding: const EdgeInsets.symmetric(vertical: 14),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                        ),
-                      );
+                  child: OutlinedButton.icon(
+                    onPressed: () async {
+                      final msg = Uri.encodeComponent(
+                        'Bharatheeyam Support\nGmail: $email');
+                      final url = Uri.parse('https://wa.me/${_supportPhone.replaceAll('+', '')}?text=$msg');
+                      if (await canLaunchUrl(url)) {
+                        await launchUrl(url, mode: LaunchMode.externalApplication);
+                      }
                     },
+                    icon: const Icon(Icons.support_agent),
+                    label: const Text('Contact Support',
+                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: kGreen,
+                      side: BorderSide(color: kGreen),
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    ),
                   ),
                 ),
 
-                // ── Re-check Access button (if signed in but locked out) ──
-                if (isSignedIn) ...[
-                  const SizedBox(height: 12),
-                  SizedBox(
-                    width: double.infinity,
-                    child: OutlinedButton.icon(
-                      onPressed: () async {
-                        await AppAccessService.checkAdminAccess();
-                        if (AppAccessService.hasAccess && mounted) {
-                          deviceBindingNotifier.value = true;
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('✅ Access restored!'), backgroundColor: Colors.green),
-                          );
-                        } else if (mounted) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('No active access found'), backgroundColor: Colors.orange),
-                          );
-                        }
-                      },
-                      icon: const Icon(Icons.refresh),
-                      label: const Text('Re-check Access',
-                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: kPurple2,
-                        side: BorderSide(color: kPurple2),
-                        padding: const EdgeInsets.symmetric(vertical: 14),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                      ),
-                    ),
-                  ),
-                ],
+
               ],
             )),
           ),
         ),
       ),
-    );
-  }
-
-  Widget _buildLockInfo(SupportLockType lockType) {
-    IconData icon;
-    Color iconColor;
-    String title;
-    String subtitle;
-
-    switch (lockType) {
-      case SupportLockType.muhurta:
-        icon = Icons.auto_awesome;
-        iconColor = Colors.purple;
-        title = 'ಮುಹೂರ್ತ ವೈಶಿಷ್ಟ್ಯ ಲಾಕ್ ಆಗಿದೆ';
-        subtitle = 'ಈ ವೈಶಿಷ್ಟ್ಯವನ್ನು ಪ್ರವೇಶಿಸಲು ದಯವಿಟ್ಟು ಬೆಂಬಲವನ್ನು ಸಂಪರ್ಕಿಸಿ';
-        break;
-      case SupportLockType.student:
-        icon = Icons.school;
-        iconColor = Colors.orange;
-        title = 'ವಿದ್ಯಾರ್ಥಿ ಮೋಡ್';
-        subtitle = 'ಈ ವಿಭಾಗವು ವಿದ್ಯಾರ್ಥಿ ಖಾತೆಗೆ ಲಭ್ಯವಿಲ್ಲ. ಅಪ್‌ಗ್ರೇಡ್ ಮಾಡಲು ಬೆಂಬಲವನ್ನು ಸಂಪರ್ಕಿಸಿ';
-        break;
-      case SupportLockType.general:
-        icon = Icons.info_outline;
-        iconColor = kMuted;
-        title = AppLocale.l('trialExpired');
-        subtitle = AppLocale.l('trialExpiredSub');
-        break;
-    }
-
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: kBorder.withOpacity(0.15),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: kBorder.withOpacity(0.3)),
-      ),
-      child: Column(children: [
-        Icon(icon, color: iconColor, size: 40),
-        const SizedBox(height: 12),
-        Text(title,
-          style: TextStyle(
-            fontSize: 18, fontWeight: FontWeight.w800,
-            color: kText,
-          ),
-          textAlign: TextAlign.center,
-        ),
-        const SizedBox(height: 8),
-        Text(subtitle,
-          style: TextStyle(fontSize: 13, color: kMuted),
-          textAlign: TextAlign.center,
-        ),
-      ]),
     );
   }
 

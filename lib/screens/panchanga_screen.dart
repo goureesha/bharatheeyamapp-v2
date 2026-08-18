@@ -562,8 +562,7 @@ class _PanchangaScreenState extends State<PanchangaScreen> {
                         _sectionHeader(Icons.access_time, AppLocale.l('kala'), kPurple1),
                         _tableRow([AppLocale.l('samvatsara'), trAll(_panchang!.samvatsara)]),
                         _tableRow([AppLocale.l('ayana'), trAll(_panchang!.ayana)]),
-                        _tableRow([AppLocale.l('drikRutu'), trAll(_panchang!.rutu)]),
-                        _tableRow([AppLocale.l('vaidikaRutu'), trAll(_panchang!.vaidikaRutu)]),
+                        _tableRow([AppLocale.l('rutu'), trAll(_panchang!.rutu)]),
                         _tableRow([AppLocale.l('divamana'), _panchang!.divamana]),
                         _tableRow([AppLocale.l('ratrimana'), _panchang!.ratrimana]),
 
