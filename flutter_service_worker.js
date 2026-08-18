@@ -23,7 +23,7 @@ const RESOURCES = {"version.json": "40d383273be60e5774161ecd3d63e663",
 "assets/AssetManifest.json": "9f4591f89f507f846804451771ba5ec4",
 "assets/AssetManifest.bin.json": "f9dbbf36ff2a19fe6a1a9586515f98ad",
 "assets/NOTICES": "6828bb438de2ae205b6fce2a137f5266",
-"assets/fonts/MaterialIcons-Regular.otf": "298c5fd09a78e56f354d7e6c90440251",
+"assets/fonts/MaterialIcons-Regular.otf": "4c1d8ed079bb438d8179f3ecaf08a14f",
 "assets/FontManifest.json": "7b2a36307916a9721811788013e65289",
 "assets/AssetManifest.bin": "0bff7b4f44b291cf5964534e7d800448",
 "assets/assets/images/ganapati.png": "22e33acfbc05962d2d2dcef91164a88a",
@@ -39,10 +39,10 @@ const RESOURCES = {"version.json": "40d383273be60e5774161ecd3d63e663",
 "assets/packages/sweph/assets/ephe/seasnam.txt": "b81323f1dc15e087893f3ed5d9a7fe37",
 "assets/packages/sweph/assets/ephe/seorbel.txt": "f59f4f28297f24e1611b9a3bef2fd26e",
 "assets/packages/sweph/assets/ephe/seas_18.se1": "728e0c0d609c52f8b23c8cfdd7ac544a",
-"main.dart.js": "f14f13d5da401632957259277b96cbf0",
+"main.dart.js": "250c0129d4069d1747e3b39180dd2cc6",
 "googled477f94eebb558c3.html": "b609deddf10e215d559e8f07f04425df",
 "admin/index.html": "b49249eeafa6ac4568bd8deea3284430",
-"flutter_bootstrap.js": "270545eb6bab5c34c40410f48b47d939"};
+"flutter_bootstrap.js": "02a236adb04c8e64a30acd8ed7f07028"};
 // The application shell files that are downloaded before a service worker can
 // start.
 const CORE = ["main.dart.js",
