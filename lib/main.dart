@@ -58,8 +58,9 @@ Future<void> _initEphemeris() async {
   }
 }
 
-/// Sign in silently for appointment sync.
+/// Sign in silently for appointment sync (mobile only).
 Future<void> _initAuth() async {
+  if (kIsWeb) return; // Web uses password auth, not Google
   try {
     await GoogleAuthService.signInSilently();
   } catch (e) {
@@ -271,9 +272,11 @@ class _BharatheeyamAppState extends State<BharatheeyamApp> with WidgetsBindingOb
               indicatorSize: TabBarIndicatorSize.tab,
             ),
           ),
-          home: GoogleAuthService.isSignedIn
-              ? const _AuthGate()
-              : const _LoginScreen(),
+          home: kIsWeb
+              ? const _WebPasswordGate()
+              : GoogleAuthService.isSignedIn
+                  ? const _AuthGate()
+                  : const _LoginScreen(),
         );
       },
     );
@@ -326,7 +329,111 @@ class _AuthGateState extends State<_AuthGate> {
   }
 }
 
-/// Login screen shown when user is not signed in
+/// Web password gate — simple password screen for web platform
+class _WebPasswordGate extends StatefulWidget {
+  const _WebPasswordGate();
+  @override
+  State<_WebPasswordGate> createState() => _WebPasswordGateState();
+}
+
+class _WebPasswordGateState extends State<_WebPasswordGate> {
+  final _controller = TextEditingController();
+  String? _error;
+  bool _obscure = true;
+
+  void _submit() {
+    if (_controller.text.trim() == '1122133') {
+      Navigator.of(context).pushAndRemoveUntil(
+        MaterialPageRoute(builder: (_) => const HomeScreen()),
+        (_) => false,
+      );
+    } else {
+      setState(() { _error = 'Incorrect password'; });
+    }
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: kBg,
+      body: Center(
+        child: Padding(
+          padding: const EdgeInsets.all(32),
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 360),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(Icons.auto_awesome, size: 64, color: kPurple2),
+                const SizedBox(height: 16),
+                Text('ಭಾರತೀಯಂ', style: TextStyle(fontSize: 28, fontWeight: FontWeight.w900, color: kPurple2)),
+                const SizedBox(height: 8),
+                Text('Bharatheeyam Jyothishya', style: TextStyle(fontSize: 14, color: kMuted)),
+                const SizedBox(height: 32),
+                Text('Enter password to continue', style: TextStyle(fontSize: 14, color: kText)),
+                const SizedBox(height: 20),
+                TextField(
+                  controller: _controller,
+                  obscureText: _obscure,
+                  onSubmitted: (_) => _submit(),
+                  style: TextStyle(color: kText),
+                  decoration: InputDecoration(
+                    hintText: 'Password',
+                    hintStyle: TextStyle(color: kMuted),
+                    filled: true,
+                    fillColor: kBorder.withOpacity(0.15),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide(color: kBorder),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide(color: kBorder),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide(color: kPurple2, width: 2),
+                    ),
+                    suffixIcon: IconButton(
+                      icon: Icon(_obscure ? Icons.visibility_off : Icons.visibility, color: kMuted),
+                      onPressed: () => setState(() { _obscure = !_obscure; }),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton.icon(
+                    onPressed: _submit,
+                    icon: const Icon(Icons.lock_open, color: Colors.white),
+                    label: const Text('Enter', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w800)),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: kPurple2,
+                      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    ),
+                  ),
+                ),
+                if (_error != null) ...[
+                  const SizedBox(height: 12),
+                  Text(_error!, style: TextStyle(color: Colors.red, fontSize: 12)),
+                ],
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Login screen shown when user is not signed in (mobile only)
 class _LoginScreen extends StatefulWidget {
   const _LoginScreen();
   @override
