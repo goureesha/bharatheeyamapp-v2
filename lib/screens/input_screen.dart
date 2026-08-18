@@ -70,6 +70,7 @@ class _InputScreenState extends State<InputScreen> {
     _tzCtrl = TextEditingController(text: '${LocationService.tzOffset >= 0 ? '+' : ''}${LocationService.tzOffset}');
     _loadProfiles();
     HistoryService.load();
+    loadWorldCities(); // Load 34K+ world cities for offline autocomplete
   }
 
   @override
