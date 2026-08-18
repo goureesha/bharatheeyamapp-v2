@@ -83,6 +83,7 @@ class Profile {
   final int? janmaNakshatraIdx;
   final String? clientId;
   final List<String> groupMembers;
+  final DateTime? savedAt;
 
   Profile({
     required this.name,
@@ -99,6 +100,7 @@ class Profile {
     this.janmaNakshatraIdx,
     this.clientId,
     this.groupMembers = const [],
+    this.savedAt,
   });
 
   Map<String, dynamic> toJson() => {
@@ -115,6 +117,7 @@ class Profile {
     'janmaNakshatraIdx': janmaNakshatraIdx,
     'clientId': clientId,
     'groupMembers': groupMembers,
+    'savedAt': savedAt?.toIso8601String(),
   };
 
   factory Profile.fromJson(String name, Map<String, dynamic> j) => Profile(
@@ -136,5 +139,6 @@ class Profile {
     groupMembers: j['groupMembers'] != null
         ? List<String>.from(j['groupMembers'] as List)
         : [],
+    savedAt: j['savedAt'] != null ? DateTime.tryParse(j['savedAt']) : null,
   );
 }

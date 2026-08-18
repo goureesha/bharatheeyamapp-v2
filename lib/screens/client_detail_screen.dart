@@ -411,6 +411,7 @@ class _ClientDetailScreenState extends State<ClientDetailScreen> {
               ampm: m.ampm,
               lat: m.lat,
               lon: m.lon,
+              tz: m.tzOffset,
               extraInfo: {'clientId': m.clientId},
               initialNotes: m.notes,
               onSave: (notes, aroodhas, janmaIdx, {bool isNew = true}) {
