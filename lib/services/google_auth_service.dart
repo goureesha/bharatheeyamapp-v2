@@ -32,6 +32,9 @@ class GoogleAuthService {
   static String? get userName => _currentUser?.displayName;
   static String? get userPhoto => _currentUser?.photoUrl;
 
+  /// Stub: clone doesn't use Firebase Auth — always false
+  static bool get isFirebaseAuthActive => false;
+
   /// Get auth headers for Google API calls (e.g., Drive API)
   static Future<Map<String, String>?> getAuthHeaders() async {
     return _currentUser?.authHeaders;

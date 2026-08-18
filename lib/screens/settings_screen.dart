@@ -22,6 +22,9 @@ import 'privacy_policy_screen.dart';
 import '../services/location_service.dart';
 import '../constants/places.dart';
 
+/// Global notifier for device binding state (used by settings & support screens)
+final ValueNotifier<bool> deviceBindingNotifier = ValueNotifier<bool>(false);
+
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
 
