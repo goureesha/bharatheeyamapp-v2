@@ -57,6 +57,7 @@ class FamilyMember {
   final double lat;
   final double lon;
   final String notes;
+  final double tzOffset;
 
   FamilyMember({
     required this.clientId,
@@ -68,6 +69,7 @@ class FamilyMember {
     required this.lat,
     required this.lon,
     this.notes = '',
+    this.tzOffset = 5.5,
   });
 
   factory FamilyMember.fromRow(List<Object?> row) {
@@ -81,18 +83,19 @@ class FamilyMember {
       lat:        row.length > 6     ? double.tryParse(row[6].toString()) ?? 0 : 0,
       lon:        row.length > 7     ? double.tryParse(row[7].toString()) ?? 0 : 0,
       notes:      row.length > 8     ? row[8].toString() : '',
+      tzOffset:   row.length > 9     ? double.tryParse(row[9].toString()) ?? 5.5 : 5.5,
     );
   }
 
   List<Object> toRow() => [
     clientId, memberName, relation, dob, birthTime,
-    birthPlace, lat.toStringAsFixed(4), lon.toStringAsFixed(4), notes,
+    birthPlace, lat.toStringAsFixed(4), lon.toStringAsFixed(4), notes, tzOffset.toString(),
   ];
 
   Map<String, dynamic> toJson() => {
     'clientId': clientId, 'memberName': memberName, 'relation': relation,
     'dob': dob, 'birthTime': birthTime, 'birthPlace': birthPlace,
-    'lat': lat, 'lon': lon, 'notes': notes,
+    'lat': lat, 'lon': lon, 'tzOffset': tzOffset, 'notes': notes,
   };
 
   factory FamilyMember.fromJson(Map<String, dynamic> j) => FamilyMember(
@@ -102,6 +105,7 @@ class FamilyMember {
     lat: (j['lat'] as num?)?.toDouble() ?? 0,
     lon: (j['lon'] as num?)?.toDouble() ?? 0,
     notes: j['notes'] ?? '',
+    tzOffset: (j['tzOffset'] as num?)?.toDouble() ?? 5.5,
   );
 
   /// Parse DOB into DateTime
@@ -428,6 +432,19 @@ class ClientService {
       return true;
     } catch (e) {
       debugPrint('ClientService: update member error: $e');
+      return false;
+    }
+  }
+
+  /// Remove a family member by clientId and memberName
+  static Future<bool> removeFamilyMember(String clientId, String memberName) async {
+    try {
+      _members.removeWhere((m) => m.clientId == clientId && m.memberName == memberName);
+      await _saveToLocal();
+      debugPrint('ClientService: removed member $memberName from $clientId');
+      return true;
+    } catch (e) {
+      debugPrint('ClientService: remove member error: $e');
       return false;
     }
   }
