@@ -9,8 +9,8 @@ import '../services/location_service.dart';
 import '../widgets/kundali_chart.dart';
 import '../widgets/planet_detail_sheet.dart';
 
-/// Ashtamangala Prashna Screen
-/// Calculates Panchanga & full Shodashavarga Kundali for given Prashna date, time & place.
+/// ಅಷ್ಟಮಂಗಲ ಪ್ರಶ್ನೆ
+/// ನೀಡಲಾದ ದಿನಾಂಕ, ಸಮಯ ಮತ್ತು ಸ್ಥಳಕ್ಕೆ ಪಂಚಾಂಗ ಮತ್ತು ಸಂಪೂರ್ಣ ಷೋಡಶವರ್ಗ ಕುಂಡಲಿಗಳನ್ನು ಲೆಕ್ಕಾಚಾರ ಮಾಡುತ್ತದೆ.
 class AshtamangalaScreen extends StatefulWidget {
   const AshtamangalaScreen({super.key});
 
@@ -38,33 +38,33 @@ class _AshtamangalaScreenState extends State<AshtamangalaScreen> {
 
   bool _hasResult = false;
   String _errorMsg = '';
-  int _selectedTab = 0; // 0: Panchanga, 1: Kundali (Shodashavarga)
-  int _selectedVargaIdx = 0; // index into Shodashavarga charts list
-  bool _showAllVargas = false; // toggle single chart vs all charts stacked
+  int _selectedTab = 0; // 0: ಪಂಚಾಂಗ, 1: ಕುಂಡಲಿ
+  int _selectedVargaIdx = 0;
+  bool _showAllVargas = false;
   String? _bhavaPlanet;
   bool _inputExpanded = true;
 
   KundaliResult? _prashnaResult;
 
-  // 16 classical Shodashavarga charts (Parashari BPHS) + Bhava
+  // ೧೬ ಪಾರಾಶರಿ ಷೋಡಶವರ್ಗ ಕುಂಡಲಿಗಳು + ಭಾವ ಕುಂಡಲಿ (ಕನ್ನಡದಲ್ಲಿ ಮಾತ್ರ)
   static const List<Map<String, dynamic>> _shodashaVargaCharts = [
-    {'code': 'D1', 'name': 'ರಾಶಿ', 'fullName': 'ರಾಶಿ ಕುಂಡಲಿ (D-1)', 'varga': 1, 'isBhava': false},
-    {'code': 'D2', 'name': 'ಹೋರಾ', 'fullName': 'ಹೋರಾ ಕುಂಡಲಿ (D-2)', 'varga': 2, 'isBhava': false},
-    {'code': 'D3', 'name': 'ದ್ರೆಕ್ಕಾಣ', 'fullName': 'ದ್ರೆಕ್ಕಾಣ ಕುಂಡಲಿ (D-3)', 'varga': 3, 'isBhava': false},
-    {'code': 'D4', 'name': 'ಚತುರ್ಥಾಂಶ', 'fullName': 'ಚತುರ್ಥಾಂಶ ಕುಂಡಲಿ (D-4)', 'varga': 4, 'isBhava': false},
-    {'code': 'D7', 'name': 'ಸಪ್ತಾಂಶ', 'fullName': 'ಸಪ್ತಾಂಶ ಕುಂಡಲಿ (D-7)', 'varga': 7, 'isBhava': false},
-    {'code': 'D9', 'name': 'ನವಾಂಶ', 'fullName': 'ನವಾಂಶ ಕುಂಡಲಿ (D-9)', 'varga': 9, 'isBhava': false},
-    {'code': 'D10', 'name': 'ದಶಾಂಶ', 'fullName': 'ದಶಾಂಶ ಕುಂಡಲಿ (D-10)', 'varga': 10, 'isBhava': false},
-    {'code': 'D12', 'name': 'ದ್ವಾದಶಾಂಶ', 'fullName': 'ದ್ವಾದಶಾಂಶ ಕುಂಡಲಿ (D-12)', 'varga': 12, 'isBhava': false},
-    {'code': 'D16', 'name': 'ಷೋಡಶಾಂಶ', 'fullName': 'ಷೋಡಶಾಂಶ ಕುಂಡಲಿ (D-16)', 'varga': 16, 'isBhava': false},
-    {'code': 'D20', 'name': 'ವಿಂಶಾಂಶ', 'fullName': 'ವಿಂಶಾಂಶ ಕುಂಡಲಿ (D-20)', 'varga': 20, 'isBhava': false},
-    {'code': 'D24', 'name': 'ಚತುರ್ವಿಂಶಾಂಶ', 'fullName': 'ಚತುರ್ವಿಂಶಾಂಶ ಕುಂಡಲಿ (D-24)', 'varga': 24, 'isBhava': false},
-    {'code': 'D27', 'name': 'ಸಪ್ತವಿಂಶಾಂಶ', 'fullName': 'ಸಪ್ತವಿಂಶಾಂಶ / ಭಾಂಶ (D-27)', 'varga': 27, 'isBhava': false},
-    {'code': 'D30', 'name': 'ತ್ರಿಂಶಾಂಶ', 'fullName': 'ತ್ರಿಂಶಾಂಶ ಕುಂಡಲಿ (D-30)', 'varga': 30, 'isBhava': false},
-    {'code': 'D40', 'name': 'ಖವೇದಾಂಶ', 'fullName': 'ಖವೇದಾಂಶ ಕುಂಡಲಿ (D-40)', 'varga': 40, 'isBhava': false},
-    {'code': 'D45', 'name': 'ಅಕ್ಷವೇದಾಂಶ', 'fullName': 'ಅಕ್ಷವೇದಾಂಶ ಕುಂಡಲಿ (D-45)', 'varga': 45, 'isBhava': false},
-    {'code': 'D60', 'name': 'ಷಷ್ಟ್ಯಂಶ', 'fullName': 'ಷಷ್ಟ್ಯಂಶ ಕುಂಡಲಿ (D-60)', 'varga': 60, 'isBhava': false},
-    {'code': 'ಭಾವ', 'name': 'ಭಾವ ಕುಂಡಲಿ', 'fullName': 'ಭಾವ ಕುಂಡಲಿ (Bhava)', 'varga': 1, 'isBhava': true},
+    {'name': 'ರಾಶಿ', 'fullName': 'ರಾಶಿ ಕುಂಡಲಿ', 'varga': 1, 'isBhava': false},
+    {'name': 'ಹೋರಾ', 'fullName': 'ಹೋರಾ ಕುಂಡಲಿ', 'varga': 2, 'isBhava': false},
+    {'name': 'ದ್ರೆಕ್ಕಾಣ', 'fullName': 'ದ್ರೆಕ್ಕಾಣ ಕುಂಡಲಿ', 'varga': 3, 'isBhava': false},
+    {'name': 'ಚತುರ್ಥಾಂಶ', 'fullName': 'ಚತುರ್ಥಾಂಶ ಕುಂಡಲಿ', 'varga': 4, 'isBhava': false},
+    {'name': 'ಸಪ್ತಾಂಶ', 'fullName': 'ಸಪ್ತಾಂಶ ಕುಂಡಲಿ', 'varga': 7, 'isBhava': false},
+    {'name': 'ನವಾಂಶ', 'fullName': 'ನವಾಂಶ ಕುಂಡಲಿ', 'varga': 9, 'isBhava': false},
+    {'name': 'ದಶಾಂಶ', 'fullName': 'ದಶಾಂಶ ಕುಂಡಲಿ', 'varga': 10, 'isBhava': false},
+    {'name': 'ದ್ವಾದಶಾಂಶ', 'fullName': 'ದ್ವಾದಶಾಂಶ ಕುಂಡಲಿ', 'varga': 12, 'isBhava': false},
+    {'name': 'ಷೋಡಶಾಂಶ', 'fullName': 'ಷೋಡಶಾಂಶ ಕುಂಡಲಿ', 'varga': 16, 'isBhava': false},
+    {'name': 'ವಿಂಶಾಂಶ', 'fullName': 'ವಿಂಶಾಂಶ ಕುಂಡಲಿ', 'varga': 20, 'isBhava': false},
+    {'name': 'ಚತುರ್ವಿಂಶಾಂಶ', 'fullName': 'ಚತುರ್ವಿಂಶಾಂಶ ಕುಂಡಲಿ', 'varga': 24, 'isBhava': false},
+    {'name': 'ಸಪ್ತವಿಂಶಾಂಶ', 'fullName': 'ಸಪ್ತವಿಂಶಾಂಶ (ಭಾಂಶ) ಕುಂಡಲಿ', 'varga': 27, 'isBhava': false},
+    {'name': 'ತ್ರಿಂಶಾಂಶ', 'fullName': 'ತ್ರಿಂಶಾಂಶ ಕುಂಡಲಿ', 'varga': 30, 'isBhava': false},
+    {'name': 'ಖವೇದಾಂಶ', 'fullName': 'ಖವೇದಾಂಶ ಕುಂಡಲಿ', 'varga': 40, 'isBhava': false},
+    {'name': 'ಅಕ್ಷವೇದಾಂಶ', 'fullName': 'ಅಕ್ಷವೇದಾಂಶ ಕುಂಡಲಿ', 'varga': 45, 'isBhava': false},
+    {'name': 'ಷಷ್ಟ್ಯಂಶ', 'fullName': 'ಷಷ್ಟ್ಯಂಶ ಕುಂಡಲಿ', 'varga': 60, 'isBhava': false},
+    {'name': 'ಭಾವ', 'fullName': 'ಭಾವ ಕುಂಡಲಿ', 'varga': 1, 'isBhava': true},
   ];
 
   @override
@@ -108,16 +108,16 @@ class _AshtamangalaScreenState extends State<AshtamangalaScreen> {
             _latCtrl.text = lat.toStringAsFixed(4);
             _lonCtrl.text = lon.toStringAsFixed(4);
             _tzCtrl.text = '${autoTz >= 0 ? '+' : ''}$autoTz';
-            _geoStatus = '📍 $displayName (TZ: ${autoTz >= 0 ? '+' : ''}$autoTz)';
+            _geoStatus = '📍 $displayName';
           });
         } else {
           if (mounted) _showPlaceDisambiguation(data);
         }
       } else {
-        setState(() => _geoStatus = 'Server Error: ${resp.statusCode}');
+        setState(() => _geoStatus = 'ಸರ್ವರ್ ದೋಷ: ${resp.statusCode}');
       }
     } catch (e) {
-      if (mounted) setState(() => _geoStatus = 'Network error: $e');
+      if (mounted) setState(() => _geoStatus = 'ದೋಷ: $e');
     }
     if (mounted) setState(() => _geoLoading = false);
   }
@@ -144,7 +144,7 @@ class _AshtamangalaScreenState extends State<AshtamangalaScreen> {
                   _latCtrl.text = lat.toStringAsFixed(4);
                   _lonCtrl.text = lon.toStringAsFixed(4);
                   _tzCtrl.text = '${autoTz >= 0 ? '+' : ''}$autoTz';
-                  _geoStatus = '📍 ${r['display_name']} (TZ: ${autoTz >= 0 ? '+' : ''}$autoTz)';
+                  _geoStatus = '📍 ${r['display_name']}';
                 });
               },
             );
@@ -214,7 +214,7 @@ class _AshtamangalaScreenState extends State<AshtamangalaScreen> {
           _prashnaResult = result;
           _hasResult = true;
           _errorMsg = '';
-          _inputExpanded = false; // Collapse input card to highlight output
+          _inputExpanded = false;
         });
       } else {
         setState(() {
@@ -253,11 +253,11 @@ class _AshtamangalaScreenState extends State<AshtamangalaScreen> {
     final lords = <String, Color>{};
     for (final md in _prashnaResult!.dashas) {
       if (now.isAfter(md.start) && now.isBefore(md.end)) {
-        lords[md.lord] = const Color(0xFFFF8C00); // Orange for Dasha
+        lords[md.lord] = const Color(0xFFFF8C00);
         for (final ad in md.antardashas) {
           if (now.isAfter(ad.start) && now.isBefore(ad.end)) {
             if (!lords.containsKey(ad.lord)) {
-              lords[ad.lord] = const Color(0xFF00C853); // Green for Bhukti
+              lords[ad.lord] = const Color(0xFF00C853);
             }
             break;
           }
@@ -283,6 +283,11 @@ class _AshtamangalaScreenState extends State<AshtamangalaScreen> {
       result = result.replaceAll(entry.key, entry.value);
     }
     return result;
+  }
+
+  String _formatKannadaTime() {
+    final ampmKn = _ampm == 'AM' ? 'ಪೂರ್ವಾಹ್ನ' : 'ಅಪರಾಹ್ನ';
+    return '${_hour.toString().padLeft(2, '0')}:${_minute.toString().padLeft(2, '0')} $ampmKn';
   }
 
   @override
@@ -328,7 +333,7 @@ class _AshtamangalaScreenState extends State<AshtamangalaScreen> {
     );
   }
 
-  // ═══ Input Card ═══
+  // ═══ ಮಾಹಿತಿ ನಮೂದು ಕಾರ್ಡ್ (Input Card) ═══
   Widget _buildInputCard() {
     return AppCard(
       child: Column(
@@ -340,7 +345,7 @@ class _AshtamangalaScreenState extends State<AshtamangalaScreen> {
               const SizedBox(width: 10),
               Expanded(
                 child: Text(
-                  'ಪ್ರಶ್ನ ವಿವರ / Prashna Details',
+                  'ಪ್ರಶ್ನ ವಿವರ',
                   style: TextStyle(fontSize: 16, fontWeight: FontWeight.w900, color: kOrange),
                 ),
               ),
@@ -354,14 +359,14 @@ class _AshtamangalaScreenState extends State<AshtamangalaScreen> {
           if (!_inputExpanded && _hasResult) ...[
             const SizedBox(height: 4),
             Text(
-              '${_dob.day.toString().padLeft(2, '0')}-${_dob.month.toString().padLeft(2, '0')}-${_dob.year}  •  ${_hour.toString().padLeft(2, '0')}:${_minute.toString().padLeft(2, '0')} $_ampm  •  ${_placeCtrl.text}',
+              '${_dob.day.toString().padLeft(2, '0')}-${_dob.month.toString().padLeft(2, '0')}-${_dob.year}  •  ${_formatKannadaTime()}  •  ${_placeCtrl.text}',
               style: TextStyle(color: kMuted, fontSize: 12),
             ),
           ],
           if (_inputExpanded || !_hasResult) ...[
             const SizedBox(height: 12),
             // Querent Name
-            _inputField(_nameCtrl, 'ಪ್ರುಚ್ಛಕ ಹೆಸರು / Querent Name', Icons.person),
+            _inputField(_nameCtrl, 'ಪ್ರುಚ್ಛಕರ ಹೆಸರು', Icons.person),
             const SizedBox(height: 12),
 
             // Date & Time Row
@@ -383,7 +388,7 @@ class _AshtamangalaScreenState extends State<AshtamangalaScreen> {
                           const SizedBox(width: 8),
                           Expanded(
                             child: Text(
-                              '${_dob.day.toString().padLeft(2, '0')}-${_dob.month.toString().padLeft(2, '0')}-${_dob.year}',
+                              'ದಿನಾಂಕ: ${_dob.day.toString().padLeft(2, '0')}-${_dob.month.toString().padLeft(2, '0')}-${_dob.year}',
                               style: TextStyle(fontSize: 13, color: kText, fontWeight: FontWeight.w600),
                             ),
                           ),
@@ -409,7 +414,7 @@ class _AshtamangalaScreenState extends State<AshtamangalaScreen> {
                           const SizedBox(width: 8),
                           Expanded(
                             child: Text(
-                              '${_hour.toString().padLeft(2, '0')}:${_minute.toString().padLeft(2, '0')} $_ampm',
+                              'ಸಮಯ: ${_formatKannadaTime()}',
                               style: TextStyle(fontSize: 13, color: kText, fontWeight: FontWeight.w600),
                             ),
                           ),
@@ -434,7 +439,7 @@ class _AshtamangalaScreenState extends State<AshtamangalaScreen> {
                   controller: textEditingController,
                   focusNode: focusNode,
                   decoration: InputDecoration(
-                    labelText: 'ಊರು ಹುಡುಕಿ / Search Location',
+                    labelText: 'ಊರು ಹುಡುಕಿ',
                     prefixIcon: Icon(Icons.search, size: 20),
                     suffixIcon: _geoLoading
                         ? Padding(padding: const EdgeInsets.all(12), child: SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2)))
@@ -464,7 +469,7 @@ class _AshtamangalaScreenState extends State<AshtamangalaScreen> {
                     _latCtrl.text = coords[0].toStringAsFixed(4);
                     _lonCtrl.text = coords[1].toStringAsFixed(4);
                     _tzCtrl.text = '${autoTz >= 0 ? '+' : ''}$autoTz';
-                    _geoStatus = '📍 $selection (TZ: ${autoTz >= 0 ? '+' : ''}$autoTz)';
+                    _geoStatus = '📍 $selection';
                   });
                 }
               },
@@ -510,7 +515,7 @@ class _AshtamangalaScreenState extends State<AshtamangalaScreen> {
                     controller: _latCtrl,
                     keyboardType: const TextInputType.numberWithOptions(decimal: true, signed: true),
                     decoration: InputDecoration(
-                      labelText: 'ಅಕ್ಷಾಂಶ (Lat)',
+                      labelText: 'ಅಕ್ಷಾಂಶ',
                       border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
                       contentPadding: const EdgeInsets.all(8),
                       isDense: true,
@@ -525,7 +530,7 @@ class _AshtamangalaScreenState extends State<AshtamangalaScreen> {
                     controller: _lonCtrl,
                     keyboardType: const TextInputType.numberWithOptions(decimal: true, signed: true),
                     decoration: InputDecoration(
-                      labelText: 'ರೇಖಾಂಶ (Lon)',
+                      labelText: 'ರೇಖಾಂಶ',
                       border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
                       contentPadding: const EdgeInsets.all(8),
                       isDense: true,
@@ -540,7 +545,7 @@ class _AshtamangalaScreenState extends State<AshtamangalaScreen> {
                     controller: _tzCtrl,
                     keyboardType: const TextInputType.numberWithOptions(decimal: true, signed: true),
                     decoration: InputDecoration(
-                      labelText: 'TZ Offset',
+                      labelText: 'ಸಮಯ ವಲಯ',
                       border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
                       contentPadding: const EdgeInsets.all(8),
                       isDense: true,
@@ -557,7 +562,7 @@ class _AshtamangalaScreenState extends State<AshtamangalaScreen> {
               controller: _numberCtrl,
               keyboardType: TextInputType.number,
               decoration: InputDecoration(
-                labelText: 'ಅಷ್ಟಮಂಗಲ ಸಂಖ್ಯೆ / Ashtamangala Number (ಐಚ್ಛಿಕ/Optional)',
+                labelText: 'ಅಷ್ಟಮಂಗಲ ಸಂಖ್ಯೆ (ಐಚ್ಛಿಕ)',
                 prefixIcon: Icon(Icons.pin, color: kMuted, size: 20),
                 border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
                 contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
@@ -582,7 +587,7 @@ class _AshtamangalaScreenState extends State<AshtamangalaScreen> {
                     ? SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
                     : Icon(Icons.calculate, size: 20),
                 label: Text(
-                  _calculating ? 'ಲೆಕ್ಕಾಚಾರವಾಗುತ್ತಿದೆ...' : 'ಲೆಕ್ಕ ಹಾಕಿ / Calculate Kundali',
+                  _calculating ? 'ಲೆಕ್ಕಾಚಾರವಾಗುತ್ತಿದೆ...' : 'ಲೆಕ್ಕ ಹಾಕಿ',
                   style: TextStyle(fontWeight: FontWeight.w800, fontSize: 15),
                 ),
                 style: ElevatedButton.styleFrom(
@@ -611,7 +616,7 @@ class _AshtamangalaScreenState extends State<AshtamangalaScreen> {
     style: TextStyle(color: kText, fontSize: 14),
   );
 
-  // ═══ Output Tabs Switcher ═══
+  // ═══ ಟ್ಯಾಬ್ ಆಯ್ಕೆ (Output Tabs Switcher) ═══
   Widget _buildOutputTabBar() {
     return AppCard(
       padding: EdgeInsets.zero,
@@ -636,9 +641,9 @@ class _AshtamangalaScreenState extends State<AshtamangalaScreen> {
                     Icon(Icons.calendar_month, size: 18, color: _selectedTab == 0 ? kPurple2 : kMuted),
                     const SizedBox(width: 8),
                     Text(
-                      'ಪಂಚಾಂಗ (Panchanga)',
+                      'ಪಂಚಾಂಗ',
                       style: TextStyle(
-                        fontSize: 13,
+                        fontSize: 14,
                         fontWeight: FontWeight.w800,
                         color: _selectedTab == 0 ? kPurple2 : kMuted,
                       ),
@@ -669,7 +674,7 @@ class _AshtamangalaScreenState extends State<AshtamangalaScreen> {
                     Text(
                       'ಕುಂಡಲಿ (ಷೋಡಶವರ್ಗ)',
                       style: TextStyle(
-                        fontSize: 13,
+                        fontSize: 14,
                         fontWeight: FontWeight.w800,
                         color: _selectedTab == 1 ? kPurple2 : kMuted,
                       ),
@@ -684,16 +689,16 @@ class _AshtamangalaScreenState extends State<AshtamangalaScreen> {
     );
   }
 
-  // ═══ Tab 1: Panchanga (Like in Kundali Main Section) ═══
+  // ═══ ಟ್ಯಾಬ್ ೧: ಪಂಚಾಂಗ ═══
   Widget _buildPanchangTab() {
     if (_prashnaResult == null) return const SizedBox.shrink();
     final r = _prashnaResult!;
     final pan = r.panchang;
     final pName = _nameCtrl.text.trim();
     final dateStr = '${_dob.day.toString().padLeft(2, "0")}-${_dob.month.toString().padLeft(2, "0")}-${_dob.year}';
-    final timeStr = '${_hour.toString().padLeft(2, "0")}:${_minute.toString().padLeft(2, "0")} $_ampm';
+    final timeStr = _formatKannadaTime();
 
-    // Calculate age (time from selected date)
+    // ವಯಸ್ಸು ಲೆಕ್ಕಾಚಾರ
     final now = DateTime.now();
     int ageYears = now.year - _dob.year;
     int ageMonths = now.month - _dob.month;
@@ -707,9 +712,9 @@ class _AshtamangalaScreenState extends State<AshtamangalaScreen> {
       ageYears--;
       ageMonths += 12;
     }
-    final ageStr = '$ageYears ${AppLocale.l('yearShort')} $ageMonths ${AppLocale.l('monthShort')} $ageDays ${AppLocale.l('dayShort')}';
+    final ageStr = '$ageYears ವರ್ಷ $ageMonths ತಿಂಗಳು $ageDays ದಿನ';
 
-    // Current Dasha and Bhukti from existing r.dashas
+    // ಪ್ರಸ್ತುತ ದಶಾ ಮತ್ತು ಭುಕ್ತಿ
     String currentDasha = '';
     String dashaEnd = '';
     String currentBhukti = '';
@@ -732,7 +737,7 @@ class _AshtamangalaScreenState extends State<AshtamangalaScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Basic Info Card
+        // ವಿವರ ಕಾರ್ಡ್
         AppCard(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -748,16 +753,16 @@ class _AshtamangalaScreenState extends State<AshtamangalaScreen> {
               _kv(AppLocale.l('ageLabel'), ageStr),
               if (currentDasha.isNotEmpty) ...[
                 const Divider(height: 16),
-                _kv('${AppLocale.l('dasha')}', '$currentDasha  (${AppLocale.l('end')}: $dashaEnd)'),
+                _kv('ಪ್ರಸ್ತುತ ದಶಾ', '$currentDasha  (ಅಂತ್ಯ: $dashaEnd)'),
                 if (currentBhukti.isNotEmpty)
-                  _kv(AppLocale.l('bhuktiLabel'), '$currentBhukti  (${AppLocale.l('end')}: $bhuktiEnd)'),
+                  _kv(AppLocale.l('bhuktiLabel'), '$currentBhukti  (ಅಂತ್ಯ: $bhuktiEnd)'),
               ],
             ],
           ),
         ),
         const SizedBox(height: 8),
 
-        // ── 📋 Panchanga (5 Angas) ──
+        // ── 📋 ಪಂಚಾಂಗ (೫ ಅಂಗ) ──
         _sectionLabel('📋 ${AppLocale.l('pHeading')}', kPurple2),
         AppCard(
           padding: EdgeInsets.zero,
@@ -781,7 +786,7 @@ class _AshtamangalaScreenState extends State<AshtamangalaScreen> {
         ),
         const SizedBox(height: 8),
 
-        // ── ☀️ Ravi (Sun) Details ──
+        // ── ☀️ ರವಿ ವಿವರ ──
         _sectionLabel('☀️ ${AppLocale.l('raviVivar')}', Colors.orange),
         AppCard(
           padding: EdgeInsets.zero,
@@ -800,7 +805,7 @@ class _AshtamangalaScreenState extends State<AshtamangalaScreen> {
         ),
         const SizedBox(height: 8),
 
-        // ── 🌙 Chandra (Moon) Details ──
+        // ── 🌙 ಚಂದ್ರ ವಿವರ ──
         _sectionLabel('🌙 ${AppLocale.l('chandraVivar')}', Colors.blue),
         AppCard(
           padding: EdgeInsets.zero,
@@ -831,7 +836,7 @@ class _AshtamangalaScreenState extends State<AshtamangalaScreen> {
     );
   }
 
-  // ═══ Tab 2: Kundali (All Shodashavarga Kundalis) ═══
+  // ═══ ಟ್ಯಾಬ್ ೨: ಕುಂಡಲಿ (ಸಂಪೂರ್ಣ ಷೋಡಶವರ್ಗ ಕುಂಡಲಿಗಳು) ═══
   Widget _buildKundaliTab() {
     if (_prashnaResult == null) return const SizedBox.shrink();
     final screenWidth = MediaQuery.of(context).size.width;
@@ -843,14 +848,14 @@ class _AshtamangalaScreenState extends State<AshtamangalaScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // View Mode Switcher Header
+        // ಹೆಡರ್ ಮತ್ತು ನೋಟ ಬದಲಾವಣೆ
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
           child: Row(
             children: [
               Expanded(
                 child: Text(
-                  'ಷೋಡಶವರ್ಗ ಕುಂಡಲಿಗಳು (${_shodashaVargaCharts.length})',
+                  'ಷೋಡಶವರ್ಗ ಕುಂಡಲಿಗಳು',
                   style: TextStyle(fontSize: 14, fontWeight: FontWeight.w900, color: kPurple2),
                 ),
               ),
@@ -858,7 +863,7 @@ class _AshtamangalaScreenState extends State<AshtamangalaScreen> {
                 onPressed: () => setState(() => _showAllVargas = !_showAllVargas),
                 icon: Icon(_showAllVargas ? Icons.view_carousel : Icons.view_stream, size: 18, color: kOrange),
                 label: Text(
-                  _showAllVargas ? 'ಒಂದೊಂದಾಗಿ / Single' : 'ಎಲ್ಲಾ ಕುಂಡಲಿಗಳು / All',
+                  _showAllVargas ? 'ಒಂದೊಂದಾಗಿ' : 'ಎಲ್ಲಾ ಕುಂಡಲಿಗಳು',
                   style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: kOrange),
                 ),
               ),
@@ -866,7 +871,7 @@ class _AshtamangalaScreenState extends State<AshtamangalaScreen> {
           ),
         ),
 
-        // Horizontal Quick-Selector Chips for all 16 vargas + Bhava
+        // ವರ್ಗ ಆಯ್ಕೆ ಚಿಪ್ಸ್‌ಗಳು (ಕನ್ನಡದಲ್ಲಿ ಮಾತ್ರ)
         SingleChildScrollView(
           scrollDirection: Axis.horizontal,
           padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
@@ -877,11 +882,11 @@ class _AshtamangalaScreenState extends State<AshtamangalaScreen> {
               return Padding(
                 padding: const EdgeInsets.only(right: 6),
                 child: ChoiceChip(
-                  label: Text('${c['code']} ${c['name']}'),
+                  label: Text('${c['name']}'),
                   selected: isSel,
                   selectedColor: kPurple2,
                   labelStyle: TextStyle(
-                    fontSize: 11,
+                    fontSize: 12,
                     fontWeight: isSel ? FontWeight.w900 : FontWeight.w600,
                     color: isSel ? Colors.white : kText,
                   ),
@@ -906,7 +911,7 @@ class _AshtamangalaScreenState extends State<AshtamangalaScreen> {
         const SizedBox(height: 8),
 
         if (!_showAllVargas) ...[
-          // Single Chart Viewer with Prev / Next Navigation
+          // ಏಕ ಕುಂಡಲಿ ನೋಟ (ಹಿಂದೆ / ಮುಂದೆ ನ್ಯಾವಿಗೇಷನ್)
           AppCard(
             child: Column(
               children: [
@@ -915,6 +920,7 @@ class _AshtamangalaScreenState extends State<AshtamangalaScreen> {
                   children: [
                     IconButton(
                       icon: Icon(Icons.arrow_back_ios, size: 18, color: _selectedVargaIdx > 0 ? kPurple2 : kMuted),
+                      tooltip: 'ಹಿಂದಿನ ಕುಂಡಲಿ',
                       onPressed: _selectedVargaIdx > 0
                           ? () => setState(() => _selectedVargaIdx--)
                           : null,
@@ -937,6 +943,7 @@ class _AshtamangalaScreenState extends State<AshtamangalaScreen> {
                     ),
                     IconButton(
                       icon: Icon(Icons.arrow_forward_ios, size: 18, color: _selectedVargaIdx < _shodashaVargaCharts.length - 1 ? kPurple2 : kMuted),
+                      tooltip: 'ಮುಂದಿನ ಕುಂಡಲಿ',
                       onPressed: _selectedVargaIdx < _shodashaVargaCharts.length - 1
                           ? () => setState(() => _selectedVargaIdx++)
                           : null,
@@ -960,7 +967,7 @@ class _AshtamangalaScreenState extends State<AshtamangalaScreen> {
             ),
           ),
         ] else ...[
-          // All 16+ Charts Stacked View
+          // ಎಲ್ಲಾ ಕುಂಡಲಿಗಳು ಒಂದರ ಕೆಳಗೆ ಒಂದು
           ..._shodashaVargaCharts.map((chart) {
             return AppCard(
               child: Column(
@@ -1007,7 +1014,7 @@ class _AshtamangalaScreenState extends State<AshtamangalaScreen> {
     );
   }
 
-  // ═══ Helper UI Widgets ═══
+  // ═══ ಸಹಾಯಕ ವಿಜೆಟ್‌ಗಳು (Helper UI Widgets) ═══
   Widget _sectionLabel(String text, Color color) {
     return Padding(
       padding: const EdgeInsets.only(top: 6, bottom: 4, left: 4),
