@@ -23,7 +23,13 @@ class AshtamangalaScreen extends StatefulWidget {
 
 class _AshtamangalaScreenState extends State<AshtamangalaScreen> {
   final _numberCtrl = TextEditingController();
+  final _tamboolaCtrl = TextEditingController();
   final _nameCtrl = TextEditingController();
+
+  int? _sprashtangaNum; // 1 to 12
+  int? _svarnaroodhaRashi; // 0 to 11
+  int? _prucchakaRashi; // 0 to 11
+  int? _prucchakaNak; // 0 to 26
 
   DateTime _dob = DateTime.now();
   int _hour = DateTime.now().hour % 12 == 0 ? 12 : DateTime.now().hour % 12;
@@ -51,6 +57,7 @@ class _AshtamangalaScreenState extends State<AshtamangalaScreen> {
   @override
   void dispose() {
     _numberCtrl.dispose();
+    _tamboolaCtrl.dispose();
     _nameCtrl.dispose();
     _placeCtrl.dispose();
     _latCtrl.dispose();
@@ -197,6 +204,11 @@ class _AshtamangalaScreenState extends State<AshtamangalaScreen> {
             result: result,
             name: _nameCtrl.text.trim().isNotEmpty ? _nameCtrl.text.trim() : 'ಅಷ್ಟಮಂಗಲ ಪ್ರಶ್ನೆ',
             ashtamangalaNumber: _numberCtrl.text.trim(),
+            tamboolaNumber: _tamboolaCtrl.text.trim(),
+            sprashtangaNum: _sprashtangaNum,
+            svarnaroodhaRashi: _svarnaroodhaRashi,
+            prucchakaRashi: _prucchakaRashi != null ? knRashi[_prucchakaRashi!] : null,
+            prucchakaNakshatra: _prucchakaNak != null ? knNak[_prucchakaNak!] : null,
             place: _placeCtrl.text.trim().isNotEmpty ? _placeCtrl.text.trim() : LocationService.place,
             dob: _dob,
             hour: _hour,
@@ -268,19 +280,160 @@ class _AshtamangalaScreenState extends State<AshtamangalaScreen> {
                     _inputField(_nameCtrl, 'ಪ್ರುಚ್ಛಕರ ಹೆಸರು (ಐಚ್ಛಿಕ)', Icons.person),
                     const SizedBox(height: 12),
 
-                    // Ashtamangala Number
-                    TextField(
-                      controller: _numberCtrl,
-                      keyboardType: TextInputType.number,
-                      decoration: InputDecoration(
-                        labelText: 'ಅಷ್ಟಮಂಗಲ ಸಂಖ್ಯೆ',
-                        hintText: 'ಉದಾ: 108',
-                        prefixIcon: Icon(Icons.pin, color: kMuted, size: 20),
-                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-                        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                        isDense: true,
-                      ),
-                      style: TextStyle(color: kText, fontSize: 14),
+                    // ಪ್ರುಚ್ಛಕರ ರಾಶಿ ಮತ್ತು ನಕ್ಷತ್ರ
+                    Row(
+                      children: [
+                        Expanded(
+                          child: DropdownButtonFormField<int>(
+                            value: _prucchakaRashi,
+                            decoration: InputDecoration(
+                              labelText: 'ಪ್ರುಚ್ಛಕರ ರಾಶಿ',
+                              prefixIcon: Icon(Icons.nightlight_round, color: kMuted, size: 20),
+                              suffixIcon: _prucchakaRashi != null
+                                  ? IconButton(
+                                      icon: const Icon(Icons.close, size: 16),
+                                      onPressed: () => setState(() => _prucchakaRashi = null),
+                                    )
+                                  : null,
+                              border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                              contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                              isDense: true,
+                            ),
+                            hint: const Text('ಆಯ್ಕೆಮಾಡಿ', style: TextStyle(fontSize: 13)),
+                            isExpanded: true,
+                            items: List.generate(12, (i) => DropdownMenuItem<int>(
+                              value: i,
+                              child: Text(knRashi[i], style: TextStyle(color: kText, fontSize: 13)),
+                            )),
+                            onChanged: (v) => setState(() => _prucchakaRashi = v),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: DropdownButtonFormField<int>(
+                            value: _prucchakaNak,
+                            decoration: InputDecoration(
+                              labelText: 'ಪ್ರುಚ್ಛಕರ ನಕ್ಷತ್ರ',
+                              prefixIcon: Icon(Icons.star_border, color: kMuted, size: 20),
+                              suffixIcon: _prucchakaNak != null
+                                  ? IconButton(
+                                      icon: const Icon(Icons.close, size: 16),
+                                      onPressed: () => setState(() => _prucchakaNak = null),
+                                    )
+                                  : null,
+                              border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                              contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                              isDense: true,
+                            ),
+                            hint: const Text('ಆಯ್ಕೆಮಾಡಿ', style: TextStyle(fontSize: 13)),
+                            isExpanded: true,
+                            items: List.generate(27, (i) => DropdownMenuItem<int>(
+                              value: i,
+                              child: Text(knNak[i], style: TextStyle(color: kText, fontSize: 13)),
+                            )),
+                            onChanged: (v) => setState(() => _prucchakaNak = v),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+
+                    // ಅಷ್ಟಮಂಗಲ ಸಂಖ್ಯೆ ಮತ್ತು ತಾಂಬೂಲ ಸಂಖ್ಯೆ
+                    Row(
+                      children: [
+                        Expanded(
+                          child: TextField(
+                            controller: _numberCtrl,
+                            keyboardType: TextInputType.number,
+                            decoration: InputDecoration(
+                              labelText: 'ಅಷ್ಟಮಂಗಲ ಸಂಖ್ಯೆ',
+                              hintText: 'ಉದಾ: 108',
+                              prefixIcon: Icon(Icons.pin, color: kMuted, size: 20),
+                              border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                              contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                              isDense: true,
+                            ),
+                            style: TextStyle(color: kText, fontSize: 14),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: TextField(
+                            controller: _tamboolaCtrl,
+                            keyboardType: TextInputType.number,
+                            decoration: InputDecoration(
+                              labelText: 'ತಾಂಬೂಲ ಸಂಖ್ಯೆ',
+                              hintText: 'ಉದಾ: 8',
+                              prefixIcon: Icon(Icons.eco, color: kMuted, size: 20),
+                              border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                              contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                              isDense: true,
+                            ),
+                            style: TextStyle(color: kText, fontSize: 14),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+
+                    // ಸ್ಪೃಷ್ಟಾಂಗ ರಾಶಿ (1-12 ಸಂಖ್ಯೆ ಆಯ್ಕೆ) ಮತ್ತು ಸ್ವರ್ಣಾರೂಢ ರಾಶಿ
+                    Row(
+                      children: [
+                        Expanded(
+                          child: DropdownButtonFormField<int>(
+                            value: _sprashtangaNum,
+                            decoration: InputDecoration(
+                              labelText: 'ಸ್ಪೃಷ್ಟಾಂಗ ರಾಶಿ (1-12)',
+                              prefixIcon: Icon(Icons.touch_app, color: kMuted, size: 20),
+                              suffixIcon: _sprashtangaNum != null
+                                  ? IconButton(
+                                      icon: const Icon(Icons.close, size: 16),
+                                      onPressed: () => setState(() => _sprashtangaNum = null),
+                                    )
+                                  : null,
+                              border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                              contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                              isDense: true,
+                            ),
+                            hint: const Text('ಸಂಖ್ಯೆ 1-12', style: TextStyle(fontSize: 13)),
+                            isExpanded: true,
+                            items: List.generate(12, (i) {
+                              final num = i + 1;
+                              return DropdownMenuItem<int>(
+                                value: num,
+                                child: Text('$num - ${knRashi[i]}', style: TextStyle(color: kText, fontSize: 13)),
+                              );
+                            }),
+                            onChanged: (v) => setState(() => _sprashtangaNum = v),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: DropdownButtonFormField<int>(
+                            value: _svarnaroodhaRashi,
+                            decoration: InputDecoration(
+                              labelText: 'ಸ್ವರ್ಣಾರೂಢ ರಾಶಿ',
+                              prefixIcon: Icon(Icons.stars, color: kMuted, size: 20),
+                              suffixIcon: _svarnaroodhaRashi != null
+                                  ? IconButton(
+                                      icon: const Icon(Icons.close, size: 16),
+                                      onPressed: () => setState(() => _svarnaroodhaRashi = null),
+                                    )
+                                  : null,
+                              border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                              contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                              isDense: true,
+                            ),
+                            hint: const Text('ಆಯ್ಕೆಮಾಡಿ', style: TextStyle(fontSize: 13)),
+                            isExpanded: true,
+                            items: List.generate(12, (i) => DropdownMenuItem<int>(
+                              value: i,
+                              child: Text(knRashi[i], style: TextStyle(color: kText, fontSize: 13)),
+                            )),
+                            onChanged: (v) => setState(() => _svarnaroodhaRashi = v),
+                          ),
+                        ),
+                      ],
                     ),
                     const SizedBox(height: 12),
 
@@ -452,6 +605,11 @@ class AshtamangalaDashboardScreen extends StatefulWidget {
   final KundaliResult result;
   final String name;
   final String ashtamangalaNumber;
+  final String tamboolaNumber;
+  final int? sprashtangaNum;
+  final int? svarnaroodhaRashi;
+  final String? prucchakaRashi;
+  final String? prucchakaNakshatra;
   final String place;
   final DateTime dob;
   final int hour;
@@ -466,6 +624,11 @@ class AshtamangalaDashboardScreen extends StatefulWidget {
     required this.result,
     required this.name,
     required this.ashtamangalaNumber,
+    required this.tamboolaNumber,
+    this.sprashtangaNum,
+    this.svarnaroodhaRashi,
+    this.prucchakaRashi,
+    this.prucchakaNakshatra,
     required this.place,
     required this.dob,
     required this.hour,
@@ -576,12 +739,21 @@ class _AshtamangalaDashboardScreenState extends State<AshtamangalaDashboardScree
     final isBhava = chart['isBhava'] as bool;
     final label = chart['fullName'] as String;
 
+    Map<String, int>? aroodhas;
+    if (varga == 1 && !isBhava && (widget.svarnaroodhaRashi != null || widget.sprashtangaNum != null)) {
+      aroodhas = {
+        if (widget.svarnaroodhaRashi != null) 'ಆರೂಢ': widget.svarnaroodhaRashi!,
+        if (widget.sprashtangaNum != null) 'ಸ್ಪೃಷ್ಟಾಂಗ': widget.sprashtangaNum! - 1,
+      };
+    }
+
     return KundaliChart(
       result: widget.result,
       varga: varga,
       isBhava: isBhava,
       showSphutas: false,
       showNavamshaNumber: true, // ಸಿಂಗಲ್ ಲೆಟರ್ + ನವಾಂಶ ಸಂಖ್ಯೆ
+      aroodhas: aroodhas,
       centerLabel: label,
       onPlanetTap: _showPlanetDetail,
       selectedPlanet: isBhava ? _bhavaPlanet : null,
@@ -647,11 +819,22 @@ class _AshtamangalaDashboardScreenState extends State<AshtamangalaDashboardScree
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 _kv('ಪ್ರುಚ್ಛಕರ ಹೆಸರು', widget.name),
+                if (widget.prucchakaRashi != null || widget.prucchakaNakshatra != null)
+                  _kv('ಪ್ರುಚ್ಛಕರ ರಾಶಿ / ನಕ್ಷತ್ರ', [
+                    if (widget.prucchakaRashi != null) 'ರಾಶಿ: ${widget.prucchakaRashi}',
+                    if (widget.prucchakaNakshatra != null) 'ನಕ್ಷತ್ರ: ${widget.prucchakaNakshatra}',
+                  ].join('  •  ')),
                 _kv('ಸ್ಥಳ', widget.place),
                 _kv('ದಿನಾಂಕ', dateStr),
                 _kv('ಸಮಯ', timeStr),
                 if (widget.ashtamangalaNumber.isNotEmpty)
                   _kv('ಅಷ್ಟಮಂಗಲ ಸಂಖ್ಯೆ', widget.ashtamangalaNumber),
+                if (widget.tamboolaNumber.isNotEmpty)
+                  _kv('ತಾಂಬೂಲ ಸಂಖ್ಯೆ', widget.tamboolaNumber),
+                if (widget.svarnaroodhaRashi != null)
+                  _kv('ಸ್ವರ್ಣಾರೂಢ ರಾಶಿ', knRashi[widget.svarnaroodhaRashi!]),
+                if (widget.sprashtangaNum != null)
+                  _kv('ಸ್ಪೃಷ್ಟಾಂಗ ರಾಶಿ', '${widget.sprashtangaNum} (${knRashi[widget.sprashtangaNum! - 1]})'),
                 _kv('ಶಿಷ್ಟ ದಶಾಧಿಪತಿ', '${trAll(pan.dashaLord)}  ಶಿಷ್ಟ ಶೇಷ: ${_trDashaBalance(pan.dashaBalance)}'),
                 const Divider(height: 16),
                 _kv('ವಯಸ್ಸು', ageStr),
@@ -859,8 +1042,17 @@ class _AshtamangalaDashboardScreenState extends State<AshtamangalaDashboardScree
     // ಹೆಚ್ಚುವರಿ ಪ್ರಶ್ನಾ ಸ್ಫುಟಗಳು
     final trisphuta = (lag + moon + jup) % 360;
     final chatusphuta = (trisphuta + sun) % 360;
-    final aroodha = (lag + 30) % 360; // ಆರೂಢ ಸ್ಫುಟ
+    final aroodha = widget.svarnaroodhaRashi != null
+        ? ((widget.svarnaroodhaRashi! * 30.0 + (lag % 30.0)) % 360)
+        : ((lag + 30) % 360); // ಆರೂಢ ಸ್ಫುಟ
     final chatra = (aroodha + lag - sun + 360) % 360; // ಛತ್ರ ಸ್ಫುಟ
+    final sprashtangaDeg = widget.sprashtangaNum != null
+        ? (((widget.sprashtangaNum! - 1) * 30.0 + (lag % 30.0)) % 360)
+        : null;
+    final tambInt = int.tryParse(widget.tamboolaNumber);
+    final tamboolaSphuta = tambInt != null
+        ? ((tambInt * 30.0 + (lag % 30.0)) % 360)
+        : null;
 
     // ಗ್ರಹಗಳ ಪಟ್ಟಿ
     const grahaList = [
@@ -878,6 +1070,10 @@ class _AshtamangalaDashboardScreenState extends State<AshtamangalaDashboardScree
       {'name': 'ಮೃತ್ಯು ಸ್ಫುಟ', 'deg': r.advSphutas['ಮೃತ್ಯು'] ?? ((lag * 7 + sun) % 360)},
       {'name': 'ಸೂಕ್ಷ್ಮ ತ್ರಿಸ್ಫುಟ', 'deg': r.advSphutas['ಸೂಕ್ಷ್ಮ ತ್ರಿ.'] ?? (((lag + moon + sun) / 3) % 360)},
       {'name': 'ಆರೂಢ ಸ್ಫುಟ', 'deg': aroodha},
+      if (sprashtangaDeg != null)
+        {'name': 'ಸ್ಪೃಷ್ಟಾಂಗ ಸ್ಫುಟ', 'deg': sprashtangaDeg},
+      if (tamboolaSphuta != null)
+        {'name': 'ತಾಂಬೂಲ ಸ್ಫುಟ', 'deg': tamboolaSphuta},
       {'name': 'ಛತ್ರ ಸ್ಫುಟ', 'deg': chatra},
       {'name': 'ಧೂಮ', 'deg': r.advSphutas['ಧೂಮ'] ?? ((sun + 133.3333) % 360)},
       {'name': 'ವ್ಯತೀಪಾತ', 'deg': r.advSphutas['ವ್ಯತೀಪಾತ'] ?? ((360 - (r.advSphutas['ಧೂಮ'] ?? ((sun + 133.3333) % 360))) % 360)},
