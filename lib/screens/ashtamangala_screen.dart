@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/gestures.dart';
+import 'dart:math' as math;
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import '../widgets/common.dart';
@@ -655,11 +656,12 @@ class _AshtamangalaDashboardScreenState extends State<AshtamangalaDashboardScree
   // ೧೬ ಪಾರಾಶರಿ ಷೋಡಶವರ್ಗ ಕುಂಡಲಿಗಳು + ಭಾವ ಕುಂಡಲಿ
   static const List<Map<String, dynamic>> _shodashaVargaCharts = [
     {'name': 'ರಾಶಿ', 'fullName': 'ರಾಶಿ ಕುಂಡಲಿ', 'varga': 1, 'isBhava': false},
+    {'name': 'ಭಾವ', 'fullName': 'ಭಾವ ಕುಂಡಲಿ', 'varga': 1, 'isBhava': true},
+    {'name': 'ನವಾಂಶ', 'fullName': 'ನವಾಂಶ ಕುಂಡಲಿ', 'varga': 9, 'isBhava': false},
     {'name': 'ಹೋರಾ', 'fullName': 'ಹೋರಾ ಕುಂಡಲಿ', 'varga': 2, 'isBhava': false},
     {'name': 'ದ್ರೆಕ್ಕಾಣ', 'fullName': 'ದ್ರೆಕ್ಕಾಣ ಕುಂಡಲಿ', 'varga': 3, 'isBhava': false},
     {'name': 'ಚತುರ್ಥಾಂಶ', 'fullName': 'ಚತುರ್ಥಾಂಶ ಕುಂಡಲಿ', 'varga': 4, 'isBhava': false},
     {'name': 'ಸಪ್ತಾಂಶ', 'fullName': 'ಸಪ್ತಾಂಶ ಕುಂಡಲಿ', 'varga': 7, 'isBhava': false},
-    {'name': 'ನವಾಂಶ', 'fullName': 'ನವಾಂಶ ಕುಂಡಲಿ', 'varga': 9, 'isBhava': false},
     {'name': 'ದಶಾಂಶ', 'fullName': 'ದಶಾಂಶ ಕುಂಡಲಿ', 'varga': 10, 'isBhava': false},
     {'name': 'ದ್ವಾದಶಾಂಶ', 'fullName': 'ದ್ವಾದಶಾಂಶ ಕುಂಡಲಿ', 'varga': 12, 'isBhava': false},
     {'name': 'ಷೋಡಶಾಂಶ', 'fullName': 'ಷೋಡಶಾಂಶ ಕುಂಡಲಿ', 'varga': 16, 'isBhava': false},
@@ -670,7 +672,6 @@ class _AshtamangalaDashboardScreenState extends State<AshtamangalaDashboardScree
     {'name': 'ಖವೇದಾಂಶ', 'fullName': 'ಖವೇದಾಂಶ ಕುಂಡಲಿ', 'varga': 40, 'isBhava': false},
     {'name': 'ಅಕ್ಷವೇದಾಂಶ', 'fullName': 'ಅಕ್ಷವೇದಾಂಶ ಕುಂಡಲಿ', 'varga': 45, 'isBhava': false},
     {'name': 'ಷಷ್ಟ್ಯಂಶ', 'fullName': 'ಷಷ್ಟ್ಯಂಶ ಕುಂಡಲಿ', 'varga': 60, 'isBhava': false},
-    {'name': 'ಭಾವ', 'fullName': 'ಭಾವ ಕುಂಡಲಿ', 'varga': 1, 'isBhava': true},
   ];
 
   @override
@@ -986,25 +987,29 @@ class _AshtamangalaDashboardScreenState extends State<AshtamangalaDashboardScree
         ),
       );
     } else {
-      // ── LANDSCAPE: ೨ ಕುಂಡಲಿಗಳು ಪಕ್ಕಪಕ್ಕದಲ್ಲಿ ಗೋಚರಿಸುತ್ತವೆ ──
+      // ── LANDSCAPE: ೨ ಕುಂಡಲಿಗಳು ಪಕ್ಕಪಕ್ಕದಲ್ಲಿ (ರಾಶಿ ಕುಂಡಲಿ ಮತ್ತು ಭಾವ ಕುಂಡಲಿ) ──
       final screenHeight = MediaQuery.of(context).size.height;
-      final screenWidth = MediaQuery.of(context).size.width * 0.65; // ಬಲ ಪ್ಯಾನೆಲ್ ಅಗಲ
-      final chartSize = (screenHeight - 140).clamp(200.0, screenHeight * 0.75);
-      final chartWidth = (screenWidth / 2.0) - 16;
+      final screenWidth = MediaQuery.of(context).size.width;
+      final topPad = MediaQuery.of(context).padding.top;
+      final bottomPad = MediaQuery.of(context).padding.bottom;
+      final availableHeight = screenHeight - topPad - bottomPad - 130;
+      final chartSize = availableHeight.clamp(200.0, screenHeight * 0.75);
+      final chartWidth = screenWidth / 2.0;
+      final squareSize = math.min(chartWidth - 16, chartSize);
 
       return SingleChildScrollView(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 6),
         child: Column(
           children: [
             SizedBox(
-              height: chartSize + 16,
+              height: squareSize + 8,
               child: ScrollConfiguration(
                 behavior: ScrollConfiguration.of(context).copyWith(
                   dragDevices: {PointerDeviceKind.touch, PointerDeviceKind.mouse},
                 ),
                 child: ListView.builder(
                   scrollDirection: Axis.horizontal,
-                  padding: const EdgeInsets.symmetric(horizontal: 4),
+                  physics: const BouncingScrollPhysics(),
                   itemCount: _shodashaVargaCharts.length,
                   itemBuilder: (context, i) {
                     final chart = _shodashaVargaCharts[i];
@@ -1012,16 +1017,22 @@ class _AshtamangalaDashboardScreenState extends State<AshtamangalaDashboardScree
                       width: chartWidth,
                       child: Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 4),
-                        child: _buildChartWidget(chart),
+                        child: Center(
+                          child: SizedBox(
+                            width: squareSize,
+                            height: squareSize,
+                            child: _buildChartWidget(chart),
+                          ),
+                        ),
                       ),
                     );
                   },
                 ),
               ),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 6),
             Text(
-              'ಗ್ರಹದ ಮೇಲೆ ಟ್ಯಾಪ್ ಮಾಡಿ ಹೆಚ್ಚಿನ ವಿವರಗಳನ್ನು ವೀಕ್ಷಿಸಿ',
+              'ಗ್ರಹದ ಮೇಲೆ ಟ್ಯಾಪ್ ಮಾಡಿ ಹೆಚ್ಚಿನ ವಿವರಗಳನ್ನು ವೀಕ್ಷಿಸಿ  •  ಸ್ವೈಪ್ ಮಾಡಿ ಇತರೆ ವರ್ಗ ಕುಂಡಲಿಗಳನ್ನು ವೀಕ್ಷಿಸಿ',
               style: TextStyle(fontSize: 11, color: kMuted),
             ),
           ],
@@ -1276,76 +1287,29 @@ class _AshtamangalaDashboardScreenState extends State<AshtamangalaDashboardScree
                 ),
                 const Divider(height: 1),
 
-                // ── PORTRAIT (ವರ್ಟಿಕಲ್ ಮೋಡ್): TabBar at top, TabBarView filling body ──
-                if (!isLandscape) ...[
-                  Container(
-                    color: kCard,
-                    child: TabBar(
-                      controller: _tabCtrl,
-                      labelColor: kPurple2,
-                      unselectedLabelColor: kMuted,
-                      labelStyle: const TextStyle(fontWeight: FontWeight.w800, fontSize: 14),
-                      indicatorColor: kPurple2,
-                      indicatorWeight: 3,
-                      tabs: _tabs.map((t) => Tab(text: t)).toList(),
-                    ),
+                // ಎಲ್ಲ ಮೋಡ್‌ಗಳಲ್ಲೂ (ವರ್ಟಿಕಲ್ ಮತ್ತು ಲ್ಯಾಂಡ್‌ಸ್ಕೇಪ್) ಪೂರ್ಣ ಅಗಲದ ಟ್ಯಾಬ್ ಬಾರ್
+                Container(
+                  color: kCard,
+                  child: TabBar(
+                    controller: _tabCtrl,
+                    labelColor: kPurple2,
+                    unselectedLabelColor: kMuted,
+                    labelStyle: const TextStyle(fontWeight: FontWeight.w800, fontSize: 14),
+                    indicatorColor: kPurple2,
+                    indicatorWeight: 3,
+                    tabs: _tabs.map((t) => Tab(text: t)).toList(),
                   ),
-                  Expanded(
-                    child: TabBarView(
-                      controller: _tabCtrl,
-                      children: [
-                        _buildPanchangTab(),
-                        _buildKundaliTab(isLandscape: false),
-                        _buildSphutaTab(),
-                      ],
-                    ),
+                ),
+                Expanded(
+                  child: TabBarView(
+                    controller: _tabCtrl,
+                    children: [
+                      _buildPanchangTab(),
+                      _buildKundaliTab(isLandscape: isLandscape),
+                      _buildSphutaTab(),
+                    ],
                   ),
-                ],
-
-                // ── LANDSCAPE: ಪಂಚಾಂಗ ಎಡಭಾಗದಲ್ಲಿ (೩೫%), ಟ್ಯಾಬ್‌ಗಳು ಬಲಭಾಗದಲ್ಲಿ ──
-                if (isLandscape)
-                  Expanded(
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        // LEFT: ಪಂಚಾಂಗ (Fixed 35% width, just like Kundali main section!)
-                        SizedBox(
-                          width: MediaQuery.of(context).size.width * 0.35,
-                          child: _buildPanchangTab(),
-                        ),
-                        Container(width: 1, color: kBorder),
-                        // RIGHT: TabBar + TabBarView
-                        Expanded(
-                          child: Column(
-                            children: [
-                              Container(
-                                color: kCard,
-                                child: TabBar(
-                                  controller: _tabCtrl,
-                                  labelColor: kPurple2,
-                                  unselectedLabelColor: kMuted,
-                                  labelStyle: const TextStyle(fontWeight: FontWeight.w800, fontSize: 14),
-                                  indicatorColor: kPurple2,
-                                  indicatorWeight: 3,
-                                  tabs: _tabs.map((t) => Tab(text: t)).toList(),
-                                ),
-                              ),
-                              Expanded(
-                                child: TabBarView(
-                                  controller: _tabCtrl,
-                                  children: [
-                                    _buildPanchangTab(),
-                                    _buildKundaliTab(isLandscape: true),
-                                    _buildSphutaTab(),
-                                  ],
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
+                ),
               ],
             );
           },
