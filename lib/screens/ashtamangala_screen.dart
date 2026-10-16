@@ -39,10 +39,9 @@ class _AshtamangalaScreenState extends State<AshtamangalaScreen> {
   bool _hasResult = false;
   String _errorMsg = '';
   int _selectedTab = 0; // 0: ಪಂಚಾಂಗ, 1: ಕುಂಡಲಿ, 2: ಸ್ಫುಟ
-  int _selectedVargaIdx = 0;
-  bool _showAllVargas = false;
   String? _bhavaPlanet;
   bool _inputExpanded = true;
+  late final PageController _kundaliPageController;
 
   KundaliResult? _prashnaResult;
 
@@ -70,6 +69,7 @@ class _AshtamangalaScreenState extends State<AshtamangalaScreen> {
   @override
   void initState() {
     super.initState();
+    _kundaliPageController = PageController();
     _placeCtrl = TextEditingController(text: LocationService.place);
     _latCtrl = TextEditingController(text: LocationService.lat.toStringAsFixed(4));
     _lonCtrl = TextEditingController(text: LocationService.lon.toStringAsFixed(4));
@@ -78,6 +78,7 @@ class _AshtamangalaScreenState extends State<AshtamangalaScreen> {
 
   @override
   void dispose() {
+    _kundaliPageController.dispose();
     _numberCtrl.dispose();
     _nameCtrl.dispose();
     _placeCtrl.dispose();
@@ -216,6 +217,9 @@ class _AshtamangalaScreenState extends State<AshtamangalaScreen> {
           _errorMsg = '';
           _inputExpanded = false;
         });
+        if (_kundaliPageController.hasClients) {
+          _kundaliPageController.jumpToPage(0);
+        }
       } else {
         setState(() {
           _errorMsg = 'ಕುಂಡಲಿ ಲೆಕ್ಕಾಚಾರ ವಿಫಲವಾಗಿದೆ. ದಯವಿಟ್ಟು ವಿವರಗಳನ್ನು ಪರಿಶೀಲಿಸಿ.';
@@ -814,160 +818,40 @@ class _AshtamangalaScreenState extends State<AshtamangalaScreen> {
     );
   }
 
-  // ═══ ಟ್ಯಾಬ್ ೨: ಕುಂಡಲಿ (ಸಂಪೂರ್ಣ ಷೋಡಶವರ್ಗ ಕುಂಡಲಿಗಳು) ═══
+  // ═══ ಟ್ಯಾಬ್ ೨: ಕುಂಡಲಿ (ಸಂಪೂರ್ಣ ಷೋಡಶವರ್ಗ ಕುಂಡಲಿಗಳು - ಸ್ವೈಪ್ ಮಾಡಬಹುದಾದ ನೋಟ) ═══
   Widget _buildKundaliTab() {
     if (_prashnaResult == null) return const SizedBox.shrink();
     final screenWidth = MediaQuery.of(context).size.width;
     final isLandscape = MediaQuery.of(context).orientation == Orientation.landscape;
     final chartSize = isLandscape ? (screenWidth * 0.45).clamp(300.0, 500.0) : (screenWidth - 32).clamp(280.0, 480.0);
 
-    final currentChart = _shodashaVargaCharts[_selectedVargaIdx];
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        // ಹೆಡರ್ ಮತ್ತು ನೋಟ ಬದಲಾವಣೆ
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
-          child: Row(
-            children: [
-              Expanded(
-                child: Text(
-                  'ಷೋಡಶವರ್ಗ ಕುಂಡಲಿಗಳು',
-                  style: TextStyle(fontSize: 14, fontWeight: FontWeight.w900, color: kPurple2),
-                ),
-              ),
-              TextButton.icon(
-                onPressed: () => setState(() => _showAllVargas = !_showAllVargas),
-                icon: Icon(_showAllVargas ? Icons.view_carousel : Icons.view_stream, size: 18, color: kOrange),
-                label: Text(
-                  _showAllVargas ? 'ಒಂದೊಂದಾಗಿ' : 'ಎಲ್ಲಾ ಕುಂಡಲಿಗಳು',
-                  style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: kOrange),
-                ),
-              ),
-            ],
-          ),
-        ),
-
-        // ವರ್ಗ ಆಯ್ಕೆ ಚಿಪ್ಸ್‌ಗಳು (ಕನ್ನಡದಲ್ಲಿ ಮಾತ್ರ)
-        SingleChildScrollView(
-          scrollDirection: Axis.horizontal,
-          padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
-          child: Row(
-            children: List.generate(_shodashaVargaCharts.length, (i) {
-              final c = _shodashaVargaCharts[i];
-              final isSel = !_showAllVargas && _selectedVargaIdx == i;
-              return Padding(
-                padding: const EdgeInsets.only(right: 6),
-                child: ChoiceChip(
-                  label: Text('${c['name']}'),
-                  selected: isSel,
-                  selectedColor: kPurple2,
-                  labelStyle: TextStyle(
-                    fontSize: 12,
-                    fontWeight: isSel ? FontWeight.w900 : FontWeight.w600,
-                    color: isSel ? Colors.white : kText,
-                  ),
-                  backgroundColor: kCard,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
-                    side: BorderSide(color: isSel ? kPurple2 : kBorder),
-                  ),
-                  onSelected: (selected) {
-                    if (selected) {
-                      setState(() {
-                        _selectedVargaIdx = i;
-                        _showAllVargas = false;
-                      });
-                    }
-                  },
-                ),
-              );
-            }),
-          ),
-        ),
-        const SizedBox(height: 8),
-
-        if (!_showAllVargas) ...[
-          // ಏಕ ಕುಂಡಲಿ ನೋಟ (ಹಿಂದೆ / ಮುಂದೆ ನ್ಯಾವಿಗೇಷನ್)
-          AppCard(
-            child: Column(
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    IconButton(
-                      icon: Icon(Icons.arrow_back_ios, size: 18, color: _selectedVargaIdx > 0 ? kPurple2 : kMuted),
-                      tooltip: 'ಹಿಂದಿನ ಕುಂಡಲಿ',
-                      onPressed: _selectedVargaIdx > 0
-                          ? () => setState(() => _selectedVargaIdx--)
-                          : null,
-                    ),
-                    Expanded(
-                      child: Column(
-                        children: [
-                          Text(
-                            currentChart['fullName'] as String,
-                            textAlign: TextAlign.center,
-                            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w900, color: kPurple2),
-                          ),
-                          const SizedBox(height: 2),
-                          Text(
-                            '${_selectedVargaIdx + 1} / ${_shodashaVargaCharts.length}',
-                            style: TextStyle(fontSize: 11, color: kMuted, fontWeight: FontWeight.w600),
-                          ),
-                        ],
-                      ),
-                    ),
-                    IconButton(
-                      icon: Icon(Icons.arrow_forward_ios, size: 18, color: _selectedVargaIdx < _shodashaVargaCharts.length - 1 ? kPurple2 : kMuted),
-                      tooltip: 'ಮುಂದಿನ ಕುಂಡಲಿ',
-                      onPressed: _selectedVargaIdx < _shodashaVargaCharts.length - 1
-                          ? () => setState(() => _selectedVargaIdx++)
-                          : null,
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 8),
-                Center(
+    return AppCard(
+      child: Column(
+        children: [
+          SizedBox(
+            height: chartSize,
+            child: PageView.builder(
+              controller: _kundaliPageController,
+              itemCount: _shodashaVargaCharts.length,
+              itemBuilder: (context, index) {
+                final chart = _shodashaVargaCharts[index];
+                return Center(
                   child: SizedBox(
                     width: chartSize,
                     height: chartSize,
-                    child: _buildChartWidget(currentChart),
+                    child: _buildChartWidget(chart),
                   ),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  'ಗ್ರಹದ ಮೇಲೆ ಟ್ಯಾಪ್ ಮಾಡಿ ಹೆಚ್ಚಿನ ವಿವರಗಳನ್ನು ವೀಕ್ಷಿಸಿ',
-                  style: TextStyle(fontSize: 11, color: kMuted),
-                ),
-              ],
+                );
+              },
             ),
           ),
-        ] else ...[
-          // ಎಲ್ಲಾ ಕುಂಡಲಿಗಳು ಒಂದರ ಕೆಳಗೆ ಒಂದು
-          ..._shodashaVargaCharts.map((chart) {
-            return AppCard(
-              child: Column(
-                children: [
-                  Text(
-                    chart['fullName'] as String,
-                    style: TextStyle(fontSize: 15, fontWeight: FontWeight.w900, color: kPurple2),
-                  ),
-                  const SizedBox(height: 8),
-                  Center(
-                    child: SizedBox(
-                      width: chartSize,
-                      height: chartSize,
-                      child: _buildChartWidget(chart),
-                    ),
-                  ),
-                ],
-              ),
-            );
-          }),
+          const SizedBox(height: 8),
+          Text(
+            'ಗ್ರಹದ ಮೇಲೆ ಟ್ಯಾಪ್ ಮಾಡಿ ಹೆಚ್ಚಿನ ವಿವರಗಳನ್ನು ವೀಕ್ಷಿಸಿ',
+            style: TextStyle(fontSize: 11, color: kMuted),
+          ),
         ],
-      ],
+      ),
     );
   }
 
