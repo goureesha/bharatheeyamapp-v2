@@ -24,6 +24,7 @@ class KundaliChart extends StatelessWidget {
   final Map<String, Color>? highlightPlanets; // planet name → highlight color (e.g. dasha=orange, bhukti=green)
   final bool forceShortNames; // force single-letter mode (for PDF)
   final bool forceSingleLetter; // force truly single-letter graha (for match PDF)
+  final bool showNavamshaNumber; // show single-letter graha with navamsha sign number (1-12)
 
   const KundaliChart({
     super.key,
@@ -41,6 +42,7 @@ class KundaliChart extends StatelessWidget {
     this.highlightPlanets,
     this.forceShortNames = false,
     this.forceSingleLetter = false,
+    this.showNavamshaNumber = false,
   });
 
   // Grid layout: indices into rashi boxes, null = center
@@ -203,6 +205,7 @@ class KundaliChart extends StatelessWidget {
         textScale: textScale,
         highlightPlanets: highlightPlanets,
         forceShortNames: forceShortNames,
+        showNavamshaNumber: showNavamshaNumber,
       );
     }
 
@@ -419,7 +422,7 @@ class KundaliChart extends StatelessWidget {
   }
 
   Widget _rashiBox(int rashiIdx, List<Widget> planets) {
-    final bool singleLetter = forceShortNames || (SingleLetterMode.isActive && ((varga == 1) || isBhava));
+    final bool singleLetter = forceShortNames || forceSingleLetter || showNavamshaNumber || (SingleLetterMode.isActive && ((varga == 1) || isBhava));
     return Container(
       margin: const EdgeInsets.all(1.0),
       decoration: BoxDecoration(
@@ -664,7 +667,12 @@ class KundaliChart extends StatelessWidget {
       final bool showDeg = (varga == 1) || isBhava;
       final bool showAmshaDeg = (varga != 1) && !isBhava;
 
-      if (forceShortNames || forceSingleLetter) {
+      if (showNavamshaNumber && info != null) {
+        // Single letter planet name with navamsha sign number (1-12)
+        final navNum = SamshakaMode.navamshaSign(info.longitude);
+        final short = _singleLetters[name] ?? _shortNames[name] ?? name;
+        displayText = '$short $navNum';
+      } else if (forceShortNames || forceSingleLetter) {
         // PDF mode: always use short names, skip all other modes
         displayText = shortName;
       } else if (showDeg && SamshakaMode.isActive) {

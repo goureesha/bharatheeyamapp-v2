@@ -10,7 +10,7 @@ import '../widgets/kundali_chart.dart';
 import '../widgets/planet_detail_sheet.dart';
 
 /// ಅಷ್ಟಮಂಗಲ ಪ್ರಶ್ನೆ
-/// ನೀಡಲಾದ ದಿನಾಂಕ, ಸಮಯ ಮತ್ತು ಸ್ಥಳಕ್ಕೆ ಪಂಚಾಂಗ ಮತ್ತು ಸಂಪೂರ್ಣ ಷೋಡಶವರ್ಗ ಕುಂಡಲಿಗಳನ್ನು ಲೆಕ್ಕಾಚಾರ ಮಾಡುತ್ತದೆ.
+/// ನೀಡಲಾದ ದಿನಾಂಕ, ಸಮಯ ಮತ್ತು ಸ್ಥಳಕ್ಕೆ ಪಂಚಾಂಗ, ಸಂಪೂರ್ಣ ಷೋಡಶವರ್ಗ ಕುಂಡಲಿಗಳು ಮತ್ತು ಸ್ಫುಟಗಳನ್ನು ಲೆಕ್ಕಾಚಾರ ಮಾಡುತ್ತದೆ.
 class AshtamangalaScreen extends StatefulWidget {
   const AshtamangalaScreen({super.key});
 
@@ -38,7 +38,7 @@ class _AshtamangalaScreenState extends State<AshtamangalaScreen> {
 
   bool _hasResult = false;
   String _errorMsg = '';
-  int _selectedTab = 0; // 0: ಪಂಚಾಂಗ, 1: ಕುಂಡಲಿ
+  int _selectedTab = 0; // 0: ಪಂಚಾಂಗ, 1: ಕುಂಡಲಿ, 2: ಸ್ಫುಟ
   int _selectedVargaIdx = 0;
   bool _showAllVargas = false;
   String? _bhavaPlanet;
@@ -322,8 +322,10 @@ class _AshtamangalaScreenState extends State<AshtamangalaScreen> {
                 const SizedBox(height: 8),
                 if (_selectedTab == 0)
                   _buildPanchangTab()
+                else if (_selectedTab == 1)
+                  _buildKundaliTab()
                 else
-                  _buildKundaliTab(),
+                  _buildSphutaTab(),
               ],
               const SizedBox(height: 32),
             ],
@@ -616,75 +618,51 @@ class _AshtamangalaScreenState extends State<AshtamangalaScreen> {
     style: TextStyle(color: kText, fontSize: 14),
   );
 
-  // ═══ ಟ್ಯಾಬ್ ಆಯ್ಕೆ (Output Tabs Switcher) ═══
+  // ═══ ಟ್ಯಾಬ್ ಆಯ್ಕೆ (Output Tabs Switcher: ಪಂಚಾಂಗ, ಕುಂಡಲಿ, ಸ್ಫುಟ) ═══
   Widget _buildOutputTabBar() {
     return AppCard(
       padding: EdgeInsets.zero,
       child: Row(
         children: [
-          Expanded(
-            child: InkWell(
-              onTap: () => setState(() => _selectedTab = 0),
-              child: Container(
-                padding: const EdgeInsets.symmetric(vertical: 12),
-                decoration: BoxDecoration(
-                  border: Border(
-                    bottom: BorderSide(
-                      color: _selectedTab == 0 ? kPurple2 : Colors.transparent,
-                      width: 3,
-                    ),
-                  ),
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(Icons.calendar_month, size: 18, color: _selectedTab == 0 ? kPurple2 : kMuted),
-                    const SizedBox(width: 8),
-                    Text(
-                      'ಪಂಚಾಂಗ',
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w800,
-                        color: _selectedTab == 0 ? kPurple2 : kMuted,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-          Expanded(
-            child: InkWell(
-              onTap: () => setState(() => _selectedTab = 1),
-              child: Container(
-                padding: const EdgeInsets.symmetric(vertical: 12),
-                decoration: BoxDecoration(
-                  border: Border(
-                    bottom: BorderSide(
-                      color: _selectedTab == 1 ? kPurple2 : Colors.transparent,
-                      width: 3,
-                    ),
-                  ),
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(Icons.grid_view, size: 18, color: _selectedTab == 1 ? kPurple2 : kMuted),
-                    const SizedBox(width: 8),
-                    Text(
-                      'ಕುಂಡಲಿ (ಷೋಡಶವರ್ಗ)',
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w800,
-                        color: _selectedTab == 1 ? kPurple2 : kMuted,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
+          _buildTabBtn(0, Icons.calendar_month, 'ಪಂಚಾಂಗ'),
+          _buildTabBtn(1, Icons.grid_view, 'ಕುಂಡಲಿ'),
+          _buildTabBtn(2, Icons.auto_graph, 'ಸ್ಫುಟ'),
         ],
+      ),
+    );
+  }
+
+  Widget _buildTabBtn(int index, IconData icon, String title) {
+    final isSel = _selectedTab == index;
+    return Expanded(
+      child: InkWell(
+        onTap: () => setState(() => _selectedTab = index),
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 12),
+          decoration: BoxDecoration(
+            border: Border(
+              bottom: BorderSide(
+                color: isSel ? kPurple2 : Colors.transparent,
+                width: 3,
+              ),
+            ),
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(icon, size: 17, color: isSel ? kPurple2 : kMuted),
+              const SizedBox(width: 6),
+              Text(
+                title,
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w800,
+                  color: isSel ? kPurple2 : kMuted,
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -1003,6 +981,7 @@ class _AshtamangalaScreenState extends State<AshtamangalaScreen> {
       varga: varga,
       isBhava: isBhava,
       showSphutas: false,
+      showNavamshaNumber: true, // ತೋರಿಸು: ಏಕಾಕ್ಷರ ಗ್ರಹ ಹೆಸರು + ನವಾಂಶ ಸಂಖ್ಯೆ
       centerLabel: label,
       onPlanetTap: _showPlanetDetail,
       selectedPlanet: isBhava ? _bhavaPlanet : null,
@@ -1014,7 +993,138 @@ class _AshtamangalaScreenState extends State<AshtamangalaScreen> {
     );
   }
 
+  // ═══ ಟ್ಯಾಬ್ ೩: ಸ್ಫುಟ (ಗ್ರಹ ಸ್ಫುಟ ಮತ್ತು ಇತರ ಸ್ಫುಟಗಳು) ═══
+  Widget _buildSphutaTab() {
+    if (_prashnaResult == null) return const SizedBox.shrink();
+    final r = _prashnaResult!;
+    final pMap = r.planets;
+    final lag = pMap['ಲಗ್ನ']?.longitude ?? 0.0;
+    final sun = pMap['ರವಿ']?.longitude ?? 0.0;
+    final moon = pMap['ಚಂದ್ರ']?.longitude ?? 0.0;
+    final jup = pMap['ಗುರು']?.longitude ?? 0.0;
+
+    // ಹೆಚ್ಚುವರಿ ಪ್ರಶ್ನಾ ಸ್ಫುಟಗಳು
+    final trisphuta = (lag + moon + jup) % 360;
+    final chatusphuta = (trisphuta + sun) % 360;
+    final aroodha = (lag + 30) % 360; // ಆರೂಢ ಸ್ಫುಟ
+    final chatra = (aroodha + lag - sun + 360) % 360; // ಛತ್ರ ಸ್ಫುಟ
+
+    // ಗ್ರಹಗಳ ಪಟ್ಟಿ
+    const grahaList = [
+      'ಲಗ್ನ', 'ರವಿ', 'ಚಂದ್ರ', 'ಕುಜ', 'ಬುಧ',
+      'ಗುರು', 'ಶುಕ್ರ', 'ಶನಿ', 'ರಾಹು', 'ಕೇತು', 'ಮಾಂದಿ'
+    ];
+
+    // ಉಪಗ್ರಹ ಮತ್ತು ವಿಶೇಷ ಸ್ಫುಟಗಳ ಪಟ್ಟಿ
+    final otherSphutas = <Map<String, dynamic>>[
+      {'name': 'ತ್ರಿಸ್ಫುಟ', 'deg': r.advSphutas['ತ್ರಿಸ್ಫುಟ'] ?? trisphuta},
+      {'name': 'ಚತುಃಸ್ಫುಟ', 'deg': r.advSphutas['ಚತುಃಸ್ಫುಟ'] ?? chatusphuta},
+      {'name': 'ಪಂಚಸ್ಫುಟ', 'deg': r.advSphutas['ಪಂಚಸ್ಫುಟ'] ?? ((chatusphuta + (pMap['ರಾಹು']?.longitude ?? 0)) % 360)},
+      {'name': 'ಪ್ರಾಣ ಸ್ಫುಟ', 'deg': r.advSphutas['ಪ್ರಾಣ'] ?? ((lag * 5 + moon) % 360)},
+      {'name': 'ದೇಹ ಸ್ಫುಟ', 'deg': r.advSphutas['ದೇಹ'] ?? ((moon * 8 + lag) % 360)},
+      {'name': 'ಮೃತ್ಯು ಸ್ಫುಟ', 'deg': r.advSphutas['ಮೃತ್ಯು'] ?? ((lag * 7 + sun) % 360)},
+      {'name': 'ಸೂಕ್ಷ್ಮ ತ್ರಿಸ್ಫುಟ', 'deg': r.advSphutas['ಸೂಕ್ಷ್ಮ ತ್ರಿ.'] ?? (((lag + moon + sun) / 3) % 360)},
+      {'name': 'ಆರೂಢ ಸ್ಫುಟ', 'deg': aroodha},
+      {'name': 'ಛತ್ರ ಸ್ಫುಟ', 'deg': chatra},
+      {'name': 'ಧೂಮ', 'deg': r.advSphutas['ಧೂಮ'] ?? ((sun + 133.3333) % 360)},
+      {'name': 'ವ್ಯತೀಪಾತ', 'deg': r.advSphutas['ವ್ಯತೀಪಾತ'] ?? ((360 - (r.advSphutas['ಧೂಮ'] ?? ((sun + 133.3333) % 360))) % 360)},
+      {'name': 'ಪರಿವೇಷ', 'deg': r.advSphutas['ಪರಿವೇಷ'] ?? 0.0},
+      {'name': 'ಇಂದ್ರಚಾಪ', 'deg': r.advSphutas['ಇಂದ್ರಚಾಪ'] ?? 0.0},
+      {'name': 'ಉಪಕೇತು', 'deg': r.advSphutas['ಉಪಕೇತು'] ?? 0.0},
+      {'name': 'ಭೃಗು ಬಿಂದು', 'deg': r.advSphutas['ಭೃಗು ಬಿ.'] ?? 0.0},
+      {'name': 'ಬೀಜ ಸ್ಫುಟ', 'deg': r.advSphutas['ಬೀಜ'] ?? 0.0},
+      {'name': 'ಕ್ಷೇತ್ರ ಸ್ಫುಟ', 'deg': r.advSphutas['ಕ್ಷೇತ್ರ'] ?? 0.0},
+      {'name': 'ಯೋಗಿ ಸ್ಫುಟ', 'deg': r.advSphutas['ಯೋಗಿ'] ?? 0.0},
+    ];
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // ── ಗ್ರಹ ಸ್ಫುಟ ──
+        _sectionLabel('🪐 ಗ್ರಹ ಸ್ಫುಟ', kPurple2),
+        AppCard(
+          padding: EdgeInsets.zero,
+          child: Column(
+            children: [
+              _tableHeader(['ಗ್ರಹ', 'ರಾಶಿ', 'ಸ್ಫುಟ', 'ನಕ್ಷತ್ರ - ಪಾದ', 'ಗತಿ']),
+              ...grahaList.map((p) {
+                final info = pMap[p];
+                if (info == null) return const SizedBox.shrink();
+                final ri = (info.longitude / 30).floor() % 12;
+                final rashiName = knRashi[ri];
+                final sphutaDeg = formatDeg(info.longitude);
+                final nakPada = '${info.nakshatra} - ${info.pada}';
+                String gati;
+                if (p == 'ಲಗ್ನ' || p == 'ಮಾಂದಿ') {
+                  gati = '-';
+                } else if (p == 'ರಾಹು' || p == 'ಕೇತು') {
+                  gati = 'ವಕ್ರಿ';
+                } else {
+                  gati = (info.speed < 0 ? 'ವಕ್ರಿ' : 'ನೇರ') + (info.isCombust ? ' (ಅಸ್ತ)' : '');
+                }
+
+                return _tableRow([
+                  p,
+                  rashiName,
+                  sphutaDeg,
+                  nakPada,
+                  gati,
+                ], bold0: true);
+              }),
+            ],
+          ),
+        ),
+        const SizedBox(height: 16),
+
+        // ── ಉಪಗ್ರಹ ಮತ್ತು ವಿಶೇಷ ಸ್ಫುಟಗಳು ──
+        _sectionLabel('✨ ಉಪಗ್ರಹ ಮತ್ತು ಇತರ ಸ್ಫುಟಗಳು', kTeal),
+        AppCard(
+          padding: EdgeInsets.zero,
+          child: Column(
+            children: [
+              _tableHeader(['ಸ್ಫುಟ', 'ರಾಶಿ', 'ಅಂಶ', 'ನಕ್ಷತ್ರ - ಪಾದ']),
+              ...otherSphutas.map((item) {
+                final name = item['name'] as String;
+                final deg = (item['deg'] as double) % 360;
+                final ri = (deg / 30).floor() % 12;
+                final rashiName = knRashi[ri];
+                final sphutaDeg = formatDeg(deg);
+                final nakIdx = (deg / 13.333333).floor() % 27;
+                final pada = ((deg % 13.333333) / 3.333333).floor() + 1;
+                final nakPada = '${knNak[nakIdx]} - $pada';
+
+                return _tableRow([
+                  name,
+                  rashiName,
+                  sphutaDeg,
+                  nakPada,
+                ], bold0: true);
+              }),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
   // ═══ ಸಹಾಯಕ ವಿಜೆಟ್‌ಗಳು (Helper UI Widgets) ═══
+  Widget _tableHeader(List<String> cols) {
+    return Container(
+      color: kPurple2.withOpacity(0.12),
+      child: Row(
+        children: cols.asMap().entries.map((e) => Expanded(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
+            child: Text(
+              e.value,
+              style: TextStyle(fontWeight: FontWeight.w800, fontSize: 11, color: kText),
+            ),
+          ),
+        )).toList(),
+      ),
+    );
+  }
+
   Widget _sectionLabel(String text, Color color) {
     return Padding(
       padding: const EdgeInsets.only(top: 6, bottom: 4, left: 4),

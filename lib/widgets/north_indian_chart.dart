@@ -23,6 +23,7 @@ class NorthIndianChart extends StatelessWidget {
   final double textScale;
   final Map<String, Color>? highlightPlanets;
   final bool forceShortNames;
+  final bool showNavamshaNumber;
 
   const NorthIndianChart({
     super.key,
@@ -39,6 +40,7 @@ class NorthIndianChart extends StatelessWidget {
     this.textScale = 1.0,
     this.highlightPlanets,
     this.forceShortNames = false,
+    this.showNavamshaNumber = false,
   });
 
   /// Compute which rashi index a planet falls in for the chosen varga
@@ -358,7 +360,7 @@ class NorthIndianChart extends StatelessWidget {
       final w = isCorner ? boxW * 0.85 : boxW;
       final ht = isCorner ? boxH * 0.85 : boxH;
 
-      final bool singleLetter = forceShortNames || (SingleLetterMode.isActive && ((varga == 1) || isBhava));
+      final bool singleLetter = forceShortNames || showNavamshaNumber || (SingleLetterMode.isActive && ((varga == 1) || isBhava));
 
       widgets.add(Positioned(
         left: center.dx * s - w / 2,
@@ -444,7 +446,12 @@ class NorthIndianChart extends StatelessWidget {
       // D1 (Rashi) and Bhava: show rashi degree; Amshas: show amsha degree
       final bool showRashiDeg = (varga == 1) || isBhava;
 
-      if (forceShortNames) {
+      if (showNavamshaNumber && info != null) {
+        // Single letter planet name with navamsha sign number (1-12)
+        final navNum = SamshakaMode.navamshaSign(info.longitude);
+        final short = _singleLetters[name] ?? _shortNames[name] ?? name;
+        displayText = '$short $navNum';
+      } else if (forceShortNames) {
         // PDF mode: always use short names, skip all other modes
         displayText = shortName;
       } else if (showRashiDeg && SamshakaMode.isActive) {
