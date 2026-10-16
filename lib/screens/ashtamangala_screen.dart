@@ -740,6 +740,9 @@ class _AshtamangalaDashboardScreenState extends State<AshtamangalaDashboardScree
     final isBhava = chart['isBhava'] as bool;
     final label = chart['fullName'] as String;
 
+    // ನವಾಂಶ ಸಂಖ್ಯೆಯನ್ನು ಕೇವಲ ರಾಶಿ ಕುಂಡಲಿ (D1) ಮತ್ತು ಭಾವ ಕುಂಡಲಿಗಳಲ್ಲಿ ಮಾತ್ರ ತೋರಿಸಿ
+    final bool isRashiOrBhava = (varga == 1 && !isBhava) || isBhava;
+
     Map<String, int>? aroodhas;
     if (varga == 1 && !isBhava && (widget.svarnaroodhaRashi != null || widget.sprashtangaNum != null)) {
       aroodhas = {
@@ -753,7 +756,8 @@ class _AshtamangalaDashboardScreenState extends State<AshtamangalaDashboardScree
       varga: varga,
       isBhava: isBhava,
       showSphutas: false,
-      showNavamshaNumber: true, // ಸಿಂಗಲ್ ಲೆಟರ್ + ನವಾಂಶ ಸಂಖ್ಯೆ
+      showNavamshaNumber: isRashiOrBhava, // ಕೇವಲ ರಾಶಿ & ಭಾವ ಕುಂಡಲಿಗಳಲ್ಲಿ ಮಾತ್ರ ನವಾಂಶ ಸಂಖ್ಯೆ
+      forceSingleLetter: true, // ಎಲ್ಲ ಕುಂಡಲಿಗಳಲ್ಲೂ ಸಿಂಗಲ್ ಲೆಟರ್ ಗ್ರಹ ಹೆಸರುಗಳು
       aroodhas: aroodhas,
       centerLabel: label,
       onPlanetTap: _showPlanetDetail,
