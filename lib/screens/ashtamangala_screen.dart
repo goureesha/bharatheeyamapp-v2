@@ -11,6 +11,7 @@ import '../services/location_service.dart';
 import '../widgets/kundali_chart.dart';
 import '../widgets/planet_detail_sheet.dart';
 import '../widgets/date_time_input.dart';
+import '../core/ashtamangala_calculator.dart';
 
 // ─────────────────────────────────────────────
 // ೧. ಅಷ್ಟಮಂಗಲ ಪ್ರಶ್ನ - ಮಾಹಿತಿ ನಮೂದು ಪರದೆ (Input Screen)
@@ -151,36 +152,6 @@ class _AshtamangalaScreenState extends State<AshtamangalaScreen> {
         ),
       ),
     );
-  }
-
-  Future<void> _pickDate() async {
-    final picked = await showDatePicker(
-      context: context,
-      initialDate: _dob,
-      firstDate: DateTime(1900),
-      lastDate: DateTime(2100),
-    );
-    if (picked != null) {
-      setState(() => _dob = picked);
-    }
-  }
-
-  Future<void> _pickTime() async {
-    int h24 = _hour + (_ampm == 'PM' && _hour != 12 ? 12 : 0);
-    if (_ampm == 'AM' && _hour == 12) h24 = 0;
-    final picked = await showTimePicker(
-      context: context,
-      initialTime: TimeOfDay(hour: h24, minute: _minute),
-    );
-    if (picked != null) {
-      final h = picked.hourOfPeriod == 0 ? 12 : picked.hourOfPeriod;
-      final ap = picked.hour < 12 ? 'AM' : 'PM';
-      setState(() {
-        _hour = h;
-        _minute = picked.minute;
-        _ampm = ap;
-      });
-    }
   }
 
   Future<void> _calculate() async {
@@ -657,8 +628,8 @@ class _AshtamangalaDashboardScreenState extends State<AshtamangalaDashboardScree
   int _chartPageIndex = 0;
   String? _bhavaPlanet;
 
-  // ಬಳಕೆದಾರರು ಕೇಳಿದ ೩ ಟ್ಯಾಬ್‌ಗಳು ಮಾತ್ರ
-  static const _tabs = ['ಪಂಚಾಂಗ', 'ಕುಂಡಲಿ', 'ಸ್ಫುಟ'];
+  // ಬಳಕೆದಾರರು ಕೇಳಿದ ೪ ಟ್ಯಾಬ್‌ಗಳು
+  static const _tabs = ['ಪಂಚಾಂಗ', 'ಕುಂಡಲಿ', 'ಸ್ಫುಟ', 'ಅಷ್ಟಮಂಗಲ'];
 
   // ೧೬ ಪಾರಾಶರಿ ಷೋಡಶವರ್ಗ ಕುಂಡಲಿಗಳು + ಭಾವ ಕುಂಡಲಿ
   static const List<Map<String, dynamic>> _shodashaVargaCharts = [
@@ -1248,6 +1219,178 @@ class _AshtamangalaDashboardScreenState extends State<AshtamangalaDashboardScree
     );
   }
 
+  // ═══ ಟ್ಯಾಬ್ ೪: ಅಷ್ಟಮಂಗಲ (Ashtamangala Tab) ═══
+  Widget _buildAshtamangalaTab() {
+    int? nakIdx;
+    if (widget.prucchakaNakshatra != null) {
+      final idx = knNak.indexOf(widget.prucchakaNakshatra!);
+      if (idx != -1) nakIdx = idx;
+    }
+
+    final d = AshtamangalaCalculator.calculate(
+      result: widget.result,
+      ashtamangalaNumber: widget.ashtamangalaNumber,
+      svarnaroodhaRashi: widget.svarnaroodhaRashi,
+      sprashtangaNum: widget.sprashtangaNum,
+      prucchakaNakshatraIdx: nakIdx,
+    );
+
+    return SingleChildScrollView(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+      child: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 700),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              // ೧. ಅಷ್ಟಮಂಗಲ ವಿಭಾಗ
+              _buildAshtamangalaCard(
+                title: 'ಅಷ್ಟಮಂಗಲ',
+                rows: [
+                  ['ಅಷ್ಟಮಂಗಲ ಸಂಖ್ಯೆ', d.ashtamangalaNumber],
+                  ['ಅಷ್ಟಮಂಗಲ ಗ್ರಹ', d.graha],
+                  ['ಅಷ್ಟಮಂಗಲ ಯೋನಿ', d.yoni],
+                  ['ಅಷ್ಟಮಂಗಲ ಜಂತು', d.jantu],
+                  ['ಅಷ್ಟಮಂಗಲ ಪಂಚಭೂತ', d.panchabhuta],
+                  ['ಅಷ್ಟಮಂಗಲ ಪಕ್ಷ', d.paksha],
+                  ['ಅಷ್ಟಮಂಗಲ ತಿಥಿ', d.tithi],
+                  ['ಅಷ್ಟಮಂಗಲ ನಕ್ಷತ್ರ', d.nakshatra],
+                  ['ಅಷ್ಟಮಂಗಲ ವಾರ', d.vara],
+                  ['ಅಷ್ಟಮಂಗಲ ರಾಶಿ', d.rashi],
+                ],
+              ),
+              const SizedBox(height: 14),
+
+              // ೨. ಧೂಮಾದಿ ಪಂಚಸ್ಫುಟ ವಿಭಾಗ
+              _buildAshtamangalaCard(
+                title: 'ಧೂಮಾದಿ ಪಂಚಸ್ಫುಟ',
+                rows: [
+                  ['ಧೂಮ ಸ್ಫುಟ', d.dhooma],
+                  ['ವ್ಯತೀಪಾತ ಸ್ಫುಟ', d.vyatipata],
+                  ['ಪರಿವೇಷ ಸ್ಫುಟ', d.parivesha],
+                  ['ಇಂದ್ರಚಾಪ ಸ್ಫುಟ', d.indrachapa],
+                  ['ಉಪಕೇತು ಸ್ಫುಟ', d.upaketu],
+                  ['ಚಂದ್ರ ಕ್ರಿಯಾ', d.chandraKriya],
+                  ['ಚಂದ್ರ ಅವಸ್ಥಾ', d.chandraAvastha],
+                  ['ಚಂದ್ರ ವೇಲಾ', d.chandraVela],
+                ],
+              ),
+              const SizedBox(height: 14),
+
+              // ೩. ಪಂಚಸೂತ್ರ ವಿಭಾಗ
+              _buildAshtamangalaCard(
+                title: 'ಪಂಚಸೂತ್ರ',
+                rows: [
+                  ['ಸಾಮಾನ್ಯ ಸೂತ್ರ - ಪೃಥ್ವೀ', d.samanyaSutra],
+                  ['ಅಧಿಪ ಸೂತ್ರ - ಜಲ', d.adhipaSutra],
+                  ['ಅಂಶ ಸೂತ್ರ - ಅಗ್ನಿ', d.amshaSutra],
+                  ['ನಕ್ಷತ್ರ ಸೂತ್ರ - ವಾಯು', d.nakshatraSutra],
+                  ['ಮಹಾ ಸೂತ್ರ - ಆಕಾಶ', d.mahaSutra],
+                ],
+              ),
+              const SizedBox(height: 20),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildAshtamangalaCard({
+    required String title,
+    required List<List<String>> rows,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Center(
+          child: Text(
+            title,
+            style: const TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w800,
+              color: Color(0xFFE67E22),
+            ),
+          ),
+        ),
+        const SizedBox(height: 8),
+        Container(
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(color: const Color(0xFFE2E8F0)),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.04),
+                blurRadius: 4,
+                offset: const Offset(0, 2),
+              ),
+            ],
+          ),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(9),
+            child: Column(
+              children: [
+                // Solid orange top banner
+                Container(
+                  height: 32,
+                  color: const Color(0xFFF6B042),
+                ),
+                ...rows.asMap().entries.map((entry) {
+                  final idx = entry.key;
+                  final r = entry.value;
+                  final isLast = idx == rows.length - 1;
+                  return Column(
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 11),
+                        child: Row(
+                          children: [
+                            Expanded(
+                              flex: 5,
+                              child: Text(
+                                r[0],
+                                style: TextStyle(
+                                  fontSize: 13.5,
+                                  fontWeight: FontWeight.w700,
+                                  color: kText,
+                                ),
+                              ),
+                            ),
+                            Expanded(
+                              flex: 5,
+                              child: Text(
+                                r[1],
+                                textAlign: TextAlign.end,
+                                style: TextStyle(
+                                  fontSize: 13.5,
+                                  fontWeight: FontWeight.w800,
+                                  color: (r[1] == 'ಜೀವ')
+                                      ? const Color(0xFF2E7D32)
+                                      : (r[1] == 'ಮೃತ್ಯು')
+                                          ? const Color(0xFFC62828)
+                                          : (r[1] == 'ರೋಗ')
+                                              ? const Color(0xFFE65100)
+                                              : kText,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      if (!isLast)
+                        const Divider(height: 1, thickness: 1, color: Color(0xFFF1F5F9)),
+                    ],
+                  );
+                }),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -1305,7 +1448,7 @@ class _AshtamangalaDashboardScreenState extends State<AshtamangalaDashboardScree
                     controller: _tabCtrl,
                     labelColor: kPurple2,
                     unselectedLabelColor: kMuted,
-                    labelStyle: const TextStyle(fontWeight: FontWeight.w800, fontSize: 14),
+                    labelStyle: const TextStyle(fontWeight: FontWeight.w800, fontSize: 13),
                     indicatorColor: kPurple2,
                     indicatorWeight: 3,
                     tabs: _tabs.map((t) => Tab(text: t)).toList(),
@@ -1318,6 +1461,7 @@ class _AshtamangalaDashboardScreenState extends State<AshtamangalaDashboardScree
                       _buildPanchangTab(),
                       _buildKundaliTab(isLandscape: isLandscape),
                       _buildSphutaTab(),
+                      _buildAshtamangalaTab(),
                     ],
                   ),
                 ),
