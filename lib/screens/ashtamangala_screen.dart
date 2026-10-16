@@ -782,6 +782,7 @@ class AshtamangalaDashboardScreen extends StatefulWidget {
 class _AshtamangalaDashboardScreenState extends State<AshtamangalaDashboardScreen>
     with SingleTickerProviderStateMixin {
   late TabController _tabCtrl;
+  late AshtamangalaDetails _ashtamangalaDetails; // Cached — computed once
   int _chartPageIndex = 0;
   String? _bhavaPlanet;
 
@@ -813,6 +814,20 @@ class _AshtamangalaDashboardScreenState extends State<AshtamangalaDashboardScree
   void initState() {
     super.initState();
     _tabCtrl = TabController(length: _tabs.length, vsync: this, initialIndex: 0);
+
+    // Pre-compute Ashtamangala details once (inputs are immutable after dashboard opens)
+    int? nakIdx;
+    if (widget.prucchakaNakshatra != null) {
+      final idx = knNak.indexOf(widget.prucchakaNakshatra!);
+      if (idx != -1) nakIdx = idx;
+    }
+    _ashtamangalaDetails = AshtamangalaCalculator.calculate(
+      result: widget.result,
+      ashtamangalaNumber: widget.ashtamangalaNumber,
+      svarnaroodhaRashi: widget.svarnaroodhaRashi,
+      sprashtangaNum: widget.sprashtangaNum,
+      prucchakaNakshatraIdx: nakIdx,
+    );
   }
 
   @override
@@ -1313,7 +1328,7 @@ class _AshtamangalaDashboardScreenState extends State<AshtamangalaDashboardScree
   // ═══ ಸಹಾಯಕ ವಿಜೆಟ್‌ಗಳು ═══
   Widget _tableHeader(List<String> cols) {
     return Container(
-      color: kPurple2.withOpacity(0.12),
+      color: kPurple2.withValues(alpha: 0.12),
       child: Row(
         children: cols.asMap().entries.map((e) => Expanded(
           child: Padding(
@@ -1378,19 +1393,7 @@ class _AshtamangalaDashboardScreenState extends State<AshtamangalaDashboardScree
 
   // ═══ ಟ್ಯಾಬ್ ೪: ಅಷ್ಟಮಂಗಲ (Ashtamangala Tab) ═══
   Widget _buildAshtamangalaTab() {
-    int? nakIdx;
-    if (widget.prucchakaNakshatra != null) {
-      final idx = knNak.indexOf(widget.prucchakaNakshatra!);
-      if (idx != -1) nakIdx = idx;
-    }
-
-    final d = AshtamangalaCalculator.calculate(
-      result: widget.result,
-      ashtamangalaNumber: widget.ashtamangalaNumber,
-      svarnaroodhaRashi: widget.svarnaroodhaRashi,
-      sprashtangaNum: widget.sprashtangaNum,
-      prucchakaNakshatraIdx: nakIdx,
-    );
+    final d = _ashtamangalaDetails;
 
     return SingleChildScrollView(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
@@ -1478,7 +1481,7 @@ class _AshtamangalaDashboardScreenState extends State<AshtamangalaDashboardScree
             border: Border.all(color: const Color(0xFFE2E8F0)),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.04),
+                color: Colors.black.withValues(alpha: 0.04),
                 blurRadius: 4,
                 offset: const Offset(0, 2),
               ),
