@@ -23,6 +23,7 @@ class KundaliChart extends StatelessWidget {
   final double textScale; // scale text on larger screens
   final Map<String, Color>? highlightPlanets; // planet name → highlight color (e.g. dasha=orange, bhukti=green)
   final bool forceShortNames; // force single-letter mode (for PDF)
+  final bool forceSingleLetter; // force truly single-letter graha (for match PDF)
 
   const KundaliChart({
     super.key,
@@ -39,6 +40,7 @@ class KundaliChart extends StatelessWidget {
     this.textScale = 1.0,
     this.highlightPlanets,
     this.forceShortNames = false,
+    this.forceSingleLetter = false,
   });
 
   // Grid layout: indices into rashi boxes, null = center
@@ -51,10 +53,10 @@ class KundaliChart extends StatelessWidget {
 
   /// Compute which rashi index each planet falls in for the chosen varga
   int _rashinFor(double deg) {
+    final dr = deg % 30;
     switch (varga) {
       case 2: // Hora
         final r = (deg / 30).floor() % 12;
-        final dr = deg % 30;
         final isOdd = r % 2 == 0;
         return isOdd ? (dr < 15 ? 4 : 3) : (dr < 15 ? 3 : 4);
       case 3: // Drekkana
@@ -68,7 +70,6 @@ class KundaliChart extends StatelessWidget {
         return ((deg / 30).floor() + ((deg % 30) / 2.5).floor()) % 12;
       case 30: // Trimshamsa
         final r = (deg / 30).floor() % 12;
-        final dr = deg % 30;
         final isOdd = r % 2 == 0;
         if (isOdd) {
           if (dr < 5) return 0;
@@ -83,6 +84,44 @@ class KundaliChart extends StatelessWidget {
           if (dr < 25) return 10;
           return 0;
         }
+      case 4: // Chaturthamsha
+        final r4 = (deg / 30).floor() % 12;
+        final part4 = (dr / 7.5).floor();
+        return (r4 + part4 * 3) % 12;
+      case 7: // Saptamsha
+        final r7 = (deg / 30).floor() % 12;
+        final isOdd7 = r7 % 2 == 0;
+        final part7 = (dr / (30 / 7)).floor();
+        return isOdd7 ? (r7 + part7) % 12 : (r7 + 6 + part7) % 12;
+      case 10: // Dashamsha
+        final r10 = (deg / 30).floor() % 12;
+        final isOdd10 = r10 % 2 == 0;
+        final part10 = (dr / 3).floor();
+        return isOdd10 ? (r10 + part10) % 12 : (r10 + 8 + part10) % 12;
+      case 16: // Shodashamsha
+        final nature16 = ((deg / 30).floor() % 12) % 3;
+        final start16 = nature16 == 0 ? 0 : (nature16 == 1 ? 4 : 8);
+        return (start16 + (dr / (30 / 16)).floor()) % 12;
+      case 20: // Vimshamsha
+        final nature20 = ((deg / 30).floor() % 12) % 3;
+        final start20 = nature20 == 0 ? 0 : (nature20 == 1 ? 8 : 4);
+        return (start20 + (dr / 1.5).floor()) % 12;
+      case 24: // Chaturvimshamsha
+        final isOdd24 = (deg / 30).floor() % 2 == 0;
+        return isOdd24 ? (4 + (dr / 1.25).floor()) % 12 : (3 + (dr / 1.25).floor()) % 12;
+      case 27: // Bhamsha
+        final elem27 = ((deg / 30).floor() % 12) % 4;
+        return (elem27 * 3 + (dr / (30 / 27)).floor()) % 12;
+      case 40: // Khavedamsha
+        final isOdd40 = (deg / 30).floor() % 2 == 0;
+        return isOdd40 ? ((dr / 0.75).floor()) % 12 : (6 + (dr / 0.75).floor()) % 12;
+      case 45: // Akshavedamsha
+        final nature45 = ((deg / 30).floor() % 12) % 3;
+        final start45 = nature45 == 0 ? 0 : (nature45 == 1 ? 4 : 8);
+        return (start45 + (dr / (30 / 45)).floor()) % 12;
+      case 60: // Shashtiyamsha
+        final r60 = (deg / 30).floor() % 12;
+        return (r60 + (dr / 0.5).floor()) % 12;
       default: // Rashi (D1)
         if (isBhava) {
           // Bhava chart: place based on house number from lagna
@@ -121,6 +160,26 @@ class KundaliChart extends StatelessWidget {
           if (dr < 25) return (dr - 20) * (30.0 / 5.0);
           return (dr - 25) * (30.0 / 5.0);
         }
+      case 4: // Chaturthamsha — each 7°30' span
+        return (dr % 7.5) * (30.0 / 7.5);
+      case 7: // Saptamsha — each 4°17' span
+        return (dr % (30 / 7)) * (30.0 / (30 / 7));
+      case 10: // Dashamsha — each 3° span
+        return (dr % 3) * (30.0 / 3.0);
+      case 16: // Shodashamsha — each 1°52.5' span
+        return (dr % (30 / 16)) * (30.0 / (30 / 16));
+      case 20: // Vimshamsha — each 1°30' span
+        return (dr % 1.5) * (30.0 / 1.5);
+      case 24: // Chaturvimshamsha — each 1°15' span
+        return (dr % 1.25) * (30.0 / 1.25);
+      case 27: // Bhamsha — each 1°6.67' span
+        return (dr % (30 / 27)) * (30.0 / (30 / 27));
+      case 40: // Khavedamsha — each 0°45' span
+        return (dr % 0.75) * (30.0 / 0.75);
+      case 45: // Akshavedamsha — each 0°40' span
+        return (dr % (30 / 45)) * (30.0 / (30 / 45));
+      case 60: // Shashtiyamsha — each 0°30' span
+        return (dr % 0.5) * (30.0 / 0.5);
       default: // Rashi (D1)
         return dr;
     }
@@ -403,7 +462,7 @@ class KundaliChart extends StatelessWidget {
     String label = centerLabel ?? AppLocale.l('appName');
     if (AppLocale.current != 'kn' && centerLabel != null) {
       // Auto-translate each line of the center label
-      label = label.split('\n').map((line) => tr(line)).join('\n');
+      label = label.split('\n').map((line) => trAll(line)).join('\n');
     }
     return Container(
       margin: const EdgeInsets.all(0),
@@ -520,13 +579,62 @@ class KundaliChart extends StatelessWidget {
     'ಮಾಂದಿ': 'മാ',
   };
 
+  static const _shortNamesEn = <String, String>{
+    'ರವಿ': 'Su', 'ಸೂರ್ಯ': 'Su', 'ಚಂದ್ರ': 'Mo', 'ಕುಜ': 'Ma', 'ಮಂಗಳ': 'Ma', 'ಬುಧ': 'Me',
+    'ಗುರು': 'Ju', 'ಶುಕ್ರ': 'Ve', 'ಶನಿ': 'Sa', 'ರಾಹು': 'Ra',
+    'ಕೇತು': 'Ke', 'ಲಗ್ನ': 'Asc', 'ಮಾಂದಿ': 'Md',
+  };
+
   static Map<String, String> get _shortNames {
     switch (AppLocale.current) {
+      case 'en': return _shortNamesEn;
       case 'hi': return _shortNamesHi;
       case 'ta': return _shortNamesTa;
       case 'te': return _shortNamesTe;
       case 'ml': return _shortNamesMl;
       default: return _shortNamesKn;
+    }
+  }
+
+  // Single-letter planet abbreviations (for match PDF where space is tight)
+  static const _singleLetterKn = <String, String>{
+    'ರವಿ': 'ರ', 'ಸೂರ್ಯ': 'ರ', 'ಚಂದ್ರ': 'ಚ', 'ಕುಜ': 'ಕ', 'ಮಂಗಳ': 'ಕ',
+    'ಬುಧ': 'ಬ', 'ಗುರು': 'ಗ', 'ಶುಕ್ರ': 'ಶ', 'ಶನಿ': 'ಶ', 'ರಾಹು': 'ರಾ',
+    'ಕೇತು': 'ಕೇ', 'ಲಗ್ನ': 'ಲ', 'ಮಾಂದಿ': 'ಮಾ',
+  };
+  static const _singleLetterHi = <String, String>{
+    'ರವಿ': 'सू', 'ಸೂರ್ಯ': 'सू', 'ಚಂದ್ರ': 'चं', 'ಕುಜ': 'मं', 'ಮಂಗಳ': 'मं',
+    'ಬುಧ': 'बु', 'ಗುರು': 'गु', 'ಶುಕ್ರ': 'शु', 'ಶನಿ': 'श', 'ರಾಹು': 'रा',
+    'ಕೇತು': 'के', 'ಲಗ್ನ': 'ल', 'ಮಾಂದಿ': 'मा',
+  };
+  static const _singleLetterTa = <String, String>{
+    'ರವಿ': 'சூ', 'ಸೂರ್ಯ': 'சூ', 'ಚಂದ್ರ': 'ச', 'ಕುಜ': 'செ', 'ಮಂಗಳ': 'செ',
+    'ಬುಧ': 'பு', 'ಗುರು': 'கு', 'ಶುಕ್ರ': 'சு', 'ಶನಿ': 'ச', 'ರಾಹು': 'ரா',
+    'ಕೇತು': 'கே', 'ಲಗ್ನ': 'ல', 'ಮಾಂದಿ': 'மா',
+  };
+  static const _singleLetterTe = <String, String>{
+    'ರವಿ': 'ర', 'ಸೂರ್ಯ': 'ర', 'ಚಂದ್ರ': 'చ', 'ಕುಜ': 'కు', 'ಮಂಗಳ': 'కు',
+    'ಬುಧ': 'బు', 'ಗುರು': 'గు', 'ಶುಕ್ರ': 'శు', 'ಶನಿ': 'శ', 'ರಾಹು': 'రా',
+    'ಕೇತು': 'కే', 'ಲಗ್ನ': 'ల', 'ಮಾಂದಿ': 'మా',
+  };
+  static const _singleLetterMl = <String, String>{
+    'ರವಿ': 'ര', 'ಸೂರ್ಯ': 'ര', 'ಚಂದ್ರ': 'ച', 'ಕುಜ': 'കു', 'ಮಂಗಳ': 'കു',
+    'ಬುಧ': 'ബു', 'ಗುರು': 'ഗു', 'ಶುಕ್ರ': 'ശു', 'ಶನಿ': 'ശ', 'ರಾಹು': 'രാ',
+    'ಕೇತು': 'കേ', 'ಲಗ್ನ': 'ല', 'ಮಾಂದಿ': 'മാ',
+  };
+  static const _singleLetterEn = <String, String>{
+    'ರವಿ': 'Su', 'ಸೂರ್ಯ': 'S', 'ಚಂದ್ರ': 'Mo', 'ಕುಜ': 'Ma', 'ಮಂಗಳ': 'M', 'ಬುಧ': 'Me',
+    'ಗುರು': 'Ju', 'ಶುಕ್ರ': 'Ve', 'ಶನಿ': 'Sa', 'ರಾಹು': 'Ra',
+    'ಕೇತು': 'Ke', 'ಲಗ್ನ': 'As', 'ಮಾಂದಿ': 'Md',
+  };
+  static Map<String, String> get _singleLetters {
+    switch (AppLocale.current) {
+      case 'en': return _singleLetterEn;
+      case 'hi': return _singleLetterHi;
+      case 'ta': return _singleLetterTa;
+      case 'te': return _singleLetterTe;
+      case 'ml': return _singleLetterMl;
+      default: return _singleLetterKn;
     }
   }
 
@@ -541,7 +649,7 @@ class KundaliChart extends StatelessWidget {
     }
 
     // Build display text
-    final map = _shortNames;
+    final map = forceSingleLetter ? _singleLetters : _shortNames;
     final shortName = map[name] ?? translateKn(name);
     String displayText = shortName;
     bool isCombust = false;
@@ -556,7 +664,7 @@ class KundaliChart extends StatelessWidget {
       final bool showDeg = (varga == 1) || isBhava;
       final bool showAmshaDeg = (varga != 1) && !isBhava;
 
-      if (forceShortNames) {
+      if (forceShortNames || forceSingleLetter) {
         // PDF mode: always use short names, skip all other modes
         displayText = shortName;
       } else if (showDeg && SamshakaMode.isActive) {

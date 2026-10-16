@@ -1190,6 +1190,55 @@ class AstroCalculator {
     final d9Idx   = (d9Exact / 30).floor() % 12;
     final d12Idx  = (d1Idx + (dr / 2.5).floor()) % 12;
 
+    // ── Shodashavarga: 10 additional divisional charts (Parashari BPHS) ──
+    // Sign nature helpers
+    final int nature = d1Idx % 3; // 0=movable(chara), 1=fixed(sthira), 2=dual(dvisvabhava)
+    final int element = d1Idx % 4; // 0=fire, 1=earth, 2=air, 3=water
+
+    // D-4 Chaturthamsha (7°30' parts, 4 per sign)
+    final int part4 = (dr / 7.5).floor();
+    final int d4Idx = (d1Idx + part4 * 3) % 12;
+
+    // D-7 Saptamsha (4°17'8.57" parts, 7 per sign)
+    final int part7 = (dr / (30 / 7)).floor();
+    final int d7Idx = isOdd ? (d1Idx + part7) % 12 : (d1Idx + 6 + part7) % 12;
+
+    // D-10 Dashamsha (3° parts, 10 per sign)
+    final int part10 = (dr / 3).floor();
+    final int d10Idx = isOdd ? (d1Idx + part10) % 12 : (d1Idx + 8 + part10) % 12;
+
+    // D-16 Shodashamsha (1°52'30" parts, 16 per sign)
+    final int part16 = (dr / (30 / 16)).floor();
+    final int startD16 = nature == 0 ? 0 : (nature == 1 ? 4 : 8);
+    final int d16Idx = (startD16 + part16) % 12;
+
+    // D-20 Vimshamsha (1°30' parts, 20 per sign)
+    final int part20 = (dr / 1.5).floor();
+    final int startD20 = nature == 0 ? 0 : (nature == 1 ? 8 : 4);
+    final int d20Idx = (startD20 + part20) % 12;
+
+    // D-24 Chaturvimshamsha (1°15' parts, 24 per sign)
+    final int part24 = (dr / 1.25).floor();
+    final int d24Idx = isOdd ? (4 + part24) % 12 : (3 + part24) % 12;
+
+    // D-27 Saptavimshamsha/Bhamsha (1°6'40" parts, 27 per sign)
+    final int part27 = (dr / (30 / 27)).floor();
+    final int startD27 = element * 3; // fire→Ar(0), earth→Cn(3), air→Li(6), water→Cp(9)
+    final int d27Idx = (startD27 + part27) % 12;
+
+    // D-40 Khavedamsha (0°45' parts, 40 per sign)
+    final int part40 = (dr / 0.75).floor();
+    final int d40Idx = isOdd ? (part40 % 12) : (6 + part40) % 12;
+
+    // D-45 Akshavedamsha (0°40' parts, 45 per sign)
+    final int part45 = (dr / (30 / 45)).floor();
+    final int startD45 = nature == 0 ? 0 : (nature == 1 ? 4 : 8);
+    final int d45Idx = (startD45 + part45) % 12;
+
+    // D-60 Shashtiyamsha (0°30' parts, 60 per sign)
+    final int part60 = (dr / 0.5).floor();
+    final int d60Idx = (d1Idx + part60) % 12;
+
     // Sub-Drekkana Parts
     String p1Part = dr < 10 ? AppLocale.l('drPart1') : (dr < 20 ? AppLocale.l('drPart2') : AppLocale.l('drPart3'));
     String d3D1Str = '${knRashi[d1Idx]} $p1Part';
@@ -1229,9 +1278,19 @@ class AstroCalculator {
       'd1': knRashi[d1Idx],
       'd2': knRashi[d2Idx],
       'd3': knRashi[trueD3Idx],
+      'd4': knRashi[d4Idx],
+      'd7': knRashi[d7Idx],
       'd9': knRashi[d9Idx],
+      'd10': knRashi[d10Idx],
       'd12': knRashi[d12Idx],
+      'd16': knRashi[d16Idx],
+      'd20': knRashi[d20Idx],
+      'd24': knRashi[d24Idx],
+      'd27': knRashi[d27Idx],
       'd30': knRashi[d30Idx],
+      'd40': knRashi[d40Idx],
+      'd45': knRashi[d45Idx],
+      'd60': knRashi[d60Idx],
       'subDrekD1': d3D1Str,
       'subDrekD9': d3D9Str,
       'subDrekD12': d3D12Str,
