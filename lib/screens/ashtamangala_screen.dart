@@ -786,8 +786,8 @@ class _AshtamangalaDashboardScreenState extends State<AshtamangalaDashboardScree
   int _chartPageIndex = 0;
   String? _bhavaPlanet;
 
-  // ಬಳಕೆದಾರರು ಕೇಳಿದ ೪ ಟ್ಯಾಬ್‌ಗಳು
-  static const _tabs = ['ಪಂಚಾಂಗ', 'ಕುಂಡಲಿ', 'ಸ್ಫುಟ', 'ಅಷ್ಟಮಂಗಲ'];
+  // ಬಳಕೆದಾರರು ಕೇಳಿದ ೫ ಟ್ಯಾಬ್‌ಗಳು
+  static const _tabs = ['ಪಂಚಾಂಗ', 'ಕುಂಡಲಿ', 'ಸ್ಫುಟ', 'ಅಷ್ಟಮಂಗಲ', 'ತ್ರಿಸ್ಫುಟ ದಶಾ'];
 
   // ೧೬ ಪಾರಾಶರಿ ಷೋಡಶವರ್ಗ ಕುಂಡಲಿಗಳು + ಭಾವ ಕುಂಡಲಿ
   static const List<Map<String, dynamic>> _shodashaVargaCharts = [
@@ -821,9 +821,19 @@ class _AshtamangalaDashboardScreenState extends State<AshtamangalaDashboardScree
       final idx = knNak.indexOf(widget.prucchakaNakshatra!);
       if (idx != -1) nakIdx = idx;
     }
+    // Construct the exact query DateTime from the input fields
+    final queryHour24 = widget.ampm == 'PM'
+        ? (widget.hour == 12 ? 12 : widget.hour + 12)
+        : (widget.hour == 12 ? 0 : widget.hour);
+    final queryDateTime = DateTime(
+      widget.dob.year, widget.dob.month, widget.dob.day,
+      queryHour24, widget.minute,
+    );
+
     _ashtamangalaDetails = AshtamangalaCalculator.calculate(
       result: widget.result,
       ashtamangalaNumber: widget.ashtamangalaNumber,
+      queryDateTime: queryDateTime,
       svarnaroodhaRashi: widget.svarnaroodhaRashi,
       sprashtangaNum: widget.sprashtangaNum,
       prucchakaNakshatraIdx: nakIdx,
@@ -1509,6 +1519,145 @@ class _AshtamangalaDashboardScreenState extends State<AshtamangalaDashboardScree
     );
   }
 
+  // ═══ ತ್ರಿಸ್ಫುಟ ದಶಾ ═══
+  Widget _buildTrisphutaDashaTab() {
+    final d = _ashtamangalaDetails;
+    final now = DateTime.now();
+
+    String _fmtDate(DateTime dt) =>
+        '${dt.day.toString().padLeft(2, "0")}-${dt.month.toString().padLeft(2, "0")}-${dt.year}';
+
+    return SingleChildScrollView(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // ── ಸಾರಾಂಶ (Summary) ──
+          AppCard(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _kv('ತ್ರಿಸ್ಫುಟ', d.trisphuta),
+                _kv('ತ್ರಿಸ್ಫುಟ ನಕ್ಷತ್ರ', d.trisphutaNakshatra),
+                _kv('ದಶಾ ಶೇಷ', d.trisphutaDashaBalance),
+              ],
+            ),
+          ),
+          const SizedBox(height: 8),
+
+          // ── ಮಹಾದಶಾ → ಅಂತರ್ದಶಾ → ಪ್ರತ್ಯಂತರ ──
+          _sectionLabel('📋 ಮಹಾದಶಾ ವಿವರ', kPurple2),
+          ...d.trisphutaDashas.map((md) {
+            final isCurrent = now.isAfter(md.start) && now.isBefore(md.end);
+            return AppCard(
+              padding: EdgeInsets.zero,
+              child: Theme(
+                data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
+                child: ExpansionTile(
+                  tilePadding: const EdgeInsets.symmetric(horizontal: 12),
+                  title: Row(
+                    children: [
+                      if (isCurrent)
+                        Container(
+                          width: 8, height: 8,
+                          margin: const EdgeInsets.only(right: 6),
+                          decoration: const BoxDecoration(color: Colors.green, shape: BoxShape.circle),
+                        ),
+                      Expanded(
+                        child: Text(
+                          '${trAll(md.lord)} ಮಹಾದಶಾ',
+                          style: TextStyle(
+                            fontWeight: FontWeight.w800,
+                            fontSize: 13,
+                            color: isCurrent ? kPurple2 : kText,
+                          ),
+                        ),
+                      ),
+                      Text(
+                        '${_fmtDate(md.start)} – ${_fmtDate(md.end)}',
+                        style: TextStyle(fontSize: 11, color: kMuted),
+                      ),
+                    ],
+                  ),
+                  initiallyExpanded: isCurrent,
+                  children: md.antardashas.map((ad) {
+                    final adCurrent = now.isAfter(ad.start) && now.isBefore(ad.end);
+                    return Theme(
+                      data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
+                      child: ExpansionTile(
+                        tilePadding: const EdgeInsets.only(left: 28, right: 12),
+                        title: Row(
+                          children: [
+                            if (adCurrent)
+                              Container(
+                                width: 6, height: 6,
+                                margin: const EdgeInsets.only(right: 6),
+                                decoration: BoxDecoration(color: Colors.orange, shape: BoxShape.circle),
+                              ),
+                            Expanded(
+                              child: Text(
+                                '${trAll(ad.lord)} ಭುಕ್ತಿ',
+                                style: TextStyle(
+                                  fontWeight: adCurrent ? FontWeight.w700 : FontWeight.w500,
+                                  fontSize: 12,
+                                  color: adCurrent ? kPurple2 : kText,
+                                ),
+                              ),
+                            ),
+                            Text(
+                              '${_fmtDate(ad.start)} – ${_fmtDate(ad.end)}',
+                              style: TextStyle(fontSize: 10, color: kMuted),
+                            ),
+                          ],
+                        ),
+                        initiallyExpanded: adCurrent,
+                        children: ad.antardashas.map((pd) {
+                          final pdCurrent = now.isAfter(pd.start) && now.isBefore(pd.end);
+                          return Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 44, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: pdCurrent ? kPurple2.withValues(alpha: 0.08) : null,
+                              border: Border(bottom: BorderSide(color: kBorder.withValues(alpha: 0.3))),
+                            ),
+                            child: Row(
+                              children: [
+                                if (pdCurrent)
+                                  Container(
+                                    width: 5, height: 5,
+                                    margin: const EdgeInsets.only(right: 5),
+                                    decoration: BoxDecoration(color: Colors.blue, shape: BoxShape.circle),
+                                  ),
+                                Expanded(
+                                  child: Text(
+                                    '${trAll(pd.lord)} ಪ್ರತ್ಯಂತರ',
+                                    style: TextStyle(
+                                      fontSize: 11,
+                                      fontWeight: pdCurrent ? FontWeight.w600 : FontWeight.normal,
+                                      color: pdCurrent ? kPurple2 : kText,
+                                    ),
+                                  ),
+                                ),
+                                Text(
+                                  '${_fmtDate(pd.start)} – ${_fmtDate(pd.end)}',
+                                  style: TextStyle(fontSize: 10, color: kMuted),
+                                ),
+                              ],
+                            ),
+                          );
+                        }).toList(),
+                      ),
+                    );
+                  }).toList(),
+                ),
+              ),
+            );
+          }),
+          const SizedBox(height: 20),
+        ],
+      ),
+    );
+  }
+
   Widget _buildAshtamangalaCard({
     required String title,
     required List<List<String>> rows,
@@ -1675,6 +1824,7 @@ class _AshtamangalaDashboardScreenState extends State<AshtamangalaDashboardScree
                       _buildKundaliTab(isLandscape: isLandscape),
                       _buildSphutaTab(),
                       _buildAshtamangalaTab(),
+                      _buildTrisphutaDashaTab(),
                     ],
                   ),
                 ),

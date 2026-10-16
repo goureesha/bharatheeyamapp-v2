@@ -77,7 +77,12 @@ class AshtamangalaDetails {
   final String santanaTithiChandra;
   final String santanaTithiRavindu;
 
-  const AshtamangalaDetails({
+  // ═══ ತ್ರಿಸ್ಫುಟ ದಶಾ ═══
+  final List<DashaEntry> trisphutaDashas;
+  final String trisphutaNakshatra;
+  final String trisphutaDashaBalance;
+
+  AshtamangalaDetails({
     required this.ashtamangalaNumber,
     required this.graha,
     required this.yoni,
@@ -139,6 +144,9 @@ class AshtamangalaDetails {
     required this.santanaTithiPanchagga,
     required this.santanaTithiChandra,
     required this.santanaTithiRavindu,
+    required this.trisphutaDashas,
+    required this.trisphutaNakshatra,
+    required this.trisphutaDashaBalance,
   });
 }
 
@@ -423,6 +431,7 @@ class AshtamangalaCalculator {
   static AshtamangalaDetails calculate({
     required KundaliResult result,
     required String ashtamangalaNumber,
+    required DateTime queryDateTime,
     int? svarnaroodhaRashi,
     int? sprashtangaNum,
     int? prucchakaNakshatraIdx,
@@ -700,6 +709,28 @@ class AshtamangalaCalculator {
     // c. ರವೀಂದುಶುಕ್ರ = S + M + V
     final santanaRavindu = formatRasiDMS(_norm(S + M + V));
 
+    // ═══ ೮. ತ್ರಿಸ್ಫುಟ ದಶಾ (Vimshottari applied to Trisphuta's nakshatra) ═══
+    final trisphutatDeg = advS['ತ್ರಿಸ್ಫುಟ'] ?? 0.0;
+    final triNakIdx = (trisphutatDeg / nakSpan).floor() % 27;
+    final triNakPerc = (trisphutatDeg % nakSpan) / nakSpan; // fraction elapsed
+    final triNakStr = knNak[triNakIdx];
+
+    // Compute full 9-mahadasha chain using existing Vimshottari engine
+    final trisphutaDashaList = AstroCalculator.calcDasha(
+      queryDateTime, triNakIdx, triNakPerc,
+    );
+
+    // Balance string: dasha lord + remaining years-months-days
+    final triDashaLordIdx = triNakIdx % 9;
+    final triTotalYears = dashaYears[triDashaLordIdx].toDouble();
+    final triRemainingYears = triTotalYears * (1 - triNakPerc);
+    final triBalY = triRemainingYears.floor();
+    final triBalMFrac = (triRemainingYears - triBalY) * 12;
+    final triBalM = triBalMFrac.floor();
+    final triBalD = ((triBalMFrac - triBalM) * 30).round();
+    final triBalStr =
+        '${dashaLords[triDashaLordIdx]} ${triBalY}ವ ${triBalM}ತಿ ${triBalD}ದಿ';
+
     return AshtamangalaDetails(
       ashtamangalaNumber: fullNum.toString(),
       graha: grahaStr,
@@ -764,6 +795,10 @@ class AshtamangalaCalculator {
       santanaTithiPanchagga: santanaPanchagga,
       santanaTithiChandra: santanaChandra,
       santanaTithiRavindu: santanaRavindu,
+      // ತ್ರಿಸ್ಫುಟ ದಶಾ
+      trisphutaDashas: trisphutaDashaList,
+      trisphutaNakshatra: triNakStr,
+      trisphutaDashaBalance: triBalStr,
     );
   }
 }
