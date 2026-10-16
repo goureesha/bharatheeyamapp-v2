@@ -205,6 +205,7 @@ class KundaliChart extends StatelessWidget {
         textScale: textScale,
         highlightPlanets: highlightPlanets,
         forceShortNames: forceShortNames,
+        forceSingleLetter: forceSingleLetter,
         showNavamshaNumber: showNavamshaNumber,
       );
     }

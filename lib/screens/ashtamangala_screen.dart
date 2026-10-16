@@ -238,7 +238,7 @@ class _AshtamangalaScreenState extends State<AshtamangalaScreen> {
     if (info == null) return;
     final sun = _prashnaResult!.planets['ರವಿ'];
     final detail = AstroCalculator.getPlanetDetail(
-      pName, info.longitude, info.speed, sun?.longitude ?? 0);
+      pName, info.longitude, info.speed, sun?.longitude ?? 0.0);
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -1019,7 +1019,7 @@ class _AshtamangalaScreenState extends State<AshtamangalaScreen> {
     final otherSphutas = <Map<String, dynamic>>[
       {'name': 'ತ್ರಿಸ್ಫುಟ', 'deg': r.advSphutas['ತ್ರಿಸ್ಫುಟ'] ?? trisphuta},
       {'name': 'ಚತುಃಸ್ಫುಟ', 'deg': r.advSphutas['ಚತುಃಸ್ಫುಟ'] ?? chatusphuta},
-      {'name': 'ಪಂಚಸ್ಫುಟ', 'deg': r.advSphutas['ಪಂಚಸ್ಫುಟ'] ?? ((chatusphuta + (pMap['ರಾಹು']?.longitude ?? 0)) % 360)},
+      {'name': 'ಪಂಚಸ್ಫುಟ', 'deg': r.advSphutas['ಪಂಚಸ್ಫುಟ'] ?? ((chatusphuta + (pMap['ರಾಹು']?.longitude ?? 0.0)) % 360)},
       {'name': 'ಪ್ರಾಣ ಸ್ಫುಟ', 'deg': r.advSphutas['ಪ್ರಾಣ'] ?? ((lag * 5 + moon) % 360)},
       {'name': 'ದೇಹ ಸ್ಫುಟ', 'deg': r.advSphutas['ದೇಹ'] ?? ((moon * 8 + lag) % 360)},
       {'name': 'ಮೃತ್ಯು ಸ್ಫುಟ', 'deg': r.advSphutas['ಮೃತ್ಯು'] ?? ((lag * 7 + sun) % 360)},
@@ -1085,7 +1085,7 @@ class _AshtamangalaScreenState extends State<AshtamangalaScreen> {
               _tableHeader(['ಸ್ಫುಟ', 'ರಾಶಿ', 'ಅಂಶ', 'ನಕ್ಷತ್ರ - ಪಾದ']),
               ...otherSphutas.map((item) {
                 final name = item['name'] as String;
-                final deg = (item['deg'] as double) % 360;
+                final deg = (item['deg'] as num).toDouble() % 360;
                 final ri = (deg / 30).floor() % 12;
                 final rashiName = knRashi[ri];
                 final sphutaDeg = formatDeg(deg);

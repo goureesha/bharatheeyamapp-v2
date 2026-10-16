@@ -23,6 +23,7 @@ class NorthIndianChart extends StatelessWidget {
   final double textScale;
   final Map<String, Color>? highlightPlanets;
   final bool forceShortNames;
+  final bool forceSingleLetter;
   final bool showNavamshaNumber;
 
   const NorthIndianChart({
@@ -40,6 +41,7 @@ class NorthIndianChart extends StatelessWidget {
     this.textScale = 1.0,
     this.highlightPlanets,
     this.forceShortNames = false,
+    this.forceSingleLetter = false,
     this.showNavamshaNumber = false,
   });
 
@@ -360,7 +362,7 @@ class NorthIndianChart extends StatelessWidget {
       final w = isCorner ? boxW * 0.85 : boxW;
       final ht = isCorner ? boxH * 0.85 : boxH;
 
-      final bool singleLetter = forceShortNames || showNavamshaNumber || (SingleLetterMode.isActive && ((varga == 1) || isBhava));
+      final bool singleLetter = forceShortNames || forceSingleLetter || showNavamshaNumber || (SingleLetterMode.isActive && ((varga == 1) || isBhava));
 
       widgets.add(Positioned(
         left: center.dx * s - w / 2,
@@ -433,7 +435,7 @@ class NorthIndianChart extends StatelessWidget {
   }
 
   Widget _planetChip(String name, {PlanetInfo? info, double? displayDeg}) {
-    final map = _shortNames;
+    final map = forceSingleLetter ? _singleLetters : _shortNames;
     final shortName = map[name] ?? translateKn(name);
     String displayText = shortName;
     bool isCombust = false;
@@ -451,7 +453,7 @@ class NorthIndianChart extends StatelessWidget {
         final navNum = SamshakaMode.navamshaSign(info.longitude);
         final short = _singleLetters[name] ?? _shortNames[name] ?? name;
         displayText = '$short $navNum';
-      } else if (forceShortNames) {
+      } else if (forceShortNames || forceSingleLetter) {
         // PDF mode: always use short names, skip all other modes
         displayText = shortName;
       } else if (showRashiDeg && SamshakaMode.isActive) {
@@ -621,6 +623,48 @@ class NorthIndianChart extends StatelessWidget {
       case 'te': return _shortNamesTe;
       case 'ml': return _shortNamesMl;
       default: return _shortNamesKn;
+    }
+  }
+
+  // Single-letter planet abbreviations (for compact chart display)
+  static const _singleLetterKn = <String, String>{
+    'ರವಿ': 'ರ', 'ಸೂರ್ಯ': 'ರ', 'ಚಂದ್ರ': 'ಚ', 'ಕುಜ': 'ಕ', 'ಮಂಗಳ': 'ಕ',
+    'ಬುಧ': 'ಬ', 'ಗುರು': 'ಗ', 'ಶುಕ್ರ': 'ಶ', 'ಶನಿ': 'ಶ', 'ರಾಹು': 'ರಾ',
+    'ಕೇತು': 'ಕೇ', 'ಲಗ್ನ': 'ಲ', 'ಮಾಂದಿ': 'ಮಾ',
+  };
+  static const _singleLetterHi = <String, String>{
+    'ರವಿ': 'सू', 'ಸೂರ್ಯ': 'सू', 'ಚಂದ್ರ': 'चं', 'ಕುಜ': 'मं', 'ಮಂಗಳ': 'मं',
+    'ಬುಧ': 'बु', 'ಗುರು': 'गु', 'ಶುಕ್ರ': 'शु', 'ಶನಿ': 'श', 'ರಾಹು': 'रा',
+    'ಕೇತು': 'के', 'ಲಗ್ನ': 'ल', 'ಮಾಂದಿ': 'मा',
+  };
+  static const _singleLetterTa = <String, String>{
+    'ರವಿ': 'சூ', 'ಸೂರ್ಯ': 'சூ', 'ಚಂದ್ರ': 'ச', 'ಕುಜ': 'செ', 'ಮಂಗಳ': 'செ',
+    'ಬುಧ': 'பு', 'ಗುರು': 'கு', 'ಶುಕ್ರ': 'சு', 'ಶನಿ': 'ச', 'ರಾಹು': 'ரா',
+    'ಕೇತು': 'கே', 'ಲಗ್ನ': 'ல', 'ಮಾಂದಿ': 'மா',
+  };
+  static const _singleLetterTe = <String, String>{
+    'ರವಿ': 'ర', 'ಸೂರ್ಯ': 'ర', 'ಚಂದ್ರ': 'చ', 'ಕುಜ': 'కు', 'ಮಂಗಳ': 'కు',
+    'ಬುಧ': 'బు', 'ಗುರು': 'గు', 'ಶುಕ್ರ': 'శు', 'ಶನಿ': 'శ', 'ರಾಹು': 'రా',
+    'ಕೇತು': 'కే', 'ಲಗ್ನ': 'ల', 'ಮಾಂದಿ': 'మా',
+  };
+  static const _singleLetterMl = <String, String>{
+    'ರವಿ': 'ര', 'ಸೂರ್ಯ': 'ര', 'ಚಂದ್ರ': 'ച', 'ಕುಜ': 'കു', 'ಮಂಗಳ': 'കു',
+    'ಬುಧ': 'ബു', 'ಗುರು': 'ഗു', 'ಶುಕ್ರ': 'ശു', 'ಶನಿ': 'ശ', 'ರಾಹು': 'രാ',
+    'ಕೇತು': 'കേ', 'ಲಗ್ನ': 'ല', 'ಮಾಂದಿ': 'മാ',
+  };
+  static const _singleLetterEn = <String, String>{
+    'ರವಿ': 'Su', 'ಸೂರ್ಯ': 'S', 'ಚಂದ್ರ': 'Mo', 'ಕುಜ': 'Ma', 'ಮಂಗಳ': 'M', 'ಬುಧ': 'Me',
+    'ಗುರು': 'Ju', 'ಶುಕ್ರ': 'Ve', 'ಶನಿ': 'Sa', 'ರಾಹು': 'Ra',
+    'ಕೇತು': 'Ke', 'ಲಗ್ನ': 'As', 'ಮಾಂದಿ': 'Md',
+  };
+  static Map<String, String> get _singleLetters {
+    switch (AppLocale.current) {
+      case 'en': return _singleLetterEn;
+      case 'hi': return _singleLetterHi;
+      case 'ta': return _singleLetterTa;
+      case 'te': return _singleLetterTe;
+      case 'ml': return _singleLetterMl;
+      default: return _singleLetterKn;
     }
   }
 }
