@@ -494,12 +494,12 @@ class _AshtamangalaScreenState extends State<AshtamangalaScreen> {
                       initialValue: TextEditingValue(text: _placeCtrl.text),
                       optionsBuilder: (textEditingValue) {
                         if (textEditingValue.text.isEmpty) return const Iterable<String>.empty();
-                        return kPlaces.keys.where((place) =>
+                        return offlinePlaces.keys.where((place) =>
                           place.toLowerCase().contains(textEditingValue.text.toLowerCase()));
                       },
                       onSelected: (selection) async {
-                        final coords = kPlaces[selection]!;
-                        final autoTz = await getTimezoneForPlace(selection, coords[0], coords[1]);
+                        final coords = offlinePlaces[selection]!;
+                        final autoTz = coords.length > 2 ? coords[2] : await getTimezoneForPlace(selection, coords[0], coords[1]);
                         setState(() {
                           _placeCtrl.text = selection;
                           _latCtrl.text = coords[0].toStringAsFixed(4);
