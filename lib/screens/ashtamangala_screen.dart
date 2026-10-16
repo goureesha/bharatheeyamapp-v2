@@ -47,6 +47,26 @@ class _AshtamangalaScreenState extends State<AshtamangalaScreen> {
   bool _geoLoading = false;
   String _geoStatus = '';
   bool _calculating = false;
+  bool _showValidationErrors = false;
+
+  bool get _allInputsValid {
+    final ashta = int.tryParse(_numberCtrl.text.trim());
+    final tamboola = int.tryParse(_tamboolaCtrl.text.trim());
+    return _nameCtrl.text.trim().isNotEmpty &&
+        _prucchakaRashi != null &&
+        _prucchakaNak != null &&
+        _numberCtrl.text.trim().isNotEmpty &&
+        ashta != null && ashta > 0 &&
+        _tamboolaCtrl.text.trim().isNotEmpty &&
+        tamboola != null && tamboola > 0 &&
+        _sprashtangaNum != null &&
+        _svarnaroodhaRashi != null &&
+        _placeCtrl.text.trim().isNotEmpty;
+  }
+
+  void _onInputChanged() {
+    if (mounted) setState(() {});
+  }
 
   @override
   void initState() {
@@ -55,10 +75,20 @@ class _AshtamangalaScreenState extends State<AshtamangalaScreen> {
     _latCtrl = TextEditingController(text: LocationService.lat.toStringAsFixed(4));
     _lonCtrl = TextEditingController(text: LocationService.lon.toStringAsFixed(4));
     _tzCtrl = TextEditingController(text: '${LocationService.tzOffset >= 0 ? '+' : ''}${LocationService.tzOffset}');
+
+    _nameCtrl.addListener(_onInputChanged);
+    _numberCtrl.addListener(_onInputChanged);
+    _tamboolaCtrl.addListener(_onInputChanged);
+    _placeCtrl.addListener(_onInputChanged);
   }
 
   @override
   void dispose() {
+    _nameCtrl.removeListener(_onInputChanged);
+    _numberCtrl.removeListener(_onInputChanged);
+    _tamboolaCtrl.removeListener(_onInputChanged);
+    _placeCtrl.removeListener(_onInputChanged);
+
     _numberCtrl.dispose();
     _tamboolaCtrl.dispose();
     _nameCtrl.dispose();
@@ -155,6 +185,47 @@ class _AshtamangalaScreenState extends State<AshtamangalaScreen> {
   }
 
   Future<void> _calculate() async {
+    // ೧. ಎಲ್ಲಾ ವಿವರಗಳ ಕಡ್ಡಾಯ ಪರಿಶೀಲನೆ (Mandatory validation of all inputs)
+    final missing = <String>[];
+    if (_nameCtrl.text.trim().isEmpty) missing.add('ಪ್ರುಚ್ಛಕರ ಹೆಸರು');
+    if (_prucchakaRashi == null) missing.add('ಪ್ರುಚ್ಛಕರ ರಾಶಿ');
+    if (_prucchakaNak == null) missing.add('ಪ್ರುಚ್ಛಕರ ನಕ್ಷತ್ರ');
+
+    final ashtaNum = int.tryParse(_numberCtrl.text.trim());
+    if (_numberCtrl.text.trim().isEmpty) {
+      missing.add('ಅಷ್ಟಮಂಗಲ ಸಂಖ್ಯೆ');
+    } else if (ashtaNum == null || ashtaNum <= 0) {
+      missing.add('ಸರಿಯಾದ ಅಷ್ಟಮಂಗಲ ಸಂಖ್ಯೆ');
+    }
+
+    final tamboolaNum = int.tryParse(_tamboolaCtrl.text.trim());
+    if (_tamboolaCtrl.text.trim().isEmpty) {
+      missing.add('ತಾಂಬೂಲ ಸಂಖ್ಯೆ');
+    } else if (tamboolaNum == null || tamboolaNum <= 0) {
+      missing.add('ಸರಿಯಾದ ತಾಂಬೂಲ ಸಂಖ್ಯೆ');
+    }
+
+    if (_sprashtangaNum == null) missing.add('ಸ್ಪೃಷ್ಟಾಂಗ ರಾಶಿ');
+    if (_svarnaroodhaRashi == null) missing.add('ಸ್ವರ್ಣಾರೂಢ ರಾಶಿ');
+    if (_placeCtrl.text.trim().isEmpty) missing.add('ಸ್ಥಳ');
+
+    if (missing.isNotEmpty) {
+      setState(() => _showValidationErrors = true);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'ಎಲ್ಲಾ ವಿವರಗಳನ್ನು ಭರ್ತಿ ಮಾಡದೆ ಫಲಿತಾಂಶ ಪಡೆಯಲು ಸಾಧ್ಯವಿಲ್ಲ.\nದಯವಿಟ್ಟು ಇವುಗಳನ್ನು ಭರ್ತಿ ಮಾಡಿ:\n• ${missing.join('\n• ')}',
+            style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13),
+          ),
+          backgroundColor: const Color(0xFFC62828),
+          duration: const Duration(seconds: 4),
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+        ),
+      );
+      return;
+    }
+
     setState(() => _calculating = true);
     try {
       final lat = double.tryParse(_latCtrl.text) ?? LocationService.lat;
@@ -175,7 +246,7 @@ class _AshtamangalaScreenState extends State<AshtamangalaScreen> {
         Navigator.push(context, MaterialPageRoute(
           builder: (_) => AshtamangalaDashboardScreen(
             result: result,
-            name: _nameCtrl.text.trim().isNotEmpty ? _nameCtrl.text.trim() : 'ಅಷ್ಟಮಂಗಲ ಪ್ರಶ್ನೆ',
+            name: _nameCtrl.text.trim(),
             ashtamangalaNumber: _numberCtrl.text.trim(),
             tamboolaNumber: _tamboolaCtrl.text.trim(),
             sprashtangaNum: _sprashtangaNum,
@@ -250,7 +321,13 @@ class _AshtamangalaScreenState extends State<AshtamangalaScreen> {
                     const SizedBox(height: 16),
 
                     // Querent Name
-                    _inputField(_nameCtrl, 'ಪ್ರುಚ್ಛಕರ ಹೆಸರು (ಐಚ್ಛಿಕ)', Icons.person),
+                    _inputField(
+                      _nameCtrl,
+                      'ಪ್ರುಚ್ಛಕರ ಹೆಸರು *',
+                      Icons.person,
+                      showError: _showValidationErrors && _nameCtrl.text.trim().isEmpty,
+                      errorText: 'ಹೆಸರು ನಮೂದಿಸಿ',
+                    ),
                     const SizedBox(height: 12),
 
                     // ಪ್ರುಚ್ಛಕರ ರಾಶಿ ಮತ್ತು ನಕ್ಷತ್ರ
@@ -260,8 +337,13 @@ class _AshtamangalaScreenState extends State<AshtamangalaScreen> {
                           child: DropdownButtonFormField<int>(
                             value: _prucchakaRashi,
                             decoration: InputDecoration(
-                              labelText: 'ಪ್ರುಚ್ಛಕರ ರಾಶಿ',
-                              prefixIcon: Icon(Icons.nightlight_round, color: kMuted, size: 20),
+                              labelText: 'ಪ್ರುಚ್ಛಕರ ರಾಶಿ *',
+                              errorText: (_showValidationErrors && _prucchakaRashi == null) ? 'ಆಯ್ಕೆಮಾಡಿ' : null,
+                              prefixIcon: Icon(
+                                Icons.nightlight_round,
+                                color: (_showValidationErrors && _prucchakaRashi == null) ? Colors.red : kMuted,
+                                size: 20,
+                              ),
                               suffixIcon: _prucchakaRashi != null
                                   ? IconButton(
                                       icon: const Icon(Icons.close, size: 16),
@@ -286,8 +368,13 @@ class _AshtamangalaScreenState extends State<AshtamangalaScreen> {
                           child: DropdownButtonFormField<int>(
                             value: _prucchakaNak,
                             decoration: InputDecoration(
-                              labelText: 'ಪ್ರುಚ್ಛಕರ ನಕ್ಷತ್ರ',
-                              prefixIcon: Icon(Icons.star_border, color: kMuted, size: 20),
+                              labelText: 'ಪ್ರುಚ್ಛಕರ ನಕ್ಷತ್ರ *',
+                              errorText: (_showValidationErrors && _prucchakaNak == null) ? 'ಆಯ್ಕೆಮಾಡಿ' : null,
+                              prefixIcon: Icon(
+                                Icons.star_border,
+                                color: (_showValidationErrors && _prucchakaNak == null) ? Colors.red : kMuted,
+                                size: 20,
+                              ),
                               suffixIcon: _prucchakaNak != null
                                   ? IconButton(
                                       icon: const Icon(Icons.close, size: 16),
@@ -319,9 +406,17 @@ class _AshtamangalaScreenState extends State<AshtamangalaScreen> {
                             controller: _numberCtrl,
                             keyboardType: TextInputType.number,
                             decoration: InputDecoration(
-                              labelText: 'ಅಷ್ಟಮಂಗಲ ಸಂಖ್ಯೆ',
+                              labelText: 'ಅಷ್ಟಮಂಗಲ ಸಂಖ್ಯೆ *',
                               hintText: 'ಉದಾ: 108',
-                              prefixIcon: Icon(Icons.pin, color: kMuted, size: 20),
+                              errorText: (_showValidationErrors &&
+                                      (_numberCtrl.text.trim().isEmpty || int.tryParse(_numberCtrl.text.trim()) == null))
+                                  ? 'ಸಂಖ್ಯೆ ನಮೂದಿಸಿ'
+                                  : null,
+                              prefixIcon: Icon(
+                                Icons.pin,
+                                color: (_showValidationErrors && _numberCtrl.text.trim().isEmpty) ? Colors.red : kMuted,
+                                size: 20,
+                              ),
                               border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
                               contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                               isDense: true,
@@ -335,9 +430,17 @@ class _AshtamangalaScreenState extends State<AshtamangalaScreen> {
                             controller: _tamboolaCtrl,
                             keyboardType: TextInputType.number,
                             decoration: InputDecoration(
-                              labelText: 'ತಾಂಬೂಲ ಸಂಖ್ಯೆ',
+                              labelText: 'ತಾಂಬೂಲ ಸಂಖ್ಯೆ *',
                               hintText: 'ಉದಾ: 8',
-                              prefixIcon: Icon(Icons.eco, color: kMuted, size: 20),
+                              errorText: (_showValidationErrors &&
+                                      (_tamboolaCtrl.text.trim().isEmpty || int.tryParse(_tamboolaCtrl.text.trim()) == null))
+                                  ? 'ಸಂಖ್ಯೆ ನಮೂದಿಸಿ'
+                                  : null,
+                              prefixIcon: Icon(
+                                Icons.eco,
+                                color: (_showValidationErrors && _tamboolaCtrl.text.trim().isEmpty) ? Colors.red : kMuted,
+                                size: 20,
+                              ),
                               border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
                               contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                               isDense: true,
@@ -356,8 +459,13 @@ class _AshtamangalaScreenState extends State<AshtamangalaScreen> {
                           child: DropdownButtonFormField<int>(
                             value: _sprashtangaNum,
                             decoration: InputDecoration(
-                              labelText: 'ಸ್ಪೃಷ್ಟಾಂಗ ರಾಶಿ (1-12)',
-                              prefixIcon: Icon(Icons.touch_app, color: kMuted, size: 20),
+                              labelText: 'ಸ್ಪೃಷ್ಟಾಂಗ ರಾಶಿ (1-12) *',
+                              errorText: (_showValidationErrors && _sprashtangaNum == null) ? 'ಆಯ್ಕೆಮಾಡಿ' : null,
+                              prefixIcon: Icon(
+                                Icons.touch_app,
+                                color: (_showValidationErrors && _sprashtangaNum == null) ? Colors.red : kMuted,
+                                size: 20,
+                              ),
                               suffixIcon: _sprashtangaNum != null
                                   ? IconButton(
                                       icon: const Icon(Icons.close, size: 16),
@@ -385,8 +493,13 @@ class _AshtamangalaScreenState extends State<AshtamangalaScreen> {
                           child: DropdownButtonFormField<int>(
                             value: _svarnaroodhaRashi,
                             decoration: InputDecoration(
-                              labelText: 'ಸ್ವರ್ಣಾರೂಢ ರಾಶಿ',
-                              prefixIcon: Icon(Icons.stars, color: kMuted, size: 20),
+                              labelText: 'ಸ್ವರ್ಣಾರೂಢ ರಾಶಿ *',
+                              errorText: (_showValidationErrors && _svarnaroodhaRashi == null) ? 'ಆಯ್ಕೆಮಾಡಿ' : null,
+                              prefixIcon: Icon(
+                                Icons.stars,
+                                color: (_showValidationErrors && _svarnaroodhaRashi == null) ? Colors.red : kMuted,
+                                size: 20,
+                              ),
                               suffixIcon: _svarnaroodhaRashi != null
                                   ? IconButton(
                                       icon: const Icon(Icons.close, size: 16),
@@ -492,8 +605,13 @@ class _AshtamangalaScreenState extends State<AshtamangalaScreen> {
                           controller: fieldTextEditingController,
                           focusNode: fieldFocusNode,
                           decoration: InputDecoration(
-                            labelText: 'ಸ್ಥಳ',
-                            prefixIcon: Icon(Icons.location_city, color: kMuted, size: 20),
+                            labelText: 'ಸ್ಥಳ *',
+                            errorText: (_showValidationErrors && _placeCtrl.text.trim().isEmpty) ? 'ಸ್ಥಳ ನಮೂದಿಸಿ' : null,
+                            prefixIcon: Icon(
+                              Icons.location_city,
+                              color: (_showValidationErrors && _placeCtrl.text.trim().isEmpty) ? Colors.red : kMuted,
+                              size: 20,
+                            ),
                             suffixIcon: _geoLoading
                                 ? const Padding(padding: EdgeInsets.all(10), child: SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2)))
                                 : IconButton(
@@ -545,11 +663,39 @@ class _AshtamangalaScreenState extends State<AshtamangalaScreen> {
                           style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 15),
                         ),
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: kOrange,
+                          backgroundColor: _allInputsValid ? kOrange : Colors.grey.shade600,
                           foregroundColor: Colors.white,
                           padding: const EdgeInsets.symmetric(vertical: 13),
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                         ),
+                      ),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.only(top: 8),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            _allInputsValid ? Icons.check_circle_outline : Icons.info_outline,
+                            size: 14,
+                            color: _allInputsValid
+                                ? const Color(0xFF2E7D32)
+                                : (_showValidationErrors ? Colors.red : kMuted),
+                          ),
+                          const SizedBox(width: 5),
+                          Text(
+                            _allInputsValid
+                                ? 'ಎಲ್ಲಾ ವಿವರಗಳನ್ನು ನಮೂದಿಸಲಾಗಿದೆ'
+                                : 'ಫಲಿತಾಂಶ ಪಡೆಯಲು ಎಲ್ಲಾ ವಿವರಗಳನ್ನು ಭರ್ತಿ ಮಾಡುವುದು ಕಡ್ಡಾಯವಾಗಿದೆ',
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                              color: _allInputsValid
+                                  ? const Color(0xFF2E7D32)
+                                  : (_showValidationErrors ? Colors.red : kMuted),
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                   ],
@@ -562,11 +708,22 @@ class _AshtamangalaScreenState extends State<AshtamangalaScreen> {
     );
   }
 
-  Widget _inputField(TextEditingController ctrl, String label, IconData icon) => TextField(
+  Widget _inputField(
+    TextEditingController ctrl,
+    String label,
+    IconData icon, {
+    bool showError = false,
+    String? errorText,
+    TextInputType keyboardType = TextInputType.text,
+    ValueChanged<String>? onChanged,
+  }) => TextField(
     controller: ctrl,
+    keyboardType: keyboardType,
+    onChanged: onChanged,
     decoration: InputDecoration(
       labelText: label,
-      prefixIcon: Icon(icon, color: kMuted, size: 20),
+      errorText: showError ? errorText : null,
+      prefixIcon: Icon(icon, color: showError ? Colors.red : kMuted, size: 20),
       border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
       contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       isDense: true,
