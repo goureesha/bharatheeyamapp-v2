@@ -10,6 +10,7 @@ import '../core/calculator.dart';
 import '../services/location_service.dart';
 import '../widgets/kundali_chart.dart';
 import '../widgets/planet_detail_sheet.dart';
+import '../widgets/date_time_input.dart';
 
 // ─────────────────────────────────────────────
 // ೧. ಅಷ್ಟಮಂಗಲ ಪ್ರಶ್ನ - ಮಾಹಿತಿ ನಮೂದು ಪರದೆ (Input Screen)
@@ -438,55 +439,61 @@ class _AshtamangalaScreenState extends State<AshtamangalaScreen> {
                     ),
                     const SizedBox(height: 12),
 
-                    // Date & Time Row
-                    Row(
-                      children: [
-                        Expanded(
-                          child: GestureDetector(
-                            onTap: _pickDate,
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-                              decoration: BoxDecoration(
-                                border: Border.all(color: kBorder),
-                                borderRadius: BorderRadius.circular(10),
+                    // Date & Time Typable Inputs (ಟೈಪ್ ಮಾಡಬಹುದಾದ ದಿನಾಂಕ & ಸಮಯ)
+                    LayoutBuilder(
+                      builder: (context, constraints) {
+                        final isWide = constraints.maxWidth > 500;
+                        if (isWide) {
+                          return Row(
+                            children: [
+                              Expanded(
+                                child: DateInputRow(
+                                  date: _dob,
+                                  color: kPurple2,
+                                  onChanged: (d) => setState(() => _dob = d),
+                                ),
                               ),
-                              child: Row(
-                                children: [
-                                  Icon(Icons.calendar_today, size: 18, color: kPurple2),
-                                  const SizedBox(width: 8),
-                                  Text(
-                                    '${_dob.day.toString().padLeft(2, '0')}-${_dob.month.toString().padLeft(2, '0')}-${_dob.year}',
-                                    style: TextStyle(color: kText, fontSize: 13, fontWeight: FontWeight.w600),
-                                  ),
-                                ],
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: TimeInputRow(
+                                  hour: _hour,
+                                  minute: _minute,
+                                  ampm: _ampm,
+                                  color: kPurple2,
+                                  onChanged: (h, m, a) => setState(() {
+                                    _hour = h;
+                                    _minute = m;
+                                    _ampm = a;
+                                  }),
+                                ),
                               ),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: GestureDetector(
-                            onTap: _pickTime,
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-                              decoration: BoxDecoration(
-                                border: Border.all(color: kBorder),
-                                borderRadius: BorderRadius.circular(10),
+                            ],
+                          );
+                        } else {
+                          return Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: [
+                              DateInputRow(
+                                date: _dob,
+                                color: kPurple2,
+                                onChanged: (d) => setState(() => _dob = d),
                               ),
-                              child: Row(
-                                children: [
-                                  Icon(Icons.access_time, size: 18, color: kPurple2),
-                                  const SizedBox(width: 8),
-                                  Text(
-                                    '${_hour.toString().padLeft(2, '0')}:${_minute.toString().padLeft(2, '0')} ${_ampm == 'AM' ? 'ಪೂರ್ವಾಹ್ನ' : 'ಅಪರಾಹ್ನ'}',
-                                    style: TextStyle(color: kText, fontSize: 13, fontWeight: FontWeight.w600),
-                                  ),
-                                ],
+                              const SizedBox(height: 10),
+                              TimeInputRow(
+                                hour: _hour,
+                                minute: _minute,
+                                ampm: _ampm,
+                                color: kPurple2,
+                                onChanged: (h, m, a) => setState(() {
+                                  _hour = h;
+                                  _minute = m;
+                                  _ampm = a;
+                                }),
                               ),
-                            ),
-                          ),
-                        ),
-                      ],
+                            ],
+                          );
+                        }
+                      },
                     ),
                     const SizedBox(height: 12),
 
