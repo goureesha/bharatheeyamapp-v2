@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/gestures.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import '../widgets/common.dart';
@@ -9,8 +10,10 @@ import '../services/location_service.dart';
 import '../widgets/kundali_chart.dart';
 import '../widgets/planet_detail_sheet.dart';
 
-/// ಅಷ್ಟಮಂಗಲ ಪ್ರಶ್ನೆ
-/// ನೀಡಲಾದ ದಿನಾಂಕ, ಸಮಯ ಮತ್ತು ಸ್ಥಳಕ್ಕೆ ಪಂಚಾಂಗ, ಸಂಪೂರ್ಣ ಷೋಡಶವರ್ಗ ಕುಂಡಲಿಗಳು ಮತ್ತು ಸ್ಫುಟಗಳನ್ನು ಲೆಕ್ಕಾಚಾರ ಮಾಡುತ್ತದೆ.
+// ─────────────────────────────────────────────
+// ೧. ಅಷ್ಟಮಂಗಲ ಪ್ರಶ್ನ - ಮಾಹಿತಿ ನಮೂದು ಪರದೆ (Input Screen)
+// ─────────────────────────────────────────────
+
 class AshtamangalaScreen extends StatefulWidget {
   const AshtamangalaScreen({super.key});
 
@@ -36,40 +39,9 @@ class _AshtamangalaScreenState extends State<AshtamangalaScreen> {
   String _geoStatus = '';
   bool _calculating = false;
 
-  bool _hasResult = false;
-  String _errorMsg = '';
-  int _selectedTab = 0; // 0: ಪಂಚಾಂಗ, 1: ಕುಂಡಲಿ, 2: ಸ್ಫುಟ
-  String? _bhavaPlanet;
-  bool _inputExpanded = true;
-  late final PageController _kundaliPageController;
-
-  KundaliResult? _prashnaResult;
-
-  // ೧೬ ಪಾರಾಶರಿ ಷೋಡಶವರ್ಗ ಕುಂಡಲಿಗಳು + ಭಾವ ಕುಂಡಲಿ (ಕನ್ನಡದಲ್ಲಿ ಮಾತ್ರ)
-  static const List<Map<String, dynamic>> _shodashaVargaCharts = [
-    {'name': 'ರಾಶಿ', 'fullName': 'ರಾಶಿ ಕುಂಡಲಿ', 'varga': 1, 'isBhava': false},
-    {'name': 'ಹೋರಾ', 'fullName': 'ಹೋರಾ ಕುಂಡಲಿ', 'varga': 2, 'isBhava': false},
-    {'name': 'ದ್ರೆಕ್ಕಾಣ', 'fullName': 'ದ್ರೆಕ್ಕಾಣ ಕುಂಡಲಿ', 'varga': 3, 'isBhava': false},
-    {'name': 'ಚತುರ್ಥಾಂಶ', 'fullName': 'ಚತುರ್ಥಾಂಶ ಕುಂಡಲಿ', 'varga': 4, 'isBhava': false},
-    {'name': 'ಸಪ್ತಾಂಶ', 'fullName': 'ಸಪ್ತಾಂಶ ಕುಂಡಲಿ', 'varga': 7, 'isBhava': false},
-    {'name': 'ನವಾಂಶ', 'fullName': 'ನವಾಂಶ ಕುಂಡಲಿ', 'varga': 9, 'isBhava': false},
-    {'name': 'ದಶಾಂಶ', 'fullName': 'ದಶಾಂಶ ಕುಂಡಲಿ', 'varga': 10, 'isBhava': false},
-    {'name': 'ದ್ವಾದಶಾಂಶ', 'fullName': 'ದ್ವಾದಶಾಂಶ ಕುಂಡಲಿ', 'varga': 12, 'isBhava': false},
-    {'name': 'ಷೋಡಶಾಂಶ', 'fullName': 'ಷೋಡಶಾಂಶ ಕುಂಡಲಿ', 'varga': 16, 'isBhava': false},
-    {'name': 'ವಿಂಶಾಂಶ', 'fullName': 'ವಿಂಶಾಂಶ ಕುಂಡಲಿ', 'varga': 20, 'isBhava': false},
-    {'name': 'ಚತುರ್ವಿಂಶಾಂಶ', 'fullName': 'ಚತುರ್ವಿಂಶಾಂಶ ಕುಂಡಲಿ', 'varga': 24, 'isBhava': false},
-    {'name': 'ಸಪ್ತವಿಂಶಾಂಶ', 'fullName': 'ಸಪ್ತವಿಂಶಾಂಶ (ಭಾಂಶ) ಕುಂಡಲಿ', 'varga': 27, 'isBhava': false},
-    {'name': 'ತ್ರಿಂಶಾಂಶ', 'fullName': 'ತ್ರಿಂಶಾಂಶ ಕುಂಡಲಿ', 'varga': 30, 'isBhava': false},
-    {'name': 'ಖವೇದಾಂಶ', 'fullName': 'ಖವೇದಾಂಶ ಕುಂಡಲಿ', 'varga': 40, 'isBhava': false},
-    {'name': 'ಅಕ್ಷವೇದಾಂಶ', 'fullName': 'ಅಕ್ಷವೇದಾಂಶ ಕುಂಡಲಿ', 'varga': 45, 'isBhava': false},
-    {'name': 'ಷಷ್ಟ್ಯಂಶ', 'fullName': 'ಷಷ್ಟ್ಯಂಶ ಕುಂಡಲಿ', 'varga': 60, 'isBhava': false},
-    {'name': 'ಭಾವ', 'fullName': 'ಭಾವ ಕುಂಡಲಿ', 'varga': 1, 'isBhava': true},
-  ];
-
   @override
   void initState() {
     super.initState();
-    _kundaliPageController = PageController();
     _placeCtrl = TextEditingController(text: LocationService.place);
     _latCtrl = TextEditingController(text: LocationService.lat.toStringAsFixed(4));
     _lonCtrl = TextEditingController(text: LocationService.lon.toStringAsFixed(4));
@@ -78,7 +50,6 @@ class _AshtamangalaScreenState extends State<AshtamangalaScreen> {
 
   @override
   void dispose() {
-    _kundaliPageController.dispose();
     _numberCtrl.dispose();
     _nameCtrl.dispose();
     _placeCtrl.dispose();
@@ -119,82 +90,92 @@ class _AshtamangalaScreenState extends State<AshtamangalaScreen> {
       }
     } catch (e) {
       if (mounted) setState(() => _geoStatus = 'ದೋಷ: $e');
+    } finally {
+      if (mounted) setState(() => _geoLoading = false);
     }
-    if (mounted) setState(() => _geoLoading = false);
   }
 
   void _showPlaceDisambiguation(List results) {
-    showDialog(context: context, builder: (ctx) {
-      return AlertDialog(
-        backgroundColor: kBg,
-        title: Text('ಸ್ಥಳ ಆಯ್ಕೆಮಾಡಿ', style: TextStyle(color: kText, fontWeight: FontWeight.w900)),
-        content: SizedBox(width: double.maxFinite, height: 300, child: ListView.builder(
-          itemCount: results.length,
-          itemBuilder: (context, index) {
-            final r = results[index];
-            return ListTile(
-              leading: Icon(Icons.location_city, color: kPurple2),
-              title: Text(r['display_name'], style: TextStyle(color: kText, fontSize: 13)),
-              onTap: () async {
-                Navigator.pop(ctx);
-                final lat = double.parse(r['lat']);
-                final lon = double.parse(r['lon']);
-                final autoTz = await getTimezoneForPlace(r['display_name'], lat, lon);
-                setState(() {
-                  _placeCtrl.text = r['name'] ?? _placeCtrl.text;
-                  _latCtrl.text = lat.toStringAsFixed(4);
-                  _lonCtrl.text = lon.toStringAsFixed(4);
-                  _tzCtrl.text = '${autoTz >= 0 ? '+' : ''}$autoTz';
-                  _geoStatus = '📍 ${r['display_name']}';
-                });
-              },
-            );
-          },
-        )),
-      );
-    });
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+      builder: (ctx) => DraggableScrollableSheet(
+        initialChildSize: 0.5,
+        minChildSize: 0.3,
+        maxChildSize: 0.8,
+        expand: false,
+        builder: (_, scrollCtrl) => Column(
+          children: [
+            Padding(
+              padding: const EdgeInsets.all(16),
+              child: Text('ಸ್ಥಳ ಆಯ್ಕೆಮಾಡಿ', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16, color: kText)),
+            ),
+            const Divider(height: 1),
+            Expanded(
+              child: ListView.builder(
+                controller: scrollCtrl,
+                itemCount: results.length,
+                itemBuilder: (_, i) {
+                  final r = results[i];
+                  return ListTile(
+                    leading: Icon(Icons.location_on, color: kPurple2),
+                    title: Text(r['display_name'], style: TextStyle(fontSize: 13, color: kText)),
+                    onTap: () async {
+                      Navigator.pop(ctx);
+                      final lat = double.parse(r['lat']);
+                      final lon = double.parse(r['lon']);
+                      final autoTz = await getTimezoneForPlace(r['display_name'], lat, lon);
+                      setState(() {
+                        _placeCtrl.text = r['display_name'].split(',')[0].trim();
+                        _latCtrl.text = lat.toStringAsFixed(4);
+                        _lonCtrl.text = lon.toStringAsFixed(4);
+                        _tzCtrl.text = '${autoTz >= 0 ? '+' : ''}$autoTz';
+                        _geoStatus = '📍 ${r['display_name']}';
+                      });
+                    },
+                  );
+                },
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   Future<void> _pickDate() async {
-    final date = await showDatePicker(
-      context: context, initialDate: _dob,
-      firstDate: DateTime(100), lastDate: DateTime(2100),
-      builder: (context, child) => Theme(
-        data: ThemeData.dark().copyWith(
-          colorScheme: ColorScheme.dark(primary: kPurple2, onPrimary: Colors.white, surface: kCard, onSurface: kText),
-          dialogBackgroundColor: kBg,
-        ), child: child!,
-      ),
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: _dob,
+      firstDate: DateTime(1900),
+      lastDate: DateTime(2100),
     );
-    if (date != null) setState(() => _dob = date);
+    if (picked != null) {
+      setState(() => _dob = picked);
+    }
   }
 
   Future<void> _pickTime() async {
-    final t = TimeOfDay(hour: _ampm == 'PM' && _hour != 12 ? _hour + 12 : (_ampm == 'AM' && _hour == 12 ? 0 : _hour), minute: _minute);
-    final time = await showTimePicker(
-      context: context, initialTime: t,
-      builder: (context, child) => Theme(
-        data: ThemeData.dark().copyWith(
-          colorScheme: ColorScheme.dark(primary: kPurple2, onPrimary: Colors.white, surface: kCard, onSurface: kText),
-          timePickerTheme: TimePickerThemeData(backgroundColor: kBg, dialBackgroundColor: kCard, hourMinuteTextColor: kPurple2),
-        ), child: child!,
-      ),
+    int h24 = _hour + (_ampm == 'PM' && _hour != 12 ? 12 : 0);
+    if (_ampm == 'AM' && _hour == 12) h24 = 0;
+    final picked = await showTimePicker(
+      context: context,
+      initialTime: TimeOfDay(hour: h24, minute: _minute),
     );
-    if (time != null) {
+    if (picked != null) {
+      final h = picked.hourOfPeriod == 0 ? 12 : picked.hourOfPeriod;
+      final ap = picked.hour < 12 ? 'AM' : 'PM';
       setState(() {
-        _hour = time.hourOfPeriod == 0 ? 12 : time.hourOfPeriod;
-        _minute = time.minute;
-        _ampm = time.period == DayPeriod.am ? 'AM' : 'PM';
+        _hour = h;
+        _minute = picked.minute;
+        _ampm = ap;
       });
     }
   }
 
   Future<void> _calculate() async {
-    setState(() {
-      _calculating = true;
-      _errorMsg = '';
-    });
-
+    setState(() => _calculating = true);
     try {
       final lat = double.tryParse(_latCtrl.text) ?? LocationService.lat;
       final lon = double.tryParse(_lonCtrl.text) ?? LocationService.lon;
@@ -211,87 +192,37 @@ class _AshtamangalaScreenState extends State<AshtamangalaScreen> {
       );
 
       if (result != null && mounted) {
-        setState(() {
-          _prashnaResult = result;
-          _hasResult = true;
-          _errorMsg = '';
-          _inputExpanded = false;
-        });
-        if (_kundaliPageController.hasClients) {
-          _kundaliPageController.jumpToPage(0);
-        }
+        Navigator.push(context, MaterialPageRoute(
+          builder: (_) => AshtamangalaDashboardScreen(
+            result: result,
+            name: _nameCtrl.text.trim().isNotEmpty ? _nameCtrl.text.trim() : 'ಅಷ್ಟಮಂಗಲ ಪ್ರಶ್ನೆ',
+            ashtamangalaNumber: _numberCtrl.text.trim(),
+            place: _placeCtrl.text.trim().isNotEmpty ? _placeCtrl.text.trim() : LocationService.place,
+            dob: _dob,
+            hour: _hour,
+            minute: _minute,
+            ampm: _ampm,
+            lat: lat,
+            lon: lon,
+            tzOffset: tzOffset,
+          ),
+        ));
       } else {
-        setState(() {
-          _errorMsg = 'ಕುಂಡಲಿ ಲೆಕ್ಕಾಚಾರ ವಿಫಲವಾಗಿದೆ. ದಯವಿಟ್ಟು ವಿವರಗಳನ್ನು ಪರಿಶೀಲಿಸಿ.';
-          _hasResult = false;
-        });
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('ಕುಂಡಲಿ ಲೆಕ್ಕಾಚಾರ ವಿಫಲವಾಗಿದೆ. ದಯವಿಟ್ಟು ವಿವರಗಳನ್ನು ಪರಿಶೀಲಿಸಿ.'), backgroundColor: Colors.red),
+          );
+        }
       }
     } catch (e) {
-      setState(() {
-        _errorMsg = 'ದೋಷ: $e';
-        _hasResult = false;
-      });
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('ದೋಷ: $e'), backgroundColor: Colors.red),
+        );
+      }
     } finally {
       if (mounted) setState(() => _calculating = false);
     }
-  }
-
-  void _showPlanetDetail(String pName) {
-    if (_prashnaResult == null) return;
-    final info = _prashnaResult!.planets[pName];
-    if (info == null) return;
-    final sun = _prashnaResult!.planets['ರವಿ'];
-    final detail = AstroCalculator.getPlanetDetail(
-      pName, info.longitude, info.speed, sun?.longitude ?? 0.0);
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (_) => PlanetDetailSheet(pName: pName, detail: detail),
-    );
-  }
-
-  Map<String, Color> get _dashaLords {
-    if (_prashnaResult == null) return {};
-    final now = DateTime.now();
-    final lords = <String, Color>{};
-    for (final md in _prashnaResult!.dashas) {
-      if (now.isAfter(md.start) && now.isBefore(md.end)) {
-        lords[md.lord] = const Color(0xFFFF8C00);
-        for (final ad in md.antardashas) {
-          if (now.isAfter(ad.start) && now.isBefore(ad.end)) {
-            if (!lords.containsKey(ad.lord)) {
-              lords[ad.lord] = const Color(0xFF00C853);
-            }
-            break;
-          }
-        }
-        break;
-      }
-    }
-    return lords;
-  }
-
-  String _trDashaBalance(String bal) {
-    if (AppLocale.current == 'kn') return bal;
-    const suffixes = {
-      'hi': {'ವ': 'व', 'ತಿ': 'म', 'ದಿ': 'दि'},
-      'ta': {'ವ': 'வ', 'ತಿ': 'மா', 'ದಿ': 'நா'},
-      'te': {'ವ': 'సం', 'ತಿ': 'నె', 'ದಿ': 'రో'},
-      'ml': {'ವ': 'വ', 'ತಿ': 'മാ', 'ದಿ': 'ദി'},
-    };
-    final map = suffixes[AppLocale.current];
-    if (map == null) return bal;
-    var result = bal;
-    for (final entry in map.entries) {
-      result = result.replaceAll(entry.key, entry.value);
-    }
-    return result;
-  }
-
-  String _formatKannadaTime() {
-    final ampmKn = _ampm == 'AM' ? 'ಪೂರ್ವಾಹ್ನ' : 'ಅಪರಾಹ್ನ';
-    return '${_hour.toString().padLeft(2, '0')}:${_minute.toString().padLeft(2, '0')} $ampmKn';
   }
 
   @override
@@ -299,313 +230,202 @@ class _AshtamangalaScreenState extends State<AshtamangalaScreen> {
     return Scaffold(
       backgroundColor: kBg,
       appBar: AppBar(
-        backgroundColor: kCard,
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        leading: IconButton(
+          icon: Icon(Icons.arrow_back, color: kText),
+          onPressed: () => Navigator.pop(context),
+        ),
         title: Text(
           'ಅಷ್ಟಮಂಗಲ ಪ್ರಶ್ನೆ',
-          style: TextStyle(color: kText, fontSize: 16, fontWeight: FontWeight.w800),
+          style: TextStyle(color: kText, fontWeight: FontWeight.w900),
         ),
-        iconTheme: IconThemeData(color: kText),
-        elevation: 0,
-        actions: [
-          if (_hasResult)
-            IconButton(
-              icon: Icon(_inputExpanded ? Icons.expand_less : Icons.expand_more, color: kPurple2),
-              tooltip: _inputExpanded ? 'ಮಾಹಿತಿ ಮುಚ್ಚಿ' : 'ಮಾಹಿತಿ ವೀಕ್ಷಿಸಿ',
-              onPressed: () => setState(() => _inputExpanded = !_inputExpanded),
-            ),
-        ],
       ),
-      body: SingleChildScrollView(
-        child: ResponsiveCenter(
+      body: SafeArea(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(16),
           child: Column(
             children: [
-              _buildInputCard(),
-              if (_hasResult && _prashnaResult != null) ...[
-                const SizedBox(height: 8),
-                _buildOutputTabBar(),
-                const SizedBox(height: 8),
-                if (_selectedTab == 0)
-                  _buildPanchangTab()
-                else if (_selectedTab == 1)
-                  _buildKundaliTab()
-                else
-                  _buildSphutaTab(),
-              ],
-              const SizedBox(height: 32),
+              AppCard(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        const Text('🪔', style: TextStyle(fontSize: 24)),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: Text(
+                            'ಪ್ರಶ್ನ ವಿವರ ನಮೂದಿಸಿ',
+                            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w900, color: kOrange),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+
+                    // Querent Name
+                    _inputField(_nameCtrl, 'ಪ್ರುಚ್ಛಕರ ಹೆಸರು (ಐಚ್ಛಿಕ)', Icons.person),
+                    const SizedBox(height: 12),
+
+                    // Ashtamangala Number
+                    TextField(
+                      controller: _numberCtrl,
+                      keyboardType: TextInputType.number,
+                      decoration: InputDecoration(
+                        labelText: 'ಅಷ್ಟಮಂಗಲ ಸಂಖ್ಯೆ',
+                        hintText: 'ಉದಾ: 108',
+                        prefixIcon: Icon(Icons.pin, color: kMuted, size: 20),
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                        isDense: true,
+                      ),
+                      style: TextStyle(color: kText, fontSize: 14),
+                    ),
+                    const SizedBox(height: 12),
+
+                    // Date & Time Row
+                    Row(
+                      children: [
+                        Expanded(
+                          child: GestureDetector(
+                            onTap: _pickDate,
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                              decoration: BoxDecoration(
+                                border: Border.all(color: kBorder),
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              child: Row(
+                                children: [
+                                  Icon(Icons.calendar_today, size: 18, color: kPurple2),
+                                  const SizedBox(width: 8),
+                                  Text(
+                                    '${_dob.day.toString().padLeft(2, '0')}-${_dob.month.toString().padLeft(2, '0')}-${_dob.year}',
+                                    style: TextStyle(color: kText, fontSize: 13, fontWeight: FontWeight.w600),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: GestureDetector(
+                            onTap: _pickTime,
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                              decoration: BoxDecoration(
+                                border: Border.all(color: kBorder),
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              child: Row(
+                                children: [
+                                  Icon(Icons.access_time, size: 18, color: kPurple2),
+                                  const SizedBox(width: 8),
+                                  Text(
+                                    '${_hour.toString().padLeft(2, '0')}:${_minute.toString().padLeft(2, '0')} ${_ampm == 'AM' ? 'ಪೂರ್ವಾಹ್ನ' : 'ಅಪರಾಹ್ನ'}',
+                                    style: TextStyle(color: kText, fontSize: 13, fontWeight: FontWeight.w600),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+
+                    // Place Autocomplete
+                    Autocomplete<String>(
+                      initialValue: TextEditingValue(text: _placeCtrl.text),
+                      optionsBuilder: (textEditingValue) {
+                        if (textEditingValue.text.isEmpty) return const Iterable<String>.empty();
+                        return kPlaces.keys.where((place) =>
+                          place.toLowerCase().contains(textEditingValue.text.toLowerCase()));
+                      },
+                      onSelected: (selection) async {
+                        final coords = kPlaces[selection]!;
+                        final autoTz = await getTimezoneForPlace(selection, coords[0], coords[1]);
+                        setState(() {
+                          _placeCtrl.text = selection;
+                          _latCtrl.text = coords[0].toStringAsFixed(4);
+                          _lonCtrl.text = coords[1].toStringAsFixed(4);
+                          _tzCtrl.text = '${autoTz >= 0 ? '+' : ''}$autoTz';
+                          _geoStatus = '📍 $selection (${coords[0]}, ${coords[1]})';
+                        });
+                      },
+                      fieldViewBuilder: (context, fieldTextEditingController, fieldFocusNode, onFieldSubmitted) {
+                        return TextField(
+                          controller: fieldTextEditingController,
+                          focusNode: fieldFocusNode,
+                          decoration: InputDecoration(
+                            labelText: 'ಸ್ಥಳ',
+                            prefixIcon: Icon(Icons.location_city, color: kMuted, size: 20),
+                            suffixIcon: _geoLoading
+                                ? const Padding(padding: EdgeInsets.all(10), child: SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2)))
+                                : IconButton(
+                                    icon: Icon(Icons.search, color: kPurple2, size: 20),
+                                    onPressed: () {
+                                      _placeCtrl.text = fieldTextEditingController.text;
+                                      _geocodeMultiple(fieldTextEditingController.text);
+                                    },
+                                  ),
+                            border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                            contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                            isDense: true,
+                          ),
+                          style: TextStyle(color: kText, fontSize: 14),
+                          onChanged: (val) => _placeCtrl.text = val,
+                        );
+                      },
+                    ),
+
+                    if (_geoStatus.isNotEmpty)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 4, left: 4),
+                        child: Text(_geoStatus, style: TextStyle(fontSize: 11, color: kPurple2)),
+                      ),
+                    const SizedBox(height: 12),
+
+                    // Lat, Lon, TZ
+                    Row(
+                      children: [
+                        Expanded(child: _inputField(_latCtrl, 'ಅಕ್ಷಾಂಶ', Icons.my_location)),
+                        const SizedBox(width: 8),
+                        Expanded(child: _inputField(_lonCtrl, 'ರೇಖಾಂಶ', Icons.my_location)),
+                        const SizedBox(width: 8),
+                        Expanded(child: _inputField(_tzCtrl, 'ಕಾಲ ವಲಯ', Icons.schedule)),
+                      ],
+                    ),
+                    const SizedBox(height: 18),
+
+                    // Calculate Button
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton.icon(
+                        onPressed: _calculating ? null : _calculate,
+                        icon: _calculating
+                            ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                            : const Icon(Icons.calculate, size: 20),
+                        label: Text(
+                          _calculating ? 'ಲೆಕ್ಕಾಚಾರವಾಗುತ್ತಿದೆ...' : 'ಲೆಕ್ಕ ಹಾಕಿ',
+                          style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 15),
+                        ),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: kOrange,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 13),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
             ],
           ),
         ),
-      ),
-    );
-  }
-
-  // ═══ ಮಾಹಿತಿ ನಮೂದು ಕಾರ್ಡ್ (Input Card) ═══
-  Widget _buildInputCard() {
-    return AppCard(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Text('🪔', style: TextStyle(fontSize: 24)),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Text(
-                  'ಪ್ರಶ್ನ ವಿವರ',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w900, color: kOrange),
-                ),
-              ),
-              if (_hasResult)
-                IconButton(
-                  icon: Icon(_inputExpanded ? Icons.keyboard_arrow_up : Icons.keyboard_arrow_down, color: kMuted),
-                  onPressed: () => setState(() => _inputExpanded = !_inputExpanded),
-                ),
-            ],
-          ),
-          if (!_inputExpanded && _hasResult) ...[
-            const SizedBox(height: 4),
-            Text(
-              '${_dob.day.toString().padLeft(2, '0')}-${_dob.month.toString().padLeft(2, '0')}-${_dob.year}  •  ${_formatKannadaTime()}  •  ${_placeCtrl.text}',
-              style: TextStyle(color: kMuted, fontSize: 12),
-            ),
-          ],
-          if (_inputExpanded || !_hasResult) ...[
-            const SizedBox(height: 12),
-            // Querent Name
-            _inputField(_nameCtrl, 'ಪ್ರುಚ್ಛಕರ ಹೆಸರು', Icons.person),
-            const SizedBox(height: 12),
-
-            // Date & Time Row
-            Row(
-              children: [
-                Expanded(
-                  child: GestureDetector(
-                    onTap: _pickDate,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-                      decoration: BoxDecoration(
-                        color: kCard,
-                        border: Border.all(color: kBorder),
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: Row(
-                        children: [
-                          Icon(Icons.calendar_today, color: kPurple2, size: 18),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: Text(
-                              'ದಿನಾಂಕ: ${_dob.day.toString().padLeft(2, '0')}-${_dob.month.toString().padLeft(2, '0')}-${_dob.year}',
-                              style: TextStyle(fontSize: 13, color: kText, fontWeight: FontWeight.w600),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: GestureDetector(
-                    onTap: _pickTime,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-                      decoration: BoxDecoration(
-                        color: kCard,
-                        border: Border.all(color: kBorder),
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: Row(
-                        children: [
-                          Icon(Icons.access_time, color: kPurple2, size: 18),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: Text(
-                              'ಸಮಯ: ${_formatKannadaTime()}',
-                              style: TextStyle(fontSize: 13, color: kText, fontWeight: FontWeight.w600),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
-
-            // Place Selector
-            Autocomplete<String>(
-              optionsBuilder: (TextEditingValue textEditingValue) {
-                if (textEditingValue.text.isEmpty) return offlinePlaces.keys.take(15);
-                final query = textEditingValue.text.toLowerCase();
-                return offlinePlaces.keys.where((n) => n.toLowerCase().contains(query));
-              },
-              fieldViewBuilder: (context, textEditingController, focusNode, onFieldSubmitted) {
-                return TextField(
-                  controller: textEditingController,
-                  focusNode: focusNode,
-                  decoration: InputDecoration(
-                    labelText: 'ಊರು ಹುಡುಕಿ',
-                    prefixIcon: Icon(Icons.search, size: 20),
-                    suffixIcon: _geoLoading
-                        ? Padding(padding: const EdgeInsets.all(12), child: SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2)))
-                        : IconButton(
-                            icon: Icon(Icons.my_location, color: kTeal, size: 20),
-                            onPressed: () {
-                              _placeCtrl.text = textEditingController.text;
-                              _geocodeMultiple(textEditingController.text);
-                            },
-                          ),
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                    isDense: true,
-                  ),
-                  onSubmitted: (_) {
-                    _placeCtrl.text = textEditingController.text;
-                    _geocodeMultiple(textEditingController.text);
-                  },
-                );
-              },
-              onSelected: (String selection) async {
-                if (offlinePlaces.containsKey(selection)) {
-                  final coords = offlinePlaces[selection]!;
-                  final autoTz = await getTimezoneForPlace(selection, coords[0], coords[1]);
-                  setState(() {
-                    _placeCtrl.text = selection;
-                    _latCtrl.text = coords[0].toStringAsFixed(4);
-                    _lonCtrl.text = coords[1].toStringAsFixed(4);
-                    _tzCtrl.text = '${autoTz >= 0 ? '+' : ''}$autoTz';
-                    _geoStatus = '📍 $selection';
-                  });
-                }
-              },
-              optionsViewBuilder: (context, onSelected, options) {
-                return Align(
-                  alignment: Alignment.topLeft,
-                  child: Material(
-                    elevation: 4,
-                    borderRadius: BorderRadius.circular(8),
-                    child: ConstrainedBox(
-                      constraints: BoxConstraints(maxHeight: 250, maxWidth: MediaQuery.of(context).size.width - 64),
-                      child: ListView.builder(
-                        padding: EdgeInsets.zero,
-                        itemCount: options.length,
-                        shrinkWrap: true,
-                        itemBuilder: (context, index) {
-                          final option = options.elementAt(index);
-                          return ListTile(
-                            dense: true,
-                            leading: Icon(Icons.location_on, size: 18, color: kPurple2),
-                            title: Text(option, style: TextStyle(fontSize: 13)),
-                            onTap: () => onSelected(option),
-                          );
-                        },
-                      ),
-                    ),
-                  ),
-                );
-              },
-            ),
-            if (_geoStatus.isNotEmpty) ...[
-              const SizedBox(height: 4),
-              Text(_geoStatus, style: TextStyle(fontSize: 12, color: kGreen)),
-            ],
-            const SizedBox(height: 10),
-
-            // Lat/Lon/TZ Display
-            Row(
-              children: [
-                Expanded(
-                  flex: 4,
-                  child: TextField(
-                    controller: _latCtrl,
-                    keyboardType: const TextInputType.numberWithOptions(decimal: true, signed: true),
-                    decoration: InputDecoration(
-                      labelText: 'ಅಕ್ಷಾಂಶ',
-                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-                      contentPadding: const EdgeInsets.all(8),
-                      isDense: true,
-                    ),
-                    style: TextStyle(fontSize: 12),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  flex: 4,
-                  child: TextField(
-                    controller: _lonCtrl,
-                    keyboardType: const TextInputType.numberWithOptions(decimal: true, signed: true),
-                    decoration: InputDecoration(
-                      labelText: 'ರೇಖಾಂಶ',
-                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-                      contentPadding: const EdgeInsets.all(8),
-                      isDense: true,
-                    ),
-                    style: TextStyle(fontSize: 12),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  flex: 3,
-                  child: TextField(
-                    controller: _tzCtrl,
-                    keyboardType: const TextInputType.numberWithOptions(decimal: true, signed: true),
-                    decoration: InputDecoration(
-                      labelText: 'ಸಮಯ ವಲಯ',
-                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-                      contentPadding: const EdgeInsets.all(8),
-                      isDense: true,
-                    ),
-                    style: TextStyle(fontSize: 12),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
-
-            // Optional Ashtamangala Number
-            TextField(
-              controller: _numberCtrl,
-              keyboardType: TextInputType.number,
-              decoration: InputDecoration(
-                labelText: 'ಅಷ್ಟಮಂಗಲ ಸಂಖ್ಯೆ (ಐಚ್ಛಿಕ)',
-                prefixIcon: Icon(Icons.pin, color: kMuted, size: 20),
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-                contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                isDense: true,
-              ),
-              style: TextStyle(color: kText, fontSize: 16, fontWeight: FontWeight.w700),
-              onSubmitted: (_) => _calculate(),
-            ),
-            if (_errorMsg.isNotEmpty)
-              Padding(
-                padding: const EdgeInsets.only(top: 8),
-                child: Text(_errorMsg, style: TextStyle(color: Colors.red, fontSize: 12, fontWeight: FontWeight.w600)),
-              ),
-            const SizedBox(height: 14),
-
-            // Calculate Button
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton.icon(
-                onPressed: _calculating ? null : _calculate,
-                icon: _calculating
-                    ? SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-                    : Icon(Icons.calculate, size: 20),
-                label: Text(
-                  _calculating ? 'ಲೆಕ್ಕಾಚಾರವಾಗುತ್ತಿದೆ...' : 'ಲೆಕ್ಕ ಹಾಕಿ',
-                  style: TextStyle(fontWeight: FontWeight.w800, fontSize: 15),
-                ),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: kOrange,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(vertical: 13),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                ),
-              ),
-            ),
-          ],
-        ],
       ),
     );
   }
@@ -621,70 +441,170 @@ class _AshtamangalaScreenState extends State<AshtamangalaScreen> {
     ),
     style: TextStyle(color: kText, fontSize: 14),
   );
+}
 
-  // ═══ ಟ್ಯಾಬ್ ಆಯ್ಕೆ (Output Tabs Switcher: ಪಂಚಾಂಗ, ಕುಂಡಲಿ, ಸ್ಫುಟ) ═══
-  Widget _buildOutputTabBar() {
-    return AppCard(
-      padding: EdgeInsets.zero,
-      child: Row(
-        children: [
-          _buildTabBtn(0, Icons.calendar_month, 'ಪಂಚಾಂಗ'),
-          _buildTabBtn(1, Icons.grid_view, 'ಕುಂಡಲಿ'),
-          _buildTabBtn(2, Icons.auto_graph, 'ಸ್ಫುಟ'),
-        ],
-      ),
+// ─────────────────────────────────────────────
+// ೨. ಅಷ್ಟಮಂಗಲ ಪ್ರಶ್ನ - ಡ್ಯಾಶ್‌ಬೋರ್ಡ್ ಪರದೆ (Dashboard Screen)
+//    ಕುಂಡಲಿ ಮುಖ್ಯ ವಿಭಾಗದಂತೆಯೇ ಪೂರ್ಣ ಸ್ಕ್ರೀನ್, ವರ್ಟಿಕಲ್ ಮೋಡ್ & ಲ್ಯಾಂಡ್‌ಸ್ಕೇಪ್ ಬೆಂಬಲ
+// ─────────────────────────────────────────────
+
+class AshtamangalaDashboardScreen extends StatefulWidget {
+  final KundaliResult result;
+  final String name;
+  final String ashtamangalaNumber;
+  final String place;
+  final DateTime dob;
+  final int hour;
+  final int minute;
+  final String ampm;
+  final double lat;
+  final double lon;
+  final double tzOffset;
+
+  const AshtamangalaDashboardScreen({
+    super.key,
+    required this.result,
+    required this.name,
+    required this.ashtamangalaNumber,
+    required this.place,
+    required this.dob,
+    required this.hour,
+    required this.minute,
+    required this.ampm,
+    required this.lat,
+    required this.lon,
+    required this.tzOffset,
+  });
+
+  @override
+  State<AshtamangalaDashboardScreen> createState() => _AshtamangalaDashboardScreenState();
+}
+
+class _AshtamangalaDashboardScreenState extends State<AshtamangalaDashboardScreen>
+    with SingleTickerProviderStateMixin {
+  late TabController _tabCtrl;
+  int _chartPageIndex = 0;
+  String? _bhavaPlanet;
+
+  // ಬಳಕೆದಾರರು ಕೇಳಿದ ೩ ಟ್ಯಾಬ್‌ಗಳು ಮಾತ್ರ
+  static const _tabs = ['ಪಂಚಾಂಗ', 'ಕುಂಡಲಿ', 'ಸ್ಫುಟ'];
+
+  // ೧೬ ಪಾರಾಶರಿ ಷೋಡಶವರ್ಗ ಕುಂಡಲಿಗಳು + ಭಾವ ಕುಂಡಲಿ
+  static const List<Map<String, dynamic>> _shodashaVargaCharts = [
+    {'name': 'ರಾಶಿ', 'fullName': 'ರಾಶಿ ಕುಂಡಲಿ', 'varga': 1, 'isBhava': false},
+    {'name': 'ಹೋರಾ', 'fullName': 'ಹೋರಾ ಕುಂಡಲಿ', 'varga': 2, 'isBhava': false},
+    {'name': 'ದ್ರೆಕ್ಕಾಣ', 'fullName': 'ದ್ರೆಕ್ಕಾಣ ಕುಂಡಲಿ', 'varga': 3, 'isBhava': false},
+    {'name': 'ಚತುರ್ಥಾಂಶ', 'fullName': 'ಚತುರ್ಥಾಂಶ ಕುಂಡಲಿ', 'varga': 4, 'isBhava': false},
+    {'name': 'ಸಪ್ತಾಂಶ', 'fullName': 'ಸಪ್ತಾಂಶ ಕುಂಡಲಿ', 'varga': 7, 'isBhava': false},
+    {'name': 'ನವಾಂಶ', 'fullName': 'ನವಾಂಶ ಕುಂಡಲಿ', 'varga': 9, 'isBhava': false},
+    {'name': 'ದಶಾಂಶ', 'fullName': 'ದಶಾಂಶ ಕುಂಡಲಿ', 'varga': 10, 'isBhava': false},
+    {'name': 'ದ್ವಾದಶಾಂಶ', 'fullName': 'ದ್ವಾದಶಾಂಶ ಕುಂಡಲಿ', 'varga': 12, 'isBhava': false},
+    {'name': 'ಷೋಡಶಾಂಶ', 'fullName': 'ಷೋಡಶಾಂಶ ಕುಂಡಲಿ', 'varga': 16, 'isBhava': false},
+    {'name': 'ವಿಂಶಾಂಶ', 'fullName': 'ವಿಂಶಾಂಶ ಕುಂಡಲಿ', 'varga': 20, 'isBhava': false},
+    {'name': 'ಚತುರ್ವಿಂಶಾಂಶ', 'fullName': 'ಚತುರ್ವಿಂಶಾಂಶ ಕುಂಡಲಿ', 'varga': 24, 'isBhava': false},
+    {'name': 'ಸಪ್ತವಿಂಶಾಂಶ', 'fullName': 'ಸಪ್ತವಿಂಶಾಂಶ (ಭಾಂಶ) ಕುಂಡಲಿ', 'varga': 27, 'isBhava': false},
+    {'name': 'ತ್ರಿಂಶಾಂಶ', 'fullName': 'ತ್ರಿಂಶಾಂಶ ಕುಂಡಲಿ', 'varga': 30, 'isBhava': false},
+    {'name': 'ಖವೇದಾಂಶ', 'fullName': 'ಖವೇದಾಂಶ ಕುಂಡಲಿ', 'varga': 40, 'isBhava': false},
+    {'name': 'ಅಕ್ಷವೇದಾಂಶ', 'fullName': 'ಅಕ್ಷವೇದಾಂಶ ಕುಂಡಲಿ', 'varga': 45, 'isBhava': false},
+    {'name': 'ಷಷ್ಟ್ಯಂಶ', 'fullName': 'ಷಷ್ಟ್ಯಂಶ ಕುಂಡಲಿ', 'varga': 60, 'isBhava': false},
+    {'name': 'ಭಾವ', 'fullName': 'ಭಾವ ಕುಂಡಲಿ', 'varga': 1, 'isBhava': true},
+  ];
+
+  @override
+  void initState() {
+    super.initState();
+    _tabCtrl = TabController(length: _tabs.length, vsync: this, initialIndex: 0);
+  }
+
+  @override
+  void dispose() {
+    _tabCtrl.dispose();
+    super.dispose();
+  }
+
+  void _showPlanetDetail(String pName) {
+    final info = widget.result.planets[pName];
+    if (info == null) return;
+    final sun = widget.result.planets['ರವಿ'];
+    final detail = AstroCalculator.getPlanetDetail(
+      pName, info.longitude, info.speed, sun?.longitude ?? 0.0);
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => PlanetDetailSheet(pName: pName, detail: detail),
     );
   }
 
-  Widget _buildTabBtn(int index, IconData icon, String title) {
-    final isSel = _selectedTab == index;
-    return Expanded(
-      child: InkWell(
-        onTap: () => setState(() => _selectedTab = index),
-        child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 12),
-          decoration: BoxDecoration(
-            border: Border(
-              bottom: BorderSide(
-                color: isSel ? kPurple2 : Colors.transparent,
-                width: 3,
-              ),
-            ),
-          ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(icon, size: 17, color: isSel ? kPurple2 : kMuted),
-              const SizedBox(width: 6),
-              Text(
-                title,
-                style: TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w800,
-                  color: isSel ? kPurple2 : kMuted,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
+  Map<String, Color> get _dashaLords {
+    final now = DateTime.now();
+    final lords = <String, Color>{};
+    for (final md in widget.result.dashas) {
+      if (now.isAfter(md.start) && now.isBefore(md.end)) {
+        lords[md.lord] = const Color(0xFFFF8C00); // Orange for Dasha
+        for (final ad in md.antardashas) {
+          if (now.isAfter(ad.start) && now.isBefore(ad.end)) {
+            if (!lords.containsKey(ad.lord)) {
+              lords[ad.lord] = const Color(0xFF00C853); // Green for Bhukti
+            }
+            break;
+          }
+        }
+        break;
+      }
+    }
+    return lords;
+  }
+
+  String _formatKannadaTime() {
+    final ap = widget.ampm == 'AM' ? 'ಪೂರ್ವಾಹ್ನ' : 'ಅಪರಾಹ್ನ';
+    return '${widget.hour.toString().padLeft(2, '0')}:${widget.minute.toString().padLeft(2, '0')} $ap';
+  }
+
+  String _trDashaBalance(String dashaBalance) {
+    return dashaBalance
+        .replaceAll('years', 'ವರ್ಷ')
+        .replaceAll('year', 'ವರ್ಷ')
+        .replaceAll('months', 'ತಿಂಗಳು')
+        .replaceAll('month', 'ತಿಂಗಳು')
+        .replaceAll('days', 'ದಿನ')
+        .replaceAll('day', 'ದಿನ');
+  }
+
+  Widget _buildChartWidget(Map<String, dynamic> chart) {
+    final varga = chart['varga'] as int;
+    final isBhava = chart['isBhava'] as bool;
+    final label = chart['fullName'] as String;
+
+    return KundaliChart(
+      result: widget.result,
+      varga: varga,
+      isBhava: isBhava,
+      showSphutas: false,
+      showNavamshaNumber: true, // ಸಿಂಗಲ್ ಲೆಟರ್ + ನವಾಂಶ ಸಂಖ್ಯೆ
+      centerLabel: label,
+      onPlanetTap: _showPlanetDetail,
+      selectedPlanet: isBhava ? _bhavaPlanet : null,
+      onPlanetLongPress: isBhava ? (pName) {
+        setState(() => _bhavaPlanet = _bhavaPlanet == pName ? null : pName);
+      } : null,
+      bhavaFromPlanet: isBhava ? _bhavaPlanet : null,
+      highlightPlanets: _dashaLords,
     );
   }
 
-  // ═══ ಟ್ಯಾಬ್ ೧: ಪಂಚಾಂಗ ═══
+  // ═══ ಟ್ಯಾಬ್ ೧: ಪಂಚಾಂಗ (Panchanga Tab) ═══
   Widget _buildPanchangTab() {
-    if (_prashnaResult == null) return const SizedBox.shrink();
-    final r = _prashnaResult!;
+    final r = widget.result;
     final pan = r.panchang;
-    final pName = _nameCtrl.text.trim();
-    final dateStr = '${_dob.day.toString().padLeft(2, "0")}-${_dob.month.toString().padLeft(2, "0")}-${_dob.year}';
+    final dateStr = '${widget.dob.day.toString().padLeft(2, "0")}-${widget.dob.month.toString().padLeft(2, "0")}-${widget.dob.year}';
     final timeStr = _formatKannadaTime();
 
     // ವಯಸ್ಸು ಲೆಕ್ಕಾಚಾರ
     final now = DateTime.now();
-    int ageYears = now.year - _dob.year;
-    int ageMonths = now.month - _dob.month;
-    int ageDays = now.day - _dob.day;
+    int ageYears = now.year - widget.dob.year;
+    int ageMonths = now.month - widget.dob.month;
+    int ageDays = now.day - widget.dob.day;
     if (ageDays < 0) {
       ageMonths--;
       final prevMonth = DateTime(now.year, now.month, 0);
@@ -716,171 +636,220 @@ class _AshtamangalaScreenState extends State<AshtamangalaScreen> {
       }
     }
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        // ವಿವರ ಕಾರ್ಡ್
-        AppCard(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              if (pName.isNotEmpty) _kv(AppLocale.l('nameLabel'), pName),
-              _kv(AppLocale.l('placeLabel'), _placeCtrl.text),
-              _kv(AppLocale.l('dateLabel'), dateStr),
-              _kv(AppLocale.l('timeLabel'), timeStr),
-              if (_numberCtrl.text.trim().isNotEmpty)
-                _kv('ಅಷ್ಟಮಂಗಲ ಸಂಖ್ಯೆ', _numberCtrl.text.trim()),
-              _kv(AppLocale.l('dashaLord'), '${trAll(pan.dashaLord)}  ${AppLocale.l('dashaBalance')}: ${_trDashaBalance(pan.dashaBalance)}'),
-              const Divider(height: 16),
-              _kv(AppLocale.l('ageLabel'), ageStr),
-              if (currentDasha.isNotEmpty) ...[
-                const Divider(height: 16),
-                _kv('ಪ್ರಸ್ತುತ ದಶಾ', '$currentDasha  (ಅಂತ್ಯ: $dashaEnd)'),
-                if (currentBhukti.isNotEmpty)
-                  _kv(AppLocale.l('bhuktiLabel'), '$currentBhukti  (ಅಂತ್ಯ: $bhuktiEnd)'),
-              ],
-            ],
-          ),
-        ),
-        const SizedBox(height: 8),
-
-        // ── 📋 ಪಂಚಾಂಗ (೫ ಅಂಗ) ──
-        _sectionLabel('📋 ${AppLocale.l('pHeading')}', kPurple2),
-        AppCard(
-          padding: EdgeInsets.zero,
-          child: Column(
-            children: [
-              _tableRow([AppLocale.l('varaLabel'), trAll(pan.vara)]),
-              _tableRow([AppLocale.l('tithiLabel'), '${trAll(pan.tithi)}${pan.tithiGata.isNotEmpty || pan.tithiParama.isNotEmpty ? ' (${AppLocale.l('gataGhati')}: ${pan.tithiGata}, ${AppLocale.l('paramaGhati')}: ${pan.tithiParama})' : ''}']),
-              _tableRow([
-                AppLocale.l('chandraNakshatra'),
-                () {
-                  final moonPada = r.planets['ಚಂದ್ರ']?.pada;
-                  final fallback = (pan.nakPercent * 4).floor() + 1;
-                  final p = moonPada ?? (fallback < 1 ? 1 : fallback > 4 ? 4 : fallback);
-                  return '${trAll(pan.nakshatra)} - ${AppLocale.l('padaLabel')} $p';
-                }()
-              ]),
-              _tableRow([AppLocale.l('yogaLabel'), '${trAll(pan.yoga)}${pan.yogaGata.isNotEmpty ? ' (${AppLocale.l('gataGhati')}: ${pan.yogaGata})' : ''}']),
-              _tableRow([AppLocale.l('karanaLabel'), '${trAll(pan.karana)}${pan.karanaGata.isNotEmpty ? ' (${AppLocale.l('gataGhati')}: ${pan.karanaGata})' : ''}']),
-            ],
-          ),
-        ),
-        const SizedBox(height: 8),
-
-        // ── ☀️ ರವಿ ವಿವರ ──
-        _sectionLabel('☀️ ${AppLocale.l('raviVivar')}', Colors.orange),
-        AppCard(
-          padding: EdgeInsets.zero,
-          child: Column(
-            children: [
-              _tableRow([AppLocale.l('sunrise'), pan.sunrise]),
-              _tableRow([AppLocale.l('sunset'), pan.sunset]),
-              _tableRow([AppLocale.l('divamana'), pan.divamana]),
-              _tableRow([AppLocale.l('ratrimana'), pan.ratrimana]),
-              _tableRow([AppLocale.l('udayadiGhati'), pan.udayadiGhati]),
-              _tableRow([AppLocale.l('suryaNakshatraLabel'), '${trAll(pan.suryaNakshatra)} - ${AppLocale.l('padaLabel')} ${pan.suryaPada}']),
-              _tableRow([AppLocale.l('souraMasa'), trAll(pan.souraMasa)]),
-              _tableRow([AppLocale.l('souraMasaGataDina'), pan.souraMasaGataDina]),
-            ],
-          ),
-        ),
-        const SizedBox(height: 8),
-
-        // ── 🌙 ಚಂದ್ರ ವಿವರ ──
-        _sectionLabel('🌙 ${AppLocale.l('chandraVivar')}', Colors.blue),
-        AppCard(
-          padding: EdgeInsets.zero,
-          child: Column(
-            children: [
-              _tableRow([
-                AppLocale.l('chandraNakshatra'),
-                () {
-                  final moonPada = r.planets['ಚಂದ್ರ']?.pada;
-                  final fallback = (pan.nakPercent * 4).floor() + 1;
-                  final p = moonPada ?? (fallback < 1 ? 1 : fallback > 4 ? 4 : fallback);
-                  return '${trAll(pan.nakshatra)} - ${AppLocale.l('padaLabel')} $p (${AppLocale.l('gataGhati')}: ${pan.gataGhati}, ${AppLocale.l('paramaGhati')}: ${pan.paramaGhati})';
-                }()
-              ]),
-              _tableRow([AppLocale.l('chandraRashiLabel'), trAll(pan.chandraRashi)]),
-              _tableRow([AppLocale.l('chandraMasa'), trAll(pan.chandraMasa)]),
-              _tableRow([AppLocale.l('samvatsara'), trAll(pan.samvatsara)]),
-              _tableRow([AppLocale.l('tithiLabel'), '${trAll(pan.tithi)}${pan.tithiGata.isNotEmpty || pan.tithiParama.isNotEmpty ? ' (${AppLocale.l('gataGhati')}: ${pan.tithiGata}, ${AppLocale.l('paramaGhati')}: ${pan.tithiParama})' : ''}']),
-              _tableRow([AppLocale.l('gataGhati'), pan.gataGhati]),
-              _tableRow([AppLocale.l('paramaGhati'), pan.paramaGhati]),
-              _tableRow([AppLocale.l('sheshaGhati'), pan.shesha]),
-              _tableRow([AppLocale.l('vishaPraghati'), pan.vishaPraghati]),
-              _tableRow([AppLocale.l('amrutaPraghati'), pan.amrutaPraghati]),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
-
-  // ═══ ಟ್ಯಾಬ್ ೨: ಕುಂಡಲಿ (ಸಂಪೂರ್ಣ ಷೋಡಶವರ್ಗ ಕುಂಡಲಿಗಳು - ಸ್ವೈಪ್ ಮಾಡಬಹುದಾದ ನೋಟ) ═══
-  Widget _buildKundaliTab() {
-    if (_prashnaResult == null) return const SizedBox.shrink();
-    final screenWidth = MediaQuery.of(context).size.width;
-    final isLandscape = MediaQuery.of(context).orientation == Orientation.landscape;
-    final chartSize = isLandscape ? (screenWidth * 0.45).clamp(300.0, 500.0) : (screenWidth - 32).clamp(280.0, 480.0);
-
-    return AppCard(
+    return SingleChildScrollView(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          SizedBox(
-            height: chartSize,
-            child: PageView.builder(
-              controller: _kundaliPageController,
-              itemCount: _shodashaVargaCharts.length,
-              itemBuilder: (context, index) {
-                final chart = _shodashaVargaCharts[index];
-                return Center(
-                  child: SizedBox(
-                    width: chartSize,
-                    height: chartSize,
-                    child: _buildChartWidget(chart),
-                  ),
-                );
-              },
+          // ವಿವರ ಕಾರ್ಡ್
+          AppCard(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _kv('ಪ್ರುಚ್ಛಕರ ಹೆಸರು', widget.name),
+                _kv('ಸ್ಥಳ', widget.place),
+                _kv('ದಿನಾಂಕ', dateStr),
+                _kv('ಸಮಯ', timeStr),
+                if (widget.ashtamangalaNumber.isNotEmpty)
+                  _kv('ಅಷ್ಟಮಂಗಲ ಸಂಖ್ಯೆ', widget.ashtamangalaNumber),
+                _kv('ಶಿಷ್ಟ ದಶಾಧಿಪತಿ', '${trAll(pan.dashaLord)}  ಶಿಷ್ಟ ಶೇಷ: ${_trDashaBalance(pan.dashaBalance)}'),
+                const Divider(height: 16),
+                _kv('ವಯಸ್ಸು', ageStr),
+                if (currentDasha.isNotEmpty) ...[
+                  const Divider(height: 16),
+                  _kv('ಪ್ರಸ್ತುತ ದಶಾ', '$currentDasha  (ಅಂತ್ಯ: $dashaEnd)'),
+                  if (currentBhukti.isNotEmpty)
+                    _kv('ಪ್ರಸ್ತುತ ಭುಕ್ತಿ', '$currentBhukti  (ಅಂತ್ಯ: $bhuktiEnd)'),
+                ],
+              ],
             ),
           ),
           const SizedBox(height: 8),
-          Text(
-            'ಗ್ರಹದ ಮೇಲೆ ಟ್ಯಾಪ್ ಮಾಡಿ ಹೆಚ್ಚಿನ ವಿವರಗಳನ್ನು ವೀಕ್ಷಿಸಿ',
-            style: TextStyle(fontSize: 11, color: kMuted),
+
+          // ── 📋 ಪಂಚಾಂಗ (೫ ಅಂಗ) ──
+          _sectionLabel('📋 ಪಂಚಾಂಗ ವಿವರ', kPurple2),
+          AppCard(
+            padding: EdgeInsets.zero,
+            child: Column(
+              children: [
+                _tableRow(['ವಾರ', trAll(pan.vara)]),
+                _tableRow(['ತಿಥಿ', '${trAll(pan.tithi)}${pan.tithiGata.isNotEmpty || pan.tithiParama.isNotEmpty ? ' (ಗತ: ${pan.tithiGata}, ಪರಮ: ${pan.tithiParama})' : ''}']),
+                _tableRow([
+                  'ನಕ್ಷತ್ರ',
+                  () {
+                    final moonPada = r.planets['ಚಂದ್ರ']?.pada;
+                    final fallback = (pan.nakPercent * 4).floor() + 1;
+                    final p = moonPada ?? (fallback < 1 ? 1 : fallback > 4 ? 4 : fallback);
+                    return '${trAll(pan.nakshatra)} - ಪಾದ $p';
+                  }()
+                ]),
+                _tableRow(['ಯೋಗ', '${trAll(pan.yoga)}${pan.yogaGata.isNotEmpty ? ' (ಗತ: ${pan.yogaGata})' : ''}']),
+                _tableRow(['ಕರಣ', '${trAll(pan.karana)}${pan.karanaGata.isNotEmpty ? ' (ಗತ: ${pan.karanaGata})' : ''}']),
+              ],
+            ),
           ),
+          const SizedBox(height: 8),
+
+          // ── ☀️ ರವಿ ವಿವರ ──
+          _sectionLabel('☀️ ರವಿ ವಿವರ', Colors.orange),
+          AppCard(
+            padding: EdgeInsets.zero,
+            child: Column(
+              children: [
+                _tableRow(['ಸೂರ್ಯೋದಯ', pan.sunrise]),
+                _tableRow(['ಸೂರ್ಯಾಸ್ತ', pan.sunset]),
+                _tableRow(['ದಿನಮಾನ', pan.divamana]),
+                _tableRow(['ರಾತ್ರಿಮಾನ', pan.ratrimana]),
+                _tableRow(['ಉದಯಾದಿ ಘಟಿ', pan.udayadiGhati]),
+                _tableRow(['ಸೂರ್ಯ ನಕ್ಷತ್ರ', '${trAll(pan.suryaNakshatra)} - ಪಾದ ${pan.suryaPada}']),
+                _tableRow(['ಸೌರ ಮಾಸ', trAll(pan.souraMasa)]),
+                _tableRow(['ಸೌರ ಮಾಸ ಗತ ದಿನ', pan.souraMasaGataDina]),
+              ],
+            ),
+          ),
+          const SizedBox(height: 8),
+
+          // ── 🌙 ಚಂದ್ರ ವಿವರ ──
+          _sectionLabel('🌙 ಚಂದ್ರ ವಿವರ', Colors.blue),
+          AppCard(
+            padding: EdgeInsets.zero,
+            child: Column(
+              children: [
+                _tableRow([
+                  'ಚಂದ್ರ ನಕ್ಷತ್ರ',
+                  () {
+                    final moonPada = r.planets['ಚಂದ್ರ']?.pada;
+                    final fallback = (pan.nakPercent * 4).floor() + 1;
+                    final p = moonPada ?? (fallback < 1 ? 1 : fallback > 4 ? 4 : fallback);
+                    return '${trAll(pan.nakshatra)} - ಪಾದ $p (ಗತ ಘಟಿ: ${pan.gataGhati}, ಪರಮ ಘಟಿ: ${pan.paramaGhati})';
+                  }()
+                ]),
+                _tableRow(['ಚಂದ್ರ ರಾಶಿ', trAll(pan.chandraRashi)]),
+                _tableRow(['ಚಾಂದ್ರ ಮಾಸ', trAll(pan.chandraMasa)]),
+                _tableRow(['ಸಂವತ್ಸರ', trAll(pan.samvatsara)]),
+                _tableRow(['ಗತ ಘಟಿ', pan.gataGhati]),
+                _tableRow(['ಪರಮ ಘಟಿ', pan.paramaGhati]),
+                _tableRow(['ಶೇಷ ಘಟಿ', pan.shesha]),
+                _tableRow(['ವಿಷ ಘಟಿ', pan.vishaPraghati]),
+                _tableRow(['ಅಮೃತ ಘಟಿ', pan.amrutaPraghati]),
+              ],
+            ),
+          ),
+          const SizedBox(height: 16),
         ],
       ),
     );
   }
 
-  Widget _buildChartWidget(Map<String, dynamic> chart) {
-    final varga = chart['varga'] as int;
-    final isBhava = chart['isBhava'] as bool;
-    final label = chart['fullName'] as String;
+  // ═══ ಟ್ಯಾಬ್ ೨: ಕುಂಡಲಿ (Kundali Tab) ═══
+  // ವರ್ಟಿಕಲ್ ಮೋಡ್: ಸ್ವೈಪ್ ಮಾಡಬಹುದಾದ ಸಿಂಗಲ್ ಚಾರ್ಟ್ + ಡಾಟ್ಸ್‌ ಇಂಡಿಕೇಟರ್
+  // ಲ್ಯಾಂಡ್‌ಸ್ಕೇಪ್ ಮೋಡ್: ಪಕ್ಕಪಕ್ಕದಲ್ಲಿ ೨ ಚಾರ್ಟ್‌ಗಳು
+  Widget _buildKundaliTab({required bool isLandscape}) {
+    if (!isLandscape) {
+      // ── PORTRAIT (ವರ್ಟಿಕಲ್ ಮೋಡ್): ಸಿಂಗಲ್ ಕುಂಡಲಿ ಪೇಜ್‌ವ್ಯೂ + ಡಾಟ್ಸ್‌ ──
+      final screenWidth = MediaQuery.of(context).size.width;
+      final chartSize = (screenWidth - 32).clamp(280.0, 480.0);
 
-    return KundaliChart(
-      result: _prashnaResult!,
-      varga: varga,
-      isBhava: isBhava,
-      showSphutas: false,
-      showNavamshaNumber: true, // ತೋರಿಸು: ಏಕಾಕ್ಷರ ಗ್ರಹ ಹೆಸರು + ನವಾಂಶ ಸಂಖ್ಯೆ
-      centerLabel: label,
-      onPlanetTap: _showPlanetDetail,
-      selectedPlanet: isBhava ? _bhavaPlanet : null,
-      onPlanetLongPress: isBhava ? (pName) {
-        setState(() => _bhavaPlanet = _bhavaPlanet == pName ? null : pName);
-      } : null,
-      bhavaFromPlanet: isBhava ? _bhavaPlanet : null,
-      highlightPlanets: _dashaLords,
-    );
+      return SingleChildScrollView(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        child: Column(
+          children: [
+            AppCard(
+              child: Column(
+                children: [
+                  SizedBox(
+                    height: chartSize,
+                    child: PageView.builder(
+                      onPageChanged: (i) => setState(() => _chartPageIndex = i),
+                      itemCount: _shodashaVargaCharts.length,
+                      itemBuilder: (context, i) {
+                        final chart = _shodashaVargaCharts[i];
+                        return Center(
+                          child: SizedBox(
+                            width: chartSize,
+                            height: chartSize,
+                            child: _buildChartWidget(chart),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  // ಡಾಟ್ಸ್‌ ಇಂಡಿಕೇಟರ್
+                  SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: List.generate(_shodashaVargaCharts.length, (i) => Container(
+                        margin: const EdgeInsets.symmetric(horizontal: 2.5),
+                        width: _chartPageIndex == i ? 18 : 7,
+                        height: 7,
+                        decoration: BoxDecoration(
+                          color: _chartPageIndex == i ? kPurple2 : kBorder,
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                      )),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'ಗ್ರಹದ ಮೇಲೆ ಟ್ಯಾಪ್ ಮಾಡಿ ಹೆಚ್ಚಿನ ವಿವರಗಳನ್ನು ವೀಕ್ಷಿಸಿ',
+                    style: TextStyle(fontSize: 11, color: kMuted),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      );
+    } else {
+      // ── LANDSCAPE: ೨ ಕುಂಡಲಿಗಳು ಪಕ್ಕಪಕ್ಕದಲ್ಲಿ ಗೋಚರಿಸುತ್ತವೆ ──
+      final screenHeight = MediaQuery.of(context).size.height;
+      final screenWidth = MediaQuery.of(context).size.width * 0.65; // ಬಲ ಪ್ಯಾನೆಲ್ ಅಗಲ
+      final chartSize = (screenHeight - 140).clamp(200.0, screenHeight * 0.75);
+      final chartWidth = (screenWidth / 2.0) - 16;
+
+      return SingleChildScrollView(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+        child: Column(
+          children: [
+            SizedBox(
+              height: chartSize + 16,
+              child: ScrollConfiguration(
+                behavior: ScrollConfiguration.of(context).copyWith(
+                  dragDevices: {PointerDeviceKind.touch, PointerDeviceKind.mouse},
+                ),
+                child: ListView.builder(
+                  scrollDirection: Axis.horizontal,
+                  padding: const EdgeInsets.symmetric(horizontal: 4),
+                  itemCount: _shodashaVargaCharts.length,
+                  itemBuilder: (context, i) {
+                    final chart = _shodashaVargaCharts[i];
+                    return SizedBox(
+                      width: chartWidth,
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 4),
+                        child: _buildChartWidget(chart),
+                      ),
+                    );
+                  },
+                ),
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'ಗ್ರಹದ ಮೇಲೆ ಟ್ಯಾಪ್ ಮಾಡಿ ಹೆಚ್ಚಿನ ವಿವರಗಳನ್ನು ವೀಕ್ಷಿಸಿ',
+              style: TextStyle(fontSize: 11, color: kMuted),
+            ),
+          ],
+        ),
+      );
+    }
   }
 
-  // ═══ ಟ್ಯಾಬ್ ೩: ಸ್ಫುಟ (ಗ್ರಹ ಸ್ಫುಟ ಮತ್ತು ಇತರ ಸ್ಫುಟಗಳು) ═══
+  // ═══ ಟ್ಯಾಬ್ ೩: ಸ್ಫುಟ (Sphuta Tab) ═══
   Widget _buildSphutaTab() {
-    if (_prashnaResult == null) return const SizedBox.shrink();
-    final r = _prashnaResult!;
+    final r = widget.result;
     final pMap = r.planets;
     final lag = pMap['ಲಗ್ನ']?.longitude ?? 0.0;
     final sun = pMap['ರವಿ']?.longitude ?? 0.0;
@@ -921,77 +890,81 @@ class _AshtamangalaScreenState extends State<AshtamangalaScreen> {
       {'name': 'ಯೋಗಿ ಸ್ಫುಟ', 'deg': r.advSphutas['ಯೋಗಿ'] ?? 0.0},
     ];
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        // ── ಗ್ರಹ ಸ್ಫುಟ ──
-        _sectionLabel('🪐 ಗ್ರಹ ಸ್ಫುಟ', kPurple2),
-        AppCard(
-          padding: EdgeInsets.zero,
-          child: Column(
-            children: [
-              _tableHeader(['ಗ್ರಹ', 'ರಾಶಿ', 'ಸ್ಫುಟ', 'ನಕ್ಷತ್ರ - ಪಾದ', 'ಗತಿ']),
-              ...grahaList.map((p) {
-                final info = pMap[p];
-                if (info == null) return const SizedBox.shrink();
-                final ri = (info.longitude / 30).floor() % 12;
-                final rashiName = knRashi[ri];
-                final sphutaDeg = formatDeg(info.longitude);
-                final nakPada = '${info.nakshatra} - ${info.pada}';
-                String gati;
-                if (p == 'ಲಗ್ನ' || p == 'ಮಾಂದಿ') {
-                  gati = '-';
-                } else if (p == 'ರಾಹು' || p == 'ಕೇತು') {
-                  gati = 'ವಕ್ರಿ';
-                } else {
-                  gati = (info.speed < 0 ? 'ವಕ್ರಿ' : 'ನೇರ') + (info.isCombust ? ' (ಅಸ್ತ)' : '');
-                }
+    return SingleChildScrollView(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // ── ಗ್ರಹ ಸ್ಫುಟ ──
+          _sectionLabel('🪐 ಗ್ರಹ ಸ್ಫುಟ', kPurple2),
+          AppCard(
+            padding: EdgeInsets.zero,
+            child: Column(
+              children: [
+                _tableHeader(['ಗ್ರಹ', 'ರಾಶಿ', 'ಸ್ಫುಟ', 'ನಕ್ಷತ್ರ - ಪಾದ', 'ಗತಿ']),
+                ...grahaList.map((p) {
+                  final info = pMap[p];
+                  if (info == null) return const SizedBox.shrink();
+                  final ri = (info.longitude / 30).floor() % 12;
+                  final rashiName = knRashi[ri];
+                  final sphutaDeg = formatDeg(info.longitude);
+                  final nakPada = '${info.nakshatra} - ${info.pada}';
+                  String gati;
+                  if (p == 'ಲಗ್ನ' || p == 'ಮಾಂದಿ') {
+                    gati = '-';
+                  } else if (p == 'ರಾಹು' || p == 'ಕೇತು') {
+                    gati = 'ವಕ್ರಿ';
+                  } else {
+                    gati = (info.speed < 0 ? 'ವಕ್ರಿ' : 'ನೇರ') + (info.isCombust ? ' (ಅಸ್ತ)' : '');
+                  }
 
-                return _tableRow([
-                  p,
-                  rashiName,
-                  sphutaDeg,
-                  nakPada,
-                  gati,
-                ], bold0: true);
-              }),
-            ],
+                  return _tableRow([
+                    p,
+                    rashiName,
+                    sphutaDeg,
+                    nakPada,
+                    gati,
+                  ], bold0: true);
+                }),
+              ],
+            ),
           ),
-        ),
-        const SizedBox(height: 16),
+          const SizedBox(height: 16),
 
-        // ── ಉಪಗ್ರಹ ಮತ್ತು ವಿಶೇಷ ಸ್ಫುಟಗಳು ──
-        _sectionLabel('✨ ಉಪಗ್ರಹ ಮತ್ತು ಇತರ ಸ್ಫುಟಗಳು', kTeal),
-        AppCard(
-          padding: EdgeInsets.zero,
-          child: Column(
-            children: [
-              _tableHeader(['ಸ್ಫುಟ', 'ರಾಶಿ', 'ಅಂಶ', 'ನಕ್ಷತ್ರ - ಪಾದ']),
-              ...otherSphutas.map((item) {
-                final name = item['name'] as String;
-                final deg = (item['deg'] as num).toDouble() % 360;
-                final ri = (deg / 30).floor() % 12;
-                final rashiName = knRashi[ri];
-                final sphutaDeg = formatDeg(deg);
-                final nakIdx = (deg / 13.333333).floor() % 27;
-                final pada = ((deg % 13.333333) / 3.333333).floor() + 1;
-                final nakPada = '${knNak[nakIdx]} - $pada';
+          // ── ಉಪಗ್ರಹ ಮತ್ತು ವಿಶೇಷ ಸ್ಫುಟಗಳು ──
+          _sectionLabel('✨ ಉಪಗ್ರಹ ಮತ್ತು ಇತರ ಸ್ಫುಟಗಳು', kTeal),
+          AppCard(
+            padding: EdgeInsets.zero,
+            child: Column(
+              children: [
+                _tableHeader(['ಸ್ಫುಟ', 'ರಾಶಿ', 'ಅಂಶ', 'ನಕ್ಷತ್ರ - ಪಾದ']),
+                ...otherSphutas.map((item) {
+                  final name = item['name'] as String;
+                  final deg = (item['deg'] as num).toDouble() % 360;
+                  final ri = (deg / 30).floor() % 12;
+                  final rashiName = knRashi[ri];
+                  final sphutaDeg = formatDeg(deg);
+                  final nakIdx = (deg / 13.333333).floor() % 27;
+                  final pada = ((deg % 13.333333) / 3.333333).floor() + 1;
+                  final nakPada = '${knNak[nakIdx]} - $pada';
 
-                return _tableRow([
-                  name,
-                  rashiName,
-                  sphutaDeg,
-                  nakPada,
-                ], bold0: true);
-              }),
-            ],
+                  return _tableRow([
+                    name,
+                    rashiName,
+                    sphutaDeg,
+                    nakPada,
+                  ], bold0: true);
+                }),
+              ],
+            ),
           ),
-        ),
-      ],
+          const SizedBox(height: 16),
+        ],
+      ),
     );
   }
 
-  // ═══ ಸಹಾಯಕ ವಿಜೆಟ್‌ಗಳು (Helper UI Widgets) ═══
+  // ═══ ಸಹಾಯಕ ವಿಜೆಟ್‌ಗಳು ═══
   Widget _tableHeader(List<String> cols) {
     return Container(
       color: kPurple2.withOpacity(0.12),
@@ -1053,6 +1026,134 @@ class _AshtamangalaScreenState extends State<AshtamangalaScreen> {
           Text('$k: ', style: TextStyle(fontWeight: FontWeight.w800, color: kPurple2)),
           Expanded(child: Text(v, style: TextStyle())),
         ],
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: kBg,
+      body: SafeArea(
+        child: OrientationBuilder(
+          builder: (context, orientation) {
+            final isLandscape = orientation == Orientation.landscape;
+
+            return Column(
+              children: [
+                // Minimal header bar (back button, title, edit button)
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  child: Row(
+                    children: [
+                      IconButton(
+                        icon: Icon(Icons.arrow_back, color: kText),
+                        onPressed: () => Navigator.pop(context),
+                      ),
+                      const SizedBox(width: 4),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              widget.name,
+                              style: TextStyle(fontSize: 15, fontWeight: FontWeight.w900, color: kText),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            Text(
+                              '${widget.dob.day.toString().padLeft(2, '0')}-${widget.dob.month.toString().padLeft(2, '0')}-${widget.dob.year}  •  ${_formatKannadaTime()}  •  ${widget.place}',
+                              style: TextStyle(fontSize: 11, color: kMuted),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ],
+                        ),
+                      ),
+                      IconButton(
+                        icon: Icon(Icons.edit, color: kPurple2, size: 20),
+                        tooltip: 'ವಿವರ ಬದಲಿಸಿ',
+                        onPressed: () => Navigator.pop(context),
+                      ),
+                    ],
+                  ),
+                ),
+                const Divider(height: 1),
+
+                // ── PORTRAIT (ವರ್ಟಿಕಲ್ ಮೋಡ್): TabBar at top, TabBarView filling body ──
+                if (!isLandscape) ...[
+                  Container(
+                    color: kCard,
+                    child: TabBar(
+                      controller: _tabCtrl,
+                      labelColor: kPurple2,
+                      unselectedLabelColor: kMuted,
+                      labelStyle: const TextStyle(fontWeight: FontWeight.w800, fontSize: 14),
+                      indicatorColor: kPurple2,
+                      indicatorWeight: 3,
+                      tabs: _tabs.map((t) => Tab(text: t)).toList(),
+                    ),
+                  ),
+                  Expanded(
+                    child: TabBarView(
+                      controller: _tabCtrl,
+                      children: [
+                        _buildPanchangTab(),
+                        _buildKundaliTab(isLandscape: false),
+                        _buildSphutaTab(),
+                      ],
+                    ),
+                  ),
+                ],
+
+                // ── LANDSCAPE: ಪಂಚಾಂಗ ಎಡಭಾಗದಲ್ಲಿ (೩೫%), ಟ್ಯಾಬ್‌ಗಳು ಬಲಭಾಗದಲ್ಲಿ ──
+                if (isLandscape)
+                  Expanded(
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // LEFT: ಪಂಚಾಂಗ (Fixed 35% width, just like Kundali main section!)
+                        SizedBox(
+                          width: MediaQuery.of(context).size.width * 0.35,
+                          child: _buildPanchangTab(),
+                        ),
+                        Container(width: 1, color: kBorder),
+                        // RIGHT: TabBar + TabBarView
+                        Expanded(
+                          child: Column(
+                            children: [
+                              Container(
+                                color: kCard,
+                                child: TabBar(
+                                  controller: _tabCtrl,
+                                  labelColor: kPurple2,
+                                  unselectedLabelColor: kMuted,
+                                  labelStyle: const TextStyle(fontWeight: FontWeight.w800, fontSize: 14),
+                                  indicatorColor: kPurple2,
+                                  indicatorWeight: 3,
+                                  tabs: _tabs.map((t) => Tab(text: t)).toList(),
+                                ),
+                              ),
+                              Expanded(
+                                child: TabBarView(
+                                  controller: _tabCtrl,
+                                  children: [
+                                    _buildPanchangTab(),
+                                    _buildKundaliTab(isLandscape: true),
+                                    _buildSphutaTab(),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+              ],
+            );
+          },
+        ),
       ),
     );
   }
