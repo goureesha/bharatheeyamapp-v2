@@ -34,6 +34,49 @@ class AshtamangalaDetails {
   final String nakshatraSutra;
   final String mahaSutra;
 
+  // ═══ NEW: ತ್ರಿಸ್ಫುಟಾದಿ ಗಣಿತ (from advSphutas) ═══
+  final String trisphuta;
+  final String chatusphuta;
+  final String panchasphuta;
+  final String pranaSphuta;
+  final String dehaSphuta;
+
+  // ═══ NEW: ವಿಶೇಷ ಪ್ರಶ್ನೆ ಸ್ಫುಟಗಳು ═══
+  final String bimbaSphuta;
+  final String pakshantaraBimbaSphuta;
+  final String yamaKantaka;
+  final String kalaSphuta;
+  final String ardhaPraharaSphuta;
+  final String bhutodaya; // Element name text
+  final String arudhaSphuta;
+  final String vithiSphuta;
+  final String chattraSphuta;
+  final String lagnaRaviYoga;
+  final String sannidhyaSphuta;
+  final String chaitanyaSphuta;
+  final String chalanaSphuta;
+  final String karanaSphuta;
+  final String prasadaSphuta;
+  final String pakshantaraPrasadaSphuta;
+  final String anganaSphuta;
+  final String mukhaMandapaSphuta;
+  final String deepaSphuta;
+  final String acharyaSphuta;
+  final String pakshantaraAcharyaSphuta;
+  final String devalakaSphuta;
+  final String dhvajaSphuta;
+
+  // ═══ NEW: ಪಂಚಸೂತ್ರ ಹೆಚ್ಚುವರಿ ═══
+  final String beejaSphutaJeeva;
+  final String beejaSphutaKshetra;
+  final String dinaSaptaBhaga;
+  final String dinaAshtaBhaga;
+  final String dinaAshtaBhagaPhala;
+  final String tamboolaGraha;
+  final String santanaTithiPanchagga;
+  final String santanaTithiChandra;
+  final String santanaTithiRavindu;
+
   const AshtamangalaDetails({
     required this.ashtamangalaNumber,
     required this.graha,
@@ -58,6 +101,44 @@ class AshtamangalaDetails {
     required this.amshaSutra,
     required this.nakshatraSutra,
     required this.mahaSutra,
+    // New fields
+    required this.trisphuta,
+    required this.chatusphuta,
+    required this.panchasphuta,
+    required this.pranaSphuta,
+    required this.dehaSphuta,
+    required this.bimbaSphuta,
+    required this.pakshantaraBimbaSphuta,
+    required this.yamaKantaka,
+    required this.kalaSphuta,
+    required this.ardhaPraharaSphuta,
+    required this.bhutodaya,
+    required this.arudhaSphuta,
+    required this.vithiSphuta,
+    required this.chattraSphuta,
+    required this.lagnaRaviYoga,
+    required this.sannidhyaSphuta,
+    required this.chaitanyaSphuta,
+    required this.chalanaSphuta,
+    required this.karanaSphuta,
+    required this.prasadaSphuta,
+    required this.pakshantaraPrasadaSphuta,
+    required this.anganaSphuta,
+    required this.mukhaMandapaSphuta,
+    required this.deepaSphuta,
+    required this.acharyaSphuta,
+    required this.pakshantaraAcharyaSphuta,
+    required this.devalakaSphuta,
+    required this.dhvajaSphuta,
+    required this.beejaSphutaJeeva,
+    required this.beejaSphutaKshetra,
+    required this.dinaSaptaBhaga,
+    required this.dinaAshtaBhaga,
+    required this.dinaAshtaBhagaPhala,
+    required this.tamboolaGraha,
+    required this.santanaTithiPanchagga,
+    required this.santanaTithiChandra,
+    required this.santanaTithiRavindu,
   });
 }
 
@@ -237,6 +318,21 @@ class AshtamangalaCalculator {
     'ಶನಿ': ['ರವಿ', 'ಚಂದ್ರ', 'ಕುಜ'],
   };
 
+  // ದಿನ ಸಪ್ತ ಭಾಗ ಫಲಗಳು (7 segments of the day)
+  static const List<String> _saptaBhagaPhala = [
+    'ಸೌಖ್ಯ', 'ಲಾಭ', 'ಹಾನಿ', 'ಕಲಹ', 'ಶುಭ', 'ರೋಗ', 'ಮೃತ್ಯು'
+  ];
+
+  // ದಿನಾಷ್ಟ ಭಾಗ ಫಲಗಳು (8 segments of the day, mapped to planets)
+  static const List<String> _ashtaBhagaPlanets = [
+    'ರವಿ', 'ಚಂದ್ರ', 'ಕುಜ', 'ಬುಧ', 'ಗುರು', 'ಶುಕ್ರ', 'ಶನಿ', 'ರಾಹು'
+  ];
+
+  // ದಿನಾಷ್ಟ ಭಾಗ ಫಲ (result for each planet)
+  static const List<String> _ashtaBhagaPhala = [
+    'ಉತ್ತರುಂ', 'ಸೌಖ್ಯ', 'ರೋಗ', 'ಲಾಭ', 'ಶುಭ', 'ಸುಖ', 'ಹಾನಿ', 'ಮೃತ್ಯು'
+  ];
+
   /// Sign-Deg-Min-Sec format: "SS-DD-MM-SS"
   /// Fixed: seconds now properly cascade instead of overflowing to 60
   static String formatRasiDMS(double totalDeg) {
@@ -263,6 +359,9 @@ class AshtamangalaCalculator {
            '${min.toString().padLeft(2, '0')}-'
            '${sec.toString().padLeft(2, '0')}';
   }
+
+  /// Normalize degrees to 0..360
+  static double _norm(double d) => ((d % 360) + 360) % 360;
 
   /// Map any digit to 1-8 range (0→8, 9→1, per cyclic Ashtamangala tradition)
   static int _normalizeDigit(int d) {
@@ -308,6 +407,16 @@ class AshtamangalaCalculator {
     if (isEnemy) return 'ಮೃತ್ಯು';
 
     return 'ರೋಗ'; // Neutral
+  }
+
+  /// ಭೂತೋದಯ: Determine the rising element based on Lagna rashi
+  static String _getBhutodaya(int lagnaRashi) {
+    // Fire signs: Mesha(0), Simha(4), Dhanu(8) → ಅಗ್ನಿ
+    // Earth signs: Vrishabha(1), Kanya(5), Makara(9) → ಪೃಥ್ವಿ
+    // Air signs: Mithuna(2), Tula(6), Kumbha(10) → ವಾಯು
+    // Water signs: Karka(3), Vrischika(7), Meena(11) → ಜಲ
+    const elements = ['ಅಗ್ನಿ', 'ಪೃಥ್ವಿ', 'ವಾಯು', 'ಜಲ'];
+    return elements[lagnaRashi % 4];
   }
 
   /// ಪ್ರಧಾನ ಲೆಕ್ಕಾಚಾರ
@@ -381,11 +490,11 @@ class AshtamangalaCalculator {
 
     // ═══ ೨. ಧೂಮಾದಿ ಪಂಚಸ್ಫುಟ ═══
     final sunLong = result.planets['ರವಿ']?.longitude ?? 0.0;
-    final dhoomaDeg = (sunLong + 133.333333) % 360;
-    final vyatipataDeg = (360 - dhoomaDeg + 360) % 360;
-    final pariveshaDeg = (vyatipataDeg + 180) % 360;
-    final indrachapaDeg = (360 - pariveshaDeg + 360) % 360;
-    final upaketuDeg = (indrachapaDeg + 16.666667) % 360;
+    final dhoomaDeg = _norm(sunLong + 133.333333);
+    final vyatipataDeg = _norm(360 - dhoomaDeg);
+    final pariveshaDeg = _norm(vyatipataDeg + 180);
+    final indrachapaDeg = _norm(360 - pariveshaDeg);
+    final upaketuDeg = _norm(indrachapaDeg + 16.666667);
 
     final dhoomaStr = formatRasiDMS(dhoomaDeg);
     final vyatipataStr = formatRasiDMS(vyatipataDeg);
@@ -446,20 +555,150 @@ class AshtamangalaCalculator {
     final nakshatraSutraStr = (nakRem3 == 1) ? 'ಜೀವ' : (nakRem3 == 2 ? 'ರೋಗ' : 'ಮೃತ್ಯು');
 
     // E. ಮಹಾ ಸೂತ್ರ - ಆಕಾಶ (Arudha Rashi & 10th from Arudha: Oja/Yugma classification)
-    // Oja (odd signs, 0-indexed even): ಮೇಷ(0), ಮಿಥುನ(2), ಸಿಂಹ(4), ತುಲಾ(6), ಧನು(8), ಕುಂಭ(10) → Surya
-    // Yugma (even signs, 0-indexed odd): ವೃಷಭ(1), ಕರ್ಕ(3), ಕನ್ಯಾ(5), ವೃಶ್ಚಿಕ(7), ಮಕರ(9), ಮೀನ(11) → Chandra
     final tenthFromArudha = (aroodhaRashi + 9) % 12;
-    final isArudhaChandra = (aroodhaRashi % 2 == 1);      // Yugma = Chandra
-    final isTenthChandra = (tenthFromArudha % 2 == 1);     // Yugma = Chandra
+    final isArudhaChandra = (aroodhaRashi % 2 == 1);
+    final isTenthChandra = (tenthFromArudha % 2 == 1);
 
     String mahaSutraStr;
     if (isArudhaChandra && isTenthChandra) {
-      mahaSutraStr = 'ಜೀವ';  // Both Chandra → ಜೀವ
+      mahaSutraStr = 'ಜೀವ';
     } else if (!isArudhaChandra && !isTenthChandra) {
-      mahaSutraStr = 'ಮೃತ್ಯು';  // Both Surya → ಮೃತ್ಯು
+      mahaSutraStr = 'ಮೃತ್ಯು';
     } else {
-      mahaSutraStr = 'ರೋಗ';  // Mixed → ರೋಗ
+      mahaSutraStr = 'ರೋಗ';
     }
+
+    // ═══ ೫. ತ್ರಿಸ್ಫುಟಾದಿ ಗಣಿತ (from advSphutas, already computed in calculator.dart) ═══
+    final advS = result.advSphutas;
+    final trisphutatStr = formatRasiDMS(advS['ತ್ರಿಸ್ಫುಟ'] ?? 0);
+    final chatusphutatStr = formatRasiDMS(advS['ಚತುಃಸ್ಫುಟ'] ?? 0);
+    final panchasphutatStr = formatRasiDMS(advS['ಪಂಚಸ್ಫುಟ'] ?? 0);
+    final pranaStr = formatRasiDMS(advS['ಪ್ರಾಣ'] ?? 0);
+    final dehaStr = formatRasiDMS(advS['ದೇಹ'] ?? 0);
+
+    // ═══ ೬. ವಿಶೇಷ ಪ್ರಶ್ನೆ ಸ್ಫುಟಗಳು (Devaprasna / Prashna Marga) ═══
+    final S = sunLong;
+    final M = moonLong;
+    final L = lagnaLong;
+    final J = result.planets['ಗುರು']?.longitude ?? 0.0;
+    final V = result.planets['ಶುಕ್ರ']?.longitude ?? 0.0;
+    final Ma = result.planets['ಕುಜ']?.longitude ?? 0.0;
+    final Sa = result.planets['ಶನಿ']?.longitude ?? 0.0;
+    final Md = result.planets['ಮಾಂದಿ']?.longitude ?? 0.0;
+
+    // Bhava cusps (0-indexed: bhavas[0]=1st house, bhavas[3]=4th, etc.)
+    final bhavas = result.bhavas;
+    final bhava4 = bhavas.length > 3 ? bhavas[3] : L; // 4th cusp
+    final bhava7 = bhavas.length > 6 ? bhavas[6] : _norm(L + 180); // 7th cusp
+    final bhava9 = bhavas.length > 8 ? bhavas[8] : _norm(L + 240); // 9th cusp
+    final bhava10 = bhavas.length > 9 ? bhavas[9] : _norm(L + 270); // 10th cusp
+
+    // ಬಿಂಬ ಸ್ಫುಟ = Trisphuta = L + M + Md (represents the idol)
+    final bimbaDeg = _norm(L + M + Md);
+    final bimbaSphutaStr = formatRasiDMS(bimbaDeg);
+
+    // ಪಕ್ಷಾಂತರ ಬಿಂಬ ಸ್ಫುಟ (Paksha correction)
+    final pakshantaraBimbaDeg = isShukla ? _norm(bimbaDeg + S) : _norm(bimbaDeg + M);
+    final pakshantaraBimbaSphutaStr = formatRasiDMS(pakshantaraBimbaDeg);
+
+    // ಯಮ ಕಂಟಕ = L + J (Jupiter's segment point)
+    final yamaKantakaStr = formatRasiDMS(_norm(L + J));
+
+    // ಕಾಲ ಸ್ಫುಟ = L + S + Md (Time destruction point)
+    final kalaSphutaStr = formatRasiDMS(_norm(L + S + Md));
+
+    // ಅರ್ಧ ಪ್ರಹಾರ ಸ್ಫುಟ = L + Ma + Md (Half-prahara, Mercury's segment)
+    final ardhaPraharaStr = formatRasiDMS(_norm(L + Ma + Md));
+
+    // ಭೂತೋದಯ = element based on Lagna rashi triplicity
+    final bhutodayaStr = _getBhutodaya(lagnaRashi);
+
+    // ಆರೂಢ ಸ್ಫುಟ = Arudha rashi + Lagna's degree-within-sign
+    final arudhaSphutaDeg = _norm(aroodhaRashi * 30.0 + (L % 30.0));
+    final arudhaSphutaStr = formatRasiDMS(arudhaSphutaDeg);
+
+    // ವೀಥಿ ಸ್ಫುಟ = M + Md (Path point)
+    final vithiSphutaStr = formatRasiDMS(_norm(M + Md));
+
+    // ಛತ್ರ ಸ್ಫುಟ = Chatusphuta = L + M + Md + S (Canopy)
+    final chattraSphutaStr = formatRasiDMS(_norm(L + M + Md + S));
+
+    // ಲಗ್ನ ರವಿ ಯೋಗ = L + S
+    final lagnaRaviYogaStr = formatRasiDMS(_norm(L + S));
+
+    // ಸಾನ್ನಿಧ್ಯ ಸ್ಫುಟ = L + J + S (Divine presence)
+    final sannidhyaStr = formatRasiDMS(_norm(L + J + S));
+
+    // ಚೈತನ್ಯ ಸ್ಫುಟ = L + S + M + J (Consciousness)
+    final chaitanyaStr = formatRasiDMS(_norm(L + S + M + J));
+
+    // ಚಲನ ಸ್ಫುಟ = L + Ma + S (Motion)
+    final chalanaStr = formatRasiDMS(_norm(L + Ma + S));
+
+    // ಕಾರಣ ಸ್ಫುಟ = L + Sa + Md (Cause)
+    final karanaStr = formatRasiDMS(_norm(L + Sa + Md));
+
+    // ಪ್ರಾಸಾದ ಸ್ಫುಟ = L + Ma + Sa (Temple structure)
+    final prasadaDeg = _norm(L + Ma + Sa);
+    final prasadaStr = formatRasiDMS(prasadaDeg);
+
+    // ಪಕ್ಷಾಂತರ ಪ್ರಾಸಾದ ಸ್ಫುಟ
+    final pakshantaraPrasadaDeg = isShukla ? _norm(prasadaDeg + S) : _norm(prasadaDeg + M);
+    final pakshantaraPrasadaStr = formatRasiDMS(pakshantaraPrasadaDeg);
+
+    // ಆಂಗಣ ಸ್ಫುಟ = L + 4th cusp + Md (Courtyard)
+    final anganaStr = formatRasiDMS(_norm(L + bhava4 + Md));
+
+    // ಮುಖ ಮಂಡಪ ಸ್ಫುಟ = L + 7th cusp + M (Front hall)
+    final mukhaMandapaStr = formatRasiDMS(_norm(L + bhava7 + M));
+
+    // ದೀಪ ಸ್ಫುಟ = L + S + Md (Lamp = light)
+    final deepaStr = formatRasiDMS(_norm(L + S + Md));
+
+    // ಆಚಾರ್ಯ ಸ್ಫುಟ = L + J + 9th cusp (Priest/Guru)
+    final acharyaDeg = _norm(L + J + bhava9);
+    final acharyaStr = formatRasiDMS(acharyaDeg);
+
+    // ಪಕ್ಷಾಂತರ ಆಚಾರ್ಯ ಸ್ಫುಟ
+    final pakshantaraAcharyaDeg = isShukla ? _norm(acharyaDeg + S) : _norm(acharyaDeg + M);
+    final pakshantaraAcharyaStr = formatRasiDMS(pakshantaraAcharyaDeg);
+
+    // ದೇವಲಕ ಸ್ಫುಟ = L + Sa + M (Temple attendant)
+    final devalakaStr = formatRasiDMS(_norm(L + Sa + M));
+
+    // ಧ್ವಜ ಸ್ಫುಟ = L + 10th cusp + Ma (Flagstaff)
+    final dhvajaStr = formatRasiDMS(_norm(L + bhava10 + Ma));
+
+    // ═══ ೭. ಪಂಚಸೂತ್ರ ಹೆಚ್ಚುವರಿ ═══
+
+    // ಬೀಜ ಸ್ಫುಟ:ಜೀವಾಧಿಷ್ಠಿತ = S + V + J (Beeja/Seed)
+    final beejaSphutaJeevaStr = formatRasiDMS(advS['ಬೀಜ'] ?? _norm(S + V + J));
+
+    // ಬೀಜ ಸ್ಫುಟ:ಜೀವೇಂದು ಕ್ಷಿತಿಜ = M + Ma + J (Kshetra/Field)
+    final beejaSphutaKshetraStr = formatRasiDMS(advS['ಕ್ಷೇತ್ರ'] ?? _norm(M + Ma + J));
+
+    // ದಿನ ಸಪ್ತ ಭಾಗ: Day divided into 7 parts based on Vara
+    final varaIdx = (vRem - 1) % 7; // 0-based
+    final dinaSaptaStr = _saptaBhagaPhala[varaIdx];
+
+    // ದಿನ ಅಷ್ಟ ಭಾಗ: Day divided into 8 parts, planet of current segment
+    final ashtaIdx = (vRem - 1) % 8; // Use vara-based rotation
+    final dinaAshtaStr = _ashtaBhagaPlanets[ashtaIdx];
+
+    // ದಿನಾಷ್ಟ ಭಾಗ ಫಲ: Result for the ashta bhaga planet
+    final dinaAshtaPhalaStr = _ashtaBhagaPhala[ashtaIdx];
+
+    // ತಾಂಬೂಲ ಗ್ರಹ: Based on sprashtanga number or ashtamangala digit
+    final tamboolaIdx = ((sprashtangaNum ?? d1) - 1).clamp(0, 7);
+    final tamboolaStr = _grahas[tamboolaIdx];
+
+    // ಸಂತಾನ ತಿಥಿಸ್ಫುಟ: three variants
+    // a. ಪಂಚಾಗ್ಗಶಿನ = (M - S) × 5 mod 360
+    final santanaPanchagga = formatRasiDMS(_norm((M - S) * 5));
+    // b. ಚಂದ್ರಸ್ಪತ್ಯಾ = M + V + J
+    final santanaChandra = formatRasiDMS(_norm(M + V + J));
+    // c. ರವೀಂದುಶುಕ್ರ = S + M + V
+    final santanaRavindu = formatRasiDMS(_norm(S + M + V));
 
     return AshtamangalaDetails(
       ashtamangalaNumber: fullNum.toString(),
@@ -485,6 +724,46 @@ class AshtamangalaCalculator {
       amshaSutra: amshaSutraStr,
       nakshatraSutra: nakshatraSutraStr,
       mahaSutra: mahaSutraStr,
+      // New: Trisphutadi
+      trisphuta: trisphutatStr,
+      chatusphuta: chatusphutatStr,
+      panchasphuta: panchasphutatStr,
+      pranaSphuta: pranaStr,
+      dehaSphuta: dehaStr,
+      // New: Vishesha Prashne Sphutas
+      bimbaSphuta: bimbaSphutaStr,
+      pakshantaraBimbaSphuta: pakshantaraBimbaSphutaStr,
+      yamaKantaka: yamaKantakaStr,
+      kalaSphuta: kalaSphutaStr,
+      ardhaPraharaSphuta: ardhaPraharaStr,
+      bhutodaya: bhutodayaStr,
+      arudhaSphuta: arudhaSphutaStr,
+      vithiSphuta: vithiSphutaStr,
+      chattraSphuta: chattraSphutaStr,
+      lagnaRaviYoga: lagnaRaviYogaStr,
+      sannidhyaSphuta: sannidhyaStr,
+      chaitanyaSphuta: chaitanyaStr,
+      chalanaSphuta: chalanaStr,
+      karanaSphuta: karanaStr,
+      prasadaSphuta: prasadaStr,
+      pakshantaraPrasadaSphuta: pakshantaraPrasadaStr,
+      anganaSphuta: anganaStr,
+      mukhaMandapaSphuta: mukhaMandapaStr,
+      deepaSphuta: deepaStr,
+      acharyaSphuta: acharyaStr,
+      pakshantaraAcharyaSphuta: pakshantaraAcharyaStr,
+      devalakaSphuta: devalakaStr,
+      dhvajaSphuta: dhvajaStr,
+      // New: Panchasutra additions
+      beejaSphutaJeeva: beejaSphutaJeevaStr,
+      beejaSphutaKshetra: beejaSphutaKshetraStr,
+      dinaSaptaBhaga: dinaSaptaStr,
+      dinaAshtaBhaga: dinaAshtaStr,
+      dinaAshtaBhagaPhala: dinaAshtaPhalaStr,
+      tamboolaGraha: tamboolaStr,
+      santanaTithiPanchagga: santanaPanchagga,
+      santanaTithiChandra: santanaChandra,
+      santanaTithiRavindu: santanaRavindu,
     );
   }
 }

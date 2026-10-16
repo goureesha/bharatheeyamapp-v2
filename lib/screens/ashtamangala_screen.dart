@@ -1437,15 +1437,68 @@ class _AshtamangalaDashboardScreenState extends State<AshtamangalaDashboardScree
               ),
               const SizedBox(height: 14),
 
-              // ೩. ಪಂಚಸೂತ್ರ ವಿಭಾಗ
+              // ೩. ವಿಶೇಷ ಪ್ರಶ್ನೆ ಸ್ಫುಟಗಳು
+              _buildAshtamangalaCard(
+                title: 'ವಿಶೇಷ ಪ್ರಶ್ನೆ ಸ್ಫುಟಗಳು',
+                rows: [
+                  ['ಬಿಂಬ ಸ್ಫುಟ', d.bimbaSphuta],
+                  ['ಪಕ್ಷಾಂತರ ಬಿಂಬ ಸ್ಫುಟ', d.pakshantaraBimbaSphuta],
+                  ['ಯಮ ಕಂಟಕ', d.yamaKantaka],
+                  ['ಕಾಲ ಸ್ಫುಟ', d.kalaSphuta],
+                  ['ಅರ್ಧ ಪ್ರಹಾರ ಸ್ಫುಟ', d.ardhaPraharaSphuta],
+                  ['ಭೂತೋದಯ', d.bhutodaya],
+                  ['ಆರೂಢ ಸ್ಫುಟ', d.arudhaSphuta],
+                  ['ವೀಥಿ ಸ್ಫುಟ', d.vithiSphuta],
+                  ['ಛತ್ರ ಸ್ಫುಟ', d.chattraSphuta],
+                  ['ಲಗ್ನ ರವಿ ಯೋಗ', d.lagnaRaviYoga],
+                  ['ಸಾನ್ನಿಧ್ಯ ಸ್ಫುಟ', d.sannidhyaSphuta],
+                  ['ಚೈತನ್ಯ ಸ್ಫುಟ', d.chaitanyaSphuta],
+                  ['ಚಲನ ಸ್ಫುಟ', d.chalanaSphuta],
+                  ['ಕಾರಣ ಸ್ಫುಟ', d.karanaSphuta],
+                  ['ಪ್ರಾಸಾದ ಸ್ಫುಟ', d.prasadaSphuta],
+                  ['ಪಕ್ಷಾಂತರ ಪ್ರಾಸಾದ ಸ್ಫುಟ', d.pakshantaraPrasadaSphuta],
+                  ['ಆಂಗಣ ಸ್ಫುಟ', d.anganaSphuta],
+                  ['ಮುಖ ಮಂಡಪ ಸ್ಫುಟ', d.mukhaMandapaSphuta],
+                  ['ದೀಪ ಸ್ಫುಟ', d.deepaSphuta],
+                  ['ಆಚಾರ್ಯ ಸ್ಫುಟ', d.acharyaSphuta],
+                  ['ಪಕ್ಷಾಂತರ ಆಚಾರ್ಯ ಸ್ಫುಟ', d.pakshantaraAcharyaSphuta],
+                  ['ದೇವಲಕ ಸ್ಫುಟ', d.devalakaSphuta],
+                  ['ಧ್ವಜ ಸ್ಫುಟ', d.dhvajaSphuta],
+                ],
+              ),
+              const SizedBox(height: 14),
+
+              // ೪. ತ್ರಿಸ್ಫುಟಾದಿ ಗಣಿತ
+              _buildAshtamangalaCard(
+                title: 'ತ್ರಿಸ್ಫುಟಾದಿ ಗಣಿತ',
+                rows: [
+                  ['ತ್ರಿಸ್ಫುಟ', d.trisphuta],
+                  ['ಚತುಸ್ಸ್ಫುಟ', d.chatusphuta],
+                  ['ಪಂಚ ಸ್ಫುಟ', d.panchasphuta],
+                  ['ಪ್ರಾಣ ಸ್ಫುಟ', d.pranaSphuta],
+                  ['ದೇಹಸ್ಫುಟ', d.dehaSphuta],
+                ],
+              ),
+              const SizedBox(height: 14),
+
+              // ೫. ಪಂಚಸೂತ್ರ ವಿಭಾಗ
               _buildAshtamangalaCard(
                 title: 'ಪಂಚಸೂತ್ರ',
                 rows: [
                   ['ಸಾಮಾನ್ಯ ಸೂತ್ರ - ಪೃಥ್ವೀ', d.samanyaSutra],
                   ['ಅಧಿಪ ಸೂತ್ರ - ಜಲ', d.adhipaSutra],
-                  ['ಅಂಶ ಸೂತ್ರ - ಅಗ್ನಿ', d.amshaSutra],
+                  ['ಅಂತ ಸೂತ್ರ - ಅಗ್ನಿ', d.amshaSutra],
                   ['ನಕ್ಷತ್ರ ಸೂತ್ರ - ವಾಯು', d.nakshatraSutra],
                   ['ಮಹಾ ಸೂತ್ರ - ಆಕಾಶ', d.mahaSutra],
+                  ['ಬೀಜ ಸ್ಫುಟ:ಜೀವಾಧಿಷ್ಠಿತ', d.beejaSphutaJeeva],
+                  ['ಬೀಜ ಸ್ಫುಟ:ಜೀವೇಂದು ಕ್ಷಿತಿಜ', d.beejaSphutaKshetra],
+                  ['ದಿನ ಸಪ್ತ ಭಾಗ', d.dinaSaptaBhaga],
+                  ['ದಿನ ಅಷ್ಟ ಭಾಗ', d.dinaAshtaBhaga],
+                  ['ದಿನಾಷ್ಟ ಭಾಗ ಫಲ', d.dinaAshtaBhagaPhala],
+                  ['ತಾಂಬೂಲ ಗ್ರಹ', d.tamboolaGraha],
+                  ['ಸಂತಾನ ತಿಥಿಸ್ಫುಟ:ಪಂಚಾಗ್ಗಶಿನ..', d.santanaTithiPanchagga],
+                  ['ಸಂತಾನ ತಿಥಿಸ್ಫುಟ:ಚಂದ್ರಸ್ಪತ್ಯಾ..', d.santanaTithiChandra],
+                  ['ಸಂತಾನ ತಿಥಿಸ್ಫುಟ:ರವೀಂದುಶುಕ್ರ..', d.santanaTithiRavindu],
                 ],
               ),
               const SizedBox(height: 20),
