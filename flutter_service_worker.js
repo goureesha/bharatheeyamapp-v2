@@ -3,7 +3,7 @@ const MANIFEST = 'flutter-app-manifest';
 const TEMP = 'flutter-temp-cache';
 const CACHE_NAME = 'flutter-app-cache';
 
-const RESOURCES = {"flutter_bootstrap.js": "9e00c0010cad42ea49e816e42cd2e66e",
+const RESOURCES = {"flutter_bootstrap.js": "1ded85761ee5133a69c0b2712eee0640",
 "assets/AssetManifest.bin.json": "8decf4e3d8efad467f13dab7795d6d23",
 "assets/AssetManifest.json": "1832e3e88fd04c257c8514315d1d9e8b",
 "assets/assets/world_cities.json": "518b120e0c46faa8bba193bf17766981",
@@ -31,7 +31,7 @@ const RESOURCES = {"flutter_bootstrap.js": "9e00c0010cad42ea49e816e42cd2e66e",
 "admin/index.html": "b49249eeafa6ac4568bd8deea3284430",
 "flutter.js": "76f08d47ff9f5715220992f993002504",
 "googled477f94eebb558c3.html": "b609deddf10e215d559e8f07f04425df",
-"main.dart.js": "248474891b277029e6d9b42a5c402ede",
+"main.dart.js": "dfb6dee2cfb8fd520463755671c69b17",
 "canvaskit/chromium/canvaskit.js": "ba4a8ae1a65ff3ad81c6818fd47e348b",
 "canvaskit/chromium/canvaskit.wasm": "64a386c87532ae52ae041d18a32a3635",
 "canvaskit/chromium/canvaskit.js.symbols": "5a23598a2a8efd18ec3b60de5d28af8f",
