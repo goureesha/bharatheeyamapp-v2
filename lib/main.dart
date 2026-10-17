@@ -11,6 +11,7 @@ import 'services/user_session_service.dart';
 import 'services/festival_cache_service.dart';
 import 'services/location_service.dart';
 import 'services/tester_service.dart';
+import 'services/internet_check_service.dart';
 import 'package:flutter/foundation.dart';
 import 'package:sweph/sweph.dart' hide kIsWeb;
 import 'core/ephemeris.dart';
@@ -37,6 +38,7 @@ Future<void> main() async {
     AppLocale.loadLang(),
     LocationService.init(),
     TesterService.init(),
+    InternetCheckService.initialize(),
     _initAuth(),
   ]);
 
@@ -139,7 +141,8 @@ class _BharatheeyamAppState extends State<BharatheeyamApp> with WidgetsBindingOb
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed) {
-      // No-op for now, lifecycle tasks can be added here
+      // Check internet and update timestamp on resume
+      InternetCheckService.checkAndUpdate();
     }
   }
 
@@ -283,7 +286,7 @@ class _BharatheeyamAppState extends State<BharatheeyamApp> with WidgetsBindingOb
   }
 }
 
-/// Gate that checks blocked status after login
+/// Gate that checks internet (24h) and blocked status after login
 class _AuthGate extends StatefulWidget {
   const _AuthGate();
   @override
@@ -293,14 +296,31 @@ class _AuthGate extends StatefulWidget {
 class _AuthGateState extends State<_AuthGate> {
   bool _checking = true;
   bool _blocked = false;
+  bool _noInternet = false;
 
   @override
   void initState() {
     super.initState();
-    _checkAccess();
+    _checkAll();
   }
 
-  Future<void> _checkAccess() async {
+  Future<void> _checkAll() async {
+    // 1. Check 24-hour internet requirement
+    final canProceed = await InternetCheckService.canProceed();
+    if (!canProceed) {
+      if (mounted) {
+        setState(() {
+          _noInternet = true;
+          _checking = false;
+        });
+      }
+      return;
+    }
+
+    // Start background periodic check (updates timestamp silently)
+    InternetCheckService.startPeriodicCheck();
+
+    // 2. Check access/blocked status
     final allowed = await UserSessionService.registerAndCheck();
     if (mounted) {
       setState(() {
@@ -308,6 +328,11 @@ class _AuthGateState extends State<_AuthGate> {
         _checking = false;
       });
     }
+  }
+
+  Future<void> _retryInternet() async {
+    setState(() { _checking = true; _noInternet = false; });
+    await _checkAll();
   }
 
   @override
@@ -324,6 +349,7 @@ class _AuthGateState extends State<_AuthGate> {
         ),
       );
     }
+    if (_noInternet) return _NoInternetScreen(onRetry: _retryInternet);
     if (_blocked) return const _BlockedScreen();
     return const HomeScreen();
   }
@@ -458,6 +484,9 @@ class _LoginScreenState extends State<_LoginScreen> {
           }
           // Start appointment listener
           FirebaseService.listenForAppointments();
+          // User just signed in online — update internet timestamp
+          await InternetCheckService.checkAndUpdate();
+          InternetCheckService.startPeriodicCheck();
           // Restart app to home
           Navigator.of(context).pushAndRemoveUntil(
             MaterialPageRoute(builder: (_) => const HomeScreen()),
@@ -550,6 +579,78 @@ class _BlockedScreen extends StatelessWidget {
                   }
                 },
                 child: Text('Sign Out', style: TextStyle(color: kPurple2)),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Screen shown when internet has not been available for 24+ hours
+class _NoInternetScreen extends StatelessWidget {
+  final VoidCallback onRetry;
+  const _NoInternetScreen({required this.onRetry});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: kBg,
+      body: Center(
+        child: Padding(
+          padding: const EdgeInsets.all(32),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(Icons.wifi_off_rounded, size: 80, color: kOrange),
+              const SizedBox(height: 20),
+              Text(
+                'ಇಂಟರ್ನೆಟ್ ಅಗತ್ಯವಿದೆ',
+                style: TextStyle(
+                  fontSize: 24,
+                  fontWeight: FontWeight.w900,
+                  color: kPurple2,
+                ),
+              ),
+              const SizedBox(height: 12),
+              Text(
+                'ಈ ಅಪ್ಲಿಕೇಶನ್ ಕನಿಷ್ಠ ೨೪ ಗಂಟೆಗಳಲ್ಲಿ ಒಮ್ಮೆ\nಇಂಟರ್ನೆಟ್ ಸಂಪರ್ಕ ಅಗತ್ಯವಿದೆ.\n\nದಯವಿಟ್ಟು ಇಂಟರ್ನೆಟ್ ಸಂಪರ್ಕಿಸಿ ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ.',
+                textAlign: TextAlign.center,
+                style: TextStyle(fontSize: 14, color: kMuted, height: 1.6),
+              ),
+              const SizedBox(height: 32),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton.icon(
+                  onPressed: onRetry,
+                  icon: const Icon(Icons.refresh, color: Colors.white),
+                  label: const Text(
+                    'ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w800,
+                      fontSize: 16,
+                    ),
+                  ),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: kPurple2,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 24, vertical: 14,
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+              Icon(Icons.info_outline, size: 18, color: kMuted),
+              const SizedBox(height: 6),
+              Text(
+                'ಇಂಟರ್ನೆಟ್ ಸಂಪರ್ಕವಾದ ನಂತರ ೨೪ ಗಂಟೆ\nಆಫ್‌ಲೈನ್‌ನಲ್ಲಿ ಬಳಸಬಹುದು',
+                textAlign: TextAlign.center,
+                style: TextStyle(fontSize: 12, color: kMuted),
               ),
             ],
           ),
