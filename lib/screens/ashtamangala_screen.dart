@@ -1781,8 +1781,7 @@ class _AshtamangalaDashboardScreenState extends State<AshtamangalaDashboardScree
     for (final e in pMap.entries) {
       rashiPositions[e.key] = e.value.rashiIndex;
     }
-    final lagnaRashi = (r.bhavas.isNotEmpty) ? (r.bhavas[0] / 30).floor() % 12 : 0;
-    rashiPositions['ಲಗ್ನ'] = lagnaRashi;
+    // Lagna and Mandi rashiIndex already set from result.planets (same as main kundali)
 
     final allBav = AshtakaVarga.computeAll(rashiPositions);
 
