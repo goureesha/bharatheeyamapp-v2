@@ -1539,8 +1539,11 @@ class _AshtamangalaDashboardScreenState extends State<AshtamangalaDashboardScree
     final now = DateTime.now();
 
     // Include time since dasha periods are in days/hours (365-day cycle)
-    String _fmtDt(DateTime dt) =>
-        '${dt.day.toString().padLeft(2, "0")}-${dt.month.toString().padLeft(2, "0")}-${dt.year} ${dt.hour.toString().padLeft(2, "0")}:${dt.minute.toString().padLeft(2, "0")}';
+    String _fmtDt(DateTime dt) {
+      final h = dt.hour % 12 == 0 ? 12 : dt.hour % 12;
+      final ap = dt.hour < 12 ? 'AM' : 'PM';
+      return '${dt.day.toString().padLeft(2, "0")}-${dt.month.toString().padLeft(2, "0")}-${dt.year} ${h.toString().padLeft(2, "0")}:${dt.minute.toString().padLeft(2, "0")} $ap';
+    }
 
     return SingleChildScrollView(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
