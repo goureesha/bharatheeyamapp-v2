@@ -185,13 +185,14 @@ class _AshtamangalaScreenState extends State<AshtamangalaScreen> {
     );
   }
 
-  /// Real-time validation for ಅಷ್ಟಮಂಗಲ ಸಂಖ್ಯೆ: digits 1-8 only, sum = 4/12/20
+  /// Real-time validation for ಅಷ್ಟಮಂಗಲ ಸಂಖ್ಯೆ: exactly 3 digits, 1-8 only, sum = 4/12/20
   String? _getAshtaNumError() {
     final txt = _numberCtrl.text.trim();
     if (txt.isEmpty) {
       return _showValidationErrors ? 'ಸಂಖ್ಯೆ ನಮೂದಿಸಿ' : null;
     }
     if (int.tryParse(txt) == null) return 'ಸರಿಯಾದ ಸಂಖ್ಯೆ ನಮೂದಿಸಿ';
+    if (txt.length != 3) return '3 ಅಂಕಿಗಳು ಬೇಕು (ಈಗ: ${txt.length})';
     int digitSum = 0;
     for (int i = 0; i < txt.length; i++) {
       final d = int.tryParse(txt[i]);
@@ -212,27 +213,9 @@ class _AshtamangalaScreenState extends State<AshtamangalaScreen> {
     if (_prucchakaRashi == null) missing.add('ಪ್ರುಚ್ಛಕರ ರಾಶಿ');
     if (_prucchakaNak == null) missing.add('ಪ್ರುಚ್ಛಕರ ನಕ್ಷತ್ರ');
 
-    final ashtaNum = int.tryParse(_numberCtrl.text.trim());
-    if (_numberCtrl.text.trim().isEmpty) {
-      missing.add('ಅಷ್ಟಮಂಗಲ ಸಂಖ್ಯೆ');
-    } else if (ashtaNum == null || ashtaNum <= 0) {
-      missing.add('ಸರಿಯಾದ ಅಷ್ಟಮಂಗಲ ಸಂಖ್ಯೆ');
-    } else {
-      // Validate: no digit should be 0, and digit sum must be 4, 12, or 20
-      final numStr = _numberCtrl.text.trim();
-      bool hasZero = false;
-      int digitSum = 0;
-      for (int i = 0; i < numStr.length; i++) {
-        final d = int.tryParse(numStr[i]);
-        if (d == null) continue;
-        if (d == 0) { hasZero = true; break; }
-        digitSum += d;
-      }
-      if (hasZero) {
-        missing.add('ಅಷ್ಟಮಂಗಲ ಸಂಖ್ಯೆಯಲ್ಲಿ 0 ಅಂಕಿ ಇರಬಾರದು');
-      } else if (digitSum != 4 && digitSum != 12 && digitSum != 20) {
-        missing.add('ಅಷ್ಟಮಂಗಲ ಸಂಖ್ಯೆ ಅಂಕಿಗಳ ಮೊತ್ತ 4, 12 ಅಥವಾ 20 ಆಗಿರಬೇಕು (ಈಗ: $digitSum)');
-      }
+    final ashtaErr = _getAshtaNumError();
+    if (ashtaErr != null) {
+      missing.add('ಅಷ್ಟಮಂಗಲ ಸಂಖ್ಯೆ: $ashtaErr');
     }
 
     final tamboolaNum = int.tryParse(_tamboolaCtrl.text.trim());
@@ -454,7 +437,9 @@ class _AshtamangalaScreenState extends State<AshtamangalaScreen> {
                               border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
                               contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                               isDense: true,
+                              counterText: '',
                             ),
+                            maxLength: 3,
                             style: TextStyle(color: kText, fontSize: 14),
                             onChanged: (_) => setState(() {}),
                           ),
