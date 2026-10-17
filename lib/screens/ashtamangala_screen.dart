@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter/gestures.dart';
 import 'dart:math' as math;
 import 'package:http/http.dart' as http;
@@ -185,6 +185,26 @@ class _AshtamangalaScreenState extends State<AshtamangalaScreen> {
     );
   }
 
+  /// Real-time validation for ಅಷ್ಟಮಂಗಲ ಸಂಖ್ಯೆ: digits 1-8 only, sum = 4/12/20
+  String? _getAshtaNumError() {
+    final txt = _numberCtrl.text.trim();
+    if (txt.isEmpty) {
+      return _showValidationErrors ? 'ಸಂಖ್ಯೆ ನಮೂದಿಸಿ' : null;
+    }
+    if (int.tryParse(txt) == null) return 'ಸರಿಯಾದ ಸಂಖ್ಯೆ ನಮೂದಿಸಿ';
+    int digitSum = 0;
+    for (int i = 0; i < txt.length; i++) {
+      final d = int.tryParse(txt[i]);
+      if (d == null) continue;
+      if (d == 0) return '0 ಅಂಕಿ ಇರಬಾರದು';
+      digitSum += d;
+    }
+    if (digitSum != 4 && digitSum != 12 && digitSum != 20) {
+      return 'ಅಂಕಿಗಳ ಮೊತ್ತ 4/12/20 ಆಗಿರಬೇಕು (ಈಗ: $digitSum)';
+    }
+    return null;
+  }
+
   Future<void> _calculate() async {
     // ೧. ಎಲ್ಲಾ ವಿವರಗಳ ಕಡ್ಡಾಯ ಪರಿಶೀಲನೆ (Mandatory validation of all inputs)
     final missing = <String>[];
@@ -197,6 +217,22 @@ class _AshtamangalaScreenState extends State<AshtamangalaScreen> {
       missing.add('ಅಷ್ಟಮಂಗಲ ಸಂಖ್ಯೆ');
     } else if (ashtaNum == null || ashtaNum <= 0) {
       missing.add('ಸರಿಯಾದ ಅಷ್ಟಮಂಗಲ ಸಂಖ್ಯೆ');
+    } else {
+      // Validate: no digit should be 0, and digit sum must be 4, 12, or 20
+      final numStr = _numberCtrl.text.trim();
+      bool hasZero = false;
+      int digitSum = 0;
+      for (int i = 0; i < numStr.length; i++) {
+        final d = int.tryParse(numStr[i]);
+        if (d == null) continue;
+        if (d == 0) { hasZero = true; break; }
+        digitSum += d;
+      }
+      if (hasZero) {
+        missing.add('ಅಷ್ಟಮಂಗಲ ಸಂಖ್ಯೆಯಲ್ಲಿ 0 ಅಂಕಿ ಇರಬಾರದು');
+      } else if (digitSum != 4 && digitSum != 12 && digitSum != 20) {
+        missing.add('ಅಷ್ಟಮಂಗಲ ಸಂಖ್ಯೆ ಅಂಕಿಗಳ ಮೊತ್ತ 4, 12 ಅಥವಾ 20 ಆಗಿರಬೇಕು (ಈಗ: $digitSum)');
+      }
     }
 
     final tamboolaNum = int.tryParse(_tamboolaCtrl.text.trim());
@@ -408,11 +444,8 @@ class _AshtamangalaScreenState extends State<AshtamangalaScreen> {
                             keyboardType: TextInputType.number,
                             decoration: InputDecoration(
                               labelText: 'ಅಷ್ಟಮಂಗಲ ಸಂಖ್ಯೆ *',
-                              hintText: 'ಉದಾ: 108',
-                              errorText: (_showValidationErrors &&
-                                      (_numberCtrl.text.trim().isEmpty || int.tryParse(_numberCtrl.text.trim()) == null))
-                                  ? 'ಸಂಖ್ಯೆ ನಮೂದಿಸಿ'
-                                  : null,
+                              hintText: 'ಉದಾ: 444',
+                              errorText: _getAshtaNumError(),
                               prefixIcon: Icon(
                                 Icons.pin,
                                 color: (_showValidationErrors && _numberCtrl.text.trim().isEmpty) ? Colors.red : kMuted,
@@ -423,6 +456,7 @@ class _AshtamangalaScreenState extends State<AshtamangalaScreen> {
                               isDense: true,
                             ),
                             style: TextStyle(color: kText, fontSize: 14),
+                            onChanged: (_) => setState(() {}),
                           ),
                         ),
                         const SizedBox(width: 8),
