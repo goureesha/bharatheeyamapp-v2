@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter/gestures.dart';
 import 'dart:math' as math;
 import 'package:http/http.dart' as http;
@@ -786,6 +786,7 @@ class _AshtamangalaDashboardScreenState extends State<AshtamangalaDashboardScree
   late AshtamangalaDetails _ashtamangalaDetails; // Cached — computed once
   int _chartPageIndex = 0;
   String? _bhavaPlanet;
+  int _selectedAvIdx = 0; // 0=SAV, 1-7 = individual planet BAV
 
   // ಬಳಕೆದಾರರು ಕೇಳಿದ ೫ ಟ್ಯಾಬ್‌ಗಳು
   static const _tabs = ['ಪಂಚಾಂಗ', 'ಕುಂಡಲಿ', 'ಸ್ಫುಟ', 'ಅಷ್ಟಮಂಗಲ', 'ತ್ರಿಸ್ಫುಟ ದಶಾ', 'ಅಷ್ಟಕವರ್ಗ', 'ಷೋಡಶವರ್ಗ'];
@@ -1777,105 +1778,56 @@ class _AshtamangalaDashboardScreenState extends State<AshtamangalaDashboardScree
     for (final e in pMap.entries) {
       rashiPositions[e.key] = e.value.rashiIndex;
     }
-    // Lagna rashi from first bhava cusp
     final lagnaRashi = (r.bhavas.isNotEmpty) ? (r.bhavas[0] / 30).floor() % 12 : 0;
     rashiPositions['ಲಗ್ನ'] = lagnaRashi;
 
     final allBav = AshtakaVarga.computeAll(rashiPositions);
 
+    // Selector labels: SAV + 7 planets
+    const avLabels = ['ಸರ್ವಾಷ್ಟಕ', 'ರವಿ', 'ಚಂದ್ರ', 'ಕುಜ', 'ಬುಧ', 'ಗುರು', 'ಶುಕ್ರ', 'ಶನಿ'];
+    final avKeys = ['SAV', ...AshtakaVarga.planets];
 
-    Widget _bavGrid(String title, String planetKey, List<int> bavData, {bool isSav = false}) {
-      final total = bavData.fold(0, (a, b) => a + b);
-      return Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Padding(
-            padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 4),
-            child: Row(
-              children: [
-                Text(
-                  title,
-                  style: TextStyle(fontWeight: FontWeight.w800, fontSize: 13, color: isSav ? kOrange : kPurple2),
-                ),
-                const Spacer(),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                  decoration: BoxDecoration(
-                    color: isSav ? kOrange.withValues(alpha: 0.15) : kPurple2.withValues(alpha: 0.15),
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: Text(
-                    'ಒಟ್ಟು: $total',
-                    style: TextStyle(fontWeight: FontWeight.w700, fontSize: 12, color: isSav ? kOrange : kPurple2),
-                  ),
-                ),
-              ],
+    final selectedKey = avKeys[_selectedAvIdx];
+    final bavData = allBav[selectedKey] ?? List.filled(12, 0);
+    final total = bavData.fold(0, (a, b) => a + b);
+    final isSav = _selectedAvIdx == 0;
+    final avg = total / 12;
+    final titleText = isSav ? 'ಸರ್ವಾಷ್ಟಕ ವರ್ಗ' : '${trAll(selectedKey)} ಅಷ್ಟಕವರ್ಗ';
+
+    // South Indian chart rashi indices per grid position
+    const siGrid = [
+      [11, 0, 1, 2],
+      [10, -1, -1, 3],
+      [9, -1, -1, 4],
+      [8, 7, 6, 5],
+    ];
+
+    Widget rashiCell(int rashiIdx) {
+      final bindus = bavData[rashiIdx];
+      final isLow = bindus < avg * 0.7;
+      return Container(
+        decoration: BoxDecoration(
+          color: isLow ? const Color(0xFFFED7D7) : Colors.white,
+          border: Border.all(color: kBorder, width: 0.5),
+        ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text(
+              knRashi[rashiIdx],
+              style: TextStyle(fontSize: 10, color: kMuted, fontWeight: FontWeight.w600),
             ),
-          ),
-          Container(
-            decoration: BoxDecoration(
-              border: Border.all(color: kBorder),
-              borderRadius: BorderRadius.circular(8),
+            const SizedBox(height: 2),
+            Text(
+              '$bindus',
+              style: TextStyle(
+                fontSize: 22,
+                fontWeight: FontWeight.w900,
+                color: isLow ? const Color(0xFFE53E3E) : kText,
+              ),
             ),
-            child: Row(
-              children: List.generate(12, (i) {
-                final bindu = bavData[i];
-                final maxB = isSav ? 56 : 8;
-                final ratio = bindu / maxB;
-                Color bgColor;
-                if (ratio >= 0.625) {
-                  bgColor = const Color(0xFF047857).withValues(alpha: 0.2); // Green — strong
-                } else if (ratio >= 0.375) {
-                  bgColor = const Color(0xFFD69E2E).withValues(alpha: 0.15); // Yellow — moderate
-                } else {
-                  bgColor = const Color(0xFFE53E3E).withValues(alpha: 0.15); // Red — weak
-                }
-                // Highlight rashi where planet sits
-                final isOwn = !isSav && rashiPositions[planetKey] == i;
-                return Expanded(
-                  child: Container(
-                    decoration: BoxDecoration(
-                      color: bgColor,
-                      border: Border(
-                        left: i > 0 ? BorderSide(color: kBorder, width: 0.5) : BorderSide.none,
-                      ),
-                    ),
-                    child: Column(
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.symmetric(vertical: 2),
-                          decoration: BoxDecoration(
-                            color: isOwn ? kPurple2.withValues(alpha: 0.3) : Colors.transparent,
-                            border: Border(bottom: BorderSide(color: kBorder, width: 0.5)),
-                          ),
-                          child: Center(
-                            child: Text(
-                              knRashi[i].substring(0, knRashi[i].length > 2 ? 2 : knRashi[i].length),
-                              style: TextStyle(fontSize: 9, fontWeight: FontWeight.w700, color: kMuted),
-                            ),
-                          ),
-                        ),
-                        Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 4),
-                          child: Center(
-                            child: Text(
-                              '$bindu',
-                              style: TextStyle(
-                                fontSize: 13,
-                                fontWeight: isOwn ? FontWeight.w900 : FontWeight.w600,
-                                color: isOwn ? kPurple2 : kText,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                );
-              }),
-            ),
-          ),
-        ],
+          ],
+        ),
       );
     }
 
@@ -1884,19 +1836,169 @@ class _AshtamangalaDashboardScreenState extends State<AshtamangalaDashboardScree
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _sectionLabel('📊 ಭಿನ್ನಾಷ್ಟಕ ವರ್ಗ (BAV)', kPurple2),
-          const SizedBox(height: 4),
-          ...AshtakaVarga.planets.map((planet) {
-            final bav = allBav[planet] ?? List.filled(12, 0);
-            return Padding(
-              padding: const EdgeInsets.only(bottom: 8),
-              child: _bavGrid(trAll(planet), planet, bav),
-            );
-          }),
+          // ── Planet selector pills ──
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: Row(
+              children: List.generate(avLabels.length, (i) {
+                final sel = _selectedAvIdx == i;
+                return Padding(
+                  padding: const EdgeInsets.only(right: 6),
+                  child: ChoiceChip(
+                    label: Text(
+                      avLabels[i],
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
+                        color: sel ? Colors.white : kText,
+                      ),
+                    ),
+                    selected: sel,
+                    selectedColor: kPurple2,
+                    backgroundColor: kCard,
+                    side: BorderSide(color: sel ? kPurple2 : kBorder),
+                    onSelected: (_) => setState(() => _selectedAvIdx = i),
+                  ),
+                );
+              }),
+            ),
+          ),
           const SizedBox(height: 12),
-          _sectionLabel('📊 ಸರ್ವಾಷ್ಟಕ ವರ್ಗ (SAV)', kOrange),
-          const SizedBox(height: 4),
-          _bavGrid('ಸರ್ವಾಷ್ಟಕ ವರ್ಗ', '', allBav['SAV'] ?? List.filled(12, 0), isSav: true),
+
+          // ── South Indian chart grid ──
+          AspectRatio(
+            aspectRatio: 1.0,
+            child: Container(
+              decoration: BoxDecoration(
+                border: Border.all(color: kBorder),
+                borderRadius: BorderRadius.circular(4),
+              ),
+              child: Column(
+                children: List.generate(4, (row) {
+                  return Expanded(
+                    child: Row(
+                      children: List.generate(4, (col) {
+                        final ri = siGrid[row][col];
+                        if (ri == -1) {
+                          if (row == 1 && col == 1) {
+                            return Expanded(
+                              flex: 2,
+                              child: Container(
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFFFFF5F5),
+                                  border: Border.all(color: kBorder, width: 0.5),
+                                ),
+                                child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Text('☀', style: TextStyle(fontSize: 20)),
+                                    const SizedBox(height: 2),
+                                    Text(
+                                      titleText,
+                                      style: TextStyle(fontSize: 13, fontWeight: FontWeight.w800, color: kOrange),
+                                      textAlign: TextAlign.center,
+                                    ),
+                                    const SizedBox(height: 4),
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 3),
+                                      decoration: BoxDecoration(
+                                        color: const Color(0xFFFEEBC8),
+                                        borderRadius: BorderRadius.circular(8),
+                                      ),
+                                      child: Text(
+                                        'ಒಟ್ಟು: $total',
+                                        style: TextStyle(fontSize: 14, fontWeight: FontWeight.w900, color: kOrange),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            );
+                          }
+                          return const SizedBox.shrink();
+                        }
+                        return Expanded(child: rashiCell(ri));
+                      }),
+                    ),
+                  );
+                }),
+              ),
+            ),
+          ),
+
+          const SizedBox(height: 16),
+
+          // ── Bindu distribution bar chart ──
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: kCard,
+              border: Border.all(color: kBorder),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'ಬಿಂದು ವಿತರಣೆ',
+                  style: TextStyle(fontSize: 13, fontWeight: FontWeight.w900, color: kPurple2),
+                ),
+                const Divider(height: 12),
+                ...List.generate(12, (i) {
+                  final bindus = bavData[i];
+                  final maxBindu = isSav ? 56 : 8;
+                  final ratio = bindus / maxBindu;
+                  final isLow = bindus < avg * 0.7;
+                  return Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 3),
+                    child: Row(
+                      children: [
+                        SizedBox(
+                          width: 60,
+                          child: Text(
+                            knRashi[i],
+                            style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: kText),
+                          ),
+                        ),
+                        Expanded(
+                          child: Container(
+                            height: 16,
+                            decoration: BoxDecoration(
+                              color: kBorder.withValues(alpha: 0.3),
+                              borderRadius: BorderRadius.circular(4),
+                            ),
+                            child: FractionallySizedBox(
+                              alignment: Alignment.centerLeft,
+                              widthFactor: ratio.clamp(0.0, 1.0),
+                              child: Container(
+                                decoration: BoxDecoration(
+                                  color: isLow ? const Color(0xFFE53E3E) : const Color(0xFF38A169),
+                                  borderRadius: BorderRadius.circular(4),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        SizedBox(
+                          width: 28,
+                          child: Text(
+                            '$bindus',
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w700,
+                              color: isLow ? const Color(0xFFE53E3E) : kText,
+                            ),
+                            textAlign: TextAlign.right,
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                }),
+              ],
+            ),
+          ),
           const SizedBox(height: 20),
         ],
       ),
@@ -1909,24 +2011,8 @@ class _AshtamangalaDashboardScreenState extends State<AshtamangalaDashboardScree
     final pMap = r.planets;
     final sun = pMap['ರವಿ'];
 
-    // Planets to show (Lagna + 9 planets + Mandi)
-    const planetOrder = ['ಲಗ್ನ', 'ರವಿ', 'ಚಂದ್ರ', 'ಕುಜ', 'ಬುಧ', 'ಗುರು', 'ಶುಕ್ರ', 'ಶನಿ', 'ರಾಹು', 'ಕೇತು'];
-    // Varga keys returned by getPlanetDetail
-    const vargaKeys = [
-      'd1', 'd2', 'd3', 'd4', 'd7', 'd9', 'd10', 'd12',
-      'd16', 'd20', 'd24', 'd27', 'd30', 'd40', 'd45', 'd60',
-    ];
-    const vargaLabels = [
-      'D1', 'D2', 'D3', 'D4', 'D7', 'D9', 'D10', 'D12',
-      'D16', 'D20', 'D24', 'D27', 'D30', 'D40', 'D45', 'D60',
-    ];
-    const vargaKnNames = [
-      'ರಾಶಿ', 'ಹೋರಾ', 'ದ್ರೆಕ್ಕಾಣ', 'ಚತುರ್ಥಾಂಶ', 'ಸಪ್ತಾಂಶ', 'ನವಾಂಶ',
-      'ದಶಾಂಶ', 'ದ್ವಾದಶಾಂಶ', 'ಷೋಡಶಾಂಶ', 'ವಿಂಶಾಂಶ', 'ಚತುರ್ವಿಂ.', 'ಭಾಂಶ',
-      'ತ್ರಿಂಶಾಂಶ', 'ಖವೇದಾಂಶ', 'ಅಕ್ಷವೇ.', 'ಷಷ್ಟ್ಯಂಶ',
-    ];
+    const planetOrder = ['ಲಗ್ನ', 'ರವಿ', 'ಚಂದ್ರ', 'ಕುಜ', 'ಬುಧ', 'ಗುರು', 'ಶುಕ್ರ', 'ಶನಿ', 'ರಾಹು', 'ಕೇತು', 'ಮಾಂದಿ'];
 
-    // Build planet detail data
     final planetDetails = <String, Map<String, dynamic>>{};
     for (final pName in planetOrder) {
       final info = pMap[pName];
@@ -1936,130 +2022,105 @@ class _AshtamangalaDashboardScreenState extends State<AshtamangalaDashboardScree
       );
     }
 
-    // Short planet labels for compact display
-    const planetShort = {
-      'ಲಗ್ನ': 'ಲ', 'ರವಿ': 'ರ', 'ಚಂದ್ರ': 'ಚಂ', 'ಕುಜ': 'ಕು',
-      'ಬುಧ': 'ಬು', 'ಗುರು': 'ಗು', 'ಶುಕ್ರ': 'ಶು', 'ಶನಿ': 'ಶ',
-      'ರಾಹು': 'ರಾ', 'ಕೇತು': 'ಕೇ',
-    };
+    String shortR(String? rashi) {
+      if (rashi == null || rashi == '-') return '-';
+      if (rashi.length > 2) return rashi.substring(0, 2);
+      return rashi;
+    }
+
+    const headerBg = Color(0xFFE8F5E9);
+    const headerTextColor = Color(0xFF2E7D32);
+    const rowAltBg = Color(0xFFF1F8E9);
+
+    Widget hCell(String text, {bool isFirst = false}) {
+      return Padding(
+        padding: EdgeInsets.symmetric(horizontal: isFirst ? 16 : 12, vertical: 8),
+        child: Text(text, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w900, color: headerTextColor), textAlign: TextAlign.center),
+      );
+    }
+
+    Widget pCell(String text) {
+      return Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        child: Text(text, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: kPurple2)),
+      );
+    }
+
+    Widget dCell(String text) {
+      return Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        child: Text(text, style: TextStyle(fontSize: 12, color: kText), textAlign: TextAlign.center),
+      );
+    }
+
+    Widget vargaTable(String title, List<String> vKeys, List<String> headers) {
+      final activePlanets = planetOrder.where((p) => planetDetails.containsKey(p)).toList();
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(vertical: 8),
+            decoration: BoxDecoration(
+              color: headerBg,
+              borderRadius: const BorderRadius.only(topLeft: Radius.circular(8), topRight: Radius.circular(8)),
+            ),
+            child: Center(
+              child: Text('# $title', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w900, color: headerTextColor)),
+            ),
+          ),
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: Table(
+              defaultColumnWidth: const IntrinsicColumnWidth(),
+              border: TableBorder.all(color: kBorder, width: 0.5),
+              children: [
+                TableRow(
+                  decoration: const BoxDecoration(color: headerBg),
+                  children: [
+                    hCell('ಗ್ರಹ', isFirst: true),
+                    ...headers.map((h) => hCell(h)),
+                  ],
+                ),
+                ...activePlanets.asMap().entries.map((entry) {
+                  final idx = entry.key;
+                  final pName = entry.value;
+                  final detail = planetDetails[pName]!;
+                  return TableRow(
+                    decoration: BoxDecoration(color: idx.isOdd ? rowAltBg : Colors.white),
+                    children: [
+                      pCell(trAll(pName)),
+                      ...vKeys.map((vk) => dCell(shortR(detail[vk] as String?))),
+                    ],
+                  );
+                }),
+              ],
+            ),
+          ),
+        ],
+      );
+    }
+
+    const shadKeys =    ['d3',   'd2', 'd9', 'd30',    'd12',   'd1'];
+    const shadHeaders = ['ದ್ರೇ', 'ಹೋ', 'ನ',  'ತ್ರಿಂಶ', 'ದ್ವಾದ', 'ಕ್ಷೇತ್ರ'];
+
+    const shodKeys =    ['d4', 'd7', 'd10', 'd16', 'd20', 'd24', 'd27', 'd40', 'd45', 'd60'];
+    const shodHeaders = ['D4', 'D7', 'D10', 'D16', 'D20', 'D24', 'D27', 'D40', 'D45', 'D60'];
 
     return SingleChildScrollView(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _sectionLabel('📋 ಷೋಡಶವರ್ಗ ಸಾರಣಿ', kPurple2),
-          const SizedBox(height: 6),
-
-          // Scrollable table — vertical for vargas, horizontal for planets
-          SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            child: DataTable(
-              columnSpacing: 8,
-              horizontalMargin: 6,
-              headingRowHeight: 44,
-              dataRowMinHeight: 32,
-              dataRowMaxHeight: 36,
-              headingRowColor: WidgetStateProperty.all(kPurple2.withValues(alpha: 0.1)),
-              border: TableBorder.all(color: kBorder, width: 0.5, borderRadius: BorderRadius.circular(4)),
-              columns: [
-                DataColumn(
-                  label: Text('ವರ್ಗ', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 11, color: kPurple2)),
-                ),
-                ...planetOrder.where((p) => planetDetails.containsKey(p)).map((p) =>
-                  DataColumn(
-                    label: Text(
-                      planetShort[p] ?? p,
-                      style: TextStyle(fontWeight: FontWeight.w800, fontSize: 12, color: kPurple2),
-                    ),
-                  ),
-                ),
-              ],
-              rows: List.generate(vargaKeys.length, (vi) {
-                return DataRow(
-                  color: WidgetStateProperty.resolveWith<Color?>((states) {
-                    return vi.isEven ? null : kBorder.withValues(alpha: 0.15);
-                  }),
-                  cells: [
-                    DataCell(
-                      Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(vargaLabels[vi], style: TextStyle(fontWeight: FontWeight.w800, fontSize: 11, color: kOrange)),
-                          Text(vargaKnNames[vi], style: TextStyle(fontSize: 9, color: kMuted)),
-                        ],
-                      ),
-                    ),
-                    ...planetOrder.where((p) => planetDetails.containsKey(p)).map((p) {
-                      final detail = planetDetails[p]!;
-                      final rashiName = detail[vargaKeys[vi]] as String? ?? '-';
-                      // Truncate to 2-3 chars for compact display
-                      final shortRashi = rashiName.length > 3 ? rashiName.substring(0, 3) : rashiName;
-                      return DataCell(
-                        Center(
-                          child: Text(
-                            shortRashi,
-                            style: TextStyle(fontSize: 11, color: kText),
-                            textAlign: TextAlign.center,
-                          ),
-                        ),
-                      );
-                    }),
-                  ],
-                );
-              }),
-            ),
-          ),
-
-          const SizedBox(height: 16),
-
-          // ── Detailed per-planet varga breakdown ──
-          _sectionLabel('🔍 ಗ್ರಹವಾರು ವರ್ಗ ವಿವರ', kPurple2),
-          const SizedBox(height: 6),
-          ...planetOrder.where((p) => planetDetails.containsKey(p)).map((pName) {
-            final detail = planetDetails[pName]!;
-            return Padding(
-              padding: const EdgeInsets.only(bottom: 8),
-              child: AppCard(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      trAll(pName),
-                      style: TextStyle(fontWeight: FontWeight.w900, fontSize: 14, color: kPurple2),
-                    ),
-                    const Divider(height: 10),
-                    Wrap(
-                      spacing: 8,
-                      runSpacing: 4,
-                      children: List.generate(vargaKeys.length, (vi) {
-                        final rashiName = detail[vargaKeys[vi]] as String? ?? '-';
-                        return Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                          decoration: BoxDecoration(
-                            color: kBorder.withValues(alpha: 0.3),
-                            borderRadius: BorderRadius.circular(6),
-                          ),
-                          child: Column(
-                            children: [
-                              Text(vargaLabels[vi], style: TextStyle(fontWeight: FontWeight.w700, fontSize: 10, color: kOrange)),
-                              Text(rashiName, style: TextStyle(fontSize: 11, color: kText)),
-                            ],
-                          ),
-                        );
-                      }),
-                    ),
-                  ],
-                ),
-              ),
-            );
-          }),
+          vargaTable('ಷಡ್ವರ್ಗ', shadKeys, shadHeaders),
+          const SizedBox(height: 20),
+          vargaTable('ಷೋಡಶವರ್ಗ', shodKeys, shodHeaders),
           const SizedBox(height: 20),
         ],
       ),
     );
   }
+
 
   @override
   Widget build(BuildContext context) {
