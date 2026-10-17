@@ -73,6 +73,11 @@ class AshtamangalaDetails {
   final String devalakaSphuta;
   final String dhvajaSphuta;
 
+  // ═══ ದ್ವಿ-ವಿಧಾನ (Dual Methods per Kerala Prashna Shastra) ═══
+  final String bimbaSphutaDevaprasna;   // ದೇವಪ್ರಶ್ನ ಬಿಂಬ (5-factor)
+  final String vithiRasi;               // ಶಾಸ್ತ್ರೀಯ ವೀಥಿ ರಾಶಿ (Sun-based)
+  final String chattraSphutaClassical;  // ಶಾಸ್ತ್ರೀಯ ಛತ್ರ (Vithi-based)
+
   // ═══ NEW: ಪಂಚಸೂತ್ರ ಹೆಚ್ಚುವರಿ ═══
   final String beejaSphutaJeeva;
   final String beejaSphutaKshetra;
@@ -149,6 +154,9 @@ class AshtamangalaDetails {
     required this.pakshantaraAcharyaSphuta,
     required this.devalakaSphuta,
     required this.dhvajaSphuta,
+    required this.bimbaSphutaDevaprasna,
+    required this.vithiRasi,
+    required this.chattraSphutaClassical,
     required this.beejaSphutaJeeva,
     required this.beejaSphutaKshetra,
     required this.dinaSaptaBhaga,
@@ -577,18 +585,20 @@ class AshtamangalaCalculator {
     final nakRem3 = dist % 3;
     final nakshatraSutraStr = (nakRem3 == 1) ? 'ಜೀವ' : (nakRem3 == 2 ? 'ರೋಗ' : 'ಮೃತ್ಯು');
 
-    // E. ಮಹಾ ಸೂತ್ರ - ಆಕಾಶ (Arudha Rashi & 10th from Arudha: Oja/Yugma classification)
+    // E. ಮಹಾ ಸೂತ್ರ - ಆಕಾಶ (Arudha Rashi & 10th from Arudha: Lunar/Solar classification)
+    // Prasna Marga Ch.6: Lunar signs = {0,1,2,3,8,9,11}, Solar signs = {4,5,6,7,10}
     final tenthFromArudha = (aroodhaRashi + 9) % 12;
-    final isArudhaChandra = (aroodhaRashi % 2 == 1);
-    final isTenthChandra = (tenthFromArudha % 2 == 1);
+    const lunarSigns = {0, 1, 2, 3, 8, 9, 11}; // ಮೇಷ,ವೃಷಭ,ಮಿಥುನ,ಕರ್ಕ,ಧನು,ಮಕರ,ಮೀನ
+    final isArudhaLunar = lunarSigns.contains(aroodhaRashi);
+    final isTenthLunar = lunarSigns.contains(tenthFromArudha);
 
     String mahaSutraStr;
-    if (isArudhaChandra && isTenthChandra) {
-      mahaSutraStr = 'ಜೀವ';
-    } else if (!isArudhaChandra && !isTenthChandra) {
-      mahaSutraStr = 'ಮೃತ್ಯು';
+    if (isArudhaLunar && isTenthLunar) {
+      mahaSutraStr = 'ಜೀವ';   // Both Lunar = Jeeva
+    } else if (!isArudhaLunar && !isTenthLunar) {
+      mahaSutraStr = 'ಮೃತ್ಯು'; // Both Solar = Mrityu
     } else {
-      mahaSutraStr = 'ರೋಗ';
+      mahaSutraStr = 'ರೋಗ';   // Mixed = Roga
     }
 
     // ═══ ೫. ತ್ರಿಸ್ಫುಟಾದಿ ಗಣಿತ (from advSphutas, already computed in calculator.dart) ═══
@@ -615,6 +625,7 @@ class AshtamangalaCalculator {
     final Ma = result.planets['ಕುಜ']?.longitude ?? 0.0;
     final Sa = result.planets['ಶನಿ']?.longitude ?? 0.0;
     final Md = result.planets['ಮಾಂದಿ']?.longitude ?? 0.0;
+    final Me = result.planets['ಬುಧ']?.longitude ?? 0.0;
 
     // Bhava cusps (0-indexed: bhavas[0]=1st house, bhavas[3]=4th, etc.)
     final bhavas = result.bhavas;
@@ -623,9 +634,21 @@ class AshtamangalaCalculator {
     final bhava9 = bhavas.length > 8 ? bhavas[8] : _norm(L + 240); // 9th cusp
     final bhava10 = bhavas.length > 9 ? bhavas[9] : _norm(L + 270); // 10th cusp
 
-    // ಬಿಂಬ ಸ್ಫುಟ = Trisphuta = L + M + Md (represents the idol)
+    // ಬಿಂಬ ಸ್ಫುಟ — Simplified (Trisphuta-based): L + M + Md
     final bimbaDeg = _norm(L + M + Md);
     final bimbaSphutaStr = formatRasiDMS(bimbaDeg);
+
+    // ಬಿಂಬ ಸ್ಫುಟ — Devaprasna (5-factor): Jupiter + Lagna + Lord1 + Lord5 + Lord8
+    final lord1Name = _rashiLords[lagnaRashi];
+    final rashi5 = (lagnaRashi + 4) % 12;
+    final rashi8 = (lagnaRashi + 7) % 12;
+    final lord5Name = _rashiLords[rashi5];
+    final lord8Name = _rashiLords[rashi8];
+    final lord1Long = result.planets[lord1Name]?.longitude ?? 0.0;
+    final lord5Long = result.planets[lord5Name]?.longitude ?? 0.0;
+    final lord8Long = result.planets[lord8Name]?.longitude ?? 0.0;
+    final bimbaDevaprasnaDeg = _norm(J + L + lord1Long + lord5Long + lord8Long);
+    final bimbaDevaprasnaStr = formatRasiDMS(bimbaDevaprasnaDeg);
 
     // ಪಕ್ಷಾಂತರ ಬಿಂಬ ಸ್ಫುಟ (Paksha correction)
     final pakshantaraBimbaDeg = isShukla ? _norm(bimbaDeg + S) : _norm(bimbaDeg + M);
@@ -637,8 +660,8 @@ class AshtamangalaCalculator {
     // ಕಾಲ ಸ್ಫುಟ = L + S + Md (Time destruction point)
     final kalaSphutaStr = formatRasiDMS(_norm(L + S + Md));
 
-    // ಅರ್ಧ ಪ್ರಹಾರ ಸ್ಫುಟ = L + Ma + Md (Half-prahara, Mercury's segment)
-    final ardhaPraharaStr = formatRasiDMS(_norm(L + Ma + Md));
+    // ಅರ್ಧ ಪ್ರಹಾರ ಸ್ಫುಟ = L + Me + Md (Mercury's segment upagraha, Prashna Marga)
+    final ardhaPraharaStr = formatRasiDMS(_norm(L + Me + Md));
 
     // ಭೂತೋದಯ = element based on Lagna rashi triplicity
     final bhutodayaStr = _getBhutodaya(lagnaRashi);
@@ -647,11 +670,29 @@ class AshtamangalaCalculator {
     final arudhaSphutaDeg = _norm(aroodhaRashi * 30.0 + (L % 30.0));
     final arudhaSphutaStr = formatRasiDMS(arudhaSphutaDeg);
 
-    // ವೀಥಿ ಸ್ಫುಟ = M + Md (Path point)
+    // ವೀಥಿ ಸ್ಫುಟ = M + Md (Path point — modern/simplified method)
     final vithiSphutaStr = formatRasiDMS(_norm(M + Md));
 
-    // ಛತ್ರ ಸ್ಫುಟ = Chatusphuta = L + M + Md + S (Canopy)
+    // ವೀಥಿ ರಾಶಿ — Classical Sun-based (Prashna Marga Ch. 8, Stanzas 47-50)
+    final sunRashi = (S / 30).floor() % 12;
+    int vithiRashiIdx;
+    if ([1, 2, 3, 4].contains(sunRashi)) {
+      vithiRashiIdx = 0; // ಮೇಷ (Sun in Vrishabha/Mithuna/Karka/Simha)
+    } else if ([7, 8, 9, 10].contains(sunRashi)) {
+      vithiRashiIdx = 2; // ಮಿಥುನ (Sun in Vrischika/Dhanu/Makara/Kumbha)
+    } else {
+      vithiRashiIdx = 1; // ವೃಷಭ (Sun in Kanya/Tula/Meena/Mesha)
+    }
+    final vithiRasiStr = knRashi[vithiRashiIdx];
+
+    // ಛತ್ರ ಸ್ಫುಟ — Modern: L + M + Md + S
     final chattraSphutaStr = formatRasiDMS(_norm(L + M + Md + S));
+
+    // ಛತ್ರ ಸ್ಫುಟ — Classical (PM Ch.8): Count Arudha→Lagna, then from Vithi Rasi
+    final arudhaToLagnaCount = (lagnaRashi - aroodhaRashi + 12) % 12;
+    final chattraRashiIdx = (vithiRashiIdx + arudhaToLagnaCount) % 12;
+    final chattraDegClassical = _norm(chattraRashiIdx * 30.0 + (L % 30.0));
+    final chattraSphutaClassicalStr = formatRasiDMS(chattraDegClassical);
 
     // ಲಗ್ನ ರವಿ ಯೋಗ = L + S
     final lagnaRaviYogaStr = formatRasiDMS(_norm(L + S));
@@ -815,6 +856,9 @@ class AshtamangalaCalculator {
       pakshantaraAcharyaSphuta: pakshantaraAcharyaStr,
       devalakaSphuta: devalakaStr,
       dhvajaSphuta: dhvajaStr,
+      bimbaSphutaDevaprasna: bimbaDevaprasnaStr,
+      vithiRasi: vithiRasiStr,
+      chattraSphutaClassical: chattraSphutaClassicalStr,
       // New: Panchasutra additions
       beejaSphutaJeeva: beejaSphutaJeevaStr,
       beejaSphutaKshetra: beejaSphutaKshetraStr,

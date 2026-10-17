@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter/gestures.dart';
 import 'dart:math' as math;
 import 'package:http/http.dart' as http;
@@ -1214,10 +1214,10 @@ class _AshtamangalaDashboardScreenState extends State<AshtamangalaDashboardScree
     final lag = pMap['ಲಗ್ನ']?.longitude ?? 0.0;
     final sun = pMap['ರವಿ']?.longitude ?? 0.0;
     final moon = pMap['ಚಂದ್ರ']?.longitude ?? 0.0;
-    final jup = pMap['ಗುರು']?.longitude ?? 0.0;
 
     // ಹೆಚ್ಚುವರಿ ಪ್ರಶ್ನಾ ಸ್ಫುಟಗಳು
-    final trisphuta = (lag + moon + jup) % 360;
+    final mandi = pMap['ಮಾಂದಿ']?.longitude ?? 0.0;
+    final trisphuta = (lag + moon + mandi) % 360;
     final chatusphuta = (trisphuta + sun) % 360;
     final aroodha = widget.svarnaroodhaRashi != null
         ? ((widget.svarnaroodhaRashi! * 30.0 + (lag % 30.0)) % 360)
@@ -1242,10 +1242,10 @@ class _AshtamangalaDashboardScreenState extends State<AshtamangalaDashboardScree
       {'name': 'ತ್ರಿಸ್ಫುಟ', 'deg': r.advSphutas['ತ್ರಿಸ್ಫುಟ'] ?? trisphuta},
       {'name': 'ಚತುಃಸ್ಫುಟ', 'deg': r.advSphutas['ಚತುಃಸ್ಫುಟ'] ?? chatusphuta},
       {'name': 'ಪಂಚಸ್ಫುಟ', 'deg': r.advSphutas['ಪಂಚಸ್ಫುಟ'] ?? ((chatusphuta + (pMap['ರಾಹು']?.longitude ?? 0.0)) % 360)},
-      {'name': 'ಪ್ರಾಣ ಸ್ಫುಟ', 'deg': r.advSphutas['ಪ್ರಾಣ'] ?? ((lag * 5 + moon) % 360)},
-      {'name': 'ದೇಹ ಸ್ಫುಟ', 'deg': r.advSphutas['ದೇಹ'] ?? ((moon * 8 + lag) % 360)},
-      {'name': 'ಮೃತ್ಯು ಸ್ಫುಟ', 'deg': r.advSphutas['ಮೃತ್ಯು'] ?? ((lag * 7 + sun) % 360)},
-      {'name': 'ಸೂಕ್ಷ್ಮ ತ್ರಿಸ್ಫುಟ', 'deg': r.advSphutas['ಸೂಕ್ಷ್ಮ ತ್ರಿ.'] ?? (((lag + moon + sun) / 3) % 360)},
+      {'name': 'ಪ್ರಾಣ ಸ್ಫುಟ', 'deg': r.advSphutas['ಪ್ರಾಣ'] ?? ((lag * 5 + mandi) % 360)},
+      {'name': 'ದೇಹ ಸ್ಫುಟ', 'deg': r.advSphutas['ದೇಹ'] ?? ((moon * 8 + mandi) % 360)},
+      {'name': 'ಮೃತ್ಯು ಸ್ಫುಟ', 'deg': r.advSphutas['ಮೃತ್ಯು'] ?? ((mandi * 7 + sun) % 360)},
+      {'name': 'ಸೂಕ್ಷ್ಮ ತ್ರಿಸ್ಫುಟ', 'deg': r.advSphutas['ಸೂಕ್ಷ್ಮ ತ್ರಿ.'] ?? 0.0},
       {'name': 'ಆರೂಢ ಸ್ಫುಟ', 'deg': aroodha},
       {'name': 'ರುದ್ರ ಸ್ಫುಟ', 'deg': r.advSphutas['ರುದ್ರ'] ?? 0.0},
       {'name': 'ಮಹೇಶ್ವರ ಸ್ಫುಟ', 'deg': r.advSphutas['ಮಹೇಶ್ವರ'] ?? 0.0},
