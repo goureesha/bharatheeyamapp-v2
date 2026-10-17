@@ -94,6 +94,9 @@ class AshtamangalaDetails {
   final String trisphutaNakshatra;
   final String trisphutaDashaBalance;
 
+  // ═══ ಪ್ರಶ್ನೆ ಸಮಯ ದೋಷಗಳು ═══
+  final Map<String, String> prashnaDoshas;
+
   AshtamangalaDetails({
     required this.ashtamangalaNumber,
     required this.graha,
@@ -169,6 +172,7 @@ class AshtamangalaDetails {
     required this.trisphutaDashas,
     required this.trisphutaNakshatra,
     required this.trisphutaDashaBalance,
+    required this.prashnaDoshas,
   });
 }
 
@@ -795,6 +799,17 @@ class AshtamangalaCalculator {
     final triBalStr =
         '${dashaLords[triDashaLordIdx]} ${triBalD}ದಿ ${triBalH}ಗಂ ${triBalMin}ನಿ';
 
+    // ═══ ೯. ಪ್ರಶ್ನೆ ಸಮಯ ದೋಷಗಳು ═══
+    final doshas = _computePrashnaDoshas(
+      result: result,
+      queryDateTime: queryDateTime,
+      lagnaLong: L,
+      moonLong: M,
+      sunLong: S,
+      lagnaRashi: lagnaRashi,
+      prucchakaNakshatraIdx: prucchakaNakshatraIdx,
+    );
+
     return AshtamangalaDetails(
       ashtamangalaNumber: fullNum.toString(),
       graha: grahaStr,
@@ -873,7 +888,267 @@ class AshtamangalaCalculator {
       trisphutaDashas: trisphutaDashaList,
       trisphutaNakshatra: triNakStr,
       trisphutaDashaBalance: triBalStr,
+      // ಪ್ರಶ್ನೆ ಸಮಯ ದೋಷಗಳು
+      prashnaDoshas: doshas,
     );
+  }
+
+  /// ═══ ಪ್ರಶ್ನೆ ಸಮಯ ದೋಷಗಳು (24 Prashna Time Dosha Checks) ═══
+  /// Based on Kerala Prashna Shastra / Prashna Marga
+  static Map<String, String> _computePrashnaDoshas({
+    required KundaliResult result,
+    required DateTime queryDateTime,
+    required double lagnaLong,
+    required double moonLong,
+    required double sunLong,
+    required int lagnaRashi,
+    int? prucchakaNakshatraIdx,
+  }) {
+    final doshas = <String, String>{};
+    final panchang = result.panchang;
+    final tIdx = panchang.tithiIndex; // 0-29
+    final moonRashi = (moonLong / 30).floor() % 12;
+    const nakSpan = 360.0 / 27.0; // 13.333... degrees
+    final moonNakIdx = (moonLong / nakSpan).floor() % 27;
+    final moonNakPada = ((moonLong % nakSpan) / (nakSpan / 4)).floor(); // 0-3
+
+    // Rahu/Ketu longitudes
+    final rahuLong = result.planets['ರಾಹು']?.longitude ?? 0.0;
+    final ketuLong = result.planets['ಕೇತು']?.longitude ?? 0.0;
+    final rahuRashi = (rahuLong / 30).floor() % 12;
+    final ketuRashi = (ketuLong / 30).floor() % 12;
+    final mandiLong = result.planets['ಮಾಂದಿ']?.longitude ?? 0.0;
+    final mandiRashi = (mandiLong / 30).floor() % 12;
+    final marsLong = result.planets['ಕುಜ']?.longitude ?? 0.0;
+    final satLong = result.planets['ಶನಿ']?.longitude ?? 0.0;
+
+    // ೧. ಗಂಡಾಂತ — Moon at water→fire sign junction (last/first 3°20')
+    {
+      final degInSign = moonLong % 30;
+      // Water sign endings: Karka(3)→Simha(4), Vrischika(7)→Dhanu(8), Meena(11)→Mesha(0)
+      final isWaterEnd = [3, 7, 11].contains(moonRashi) && degInSign > 26.6667;
+      final isFireStart = [0, 4, 8].contains(moonRashi) && degInSign < 3.3333;
+      doshas['ಗಂಡಾಂತ'] = (isWaterEnd || isFireStart) ? 'ಇದೆ' : '-';
+    }
+
+    // ೨. ಉಷ್ಣ ಶಿಖಾ — Moon in specific inauspicious nakshatra padas
+    // Ashlesha(8)-4, Jyeshtha(17)-4, Revati(26)-4, Ardra(5)-1, Moola(18)-1, Ashwini(0)-1
+    {
+      final isUshnaShikha =
+          (moonNakIdx == 8 && moonNakPada == 3) ||  // ಆಶ್ಲೇಷ-4
+          (moonNakIdx == 17 && moonNakPada == 3) || // ಜ್ಯೇಷ್ಠ-4
+          (moonNakIdx == 26 && moonNakPada == 3) || // ರೇವತಿ-4
+          (moonNakIdx == 5 && moonNakPada == 0) ||  // ಆರಿದ್ರಾ-1
+          (moonNakIdx == 18 && moonNakPada == 0) || // ಮೂಲ-1
+          (moonNakIdx == 0 && moonNakPada == 0);    // ಅಶ್ವಿನಿ-1
+      doshas['ಉಷ್ಣ ಶಿಖಾ'] = isUshnaShikha ? 'ಇದೆ' : '-';
+    }
+
+    // ೩. ವಿಷ — Visha Ghati check (from panchanga data)
+    {
+      doshas['ವಿಷ'] = panchang.vishaPraghati.isNotEmpty ? panchang.vishaPraghati : '-';
+    }
+
+    // ೪. ಅಷ್ಟಮಿ — Tithi is Ashtami (tithiIndex 7 or 22)
+    doshas['ಅಷ್ಟಮಿ'] = (tIdx == 7 || tIdx == 22) ? 'ಇದೆ' : '-';
+
+    // ೫. ವಿಷ್ಟಿ ಕರಣ — Bhadra/Vishti karana
+    {
+      final karana = panchang.karana;
+      final isVishti = karana.contains('ವಿಷ್ಟಿ') || karana.contains('ಭದ್ರ') || karana.contains('ಭದ್ರಾ');
+      doshas['ವಿಷ್ಟಿ ಕರಣ'] = isVishti ? 'ಇದೆ' : '-';
+    }
+
+    // ೬. ರಿಕ್ತ ತಿಥಿ — Chaturthi(3,18), Navami(8,23), Chaturdashi(13,28)
+    doshas['ರಿಕ್ತ ತಿಥಿ'] = [3, 8, 13, 18, 23, 28].contains(tIdx) ? 'ಇದೆ' : '-';
+
+    // ೭. ಸ್ಥಿರ ಕರಣ — Fixed karanas: Shakuni, Chatushpada, Naga, Kimstughna
+    {
+      final k = panchang.karana;
+      final isFixed = k.contains('ಶಕುನಿ') || k.contains('ಚತುಷ್ಪಾದ') ||
+                      k.contains('ನಾಗ') || k.contains('ಕಿಂಸ್ತುಘ್ನ');
+      doshas['ಸ್ಥಿರ ಕರಣ'] = isFixed ? 'ಇದೆ' : '-';
+    }
+
+    // ೮. ತಿಥಿ ಸಂಧಿ — Moon-Sun distance near multiple of 12° (within ±0.5°)
+    {
+      final dist = (moonLong - sunLong + 360) % 360;
+      final rem12 = dist % 12;
+      final isSandhi = rem12 < 0.5 || rem12 > 11.5;
+      doshas['ತಿಥಿ ಸಂಧಿ'] = isSandhi ? 'ಇದೆ' : '-';
+    }
+
+    // ೯. ನಕ್ಷತ್ರ ಸಂಧಿ — Moon near nakshatra boundary
+    {
+      final rem = moonLong % nakSpan;
+      doshas['ನಕ್ಷತ್ರ ಸಂಧಿ'] = (rem < 0.5 || rem > nakSpan - 0.5) ? 'ಇದೆ' : '-';
+    }
+
+    // ೧೦. ರಾಶಿ ಸಂಧಿ — Moon near rashi boundary
+    {
+      final rem = moonLong % 30;
+      doshas['ರಾಶಿ ಸಂಧಿ'] = (rem < 1 || rem > 29) ? 'ಇದೆ' : '-';
+    }
+
+    // ೧೧. ಅಂಶ ಸಂಧಿ — Moon near navamsha boundary (3°20' = 3.333...)
+    {
+      final navSpan = 30.0 / 9.0; // 3.333...
+      final rem = moonLong % navSpan;
+      doshas['ಅಂಶ ಸಂಧಿ'] = (rem < 0.25 || rem > navSpan - 0.25) ? 'ಇದೆ' : '-';
+    }
+
+    // ೧೨. ಗುಳಿಕೋದಯ — Mandi in Lagna rashi
+    doshas['ಗುಳಿಕೋದಯ'] = (mandiRashi == lagnaRashi) ? 'ಇದೆ' : '-';
+
+    // ೧೩. ಸಾರ್ಪಶಿರ — Rahu in Lagna or Moon conjunct Rahu/Ketu
+    {
+      final rahuInLagna = rahuRashi == lagnaRashi;
+      final moonConjRahu = (moonRashi == rahuRashi);
+      final moonConjKetu = (moonRashi == ketuRashi);
+      if (rahuInLagna || moonConjRahu || moonConjKetu) {
+        final parts = <String>[];
+        if (rahuInLagna) parts.add('ರಾಹು ಲಗ್ನದಲ್ಲಿ');
+        if (moonConjRahu) parts.add('ಚಂದ್ರ-ರಾಹು ಯುತಿ');
+        if (moonConjKetu) parts.add('ಚಂದ್ರ-ಕೇತು ಯುತಿ');
+        doshas['ಸಾರ್ಪಶಿರ'] = parts.join(', ');
+      } else {
+        doshas['ಸಾರ್ಪಶಿರ'] = '-';
+      }
+    }
+
+    // ೧೪. ವಿಕಾರಗಳು — Composite check
+    {
+      final vikaras = <String>[];
+      // ದುರ್ಮೂರ್ತಿ: 8th(7,22)/14th(13,28)/30th(29) tithi
+      if ([7, 13, 22, 28, 29].contains(tIdx)) vikaras.add('ದುರ್ಮೂರ್ತಿ');
+      // ಗೇಹ ವಿಕಾರ: malefic in 4th house
+      final bhava4Rashi = (lagnaRashi + 3) % 12;
+      final marsRashi = (marsLong / 30).floor() % 12;
+      final satRashi = (satLong / 30).floor() % 12;
+      if (marsRashi == bhava4Rashi || satRashi == bhava4Rashi ||
+          rahuRashi == bhava4Rashi || ketuRashi == bhava4Rashi) {
+        vikaras.add('ಗೇಹ ವಿಕಾರ');
+      }
+      doshas['ವಿಕಾರಗಳು'] = vikaras.isNotEmpty ? vikaras.join(', ') : '-';
+    }
+
+    // ೧೫. ಮೃತ್ಯು ಯೋಗ — Vara + Nakshatra death combinations
+    {
+      // Sun=0: Magha(9), Mon=1: Vishakha(15), Tue=2: Swati(14),
+      // Wed=3: Dhanishtha(22), Thu=4: Purvashadha(19), Fri=5: Bharani(1), Sat=6: Revati(26)
+      const mrityuNak = [9, 15, 14, 22, 19, 1, 26];
+      final varaStr = panchang.vara;
+      int varaIdx = -1;
+      for (int i = 0; i < knVara.length; i++) {
+        if (varaStr.contains(knVara[i])) { varaIdx = i; break; }
+      }
+      if (varaIdx >= 0 && varaIdx < 7 && moonNakIdx == mrityuNak[varaIdx]) {
+        doshas['ಮೃತ್ಯು ಯೋಗ'] = 'ಇದೆ (${knVara[varaIdx]}+${knNak[moonNakIdx]})';
+      } else {
+        doshas['ಮೃತ್ಯು ಯೋಗ'] = '-';
+      }
+    }
+
+    // ೧೬. ದಗ್ಧ ಯೋಗ — Vara + Tithi burnt combinations
+    {
+      // Sun=0: 12th, Mon=1: 11th, Tue=2: 5th, Wed=3: 3rd,
+      // Thu=4: 6th, Fri=5: 8th, Sat=6: 9th (tithi within paksha, 1-based)
+      const dagdhaTithi = [12, 11, 5, 3, 6, 8, 9]; // 1-based within-paksha
+      final varaStr = panchang.vara;
+      int varaIdx = -1;
+      for (int i = 0; i < knVara.length; i++) {
+        if (varaStr.contains(knVara[i])) { varaIdx = i; break; }
+      }
+      final tithiInPaksha = (tIdx % 15) + 1; // 1-15
+      if (varaIdx >= 0 && varaIdx < 7 && tithiInPaksha == dagdhaTithi[varaIdx]) {
+        doshas['ದಗ್ಧ ಯೋಗ'] = 'ಇದೆ';
+      } else {
+        doshas['ದಗ್ಧ ಯೋಗ'] = '-';
+      }
+    }
+
+    // ೧೭. ಪಾಪ ದೃಷ್ಟಿ — Malefics aspecting Lagna (7th aspect to Lagna rashi)
+    {
+      final opp = (lagnaRashi + 6) % 12; // 7th from Lagna
+      final aspects = <String>[];
+      if ((marsLong / 30).floor() % 12 == opp) aspects.add('ಕುಜ');
+      if ((satLong / 30).floor() % 12 == opp) aspects.add('ಶನಿ');
+      if (rahuRashi == opp) aspects.add('ರಾಹು');
+      if (ketuRashi == opp) aspects.add('ಕೇತು');
+      doshas['ಪಾಪ ದೃಷ್ಟಿ'] = aspects.isNotEmpty ? aspects.join(', ') : '-';
+    }
+
+    // ೧೮. ಪಾಪ ಉದಯ — Natural malefic in Lagna rashi
+    {
+      final malInLagna = <String>[];
+      if ((marsLong / 30).floor() % 12 == lagnaRashi) malInLagna.add('ಕುಜ');
+      if ((satLong / 30).floor() % 12 == lagnaRashi) malInLagna.add('ಶನಿ');
+      if (rahuRashi == lagnaRashi) malInLagna.add('ರಾಹು');
+      if (ketuRashi == lagnaRashi) malInLagna.add('ಕೇತು');
+      doshas['ಪಾಪ ಉದಯ'] = malInLagna.isNotEmpty ? malInLagna.join(', ') : '-';
+    }
+
+    // ೧೯. ತ್ರಯೋದಶಿ — Tithi is Trayodashi: tithiIndex 12 or 27
+    doshas['ತ್ರಯೋದಶಿ'] = (tIdx == 12 || tIdx == 27) ? 'ಇದೆ' : '-';
+
+    // ೨೦. ಪ್ರದೋಷ — Evening twilight (within ~1.5 hours before sunset)
+    {
+      // Parse sunset time from panchanga
+      final sunsetStr = panchang.sunset;
+      bool isPradosha = false;
+      final parts = sunsetStr.split(':');
+      if (parts.length >= 2) {
+        final sunsetH = int.tryParse(parts[0]) ?? 18;
+        final sunsetM = int.tryParse(parts[1]) ?? 0;
+        final sunsetMin = sunsetH * 60 + sunsetM;
+        final queryMin = queryDateTime.hour * 60 + queryDateTime.minute;
+        // Pradosha = within 90 minutes before sunset
+        isPradosha = queryMin >= (sunsetMin - 90) && queryMin <= sunsetMin;
+      }
+      doshas['ಪ್ರದೋಷ'] = isPradosha ? 'ಇದೆ' : '-';
+    }
+
+    // ೨೧. ರವಿ ದೃಷ್ಟಿ — Sun aspecting Lagna (Sun in 7th from Lagna)
+    {
+      final sunRashi = (sunLong / 30).floor() % 12;
+      final oppLagna = (lagnaRashi + 6) % 12;
+      doshas['ರವಿ ದೃಷ್ಟಿ'] = (sunRashi == oppLagna) ? 'ಇದೆ' : '-';
+    }
+
+    // ೨೨. ಸಂಕ್ರಾಂತಿ — Sun near rashi boundary
+    {
+      final rem = sunLong % 30;
+      doshas['ಸಂಕ್ರಾಂತಿ'] = (rem < 1 || rem > 29) ? 'ಇದೆ' : '-';
+    }
+
+    // ೨೩. ತಾರಾನುಕೂಲ — Tara compatibility (from pruchaka nakshatra to prashna Moon nakshatra)
+    {
+      const taraNames = [
+        'ಜನ್ಮ', 'ಸಂಪತ್', 'ವಿಪತ್', 'ಕ್ಷೇಮ', 'ಪ್ರತ್ಯರಿ',
+        'ಸಾಧಕ', 'ವಧ', 'ಮಿತ್ರ', 'ಪರಮಮಿತ್ರ'
+      ];
+      if (prucchakaNakshatraIdx != null) {
+        final dist = (moonNakIdx - prucchakaNakshatraIdx + 27) % 27;
+        final taraIdx = dist % 9;
+        doshas['ತಾರಾನುಕೂಲ'] = taraNames[taraIdx];
+      } else {
+        doshas['ತಾರಾನುಕೂಲ'] = '-';
+      }
+    }
+
+    // ೨೪. ಜನ್ಮಾಷ್ಟಮ — Moon in 8th rashi from pruchaka's rashi
+    {
+      if (prucchakaNakshatraIdx != null) {
+        // Derive pruchaka rashi from their nakshatra (each nak = 13.333° → rashi)
+        final pruchakaRashi = ((prucchakaNakshatraIdx * nakSpan) / 30).floor() % 12;
+        final eighthRashi = (pruchakaRashi + 7) % 12;
+        doshas['ಜನ್ಮಾಷ್ಟಮ'] = (moonRashi == eighthRashi) ? 'ಇದೆ' : '-';
+      } else {
+        doshas['ಜನ್ಮಾಷ್ಟಮ'] = '-';
+      }
+    }
+
+    return doshas;
   }
 
   /// Trisphuta Dasha: Vimshottari compressed into a 365-day cycle.

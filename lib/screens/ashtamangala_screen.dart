@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter/gestures.dart';
 import 'dart:math' as math;
 import 'package:http/http.dart' as http;
@@ -1451,6 +1451,13 @@ class _AshtamangalaDashboardScreenState extends State<AshtamangalaDashboardScree
                   ['ಚಂದ್ರ ಅವಸ್ಥಾ', d.chandraAvastha],
                   ['ಚಂದ್ರ ವೇಲಾ', d.chandraVela],
                 ],
+              ),
+              const SizedBox(height: 14),
+
+              // ಪ್ರಶ್ನೆ ಸಮಯ ದೋಷಗಳು
+              _buildAshtamangalaCard(
+                title: 'ಪ್ರಶ್ನೆ ಸಮಯ ದೋಷಗಳು',
+                rows: d.prashnaDoshas.entries.map((e) => [e.key, e.value]).toList(),
               ),
               const SizedBox(height: 14),
 
