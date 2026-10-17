@@ -1136,6 +1136,12 @@ class AstroCalculator {
       final deha       = normDeg(M * 8 + Md);
       final mrityu     = normDeg(Md * 7 + S);
       final sookshma   = normDeg(prana + deha + mrityu);
+      final Sa  = positions['ಶನಿ']!;
+      final rudra      = normDeg(Sa + Md);        // Rudra = Saturn + Mandi
+      final maheswara  = normDeg(3 * M - Md);     // Maheswara = 3×Moon - Gulika
+      final brahma     = normDeg(Asc + J + S);    // Brahma = Lagna + Jupiter + Sun
+      final vishnu     = normDeg(5 * M + 4 * Asc);// Vishnu = 5×Moon + 4×Lagna
+      final yamaghanta = normDeg(S + R + Md);     // Yamaghanta = Sun + Rahu + Mandi
 
       final advSphutas = <String, double>{
         'ಧೂಮ': dhooma, 'ವ್ಯತೀಪಾತ': vyatipata, 'ಪರಿವೇಷ': parivesha,
@@ -1144,6 +1150,8 @@ class AstroCalculator {
         'ತ್ರಿಸ್ಫುಟ': trisphuta, 'ಚತುಃಸ್ಫುಟ': chatusphuta,
         'ಪಂಚಸ್ಫುಟ': panchasphuta, 'ಪ್ರಾಣ': prana, 'ದೇಹ': deha,
         'ಮೃತ್ಯು': mrityu, 'ಸೂಕ್ಷ್ಮ ತ್ರಿ.': sookshma,
+        'ರುದ್ರ': rudra, 'ಮಹೇಶ್ವರ': maheswara, 'ಬ್ರಹ್ಮ': brahma,
+        'ವಿಷ್ಣು': vishnu, 'ಯಮಘಂಟ': yamaghanta,
       };
 
       return KundaliResult(

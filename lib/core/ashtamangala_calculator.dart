@@ -40,6 +40,13 @@ class AshtamangalaDetails {
   final String panchasphuta;
   final String pranaSphuta;
   final String dehaSphuta;
+  final String mrityuSphuta;
+  final String sookshmaTrisphuta;
+  final String rudraSphuta;
+  final String maheswaraSphuta;
+  final String brahmaSphuta;
+  final String vishnuSphuta;
+  final String yamaghantaSphuta;
 
   // ═══ NEW: ವಿಶೇಷ ಪ್ರಶ್ನೆ ಸ್ಫುಟಗಳು ═══
   final String bimbaSphuta;
@@ -112,6 +119,13 @@ class AshtamangalaDetails {
     required this.panchasphuta,
     required this.pranaSphuta,
     required this.dehaSphuta,
+    required this.mrityuSphuta,
+    required this.sookshmaTrisphuta,
+    required this.rudraSphuta,
+    required this.maheswaraSphuta,
+    required this.brahmaSphuta,
+    required this.vishnuSphuta,
+    required this.yamaghantaSphuta,
     required this.bimbaSphuta,
     required this.pakshantaraBimbaSphuta,
     required this.yamaKantaka,
@@ -584,6 +598,13 @@ class AshtamangalaCalculator {
     final panchasphutatStr = formatRasiDMS(advS['ಪಂಚಸ್ಫುಟ'] ?? 0);
     final pranaStr = formatRasiDMS(advS['ಪ್ರಾಣ'] ?? 0);
     final dehaStr = formatRasiDMS(advS['ದೇಹ'] ?? 0);
+    final mrityuStr = formatRasiDMS(advS['ಮೃತ್ಯು'] ?? 0);
+    final sookshmaTriStr = formatRasiDMS(advS['ಸೂಕ್ಷ್ಮ ತ್ರಿ.'] ?? 0);
+    final rudraStr = formatRasiDMS(advS['ರುದ್ರ'] ?? 0);
+    final maheswaraStr = formatRasiDMS(advS['ಮಹೇಶ್ವರ'] ?? 0);
+    final brahmaStr = formatRasiDMS(advS['ಬ್ರಹ್ಮ'] ?? 0);
+    final vishnuStr = formatRasiDMS(advS['ವಿಷ್ಣು'] ?? 0);
+    final yamaghantaStr = formatRasiDMS(advS['ಯಮಘಂಟ'] ?? 0);
 
     // ═══ ೬. ವಿಶೇಷ ಪ್ರಶ್ನೆ ಸ್ಫುಟಗಳು (Devaprasna / Prashna Marga) ═══
     final S = sunLong;
@@ -763,6 +784,13 @@ class AshtamangalaCalculator {
       panchasphuta: panchasphutatStr,
       pranaSphuta: pranaStr,
       dehaSphuta: dehaStr,
+      mrityuSphuta: mrityuStr,
+      sookshmaTrisphuta: sookshmaTriStr,
+      rudraSphuta: rudraStr,
+      maheswaraSphuta: maheswaraStr,
+      brahmaSphuta: brahmaStr,
+      vishnuSphuta: vishnuStr,
+      yamaghantaSphuta: yamaghantaStr,
       // New: Vishesha Prashne Sphutas
       bimbaSphuta: bimbaSphutaStr,
       pakshantaraBimbaSphuta: pakshantaraBimbaSphutaStr,
