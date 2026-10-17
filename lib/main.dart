@@ -305,9 +305,11 @@ class _AuthGateState extends State<_AuthGate> {
   }
 
   Future<void> _checkAll() async {
-    // 1. Check 24-hour internet requirement
-    final canProceed = await InternetCheckService.canProceed();
-    if (!canProceed) {
+    // 1. Check internet status
+    final isOnline = await InternetCheckService.checkAndUpdate();
+
+    if (!isOnline && InternetCheckService.isExpired) {
+      // Offline for 24h+ -> block app
       if (mounted) {
         setState(() {
           _noInternet = true;
@@ -317,10 +319,19 @@ class _AuthGateState extends State<_AuthGate> {
       return;
     }
 
-    // Start background periodic check (updates timestamp silently)
+    if (!isOnline) {
+      // Offline but within 24h -> open normally, skip Firestore calls
+      InternetCheckService.startPeriodicCheck();
+      if (mounted) {
+        setState(() { _checking = false; });
+      }
+      return;
+    }
+
+    // Online -> update timestamp, start periodic check, verify access
     InternetCheckService.startPeriodicCheck();
 
-    // 2. Check access/blocked status
+    // 2. Check access/blocked status (only when online)
     final allowed = await UserSessionService.registerAndCheck();
     if (mounted) {
       setState(() {
