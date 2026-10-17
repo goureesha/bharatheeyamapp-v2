@@ -1524,8 +1524,9 @@ class _AshtamangalaDashboardScreenState extends State<AshtamangalaDashboardScree
     final d = _ashtamangalaDetails;
     final now = DateTime.now();
 
-    String _fmtDate(DateTime dt) =>
-        '${dt.day.toString().padLeft(2, "0")}-${dt.month.toString().padLeft(2, "0")}-${dt.year}';
+    // Include time since dasha periods are in days/hours (365-day cycle)
+    String _fmtDt(DateTime dt) =>
+        '${dt.day.toString().padLeft(2, "0")}-${dt.month.toString().padLeft(2, "0")}-${dt.year} ${dt.hour.toString().padLeft(2, "0")}:${dt.minute.toString().padLeft(2, "0")}';
 
     return SingleChildScrollView(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
@@ -1574,7 +1575,7 @@ class _AshtamangalaDashboardScreenState extends State<AshtamangalaDashboardScree
                         ),
                       ),
                       Text(
-                        '${_fmtDate(md.start)} – ${_fmtDate(md.end)}',
+                        '${_fmtDt(md.start)} – ${_fmtDt(md.end)}',
                         style: TextStyle(fontSize: 11, color: kMuted),
                       ),
                     ],
@@ -1605,7 +1606,7 @@ class _AshtamangalaDashboardScreenState extends State<AshtamangalaDashboardScree
                               ),
                             ),
                             Text(
-                              '${_fmtDate(ad.start)} – ${_fmtDate(ad.end)}',
+                              '${_fmtDt(ad.start)} – ${_fmtDt(ad.end)}',
                               style: TextStyle(fontSize: 10, color: kMuted),
                             ),
                           ],
@@ -1638,7 +1639,7 @@ class _AshtamangalaDashboardScreenState extends State<AshtamangalaDashboardScree
                                   ),
                                 ),
                                 Text(
-                                  '${_fmtDate(pd.start)} – ${_fmtDate(pd.end)}',
+                                  '${_fmtDt(pd.start)} – ${_fmtDt(pd.end)}',
                                   style: TextStyle(fontSize: 10, color: kMuted),
                                 ),
                               ],

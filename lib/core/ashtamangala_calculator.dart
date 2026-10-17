@@ -709,27 +709,29 @@ class AshtamangalaCalculator {
     // c. ರವೀಂದುಶುಕ್ರ = S + M + V
     final santanaRavindu = formatRasiDMS(_norm(S + M + V));
 
-    // ═══ ೮. ತ್ರಿಸ್ಫುಟ ದಶಾ (Vimshottari applied to Trisphuta's nakshatra) ═══
+    // ═══ ೮. ತ್ರಿಸ್ಫುಟ ದಶಾ (Vimshottari scaled to 365-day cycle) ═══
+    // In Prashna, Trisphuta Dasha compresses 120-year Vimshottari into 365 days.
+    // Scale: 1 Vimshottari-year = 365/120 ≈ 3.0417 days
     final trisphutatDeg = advS['ತ್ರಿಸ್ಫುಟ'] ?? 0.0;
     final triNakIdx = (trisphutatDeg / nakSpan).floor() % 27;
     final triNakPerc = (trisphutatDeg % nakSpan) / nakSpan; // fraction elapsed
     final triNakStr = knNak[triNakIdx];
 
-    // Compute full 9-mahadasha chain using existing Vimshottari engine
-    final trisphutaDashaList = AstroCalculator.calcDasha(
+    // Compute 365-day Trisphuta Dasha
+    final trisphutaDashaList = _calcTrisphutaDasha(
       queryDateTime, triNakIdx, triNakPerc,
     );
 
-    // Balance string: dasha lord + remaining years-months-days
+    // Balance string: dasha lord + remaining days-hours-minutes
     final triDashaLordIdx = triNakIdx % 9;
-    final triTotalYears = dashaYears[triDashaLordIdx].toDouble();
-    final triRemainingYears = triTotalYears * (1 - triNakPerc);
-    final triBalY = triRemainingYears.floor();
-    final triBalMFrac = (triRemainingYears - triBalY) * 12;
-    final triBalM = triBalMFrac.floor();
-    final triBalD = ((triBalMFrac - triBalM) * 30).round();
+    final triTotalDays = dashaYears[triDashaLordIdx] * 365.0 / 120.0;
+    final triRemainingDays = triTotalDays * (1 - triNakPerc);
+    final triBalD = triRemainingDays.floor();
+    final triBalHFrac = (triRemainingDays - triBalD) * 24;
+    final triBalH = triBalHFrac.floor();
+    final triBalMin = ((triBalHFrac - triBalH) * 60).round();
     final triBalStr =
-        '${dashaLords[triDashaLordIdx]} ${triBalY}ವ ${triBalM}ತಿ ${triBalD}ದಿ';
+        '${dashaLords[triDashaLordIdx]} ${triBalD}ದಿ ${triBalH}ಗಂ ${triBalMin}ನಿ';
 
     return AshtamangalaDetails(
       ashtamangalaNumber: fullNum.toString(),
@@ -800,5 +802,111 @@ class AshtamangalaCalculator {
       trisphutaNakshatra: triNakStr,
       trisphutaDashaBalance: triBalStr,
     );
+  }
+
+  /// Trisphuta Dasha: Vimshottari compressed into a 365-day cycle.
+  /// 1 Vim-year = 365/120 ≈ 3.0417 days. Uses minute-precision Duration.
+  static List<DashaEntry> _calcTrisphutaDasha(
+    DateTime queryDate, int nIdx, double perc,
+  ) {
+    const double scale = 365.0 / 120.0; // days per Vimshottari-year
+    final List<DashaEntry> result = [];
+    DateTime cur = queryDate;
+    final si = nIdx % 9;
+
+    for (int i = 0; i < 9; i++) {
+      final im = (si + i) % 9;
+      final yMul = (i == 0) ? (1 - perc) : 1.0;
+      final mdMinutes = (dashaYears[im] * yMul * scale * 24 * 60).round();
+      final mdEnd = cur.add(Duration(minutes: mdMinutes));
+
+      final List<DashaEntry> antars = [];
+      DateTime cad = cur;
+      final totalMdY = dashaYears[im].toDouble();
+
+      if (i == 0) {
+        // First mahadasha — find which bhukti the query falls into
+        final elapsedY = totalMdY * perc;
+        double cumY = 0;
+
+        for (int j = 0; j < 9; j++) {
+          final ia = (im + j) % 9;
+          final fullAdY = totalMdY * dashaYears[ia] / 120.0;
+          final nextCum = cumY + fullAdY;
+
+          if (nextCum <= elapsedY) {
+            cumY = nextCum;
+            continue; // This bhukti fully elapsed — skip
+          }
+
+          double adY;
+          if (cumY < elapsedY) {
+            // Partially elapsed
+            adY = fullAdY * (1 - (elapsedY - cumY) / fullAdY);
+          } else {
+            adY = fullAdY;
+          }
+          cumY = nextCum;
+
+          final adMin = (adY * scale * 24 * 60).round();
+          if (adMin <= 0) continue;
+          final ae = cad.add(Duration(minutes: adMin));
+
+          // Pratyantara dashas
+          final prats = _buildPratyantara(cad, ae, im, ia, scale);
+
+          antars.add(DashaEntry(
+            lord: dashaLords[ia], start: cad, end: ae,
+            antardashas: prats,
+          ));
+          cad = ae;
+        }
+      } else {
+        // Full mahadasha — all antardashas complete
+        for (int j = 0; j < 9; j++) {
+          final ia = (im + j) % 9;
+          final adY = totalMdY * dashaYears[ia] / 120.0;
+          final adMin = (adY * scale * 24 * 60).round();
+          if (adMin <= 0) continue;
+          final ae = cad.add(Duration(minutes: adMin));
+
+          final prats = _buildPratyantara(cad, ae, im, ia, scale);
+
+          antars.add(DashaEntry(
+            lord: dashaLords[ia], start: cad, end: ae,
+            antardashas: prats,
+          ));
+          cad = ae;
+        }
+      }
+
+      result.add(DashaEntry(
+        lord: dashaLords[im], start: cur, end: mdEnd,
+        antardashas: antars,
+      ));
+      cur = mdEnd;
+    }
+    return result;
+  }
+
+  /// Build pratyantara (sub-sub) dashas within an antardasha.
+  static List<DashaEntry> _buildPratyantara(
+    DateTime adStart, DateTime adEnd, int mdIdx, int adIdx, double scale,
+  ) {
+    final List<DashaEntry> prats = [];
+    DateTime cpd = adStart;
+    final totalMdY = dashaYears[mdIdx].toDouble();
+
+    for (int k = 0; k < 9; k++) {
+      final ip = (adIdx + k) % 9;
+      final pdY = (totalMdY * dashaYears[adIdx] * dashaYears[ip]) /
+          (120.0 * 120.0);
+      final pdMin = (pdY * scale * 24 * 60).round();
+      if (pdMin <= 0) continue;
+      final pe = cpd.add(Duration(minutes: pdMin));
+      prats.add(DashaEntry(lord: dashaLords[ip], start: cpd, end: pe));
+      cpd = pe;
+    }
+    return prats;
   }
 }
