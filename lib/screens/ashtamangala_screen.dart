@@ -12,6 +12,7 @@ import '../widgets/kundali_chart.dart';
 import '../widgets/planet_detail_sheet.dart';
 import '../widgets/date_time_input.dart';
 import '../core/ashtamangala_calculator.dart';
+import '../core/ashtakavarga.dart';
 
 // ─────────────────────────────────────────────
 // ೧. ಅಷ್ಟಮಂಗಲ ಪ್ರಶ್ನ - ಮಾಹಿತಿ ನಮೂದು ಪರದೆ (Input Screen)
@@ -787,7 +788,7 @@ class _AshtamangalaDashboardScreenState extends State<AshtamangalaDashboardScree
   String? _bhavaPlanet;
 
   // ಬಳಕೆದಾರರು ಕೇಳಿದ ೫ ಟ್ಯಾಬ್‌ಗಳು
-  static const _tabs = ['ಪಂಚಾಂಗ', 'ಕುಂಡಲಿ', 'ಸ್ಫುಟ', 'ಅಷ್ಟಮಂಗಲ', 'ತ್ರಿಸ್ಫುಟ ದಶಾ'];
+  static const _tabs = ['ಪಂಚಾಂಗ', 'ಕುಂಡಲಿ', 'ಸ್ಫುಟ', 'ಅಷ್ಟಮಂಗಲ', 'ತ್ರಿಸ್ಫುಟ ದಶಾ', 'ಅಷ್ಟಕವರ್ಗ', 'ಷೋಡಶವರ್ಗ'];
 
   // ೧೬ ಪಾರಾಶರಿ ಷೋಡಶವರ್ಗ ಕುಂಡಲಿಗಳು + ಭಾವ ಕುಂಡಲಿ
   static const List<Map<String, dynamic>> _shodashaVargaCharts = [
@@ -1766,6 +1767,300 @@ class _AshtamangalaDashboardScreenState extends State<AshtamangalaDashboardScree
     );
   }
 
+  // ═══ ಟ್ಯಾಬ್ ೬: ಅಷ್ಟಕವರ್ಗ (Ashtaka Varga Tab) ═══
+  Widget _buildAshtakaVargaTab() {
+    final r = widget.result;
+    final pMap = r.planets;
+
+    // Build rashi positions map for AshtakaVarga engine
+    final rashiPositions = <String, int>{};
+    for (final e in pMap.entries) {
+      rashiPositions[e.key] = e.value.rashiIndex;
+    }
+    // Lagna rashi from first bhava cusp
+    final lagnaRashi = (r.bhavas.isNotEmpty) ? (r.bhavas[0] / 30).floor() % 12 : 0;
+    rashiPositions['ಲಗ್ನ'] = lagnaRashi;
+
+    final allBav = AshtakaVarga.computeAll(rashiPositions);
+
+
+    Widget _bavGrid(String title, String planetKey, List<int> bavData, {bool isSav = false}) {
+      final total = bavData.fold(0, (a, b) => a + b);
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 4),
+            child: Row(
+              children: [
+                Text(
+                  title,
+                  style: TextStyle(fontWeight: FontWeight.w800, fontSize: 13, color: isSav ? kOrange : kPurple2),
+                ),
+                const Spacer(),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: isSav ? kOrange.withValues(alpha: 0.15) : kPurple2.withValues(alpha: 0.15),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Text(
+                    'ಒಟ್ಟು: $total',
+                    style: TextStyle(fontWeight: FontWeight.w700, fontSize: 12, color: isSav ? kOrange : kPurple2),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Container(
+            decoration: BoxDecoration(
+              border: Border.all(color: kBorder),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Row(
+              children: List.generate(12, (i) {
+                final bindu = bavData[i];
+                final maxB = isSav ? 56 : 8;
+                final ratio = bindu / maxB;
+                Color bgColor;
+                if (ratio >= 0.625) {
+                  bgColor = const Color(0xFF047857).withValues(alpha: 0.2); // Green — strong
+                } else if (ratio >= 0.375) {
+                  bgColor = const Color(0xFFD69E2E).withValues(alpha: 0.15); // Yellow — moderate
+                } else {
+                  bgColor = const Color(0xFFE53E3E).withValues(alpha: 0.15); // Red — weak
+                }
+                // Highlight rashi where planet sits
+                final isOwn = !isSav && rashiPositions[planetKey] == i;
+                return Expanded(
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: bgColor,
+                      border: Border(
+                        left: i > 0 ? BorderSide(color: kBorder, width: 0.5) : BorderSide.none,
+                      ),
+                    ),
+                    child: Column(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.symmetric(vertical: 2),
+                          decoration: BoxDecoration(
+                            color: isOwn ? kPurple2.withValues(alpha: 0.3) : Colors.transparent,
+                            border: Border(bottom: BorderSide(color: kBorder, width: 0.5)),
+                          ),
+                          child: Center(
+                            child: Text(
+                              knRashi[i].substring(0, knRashi[i].length > 2 ? 2 : knRashi[i].length),
+                              style: TextStyle(fontSize: 9, fontWeight: FontWeight.w700, color: kMuted),
+                            ),
+                          ),
+                        ),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 4),
+                          child: Center(
+                            child: Text(
+                              '$bindu',
+                              style: TextStyle(
+                                fontSize: 13,
+                                fontWeight: isOwn ? FontWeight.w900 : FontWeight.w600,
+                                color: isOwn ? kPurple2 : kText,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              }),
+            ),
+          ),
+        ],
+      );
+    }
+
+    return SingleChildScrollView(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _sectionLabel('📊 ಭಿನ್ನಾಷ್ಟಕ ವರ್ಗ (BAV)', kPurple2),
+          const SizedBox(height: 4),
+          ...AshtakaVarga.planets.map((planet) {
+            final bav = allBav[planet] ?? List.filled(12, 0);
+            return Padding(
+              padding: const EdgeInsets.only(bottom: 8),
+              child: _bavGrid(trAll(planet), planet, bav),
+            );
+          }),
+          const SizedBox(height: 12),
+          _sectionLabel('📊 ಸರ್ವಾಷ್ಟಕ ವರ್ಗ (SAV)', kOrange),
+          const SizedBox(height: 4),
+          _bavGrid('ಸರ್ವಾಷ್ಟಕ ವರ್ಗ', '', allBav['SAV'] ?? List.filled(12, 0), isSav: true),
+          const SizedBox(height: 20),
+        ],
+      ),
+    );
+  }
+
+  // ═══ ಟ್ಯಾಬ್ ೭: ಷೋಡಶವರ್ಗ (Shodasha Varga Tab) ═══
+  Widget _buildShodashaVargaTab() {
+    final r = widget.result;
+    final pMap = r.planets;
+    final sun = pMap['ರವಿ'];
+
+    // Planets to show (Lagna + 9 planets + Mandi)
+    const planetOrder = ['ಲಗ್ನ', 'ರವಿ', 'ಚಂದ್ರ', 'ಕುಜ', 'ಬುಧ', 'ಗುರು', 'ಶುಕ್ರ', 'ಶನಿ', 'ರಾಹು', 'ಕೇತು'];
+    // Varga keys returned by getPlanetDetail
+    const vargaKeys = [
+      'd1', 'd2', 'd3', 'd4', 'd7', 'd9', 'd10', 'd12',
+      'd16', 'd20', 'd24', 'd27', 'd30', 'd40', 'd45', 'd60',
+    ];
+    const vargaLabels = [
+      'D1', 'D2', 'D3', 'D4', 'D7', 'D9', 'D10', 'D12',
+      'D16', 'D20', 'D24', 'D27', 'D30', 'D40', 'D45', 'D60',
+    ];
+    const vargaKnNames = [
+      'ರಾಶಿ', 'ಹೋರಾ', 'ದ್ರೆಕ್ಕಾಣ', 'ಚತುರ್ಥಾಂಶ', 'ಸಪ್ತಾಂಶ', 'ನವಾಂಶ',
+      'ದಶಾಂಶ', 'ದ್ವಾದಶಾಂಶ', 'ಷೋಡಶಾಂಶ', 'ವಿಂಶಾಂಶ', 'ಚತುರ್ವಿಂ.', 'ಭಾಂಶ',
+      'ತ್ರಿಂಶಾಂಶ', 'ಖವೇದಾಂಶ', 'ಅಕ್ಷವೇ.', 'ಷಷ್ಟ್ಯಂಶ',
+    ];
+
+    // Build planet detail data
+    final planetDetails = <String, Map<String, dynamic>>{};
+    for (final pName in planetOrder) {
+      final info = pMap[pName];
+      if (info == null) continue;
+      planetDetails[pName] = AstroCalculator.getPlanetDetail(
+        pName, info.longitude, info.speed, sun?.longitude ?? 0.0,
+      );
+    }
+
+    // Short planet labels for compact display
+    const planetShort = {
+      'ಲಗ್ನ': 'ಲ', 'ರವಿ': 'ರ', 'ಚಂದ್ರ': 'ಚಂ', 'ಕುಜ': 'ಕು',
+      'ಬುಧ': 'ಬು', 'ಗುರು': 'ಗು', 'ಶುಕ್ರ': 'ಶು', 'ಶನಿ': 'ಶ',
+      'ರಾಹು': 'ರಾ', 'ಕೇತು': 'ಕೇ',
+    };
+
+    return SingleChildScrollView(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _sectionLabel('📋 ಷೋಡಶವರ್ಗ ಸಾರಣಿ', kPurple2),
+          const SizedBox(height: 6),
+
+          // Scrollable table — vertical for vargas, horizontal for planets
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: DataTable(
+              columnSpacing: 8,
+              horizontalMargin: 6,
+              headingRowHeight: 44,
+              dataRowMinHeight: 32,
+              dataRowMaxHeight: 36,
+              headingRowColor: WidgetStateProperty.all(kPurple2.withValues(alpha: 0.1)),
+              border: TableBorder.all(color: kBorder, width: 0.5, borderRadius: BorderRadius.circular(4)),
+              columns: [
+                DataColumn(
+                  label: Text('ವರ್ಗ', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 11, color: kPurple2)),
+                ),
+                ...planetOrder.where((p) => planetDetails.containsKey(p)).map((p) =>
+                  DataColumn(
+                    label: Text(
+                      planetShort[p] ?? p,
+                      style: TextStyle(fontWeight: FontWeight.w800, fontSize: 12, color: kPurple2),
+                    ),
+                  ),
+                ),
+              ],
+              rows: List.generate(vargaKeys.length, (vi) {
+                return DataRow(
+                  color: WidgetStateProperty.resolveWith<Color?>((states) {
+                    return vi.isEven ? null : kBorder.withValues(alpha: 0.15);
+                  }),
+                  cells: [
+                    DataCell(
+                      Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(vargaLabels[vi], style: TextStyle(fontWeight: FontWeight.w800, fontSize: 11, color: kOrange)),
+                          Text(vargaKnNames[vi], style: TextStyle(fontSize: 9, color: kMuted)),
+                        ],
+                      ),
+                    ),
+                    ...planetOrder.where((p) => planetDetails.containsKey(p)).map((p) {
+                      final detail = planetDetails[p]!;
+                      final rashiName = detail[vargaKeys[vi]] as String? ?? '-';
+                      // Truncate to 2-3 chars for compact display
+                      final shortRashi = rashiName.length > 3 ? rashiName.substring(0, 3) : rashiName;
+                      return DataCell(
+                        Center(
+                          child: Text(
+                            shortRashi,
+                            style: TextStyle(fontSize: 11, color: kText),
+                            textAlign: TextAlign.center,
+                          ),
+                        ),
+                      );
+                    }),
+                  ],
+                );
+              }),
+            ),
+          ),
+
+          const SizedBox(height: 16),
+
+          // ── Detailed per-planet varga breakdown ──
+          _sectionLabel('🔍 ಗ್ರಹವಾರು ವರ್ಗ ವಿವರ', kPurple2),
+          const SizedBox(height: 6),
+          ...planetOrder.where((p) => planetDetails.containsKey(p)).map((pName) {
+            final detail = planetDetails[pName]!;
+            return Padding(
+              padding: const EdgeInsets.only(bottom: 8),
+              child: AppCard(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      trAll(pName),
+                      style: TextStyle(fontWeight: FontWeight.w900, fontSize: 14, color: kPurple2),
+                    ),
+                    const Divider(height: 10),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 4,
+                      children: List.generate(vargaKeys.length, (vi) {
+                        final rashiName = detail[vargaKeys[vi]] as String? ?? '-';
+                        return Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: kBorder.withValues(alpha: 0.3),
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          child: Column(
+                            children: [
+                              Text(vargaLabels[vi], style: TextStyle(fontWeight: FontWeight.w700, fontSize: 10, color: kOrange)),
+                              Text(rashiName, style: TextStyle(fontSize: 11, color: kText)),
+                            ],
+                          ),
+                        );
+                      }),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          }),
+          const SizedBox(height: 20),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -1821,6 +2116,7 @@ class _AshtamangalaDashboardScreenState extends State<AshtamangalaDashboardScree
                   color: kCard,
                   child: TabBar(
                     controller: _tabCtrl,
+                    isScrollable: true,
                     labelColor: kPurple2,
                     unselectedLabelColor: kMuted,
                     labelStyle: const TextStyle(fontWeight: FontWeight.w800, fontSize: 13),
@@ -1838,6 +2134,8 @@ class _AshtamangalaDashboardScreenState extends State<AshtamangalaDashboardScree
                       _buildSphutaTab(),
                       _buildAshtamangalaTab(),
                       _buildTrisphutaDashaTab(),
+                      _buildAshtakaVargaTab(),
+                      _buildShodashaVargaTab(),
                     ],
                   ),
                 ),
