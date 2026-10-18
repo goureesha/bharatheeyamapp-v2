@@ -13,6 +13,7 @@ import '../widgets/planet_detail_sheet.dart';
 import '../widgets/date_time_input.dart';
 import '../core/ashtamangala_calculator.dart';
 import '../core/ashtakavarga.dart';
+import '../services/ashtamangala_storage_service.dart';
 
 // ─────────────────────────────────────────────
 // ೧. ಅಷ್ಟಮಂಗಲ ಪ್ರಶ್ನ - ಮಾಹಿತಿ ನಮೂದು ಪರದೆ (Input Screen)
@@ -49,6 +50,8 @@ class _AshtamangalaScreenState extends State<AshtamangalaScreen> {
   String _geoStatus = '';
   bool _calculating = false;
   bool _showValidationErrors = false;
+  Map<String, AshtamangalaRecord> _savedRecords = {};
+  bool _loadedFromSaved = false;
 
   bool get _allInputsValid {
     final ashta = int.tryParse(_numberCtrl.text.trim());
@@ -81,6 +84,7 @@ class _AshtamangalaScreenState extends State<AshtamangalaScreen> {
     _numberCtrl.addListener(_onInputChanged);
     _tamboolaCtrl.addListener(_onInputChanged);
     _placeCtrl.addListener(_onInputChanged);
+    _loadRecords();
   }
 
   @override
@@ -299,6 +303,144 @@ class _AshtamangalaScreenState extends State<AshtamangalaScreen> {
     } finally {
       if (mounted) setState(() => _calculating = false);
     }
+  }
+
+  Future<void> _loadRecords() async {
+    final records = await AshtamangalaStorageService.loadAll();
+    if (mounted) setState(() => _savedRecords = records);
+  }
+
+  void _loadRecord(AshtamangalaRecord r) {
+    setState(() {
+      _loadedFromSaved = true;
+      _nameCtrl.text = r.name;
+      _numberCtrl.text = r.ashtamangalaNumber;
+      _tamboolaCtrl.text = r.tamboolaNumber;
+      _sprashtangaNum = r.sprashtangaNum;
+      _svarnaroodhaRashi = r.svarnaroodhaRashi;
+      _prucchakaRashi = r.prucchakaRashi;
+      _prucchakaNak = r.prucchakaNak;
+      _placeCtrl.text = r.place;
+      _latCtrl.text = r.lat.toStringAsFixed(4);
+      _lonCtrl.text = r.lon.toStringAsFixed(4);
+      _tzCtrl.text = '${r.tzOffset >= 0 ? '+' : ''}';
+      _hour = r.hour;
+      _minute = r.minute;
+      _ampm = r.ampm;
+      try {
+        final parts = r.date.split('-');
+        if (parts.length == 3) {
+          _dob = DateTime(int.parse(parts[0]), int.parse(parts[1]), int.parse(parts[2]));
+        }
+      } catch (_) {}
+    });
+  }
+
+
+  Future<void> _saveRecord() async {
+    if (_nameCtrl.text.trim().isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('ಹೆಸರು ನಮೂದಿಸಿ'), backgroundColor: Colors.red),
+      );
+      return;
+    }
+    final record = AshtamangalaRecord(
+      name: _nameCtrl.text.trim(),
+      date: '${_dob.year}-${_dob.month.toString().padLeft(2,'0')}-${_dob.day.toString().padLeft(2,'0')}',
+      hour: _hour, minute: _minute, ampm: _ampm,
+      lat: double.tryParse(_latCtrl.text) ?? LocationService.lat,
+      lon: double.tryParse(_lonCtrl.text) ?? LocationService.lon,
+      tzOffset: double.tryParse(_tzCtrl.text) ?? LocationService.tzOffset,
+      place: _placeCtrl.text.trim(),
+      ashtamangalaNumber: _numberCtrl.text.trim(),
+      tamboolaNumber: _tamboolaCtrl.text.trim(),
+      sprashtangaNum: _sprashtangaNum,
+      svarnaroodhaRashi: _svarnaroodhaRashi,
+      prucchakaRashi: _prucchakaRashi,
+      prucchakaNak: _prucchakaNak,
+      savedAt: DateTime.now(),
+    );
+    await AshtamangalaStorageService.save(record);
+    await _loadRecords();
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('✅ "${record.name}" ಉಳಿಸಲಾಗಿದೆ'),
+          backgroundColor: const Color(0xFF2E7D32),
+        ),
+      );
+    }
+  }
+
+  Widget _buildSavedRecordsSheet() {
+    final sorted = _savedRecords.entries.toList()
+      ..sort((a, b) {
+        final aT = a.value.savedAt;
+        final bT = b.value.savedAt;
+        if (aT != null && bT != null) return bT.compareTo(aT);
+        if (bT != null) return 1;
+        if (aT != null) return -1;
+        return a.key.compareTo(b.key);
+      });
+
+    return Container(
+      constraints: BoxConstraints(maxHeight: MediaQuery.of(context).size.height * 0.6),
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text('ಉಳಿಸಿದ ಅಷ್ಟಮಂಗಲ ಪ್ರಶ್ನೆಗಳು', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: kPurple2)),
+          const Divider(),
+          if (sorted.isEmpty)
+            Padding(padding: EdgeInsets.all(32), child: Text('ಯಾವುದೇ ಉಳಿಸಿದ ಪ್ರಶ್ನೆಗಳಿಲ್ಲ', style: TextStyle(color: kMuted)))
+          else
+            Flexible(
+              child: ListView.builder(
+                shrinkWrap: true,
+                itemCount: sorted.length,
+                itemBuilder: (_, i) {
+                  final record = sorted[i].value;
+                  return Dismissible(
+                    key: Key(sorted[i].key),
+                    direction: DismissDirection.endToStart,
+                    background: Container(
+                      alignment: Alignment.centerRight,
+                      padding: const EdgeInsets.only(right: 20),
+                      color: Colors.red,
+                      child: const Icon(Icons.delete, color: Colors.white),
+                    ),
+                    confirmDismiss: (_) => showDialog(
+                      context: context,
+                      builder: (ctx) => AlertDialog(
+                        title: Text('ಅಳಿಸುವುದೇ?'),
+                        content: Text('"${record.name}" ಅಳಿಸುವುದೇ?'),
+                        actions: [
+                          TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text('ಬೇಡ')),
+                          TextButton(onPressed: () => Navigator.pop(ctx, true), child: Text('ಹೌದು', style: TextStyle(color: Colors.red))),
+                        ],
+                      ),
+                    ),
+                    onDismissed: (_) async {
+                      await AshtamangalaStorageService.delete(sorted[i].key);
+                      await _loadRecords();
+                    },
+                    child: ListTile(
+                      leading: Icon(Icons.auto_awesome, color: kPurple2),
+                      title: Text(record.name, style: TextStyle(fontWeight: FontWeight.w700, color: kText)),
+                      subtitle: Text('${record.date} | ${record.place} | ಸಂ: ${record.ashtamangalaNumber}', style: TextStyle(color: kMuted, fontSize: 12)),
+                      trailing: Icon(Icons.chevron_right, color: kMuted),
+                      onTap: () {
+                        Navigator.pop(context);
+                        _loadRecord(record);
+                      },
+                    ),
+                  );
+                },
+              ),
+            ),
+        ],
+      ),
+    );
   }
 
   @override
@@ -668,6 +810,81 @@ class _AshtamangalaScreenState extends State<AshtamangalaScreen> {
                         Expanded(child: _inputField(_tzCtrl, 'ಕಾಲ ವಲಯ', Icons.schedule)),
                       ],
                     ),
+                    // Save, Open, Now buttons
+                    Row(
+                      children: [
+                        Expanded(
+                          child: ElevatedButton.icon(
+                            onPressed: _saveRecord,
+                            icon: const Icon(Icons.save, size: 18),
+                            label: const Text('ಉಳಿಸಿ', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 13)),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: const Color(0xFF2E7D32),
+                              foregroundColor: Colors.white,
+                              padding: const EdgeInsets.symmetric(vertical: 12),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 6),
+                        Expanded(
+                          child: ElevatedButton.icon(
+                            onPressed: () {
+                              showModalBottomSheet(
+                                context: context,
+                                backgroundColor: kCard,
+                                shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+                                builder: (_) => _buildSavedRecordsSheet(),
+                              );
+                            },
+                            icon: const Icon(Icons.folder_open, size: 18),
+                            label: const Text('ತೆರೆಯಿರಿ', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 13)),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: const Color(0xFF2B6CB0),
+                              foregroundColor: Colors.white,
+                              padding: const EdgeInsets.symmetric(vertical: 12),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 6),
+                        Expanded(
+                          child: ElevatedButton.icon(
+                            onPressed: () {
+                              final selectedTz = double.tryParse(_tzCtrl.text) ?? LocationService.tzOffset;
+                              final nowUtc = DateTime.now().toUtc();
+                              final locationNow = nowUtc.add(Duration(
+                                hours: selectedTz.truncate(),
+                                minutes: ((selectedTz - selectedTz.truncate()) * 60).round(),
+                              ));
+                              setState(() {
+                                _loadedFromSaved = false;
+                                _nameCtrl.clear();
+                                _numberCtrl.clear();
+                                _tamboolaCtrl.clear();
+                                _sprashtangaNum = null;
+                                _svarnaroodhaRashi = null;
+                                _prucchakaRashi = null;
+                                _prucchakaNak = null;
+                                _dob = locationNow;
+                                _hour = locationNow.hour % 12 == 0 ? 12 : locationNow.hour % 12;
+                                _minute = locationNow.minute;
+                                _ampm = locationNow.hour >= 12 ? 'PM' : 'AM';
+                              });
+                            },
+                            icon: const Icon(Icons.access_time, size: 18),
+                            label: const Text('ಈಗ', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 13)),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: kTeal,
+                              foregroundColor: Colors.white,
+                              padding: const EdgeInsets.symmetric(vertical: 12),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 10),
                     const SizedBox(height: 18),
 
                     // Calculate Button
