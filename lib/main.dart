@@ -64,6 +64,7 @@ Future<void> _initEphemeris() async {
 Future<void> _initAuth() async {
   if (kIsWeb) return; // Web uses password auth, not Google
   try {
+    await GoogleAuthService.loadPersistedState();
     await GoogleAuthService.signInSilently();
   } catch (e) {
     debugPrint('Auth init error: $e');
@@ -277,7 +278,7 @@ class _BharatheeyamAppState extends State<BharatheeyamApp> with WidgetsBindingOb
           ),
           home: kIsWeb
               ? const _WebPasswordGate()
-              : GoogleAuthService.isSignedIn
+              : (GoogleAuthService.isSignedIn || GoogleAuthService.wasPreviouslySignedIn)
                   ? const _AuthGate()
                   : const _LoginScreen(),
         );

@@ -2,11 +2,34 @@ import 'package:google_sign_in/google_sign_in.dart';
 import 'package:flutter/foundation.dart';
 import 'package:extension_google_sign_in_as_googleapis_auth/extension_google_sign_in_as_googleapis_auth.dart';
 import 'package:googleapis_auth/googleapis_auth.dart' as gapis_auth;
+import 'package:shared_preferences/shared_preferences.dart';
 import 'tester_service.dart';
 
 /// Google Sign-In service — email + calendar scopes.
 /// Used for user identity and Google Calendar 2-way sync.
 class GoogleAuthService {
+  static const String _wasSignedInKey = 'was_signed_in';
+
+  /// Whether the user had previously signed in successfully.
+  /// Persisted across app restarts via SharedPreferences.
+  /// Used to allow offline access when silent sign-in fails.
+  static bool _wasPreviouslySignedIn = false;
+  static bool get wasPreviouslySignedIn => _wasPreviouslySignedIn;
+
+  /// Load the persisted sign-in flag from SharedPreferences.
+  /// Must be called during app startup (before checking isSignedIn).
+  static Future<void> loadPersistedState() async {
+    final prefs = await SharedPreferences.getInstance();
+    _wasPreviouslySignedIn = prefs.getBool(_wasSignedInKey) ?? false;
+    debugPrint('GoogleAuth: wasPreviouslySignedIn = $_wasPreviouslySignedIn');
+  }
+
+  /// Persist the sign-in flag.
+  static Future<void> _saveSignedInFlag(bool value) async {
+    _wasPreviouslySignedIn = value;
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(_wasSignedInKey, value);
+  }
   static const _webClientId =
       '149255394829-167dod55vdctebqpqacn5n5in5rfiift.apps.googleusercontent.com';
 
@@ -94,6 +117,7 @@ class GoogleAuthService {
       if (_currentUser != null) {
         debugPrint('Google Sign-In success: ${_currentUser!.email}');
         TesterService.checkTesterStatus(_currentUser!.email);
+        await _saveSignedInFlag(true);
       }
       return _currentUser != null;
     } catch (e) {
@@ -105,6 +129,7 @@ class GoogleAuthService {
   static Future<void> signOut() async {
     await _instance.signOut();
     _currentUser = null;
+    await _saveSignedInFlag(false);
     await TesterService.onSignOut();
   }
 
@@ -113,6 +138,7 @@ class GoogleAuthService {
       _currentUser = await _instance.signInSilently();
       if (_currentUser != null) {
         TesterService.checkTesterStatus(_currentUser!.email);
+        await _saveSignedInFlag(true);
       }
       return _currentUser != null;
     } catch (e) {
