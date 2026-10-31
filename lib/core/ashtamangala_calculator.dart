@@ -1,4 +1,4 @@
-// Ashtamangala Prashna Calculations based on Prashna Marga & Kerala Astrological Tradition
+﻿// Ashtamangala Prashna Calculations based on Prashna Marga & Kerala Astrological Tradition
 
 import '../constants/strings.dart';
 import 'calculator.dart';
@@ -466,14 +466,21 @@ class AshtamangalaCalculator {
     return 'ರೋಗ'; // Neutral
   }
 
-  /// ಭೂತೋದಯ: Determine the rising element based on Lagna rashi
-  static String _getBhutodaya(int lagnaRashi) {
-    // Fire signs: Mesha(0), Simha(4), Dhanu(8) → ಅಗ್ನಿ
-    // Earth signs: Vrishabha(1), Kanya(5), Makara(9) → ಪೃಥ್ವಿ
-    // Air signs: Mithuna(2), Tula(6), Kumbha(10) → ವಾಯು
-    // Water signs: Karka(3), Vrischika(7), Meena(11) → ಜಲ
-    const elements = ['ಅಗ್ನಿ', 'ಪೃಥ್ವಿ', 'ವಾಯು', 'ಜಲ'];
-    return elements[lagnaRashi % 4];
+  /// ಭೂತೋದಯ: Determine the rising Pancha Bhuta based on Lagna longitude
+  /// Per Prashna Marga Ch.16 - each 30 degree sign divided into 5 x 6 degree blocks.
+  /// Odd signs (Oja): forward  ಪೃಥ್ವಿ -> ಜಲ -> ತೇಜಸ್ (ಅಗ್ನಿ) -> ವಾಯು -> ಆಕಾಶ
+  /// Even signs (Yugma): reverse ಆಕಾಶ -> ವಾಯು -> ತೇಜಸ್ (ಅಗ್ನಿ) -> ಜಲ -> ಪೃಥ್ವಿ
+  static String _getBhutodaya(double lagnaLong) {
+    final rashi = (lagnaLong / 30).floor() % 12;
+    final degInSign = lagnaLong % 30; // 0..30
+    final blockIdx = (degInSign / 6).floor().clamp(0, 4); // 0..4
+    // Odd rashi index (0-based): 0=Mesha,2=Mithuna,4=Simha,6=Tula,8=Dhanu,10=Kumbha
+    final isOdd = rashi % 2 == 0;
+    // Forward: Prithvi(0) Jala(1) Tejas(2) Vayu(3) Akasha(4)
+    // Reverse: Akasha(0) Vayu(1) Tejas(2) Jala(3) Prithvi(4)
+    const bhutas = ['ಪೃಥ್ವಿ', 'ಜಲ', 'ತೇಜಸ್ (ಅಗ್ನಿ)', 'ವಾಯು', 'ಆಕಾಶ'];
+    final idx = isOdd ? blockIdx : (4 - blockIdx);
+    return bhutas[idx];
   }
 
   /// ತಾಂಬೂಲ ಗ್ರಹದ ರೇಖಾಂಶ (Longitude of Tamboola Graha planet)
@@ -709,8 +716,8 @@ class AshtamangalaCalculator {
     // ಅರ್ಧ ಪ್ರಹಾರ ಸ್ಫುಟ = L + Me + Md (Mercury's segment upagraha, Prashna Marga)
     final ardhaPraharaStr = formatRasiDMS(_norm(L + Me + Md));
 
-    // ಭೂತೋದಯ = element based on Lagna rashi triplicity
-    final bhutodayaStr = _getBhutodaya(lagnaRashi);
+    // ಭೂತೋದಯ = rising Pancha Bhuta per PM Ch.16 (6deg blocks, odd/even sign)
+    final bhutodayaStr = _getBhutodaya(lagnaLong);
 
     // ಆರೂಢ ಸ್ಫುಟ = Arudha rashi + Lagna's degree-within-sign
     final arudhaSphutaDeg = _norm(aroodhaRashi * 30.0 + (L % 30.0));
