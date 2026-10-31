@@ -1076,6 +1076,7 @@ class _AshtamangalaDashboardScreenState extends State<AshtamangalaDashboardScree
       svarnaroodhaRashi: widget.svarnaroodhaRashi,
       sprashtangaNum: widget.sprashtangaNum,
       prucchakaNakshatraIdx: nakIdx,
+      tamboolaNumber: int.tryParse(widget.tamboolaNumber),
     );
   }
 
@@ -1764,6 +1765,8 @@ class _AshtamangalaDashboardScreenState extends State<AshtamangalaDashboardScree
                   ['ದಿನ ಅಷ್ಟ ಭಾಗ', d.dinaAshtaBhaga],
                   ['ದಿನಾಷ್ಟ ಭಾಗ ಫಲ', d.dinaAshtaBhagaPhala],
                   ['ತಾಂಬೂಲ ಗ್ರಹ', d.tamboolaGraha],
+                  if (d.tamboolaLagna.isNotEmpty)
+                    ['ತಾಂಬೂಲ ಲಗ್ನ', d.tamboolaLagna],
                   ['ಸಂತಾನ ತಿಥಿಸ್ಫುಟ:ಪಂಚಾಗ್ಗಶಿನ..', d.santanaTithiPanchagga],
                   ['ಸಂತಾನ ತಿಥಿಸ್ಫುಟ:ಚಂದ್ರಸ್ಪತ್ಯಾ..', d.santanaTithiChandra],
                   ['ಸಂತಾನ ತಿಥಿಸ್ಫುಟ:ರವೀಂದುಶುಕ್ರ..', d.santanaTithiRavindu],

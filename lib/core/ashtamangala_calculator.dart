@@ -1,4 +1,4 @@
-// Ashtamangala Prashna Calculations based on Prashna Marga & Kerala Astrological Tradition
+﻿// Ashtamangala Prashna Calculations based on Prashna Marga & Kerala Astrological Tradition
 
 import '../constants/strings.dart';
 import 'calculator.dart';
@@ -85,6 +85,7 @@ class AshtamangalaDetails {
   final String dinaAshtaBhaga;
   final String dinaAshtaBhagaPhala;
   final String tamboolaGraha;
+  final String tamboolaLagna; // Rashi where Tamboola Graha sits
   final String santanaTithiPanchagga;
   final String santanaTithiChandra;
   final String santanaTithiRavindu;
@@ -166,6 +167,7 @@ class AshtamangalaDetails {
     required this.dinaAshtaBhaga,
     required this.dinaAshtaBhagaPhala,
     required this.tamboolaGraha,
+    required this.tamboolaLagna,
     required this.santanaTithiPanchagga,
     required this.santanaTithiChandra,
     required this.santanaTithiRavindu,
@@ -453,6 +455,24 @@ class AshtamangalaCalculator {
     return elements[lagnaRashi % 4];
   }
 
+  /// ತಾಂಬೂಲ ಗ್ರಹದ ರೇಖಾಂಶ (Longitude of Tamboola Graha planet)
+  /// Maps remainder (0-6) to planet name and returns its longitude from KundaliResult.
+  /// Remainder: 0=Shani, 1=Ravi, 2=Chandra, 3=Kuja, 4=Budha, 5=Guru, 6=Shukra
+  static double? _getTamboolaGrahaLongitude(int remainder, KundaliResult result) {
+    const planetMap = {
+      0: 'ಶನಿ',    // Saturn
+      1: 'ರವಿ',    // Sun
+      2: 'ಚಂದ್ರ', // Moon
+      3: 'ಕುಜ',    // Mars
+      4: 'ಬುಧ',    // Mercury
+      5: 'ಗುರು',   // Jupiter
+      6: 'ಶುಕ್ರ', // Venus
+    };
+    final pName = planetMap[remainder];
+    if (pName == null) return null;
+    return result.planets[pName]?.longitude;
+  }
+
   /// ಪ್ರಧಾನ ಲೆಕ್ಕಾಚಾರ
   static AshtamangalaDetails calculate({
     required KundaliResult result,
@@ -461,6 +481,7 @@ class AshtamangalaCalculator {
     int? svarnaroodhaRashi,
     int? sprashtangaNum,
     int? prucchakaNakshatraIdx,
+    int? tamboolaNumber,
   }) {
     // ═══ ೧. ಅಷ್ಟಮಂಗಲ ಸಂಖ್ಯೆ ವಿಶ್ಲೇಷಣೆ ═══
     final numStr = ashtamangalaNumber.trim();
@@ -763,9 +784,35 @@ class AshtamangalaCalculator {
     // ದಿನಾಷ್ಟ ಭಾಗ ಫಲ: Result for the ashta bhaga planet
     final dinaAshtaPhalaStr = _ashtaBhagaPhala[ashtaIdx];
 
-    // ತಾಂಬೂಲ ಗ್ರಹ: Based on sprashtanga number or ashtamangala digit
-    final tamboolaIdx = ((sprashtangaNum ?? d1) - 1).clamp(0, 7);
-    final tamboolaStr = _grahas[tamboolaIdx];
+    // ತಾಂಬೂಲ ಗ್ರಹ: Prashna Marga Pancheekarana Prakriya (Ch. 7)
+    // Formula: (T × 10 + 1) mod 7 → remainder maps to weekday-order planet
+    // Rem 1=Ravi, 2=Chandra, 3=Kuja, 4=Budha, 5=Guru, 6=Shukra, 0(7)=Shani
+    const _tamboolaGrahaNames = [
+      'ಶನಿ',    // 0 (remainder 7) — Saturn
+      'ರವಿ',    // 1 — Sun
+      'ಚಂದ್ರ', // 2 — Moon
+      'ಕುಜ',    // 3 — Mars
+      'ಬುಧ',    // 4 — Mercury
+      'ಗುರು',   // 5 — Jupiter
+      'ಶುಕ್ರ', // 6 — Venus
+    ];
+    String tamboolaStr;
+    String tamboolaLagnaStr = '';
+    if (tamboolaNumber != null && tamboolaNumber > 0) {
+      final tRemainder = ((tamboolaNumber * 10) + 1) % 7;
+      tamboolaStr = _tamboolaGrahaNames[tRemainder];
+      // Tamboola Lagna = Rashi where Tamboola Graha is placed at query time
+      final tamboolaGrahaLong = _getTamboolaGrahaLongitude(
+        tRemainder, result,
+      );
+      if (tamboolaGrahaLong != null) {
+        final tLagnaRashi = (tamboolaGrahaLong / 30).floor() % 12;
+        tamboolaLagnaStr = knRashi[tLagnaRashi];
+      }
+    } else {
+      // Fallback: use first digit of ashtamangala number
+      tamboolaStr = _grahas[(d1 - 1).clamp(0, 7)];
+    }
 
     // ಸಂತಾನ ತಿಥಿಸ್ಫುಟ: three variants
     // a. ಪಂಚಾಗ್ಗಶಿನ = (M - S) × 5 mod 360
@@ -881,6 +928,7 @@ class AshtamangalaCalculator {
       dinaAshtaBhaga: dinaAshtaStr,
       dinaAshtaBhagaPhala: dinaAshtaPhalaStr,
       tamboolaGraha: tamboolaStr,
+      tamboolaLagna: tamboolaLagnaStr,
       santanaTithiPanchagga: santanaPanchagga,
       santanaTithiChandra: santanaChandra,
       santanaTithiRavindu: santanaRavindu,
