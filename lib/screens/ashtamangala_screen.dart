@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter/gestures.dart';
 import 'dart:math' as math;
 import 'package:http/http.dart' as http;
@@ -14,6 +14,7 @@ import '../widgets/date_time_input.dart';
 import '../core/ashtamangala_calculator.dart';
 import '../core/ashtakavarga.dart';
 import '../services/ashtamangala_storage_service.dart';
+import '../constants/ashtamangala_shloka_references.dart';
 
 // ─────────────────────────────────────────────
 // ೧. ಅಷ್ಟಮಂಗಲ ಪ್ರಶ್ನ - ಮಾಹಿತಿ ನಮೂದು ಪರದೆ (Input Screen)
@@ -1025,7 +1026,7 @@ class _AshtamangalaDashboardScreenState extends State<AshtamangalaDashboardScree
   int _selectedAvIdx = 0; // 0=SAV, 1-7 = individual planet BAV
 
   // ಬಳಕೆದಾರರು ಕೇಳಿದ ೫ ಟ್ಯಾಬ್‌ಗಳು
-  static const _tabs = ['ಪಂಚಾಂಗ', 'ಕುಂಡಲಿ', 'ಸ್ಫುಟ', 'ಅಷ್ಟಮಂಗಲ', 'ತ್ರಿಸ್ಫುಟ ದಶಾ', 'ಅಷ್ಟಕವರ್ಗ', 'ಷೋಡಶವರ್ಗ'];
+  static const _tabs = ['ಪಂಚಾಂಗ', 'ಕುಂಡಲಿ', 'ಸ್ಫುಟ', 'ಅಷ್ಟಮಂಗಲ', 'ತ್ರಿಸ್ಫುಟ ದಶಾ', 'ಅಷ್ಟಕವರ್ಗ', 'ಷೋಡಶವರ್ಗ', 'ಆಧಾರ'];
 
   // ೧೬ ಪಾರಾಶರಿ ಷೋಡಶವರ್ಗ ಕುಂಡಲಿಗಳು + ಭಾವ ಕುಂಡಲಿ
   static const List<Map<String, dynamic>> _shodashaVargaCharts = [
@@ -1919,6 +1920,161 @@ class _AshtamangalaDashboardScreenState extends State<AshtamangalaDashboardScree
     );
   }
 
+  // ═══ ಟ್ಯಾಬ್ ೮: ಆಧಾರ (Shloka References) ═══
+  Widget _buildAadharaTab() {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Center(
+            child: Padding(
+              padding: const EdgeInsets.only(bottom: 12, top: 4),
+              child: Column(
+                children: [
+                  const Text(
+                    'ಸೂತ್ರ-ಸ್ಫುಟ ಮೂಲ ಶ್ಲೋಕ ಆಧಾರ',
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: Color(0xFFE67E22)),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    'ಪ್ರಶ್ನಮಾರ್ಗ, ಸೂರ್ಯಸಿದ್ಧಾಂತ, ಫಲದೀಪಿಕಾ, ದೇವಕೇರಳಂ',
+                    style: TextStyle(fontSize: 12, color: kMuted),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          ...AshtamangalaShlokaData.allSections.entries.map((section) {
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _sectionLabel('📖 ${section.key}', kPurple2),
+                const SizedBox(height: 4),
+                ...section.value.map((ref) => _buildShlokaCard(ref)),
+                const SizedBox(height: 12),
+              ],
+            );
+          }),
+          const SizedBox(height: 20),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildShlokaCard(ShlokaRef ref) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 10),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.04),
+            blurRadius: 4,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(9),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            // Header with name
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+              color: kPurple2.withValues(alpha: 0.1),
+              child: Text(
+                ref.name,
+                style: TextStyle(fontSize: 14, fontWeight: FontWeight.w800, color: kPurple2),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.all(12),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Shloka (Sanskrit/original)
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFFFF8E1),
+                      borderRadius: BorderRadius.circular(6),
+                      border: Border.all(color: const Color(0xFFFFE082)),
+                    ),
+                    child: Text(
+                      ref.shloka,
+                      style: const TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                        color: Color(0xFF5D4037),
+                        height: 1.5,
+                        fontStyle: FontStyle.italic,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  // Kannada meaning
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('ಅರ್ಥ: ', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 12, color: kTeal)),
+                      Expanded(child: Text(ref.kannadaArtha, style: const TextStyle(fontSize: 12, height: 1.4))),
+                    ],
+                  ),
+                  const SizedBox(height: 6),
+                  // Formula
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('ಸೂತ್ರ: ', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 12, color: Color(0xFFE67E22))),
+                      Expanded(
+                        child: Text(
+                          ref.formula,
+                          style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Color(0xFF2E7D32)),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  // Book & Chapter info
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: kPurple2.withValues(alpha: 0.06),
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: Row(
+                      children: [
+                        const Icon(Icons.menu_book_rounded, size: 16, color: Color(0xFF7B1FA2)),
+                        const SizedBox(width: 6),
+                        Expanded(
+                          child: Text.rich(
+                            TextSpan(children: [
+                              TextSpan(text: 'ಗ್ರಂಥ: ', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 11, color: kPurple2)),
+                              TextSpan(text: ref.grantha, style: const TextStyle(fontSize: 11)),
+                              TextSpan(text: '  |  ', style: TextStyle(color: kMuted)),
+                              TextSpan(text: ref.adhyaya, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600)),
+                              TextSpan(text: '  |  ', style: TextStyle(color: kMuted)),
+                              TextSpan(text: ref.stanza, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: Color(0xFFE67E22))),
+                            ]),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget _buildAshtamangalaCard({
     required String title,
     required List<List<String>> rows,
@@ -2442,6 +2598,7 @@ class _AshtamangalaDashboardScreenState extends State<AshtamangalaDashboardScree
                       _buildTrisphutaDashaTab(),
                       _buildAshtakaVargaTab(),
                       _buildShodashaVargaTab(),
+                      _buildAadharaTab(),
                     ],
                   ),
                 ),
