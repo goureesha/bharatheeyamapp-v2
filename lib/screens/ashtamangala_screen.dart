@@ -15,6 +15,7 @@ import '../core/ashtamangala_calculator.dart';
 import '../core/ashtakavarga.dart';
 import '../services/ashtamangala_storage_service.dart';
 import '../constants/ashtamangala_shloka_references.dart';
+import '../constants/ashtamangala_phala_shlokas.dart';
 
 // ─────────────────────────────────────────────
 // ೧. ಅಷ್ಟಮಂಗಲ ಪ್ರಶ್ನ - ಮಾಹಿತಿ ನಮೂದು ಪರದೆ (Input Screen)
@@ -1026,7 +1027,7 @@ class _AshtamangalaDashboardScreenState extends State<AshtamangalaDashboardScree
   int _selectedAvIdx = 0; // 0=SAV, 1-7 = individual planet BAV
 
   // ಬಳಕೆದಾರರು ಕೇಳಿದ ೫ ಟ್ಯಾಬ್‌ಗಳು
-  static const _tabs = ['ಪಂಚಾಂಗ', 'ಕುಂಡಲಿ', 'ಸ್ಫುಟ', 'ಅಷ್ಟಮಂಗಲ', 'ತ್ರಿಸ್ಫುಟ ದಶಾ', 'ಅಷ್ಟಕವರ್ಗ', 'ಷೋಡಶವರ್ಗ', 'ಆಧಾರ'];
+  static const _tabs = ['ಪಂಚಾಂಗ', 'ಕುಂಡಲಿ', 'ಸ್ಫುಟ', 'ಅಷ್ಟಮಂಗಲ', 'ತ್ರಿಸ್ಫುಟ ದಶಾ', 'ಅಷ್ಟಕವರ್ಗ', 'ಷೋಡಶವರ್ಗ', 'ಫಲಾದೇಶ', 'ಆಧಾರ'];
 
   // ೧೬ ಪಾರಾಶರಿ ಷೋಡಶವರ್ಗ ಕುಂಡಲಿಗಳು + ಭಾವ ಕುಂಡಲಿ
   static const List<Map<String, dynamic>> _shodashaVargaCharts = [
@@ -1949,6 +1950,297 @@ class _AshtamangalaDashboardScreenState extends State<AshtamangalaDashboardScree
   }
 
   // ═══ ಟ್ಯಾಬ್ ೮: ಆಧಾರ (Shloka References) ═══
+
+  // ══════════════════════════════════════════════════════
+  // ಫಲಾದೇಶ ಟ್ಯಾಬ್ — context-aware original phala shlokas
+  // ══════════════════════════════════════════════════════
+  Widget _buildPhalaTab() {
+    final d = _ashtamangalaDetails;
+    return SingleChildScrollView(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Center(
+            child: Padding(
+              padding: const EdgeInsets.only(bottom: 12, top: 4),
+              child: Column(
+                children: [
+                  const Text(
+                    'ಅಷ್ಟಮಂಗಲ ಫಲಾದೇಶ',
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: Color(0xFFE67E22)),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    'ಮೂಲ ಸಂಸ್ಕೃತ ಫಲ ಶ್ಲೋಕಗಳು — ಪ್ರಶ್ನಮಾರ್ಗ ಆಧಾರಿತ',
+                    style: TextStyle(fontSize: 12, color: kMuted),
+                  ),
+                ],
+              ),
+            ),
+          ),
+
+          // ── ಗ್ರಹ ಫಲ ──────────────────────────────────────────
+          _sectionLabel('🪐 ಅಷ್ಟಮಂಗಲ ಗ್ರಹ ಫಲ', kPurple2),
+          const SizedBox(height: 4),
+          ...() {
+            final parts = d.graha.split('-');
+            final labels = ['ಅಂಕ ೧ ಗ್ರಹ', 'ಅಂಕ ೨ ಗ್ರಹ', 'ಅಂಕ ೩ ಗ್ರಹ'];
+            return List.generate(parts.length, (i) {
+              final key = parts[i].trim();
+              final ref = grahaPhala[key];
+              return _buildPhalaCard(
+                label: '${labels[i < labels.length ? i : 0]}: $key',
+                ref: ref,
+                fallbackArtha: '$key ಗ್ರಹ ಫಲ — ಪ್ರಶ್ನಮಾರ್ಗ ಅಧ್ಯಾಯ ೭',
+              );
+            });
+          }(),
+          const SizedBox(height: 12),
+
+          // ── ಯೋನಿ ಫಲ ──────────────────────────────────────────
+          _sectionLabel('🔮 ಯೋನಿ ಫಲ', kPurple2),
+          const SizedBox(height: 4),
+          ...() {
+            final parts = d.yoni.split('-');
+            final labels = ['ಅಂಕ ೧ ಯೋನಿ', 'ಅಂಕ ೨ ಯೋನಿ', 'ಅಂಕ ೩ ಯೋನಿ'];
+            return List.generate(parts.length, (i) {
+              final key = parts[i].trim();
+              final ref = yoniPhala[key];
+              return _buildPhalaCard(
+                label: '${labels[i < labels.length ? i : 0]}: $key',
+                ref: ref,
+                fallbackArtha: '$key ಯೋನಿ ಫಲ — ಪ್ರಶ್ನಮಾರ್ಗ ಅಧ್ಯಾಯ ೭',
+              );
+            });
+          }(),
+          const SizedBox(height: 12),
+
+          // ── ಜಂತು ಫಲ ──────────────────────────────────────────
+          _sectionLabel('🦁 ಜಂತು ಫಲ', kPurple2),
+          const SizedBox(height: 4),
+          ...() {
+            final parts = d.jantu.split('-');
+            final labels = ['ಅಂಕ ೧ ಜಂತು', 'ಅಂಕ ೨ ಜಂತು', 'ಅಂಕ ೩ ಜಂತು'];
+            return List.generate(parts.length, (i) {
+              final key = parts[i].trim();
+              final ref = jantuPhala[key];
+              return _buildPhalaCard(
+                label: '${labels[i < labels.length ? i : 0]}: $key',
+                ref: ref,
+                fallbackArtha: '$key ಜಂತು ಫಲ — ಪ್ರಶ್ನಮಾರ್ಗ ಅಧ್ಯಾಯ ೭',
+              );
+            });
+          }(),
+          const SizedBox(height: 12),
+
+          // ── ಪಂಚಭೂತ ಫಲ ───────────────────────────────────────
+          _sectionLabel('🌍 ಪಂಚಭೂತ ಫಲ', kPurple2),
+          const SizedBox(height: 4),
+          ...() {
+            final parts = d.panchabhuta.split('-');
+            final labels = ['ಅಂಕ ೧ ಭೂತ', 'ಅಂಕ ೨ ಭೂತ', 'ಅಂಕ ೩ ಭೂತ'];
+            return List.generate(parts.length, (i) {
+              final key = parts[i].trim();
+              final ref = panchabhutaPhala[key];
+              return _buildPhalaCard(
+                label: '${labels[i < labels.length ? i : 0]}: $key',
+                ref: ref,
+                fallbackArtha: '$key ಭೂತ ಫಲ — ಪ್ರಶ್ನಮಾರ್ಗ ಅಧ್ಯಾಯ ೭',
+              );
+            });
+          }(),
+          const SizedBox(height: 12),
+
+          // ── ಪಕ್ಷ ಫಲ ──────────────────────────────────────────
+          _sectionLabel('🌙 ಪಕ್ಷ ಫಲ', kPurple2),
+          const SizedBox(height: 4),
+          _buildPhalaCard(
+            label: 'ಪಕ್ಷ: ${d.paksha}',
+            ref: pakshaPhala[d.paksha],
+            fallbackArtha: '${d.paksha} ಫಲ — ಪ್ರಶ್ನಮಾರ್ಗ ಅಧ್ಯಾಯ ೭',
+          ),
+          const SizedBox(height: 12),
+
+          // ── ವಾರ ಫಲ ──────────────────────────────────────────
+          _sectionLabel('📅 ವಾರ ಫಲ', kPurple2),
+          const SizedBox(height: 4),
+          _buildPhalaCard(
+            label: 'ವಾರ: ${d.vara}',
+            ref: varaPhala[d.vara],
+            fallbackArtha: '${d.vara} ಫಲ — ಪ್ರಶ್ನಮಾರ್ಗ ಅಧ್ಯಾಯ ೭',
+          ),
+          const SizedBox(height: 12),
+
+          // ── ಪಂಚಸೂತ್ರ ಫಲ ─────────────────────────────────────
+          _sectionLabel('📊 ಪಂಚಸೂತ್ರ ಫಲ', kPurple2),
+          const SizedBox(height: 4),
+          _buildPhalaCard(
+            label: 'ಸಾಮಾನ್ಯ ಸೂತ್ರ: ${d.samanyaSutra}',
+            ref: panchasutraPhala[d.samanyaSutra],
+            fallbackArtha: '${d.samanyaSutra} — ಪ್ರಶ್ನಮಾರ್ಗ ಅಧ್ಯಾಯ ೬',
+          ),
+          _buildPhalaCard(
+            label: 'ಆಧಿಪ ಸೂತ್ರ: ${d.adhipaSutra}',
+            ref: panchasutraPhala[d.adhipaSutra],
+            fallbackArtha: '${d.adhipaSutra} — ಪ್ರಶ್ನಮಾರ್ಗ ಅಧ್ಯಾಯ ೬',
+          ),
+          _buildPhalaCard(
+            label: 'ಅಂಶ ಸೂತ್ರ: ${d.amshaSutra}',
+            ref: panchasutraPhala[d.amshaSutra],
+            fallbackArtha: '${d.amshaSutra} — ಪ್ರಶ್ನಮಾರ್ಗ ಅಧ್ಯಾಯ ೬',
+          ),
+          _buildPhalaCard(
+            label: 'ನಕ್ಷತ್ರ ಸೂತ್ರ: ${d.nakshatraSutra}',
+            ref: panchasutraPhala[d.nakshatraSutra],
+            fallbackArtha: '${d.nakshatraSutra} — ಪ್ರಶ್ನಮಾರ್ಗ ಅಧ್ಯಾಯ ೬',
+          ),
+          _buildPhalaCard(
+            label: 'ಮಹಾ ಸೂತ್ರ: ${d.mahaSutra}',
+            ref: panchasutraPhala[d.mahaSutra],
+            fallbackArtha: '${d.mahaSutra} — ಪ್ರಶ್ನಮಾರ್ಗ ಅಧ್ಯಾಯ ೬',
+          ),
+          const SizedBox(height: 12),
+
+          // ── ಭೂತೋದಯ ಫಲ ──────────────────────────────────────
+          _sectionLabel('🌅 ಭೂತೋದಯ ಫಲ', kPurple2),
+          const SizedBox(height: 4),
+          _buildPhalaCard(
+            label: 'ಭೂತೋದಯ: ${d.bhutodaya}',
+            ref: bhutodayaPhala[d.bhutodaya],
+            fallbackArtha: '${d.bhutodaya} ಭೂತೋದಯ ಫಲ — ಪ್ರಶ್ನಮಾರ್ಗ ಅಧ್ಯಾಯ ೧೬',
+          ),
+          const SizedBox(height: 12),
+
+          // ── ದೇಹ-ಪ್ರಾಣ-ಮೃತ್ಯು ಫಲ ──────────────────────────
+          _sectionLabel('⚖️ ದೇಹ-ಪ್ರಾಣ-ಮೃತ್ಯು ಫಲ', kPurple2),
+          const SizedBox(height: 4),
+          () {
+            String key = 'ದೇಹ';
+            final t = d.dehaPranaMrityuTulane;
+            if (t.startsWith('ಪ್ರಾಣ')) key = 'ಪ್ರಾಣ';
+            if (t.startsWith('ಮೃತ್ಯು')) key = 'ಮೃತ್ಯು';
+            return _buildPhalaCard(
+              label: 'ತುಲನ: $key ಪ್ರಬಲ',
+              ref: dehaPranaPhala[key],
+              fallbackArtha: '$key ಬಲ ಫಲ — ಪ್ರಶ್ನಮಾರ್ಗ ಅಧ್ಯಾಯ ೫',
+            );
+          }(),
+          const SizedBox(height: 20),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPhalaCard({
+    required String label,
+    required PhalaRef? ref,
+    required String fallbackArtha,
+  }) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 10),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.04),
+            blurRadius: 4,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(9),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            // Header
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+              color: const Color(0xFFE67E22).withValues(alpha: 0.12),
+              child: Text(
+                label,
+                style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w800, color: Color(0xFFE67E22)),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.all(12),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  if (ref != null) ...[
+                    // Sanskrit shloka
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFFFF8E1),
+                        borderRadius: BorderRadius.circular(6),
+                        border: Border.all(color: const Color(0xFFFFE082)),
+                      ),
+                      child: Text(
+                        ref.shloka,
+                        style: const TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                          color: Color(0xFF5D4037),
+                          height: 1.6,
+                          fontStyle: FontStyle.italic,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    // Kannada artha
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text('ಫಲ: ', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 12, color: kTeal)),
+                        Expanded(child: Text(ref.kannadaArtha, style: const TextStyle(fontSize: 12, height: 1.4))),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    // Grantha reference
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                      decoration: BoxDecoration(
+                        color: kPurple2.withValues(alpha: 0.06),
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      child: Row(
+                        children: [
+                          const Icon(Icons.menu_book_rounded, size: 16, color: Color(0xFF7B1FA2)),
+                          const SizedBox(width: 6),
+                          Expanded(
+                            child: Text.rich(
+                              TextSpan(children: [
+                                TextSpan(text: 'ಗ್ರಂಥ: ', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 11, color: kPurple2)),
+                                TextSpan(text: ref.grantha, style: const TextStyle(fontSize: 11)),
+                                TextSpan(text: '  |  ', style: TextStyle(color: kMuted)),
+                                TextSpan(text: ref.adhyaya, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600)),
+                                TextSpan(text: '  |  ', style: TextStyle(color: kMuted)),
+                                TextSpan(text: ref.stanza, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: Color(0xFFE67E22))),
+                              ]),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ] else ...[
+                    Text(
+                      fallbackArtha,
+                      style: TextStyle(fontSize: 12, color: kMuted, height: 1.4),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
   Widget _buildAadharaTab() {
     return SingleChildScrollView(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
@@ -2626,6 +2918,7 @@ class _AshtamangalaDashboardScreenState extends State<AshtamangalaDashboardScree
                       _buildTrisphutaDashaTab(),
                       _buildAshtakaVargaTab(),
                       _buildShodashaVargaTab(),
+                      _buildPhalaTab(),
                       _buildAadharaTab(),
                     ],
                   ),
