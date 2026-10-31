@@ -2171,26 +2171,77 @@ class _AshtamangalaDashboardScreenState extends State<AshtamangalaDashboardScree
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   if (ref != null) ...[
-                    // Sanskrit shloka
-                    Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.all(10),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFFFF8E1),
-                        borderRadius: BorderRadius.circular(6),
-                        border: Border.all(color: const Color(0xFFFFE082)),
-                      ),
-                      child: Text(
-                        ref.shloka,
-                        style: const TextStyle(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w600,
-                          color: Color(0xFF5D4037),
-                          height: 1.6,
-                          fontStyle: FontStyle.italic,
+                    // Shloka box — Devanagari Sanskrit + Kannada transliteration
+                    if (!ref.shloka.startsWith('—'))
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.all(10),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFFFF8E1),
+                          borderRadius: BorderRadius.circular(6),
+                          border: Border.all(color: const Color(0xFFFFE082)),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              '• ಸಂಸ್ಕೃತ (देवनागरी)',
+                              style: TextStyle(fontSize: 10, color: Colors.brown.shade400, fontWeight: FontWeight.w600),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              ref.shloka,
+                              style: const TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w600,
+                                color: Color(0xFF5D4037),
+                                height: 1.6,
+                                fontStyle: FontStyle.italic,
+                              ),
+                            ),
+                            if (ref.kannadaShloka.isNotEmpty) ...[
+                              const SizedBox(height: 10),
+                              const Divider(height: 1, color: Color(0xFFFFE082)),
+                              const SizedBox(height: 8),
+                              Text(
+                                '• ಕನ್ನಡ ಲಿಪ್ಯಂತರ (ಪ್ರಶ್ನಮಾರ್ಗ)',
+                                style: TextStyle(fontSize: 10, color: Colors.brown.shade400, fontWeight: FontWeight.w600),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                ref.kannadaShloka,
+                                style: const TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w600,
+                                  color: Color(0xFF4E342E),
+                                  height: 1.6,
+                                  fontStyle: FontStyle.italic,
+                                ),
+                              ),
+                            ],
+                          ],
+                        ),
+                      )
+                    else
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.all(10),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFFFF8E1),
+                          borderRadius: BorderRadius.circular(6),
+                          border: Border.all(color: const Color(0xFFFFE082)),
+                        ),
+                        child: Text(
+                          ref.shloka,
+                          style: const TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                            color: Color(0xFF5D4037),
+                            height: 1.6,
+                            fontStyle: FontStyle.italic,
+                          ),
                         ),
                       ),
-                    ),
                     const SizedBox(height: 8),
                     // Kannada artha
                     Row(
