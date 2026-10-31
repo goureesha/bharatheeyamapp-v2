@@ -1,4 +1,4 @@
-﻿// Ashtamangala Prashna Calculations based on Prashna Marga & Kerala Astrological Tradition
+// Ashtamangala Prashna Calculations based on Prashna Marga & Kerala Astrological Tradition
 
 import '../constants/strings.dart';
 import 'calculator.dart';
@@ -90,6 +90,17 @@ class AshtamangalaDetails {
   final String santanaTithiChandra;
   final String santanaTithiRavindu;
 
+  // Additional Prashna Marga calculations
+  final String dehaPranaMrityuTulane;
+  final String digitPastAnalysis;
+  final String digitPresentAnalysis;
+  final String digitFutureAnalysis;
+  final String navagrahaFromNumber;
+  final String panchabhutaFromNumber;
+  final String kalaHora;
+  final String arudhaAvastha;
+  final String sprashtangaDosha;
+
   // ═══ ತ್ರಿಸ್ಫುಟ ದಶಾ ═══
   final List<DashaEntry> trisphutaDashas;
   final String trisphutaNakshatra;
@@ -171,6 +182,16 @@ class AshtamangalaDetails {
     required this.santanaTithiPanchagga,
     required this.santanaTithiChandra,
     required this.santanaTithiRavindu,
+    // Additional Prashna Marga
+    required this.dehaPranaMrityuTulane,
+    required this.digitPastAnalysis,
+    required this.digitPresentAnalysis,
+    required this.digitFutureAnalysis,
+    required this.navagrahaFromNumber,
+    required this.panchabhutaFromNumber,
+    required this.kalaHora,
+    required this.arudhaAvastha,
+    required this.sprashtangaDosha,
     required this.trisphutaDashas,
     required this.trisphutaNakshatra,
     required this.trisphutaDashaBalance,
@@ -822,6 +843,163 @@ class AshtamangalaCalculator {
     // c. ರವೀಂದುಶುಕ್ರ = S + M + V
     final santanaRavindu = formatRasiDMS(_norm(S + M + V));
 
+    // ═══ ೭ᵃ. ದೇಹ-ಪ್ರಾಣ-ಮೃತ್ಯು ತುಲನೆ (Prashna Marga Ch.5, St.17-23) ═══
+    final dehaDeg = advS['ದೇಹ'] ?? 0.0;
+    final pranaDeg = advS['ಪ್ರಾಣ'] ?? 0.0;
+    final mrityuDeg = advS['ಮೃತ್ಯು'] ?? 0.0;
+    String dehaPranaTulane;
+    if (dehaDeg >= pranaDeg && dehaDeg >= mrityuDeg) {
+      dehaPranaTulane = 'ದೇಹ ಪ್ರಬಲ — ಆರೋಗ್ಯ/ಚೇತರಿಕೆ ಸೂಚನೆ';
+    } else if (mrityuDeg >= dehaDeg && mrityuDeg >= pranaDeg) {
+      dehaPranaTulane = 'ಮೃತ್ಯು ಪ್ರಬಲ — ಅಪಾಯ/ಎಚ್ಚರಿಕೆ';
+    } else {
+      dehaPranaTulane = 'ಪ್ರಾಣ ಪ್ರಬಲ — ರೋಗ ಉಳಿಯುವ ಸೂಚನೆ';
+    }
+
+    // ═══ ೭ᵇ. ಅಂಕ ವಿಶ್ಲೇಷಣೆ: ಭೂತ-ವರ್ತಮಾನ-ಭವಿಷ್ಯ (PM Ch.7, St.1-2) ═══
+    // d1=hundreds=past, d2=tens=present, d3=units=future
+    // Each digit maps to a graha (1=Ravi..8=Rahu) with karakatva
+    const digitGrahaKarakatva = {
+      1: 'ರವಿ — ಅಧಿಕಾರ/ಪಿತೃ/ಆರೋಗ್ಯ',
+      2: 'ಕುಜ — ಭೂಮಿ/ಸೋದರ/ಶೌರ್ಯ',
+      3: 'ಗುರು — ಜ್ಞಾನ/ಸಂತಾನ/ಧರ್ಮ',
+      4: 'ಬುಧ — ವಿದ್ಯೆ/ವ್ಯಾಪಾರ/ವಾಕ್',
+      5: 'ಶುಕ್ರ — ಸುಖ/ಕಲೆ/ವಿವಾಹ',
+      6: 'ಶನಿ — ಕಷ್ಟ/ದೀರ್ಘರೋಗ/ಸೇವಕ',
+      7: 'ಚಂದ್ರ — ಮನಸ್ಸು/ಮಾತೃ/ಜಲ',
+      8: 'ರಾಹು — ವಿದೇಶ/ಭಯ/ವಿಷ',
+    };
+    final digitPast = digitGrahaKarakatva[d1] ?? '';
+    final digitPresent = digitGrahaKarakatva[d2] ?? '';
+    final digitFuture = digitGrahaKarakatva[d3] ?? '';
+
+    // ═══ ೭ᶜ. ಗ್ರಹ ÷ ೯ — ನವಗ್ರಹ (PM Ch.7, St.5) ═══
+    int nRem = fullNum % 9;
+    if (nRem == 0) nRem = 9;
+    const navagrahaNames = [
+      'ರವಿ', 'ಚಂದ್ರ', 'ಕುಜ', 'ಬುಧ', 'ಗುರು',
+      'ಶುಕ್ರ', 'ಶನಿ', 'ರಾಹು', 'ಕೇತು'
+    ];
+    final navagrahaStr = navagrahaNames[nRem - 1];
+
+    // ═══ ೭ᵈ. ಪಂಚಭೂತ ÷ ೫ (PM Ch.7, St.15) ═══
+    int bRem = fullNum % 5;
+    if (bRem == 0) bRem = 5;
+    const bhutaNames5 = ['ಅಗ್ನಿ', 'ಪೃಥ್ವಿ', 'ಆಕಾಶ', 'ವಾಯು', 'ಜಲ'];
+    final bhutaFromNumStr = bhutaNames5[bRem - 1];
+
+    // ═══ ೭ᵉ. ಕಾಲ ಹೋರಾ (PM Ch.4, St.30-35) ═══
+    // Hora order: Sun(0), Venus(1), Mercury(2), Moon(3), Saturn(4), Jupiter(5), Mars(6)
+    // First hora of each weekday: Sun=0, Mon=3, Tue=6, Wed=2, Thu=5, Fri=1, Sat=4
+    const weekdayHoraStart = [0, 3, 6, 2, 5, 1, 4]; // Sun=1..Sat=7 → index 0..6
+    const horaLords = ['ರವಿ', 'ಶುಕ್ರ', 'ಬುಧ', 'ಚಂದ್ರ', 'ಶನಿ', 'ಗುರು', 'ಕುಜ'];
+    // queryDateTime.weekday: 1=Mon..7=Sun → convert to 0=Sun..6=Sat
+    final wdIdx = queryDateTime.weekday == 7 ? 0 : queryDateTime.weekday;
+    // Hora number from sunrise (approximate: 6 AM as sunrise proxy)
+    final hoursSinceSunrise = (queryDateTime.hour - 6 + 24) % 24;
+    final horaNumber = hoursSinceSunrise; // Each hora ≈ 1 hour for simplicity
+    final horaIdx = (weekdayHoraStart[wdIdx] + horaNumber) % 7;
+    final kalaHoraStr = horaLords[horaIdx];
+
+    // ═══ ೭ᶠ. ಆರೂಢ ಅವಸ್ಥಾ (PM Ch.5, St.5-15) ═══
+    // Evaluate Arudha rashi lord's planetary state
+    final arudhaLord = _rashiLords[aroodhaRashi];
+    final arudhaLordLong = result.planets[arudhaLord]?.longitude ?? 0.0;
+    final arudhaLordRashi = (arudhaLordLong / 30).floor() % 12;
+
+    // Exaltation rashis (planet → rashi index)
+    const exaltRashi = {
+      'ರವಿ': 0,     // Mesha
+      'ಚಂದ್ರ': 1,  // Vrishabha
+      'ಕುಜ': 9,     // Makara
+      'ಬುಧ': 5,     // Kanya
+      'ಗುರು': 3,    // Karka
+      'ಶುಕ್ರ': 11,  // Meena
+      'ಶನಿ': 6,     // Tula
+    };
+    // Debilitation is 7th from exaltation
+    const debilRashi = {
+      'ರವಿ': 6,     // Tula
+      'ಚಂದ್ರ': 7,  // Vrischika
+      'ಕುಜ': 3,     // Karka
+      'ಬುಧ': 11,    // Meena
+      'ಗುರು': 9,    // Makara
+      'ಶುಕ್ರ': 5,   // Kanya
+      'ಶನಿ': 0,     // Mesha
+    };
+
+    // Own sign check
+    bool isOwnSign = false;
+    for (int ri = 0; ri < 12; ri++) {
+      if (_rashiLords[ri] == arudhaLord && ri == arudhaLordRashi) {
+        isOwnSign = true;
+        break;
+      }
+    }
+
+    // Combustion check (within ~6° of Sun for most planets)
+    final distFromSun = ((arudhaLordLong - S).abs() % 360);
+    final isCombust = arudhaLord != 'ರವಿ' && (distFromSun < 6.0 || distFromSun > 354.0);
+
+    // Retrograde check
+    final arudhaLordPlanet = result.planets[arudhaLord];
+    final isRetro = (arudhaLordPlanet?.speed ?? 0.0) < 0;
+
+    String arudhaAvasthaStr;
+    if (exaltRashi[arudhaLord] == arudhaLordRashi) {
+      arudhaAvasthaStr = 'ದೀಪ್ತ (ಉಚ್ಚ) — ಅತ್ಯುತ್ತಮ';
+    } else if (isOwnSign) {
+      arudhaAvasthaStr = 'ಸ್ವಸ್ಥ (ಸ್ವಕ್ಷೇತ್ರ) — ಶುಭ';
+    } else if (debilRashi[arudhaLord] == arudhaLordRashi) {
+      arudhaAvasthaStr = 'ದೀನ (ನೀಚ) — ಅಶುಭ';
+    } else if (isCombust) {
+      arudhaAvasthaStr = 'ವಿಕಲ (ಅಸ್ತ) — ಅಶುಭ';
+    } else if (isRetro) {
+      arudhaAvasthaStr = 'ಮುದಿತ (ವಕ್ರ) — ಮಿಶ್ರ';
+    } else {
+      // Check if in friend's/enemy's sign
+      final signLord = _rashiLords[arudhaLordRashi];
+      if (_naturalFriends[arudhaLord]?.contains(signLord) ?? false) {
+        arudhaAvasthaStr = 'ಶಾಂತ (ಮಿತ್ರಕ್ಷೇತ್ರ) — ಮಧ್ಯಮ';
+      } else if (_naturalEnemies[arudhaLord]?.contains(signLord) ?? false) {
+        arudhaAvasthaStr = 'ದುಃಖಿ (ಶತ್ರುಕ್ಷೇತ್ರ) — ಅಶುಭ';
+      } else {
+        arudhaAvasthaStr = 'ಶಾಂತ (ಸಮಕ್ಷೇತ್ರ) — ಸಾಮಾನ್ಯ';
+      }
+    }
+
+    // ═══ ೭ᵍ. ಸ್ಪೃಷ್ಟಾಂಗ ದೋಷ (PM Ch.4, St.47-50) ═══
+    // Check if malefics (Mars, Saturn, Rahu, Ketu) aspect or conjoin sprashtanga rashi
+    String sprashtangaDoshaStr = '';
+    if (sprashtangaNum != null) {
+      final spRashi = (sprashtangaNum - 1) % 12;
+      final maleficPlanets = {
+        'ಕುಜ': Ma, 'ಶನಿ': Sa,
+        'ರಾಹು': result.planets['ರಾಹು']?.longitude ?? 0.0,
+        'ಕೇತು': result.planets['ಕೇತು']?.longitude ?? 0.0,
+      };
+      final doshaList = <String>[];
+      for (final entry in maleficPlanets.entries) {
+        final pRashi = (entry.value / 30).floor() % 12;
+        // Conjunction
+        if (pRashi == spRashi) {
+          doshaList.add('${entry.key} ಯುತಿ');
+          continue;
+        }
+        // Aspect check: 7th aspect (all planets), plus Mars(4,8), Saturn(3,10), Rahu/Ketu(5,9)
+        final diff = (pRashi - spRashi + 12) % 12;
+        bool aspects = diff == 6; // 7th aspect (universal)
+        if (entry.key == 'ಕುಜ') aspects = aspects || diff == 3 || diff == 7;
+        if (entry.key == 'ಶನಿ') aspects = aspects || diff == 2 || diff == 9;
+        if (aspects) {
+          doshaList.add('${entry.key} ದೃಷ್ಟಿ');
+        }
+      }
+      sprashtangaDoshaStr = doshaList.isEmpty ? 'ದೋಷ ಇಲ್ಲ' : doshaList.join(', ');
+    } else {
+      sprashtangaDoshaStr = 'ಸ್ಪೃಷ್ಟಾಂಗ ಇಲ್ಲ';
+    }
+
     // ═══ ೮. ತ್ರಿಸ್ಫುಟ ದಶಾ (Vimshottari scaled to 365-day cycle) ═══
     // In Prashna, Trisphuta Dasha compresses 120-year Vimshottari into 365 days.
     // Scale: 1 Vimshottari-year = 365/120 ≈ 3.0417 days
@@ -932,6 +1110,16 @@ class AshtamangalaCalculator {
       santanaTithiPanchagga: santanaPanchagga,
       santanaTithiChandra: santanaChandra,
       santanaTithiRavindu: santanaRavindu,
+      // Additional Prashna Marga
+      dehaPranaMrityuTulane: dehaPranaTulane,
+      digitPastAnalysis: digitPast,
+      digitPresentAnalysis: digitPresent,
+      digitFutureAnalysis: digitFuture,
+      navagrahaFromNumber: navagrahaStr,
+      panchabhutaFromNumber: bhutaFromNumStr,
+      kalaHora: kalaHoraStr,
+      arudhaAvastha: arudhaAvasthaStr,
+      sprashtangaDosha: sprashtangaDoshaStr,
       // ತ್ರಿಸ್ಫುಟ ದಶಾ
       trisphutaDashas: trisphutaDashaList,
       trisphutaNakshatra: triNakStr,

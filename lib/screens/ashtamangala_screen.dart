@@ -1772,6 +1772,31 @@ class _AshtamangalaDashboardScreenState extends State<AshtamangalaDashboardScree
                   ['ಸಂತಾನ ತಿಥಿಸ್ಫುಟ:ರವೀಂದುಶುಕ್ರ..', d.santanaTithiRavindu],
                 ],
               ),
+              // ೬. ಹೆಚ್ಚುವರಿ ಪ್ರಶ್ನಮಾರ್ಗ ವಿಶ್ಲೇಷಣೆ
+              _buildAshtamangalaCard(
+                title: 'ಪ್ರಶ್ನಮಾರ್ಗ ವಿಶ್ಲೇಷಣೆ',
+                rows: [
+                  ['ದೇಹ-ಪ್ರಾಣ-ಮೃತ್ಯು ತುಲನೆ', d.dehaPranaMrityuTulane],
+                  ['ಅಂಕ ÷ ೯ → ನವಗ್ರಹ', d.navagrahaFromNumber],
+                  ['ಅಂಕ ÷ ೫ → ಪಂಚಭೂತ', d.panchabhutaFromNumber],
+                  ['ಕಾಲ ಹೋರಾ', d.kalaHora],
+                  ['ಆರೂಢಾಧಿಪ ಅವಸ್ಥಾ', d.arudhaAvastha],
+                  ['ಸ್ಪೃಷ್ಟಾಂಗ ದೋಷ', d.sprashtangaDosha],
+                ],
+              ),
+              const SizedBox(height: 14),
+
+              // ೭. ಅಂಕ ವಿಶ್ಲೇಷಣೆ: ಭೂತ-ವರ್ತಮಾನ-ಭವಿಷ್ಯ
+              _buildAshtamangalaCard(
+                title: 'ಅಂಕ ವಿಶ್ಲೇಷಣೆ (ಭೂತ-ವರ್ತಮಾನ-ಭವಿಷ್ಯ)',
+                rows: [
+                  ['ಭೂತಕಾಲ (ನೂರರ ಸ್ಥಾನ)', d.digitPastAnalysis],
+                  ['ವರ್ತಮಾನ (ಹತ್ತರ ಸ್ಥಾನ)', d.digitPresentAnalysis],
+                  ['ಭವಿಷ್ಯ (ಒಂದರ ಸ್ಥಾನ)', d.digitFutureAnalysis],
+                ],
+              ),
+              const SizedBox(height: 14),
+
               const SizedBox(height: 20),
             ],
           ),
